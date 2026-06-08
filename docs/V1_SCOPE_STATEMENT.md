@@ -87,6 +87,30 @@ All of the following must pass before V1 is considered complete:
 - [ ] `tests/test_metrics.py`: metric reconciliation
 - [ ] `tests/test_benchmark_runner.py`: JSON report, `exactkv_failures == 0`
 
+## Known V1 limitations and brittleness notes
+
+### DynamicCache internal reconstruction (transformers 5.8.1)
+
+ExactKV currently supports transformers >= 5.8 `DynamicCache` through direct
+attribute injection into `DynamicLayer` objects (`layer.keys`, `layer.values`,
+`layer.is_initialized`, `layer.dtype`, `layer.device`).  This relies on
+`DynamicLayer.__dict__` remaining stable.
+
+**Risk:** This reconstruction may break silently across transformers versions if
+`DynamicLayer` adds validation, changes internal field names, or introduces a
+more restricted interface.
+
+**Future mitigation:** Replace with a version-pinned compatibility layer or
+contribute a stable `from_tensors()` / `from_dict()` class method to upstream
+`DynamicCache`.  Until then, the minimum viable fix is to pin `transformers` to
+a tested version range in `pyproject.toml` and gate the cache utilities with a
+version check.
+
+**Scope note:** This limitation is acceptable for V1 because the goal is
+*correctness verification*, not production deployment.  All tests must run with
+`TRANSFORMERS_OFFLINE=1` (model cached locally) and are validated against
+`Qwen/Qwen2.5-0.5B` on transformers 5.8.1.
+
 ## Citation and novelty note
 
 The draft-then-verify compressed-KV algorithm is from:
