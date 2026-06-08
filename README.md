@@ -120,13 +120,78 @@ EOF
 
 ---
 
+## V2 reporting (JSON and CSV)
+
+ExactKV V2 can write stable JSON and CSV reports that include compressor
+metadata alongside correctness and acceptance metrics.
+
+### Write a JSON report
+
+```python
+from exactkv.benchmarks.prompts import load_smoke_prompts
+from exactkv.benchmarks.reports import build_run_manifest, write_json_report
+from exactkv.benchmarks.runner import RunConfig, run_suite
+from exactkv.runtime.model_runtime import ModelRuntime
+
+rt  = ModelRuntime("Qwen/Qwen2.5-0.5B", device="auto", dtype="float32")
+cfg = RunConfig(compressor_name="int8", draft_len=4, max_new_tokens=32)
+
+report   = run_suite(rt, load_smoke_prompts()[:4], cfg)
+manifest = build_run_manifest(
+    model_name="Qwen/Qwen2.5-0.5B",
+    prompt_suite="smoke",
+    compressor_names=["int8"],
+    draft_len=4,
+    max_new_tokens=32,
+)
+write_json_report(report, "reports/run_int8.json", manifest=manifest)
+```
+
+### Write a CSV report
+
+```python
+from exactkv.benchmarks.reports import write_csv_report
+
+write_csv_report(report, "reports/run_int8.csv")
+```
+
+### What V2 reports — and what it does not
+
+**Reported:** exactness (token match), acceptance rate, accepted/rejected/corrected
+counts, memory byte estimates, compressor metadata.
+
+**Not reported:** tokens/second, throughput, latency, speedup, or any runtime
+performance metric. V2 proves *correctness and acceptance behaviour*, not
+production performance.
+
+### int4\_sim memory disclaimer
+
+`int4_sim` is a **simulated** INT4 compressor. It quantises values into the
+signed-4-bit range `[-8, 7]` but stores them in `torch.int8` containers (1 byte
+per element). It does **not** perform real 4-bit bit-packing.
+
+Every JSON and CSV report row for `int4_sim` includes:
+
+```
+"is_simulated": true,
+"supports_real_bytes_claim": false,
+"memory_claim_note": "int4_sim uses int8 container storage in V2; do not
+  interpret this as real packed INT4 memory savings."
+```
+
+Do not cite `int4_sim`'s `compressed_kv_bytes` as evidence of real INT4 memory
+savings.
+
+---
+
 ## Project structure
 
 ```
 exactkv/
-├── config.py             # ExactKVConfig dataclass
+├── config.py             # ExactKVConfig, BenchmarkConfig
 ├── runtime/
 │   ├── model_runtime.py      # ModelRuntime (HF model + tokenizer wrapper)
+│   ├── prefill.py            # prefill_to_full_state (shared helper)
 │   ├── generation.py         # generate_full_greedy, generate_lossy_greedy
 │   └── exactkv_generator.py  # ExactKVGenerator (draft-verify-commit loop)
 ├── cache/
@@ -134,9 +199,12 @@ exactkv/
 │   ├── compressed_state.py   # CompressedKVState (compressor-specific)
 │   └── utils.py              # kv_seq_len, extract_kv_tensors, rebuild_cache
 ├── compressors/
-│   ├── base.py               # KVCompressor Protocol, CompressionStats
+│   ├── base.py               # KVCompressor Protocol, CompressionStats, CompressorCapabilities
+│   ├── registry.py           # register_compressor, get_compressor, list_compressors
+│   ├── __init__.py           # registers all built-in compressors
 │   ├── noop.py               # NoOpCompressor (identity, acceptance=100%)
 │   ├── int8.py               # Int8Compressor (per-tensor symmetric INT8)
+│   ├── int4_sim.py           # Int4SimCompressor (simulated INT4, int8 storage)
 │   └── debug_noise.py        # DebugNoiseCompressor (forces rejection, test only)
 ├── verification/
 │   ├── acceptance.py         # compute_acceptance, AcceptanceResult, traces
@@ -147,7 +215,8 @@ exactkv/
 │   └── memory.py             # estimate_kv_memory, MemorySummary
 └── benchmarks/
     ├── prompts.py            # load_prompts, load_smoke_prompts
-    └── runner.py             # run_one, run_suite, RunConfig
+    ├── runner.py             # run_one, run_suite, RunConfig
+    └── reports.py            # write_json_report, write_csv_report, build_run_manifest
 
 benchmarks/
 └── prompts/

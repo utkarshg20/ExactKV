@@ -1,14 +1,18 @@
-"""ExactKV V1 benchmark runner.
+"""ExactKV benchmark runner.
 
 Runs a single prompt under three modes and reports a JSON-compatible dict:
   1. ``full``    — generate_full_greedy (ground truth)
   2. ``lossy``   — generate_lossy_greedy (no verification)
   3. ``exactkv`` — ExactKVGenerator draft-verify-commit loop
 
-The runner is single-threaded and correctness-first.  It does NOT claim any
-throughput or latency numbers.
+The runner is single-threaded and correctness-first.  It does NOT report
+timing, throughput, latency, or speedup numbers.
 
-Supported compressor names: ``"noop"``, ``"int8"``, ``"debug_noise"``.
+V2 addition: ``run_one`` now includes ``compressor_capabilities`` in the
+returned dict so that reports.py can enrich JSON/CSV output with compressor
+metadata (``is_simulated``, ``supports_real_bytes_claim``, etc.).
+
+Supported compressor names: ``"noop"``, ``"int8"``, ``"int4_sim"``, ``"debug_noise"``.
 """
 from __future__ import annotations
 
@@ -51,6 +55,13 @@ def run_one(
         memory, exactkv_failure.
     """
     compressor = get_compressor(config.compressor_name)
+    # Capture capabilities for report enrichment (V2); safe for compressors
+    # that predate the capabilities attribute.
+    caps_dict: dict = {}
+    if hasattr(compressor, "capabilities"):
+        from dataclasses import asdict
+        caps_dict = asdict(compressor.capabilities)
+
     prompt = prompt_entry["prompt"]
     max_new = config.max_new_tokens
 
@@ -83,6 +94,7 @@ def run_one(
         "category": prompt_entry.get("category", "unknown"),
         "model_name": runtime.model_name,
         "compressor_name": config.compressor_name,
+        "compressor_capabilities": caps_dict,   # V2: enables report honesty fields
         "draft_len": config.draft_len,
         "max_new_tokens": max_new,
         "full": {
