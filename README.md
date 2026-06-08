@@ -17,6 +17,41 @@ KV-cache generation and benchmark evaluation.
 
 ---
 
+## Headline result (v0.4.0)
+
+**Experiment 003 — asymmetric K/V sweep.** Across a 612-run core-suite sweep
+(`Qwen/Qwen2.5-0.5B`, 34 prompts × 9 compressors × 2 draft lengths), ExactKV had
+**0 failures** while revealing that **keys are far more fragile than values under
+compression**. Keeping keys at full precision with INT8 values (`k_full_v8`)
+accepted 98.8% of drafted tokens; compressing keys to simulated 4-bit
+(`k4_v8_sim`) collapsed acceptance to 56.2%.
+
+| Compressor       | K bits | V bits | Accept rate | Rejected | ExactKV failures |
+| ---------------- | -----: | -----: | ----------: | -------: | ---------------: |
+| k_full_v8        |   full |      8 |       0.988 |       22 |                0 |
+| k8_v_full        |      8 |   full |       0.953 |       86 |                0 |
+| int8             |      8 |      8 |       0.953 |       89 |                0 |
+| k_full_v4_sim ⚠️ |   full |  4-sim |       0.890 |      174 |                0 |
+| k8_v4_sim ⚠️     |      8 |  4-sim |       0.858 |      240 |                0 |
+| k4_v8_sim ⚠️     |  4-sim |      8 |       0.562 |     1253 |                0 |
+| int4_sim ⚠️      |  4-sim |  4-sim |       0.553 |     1272 |                0 |
+| k8_v2_sim ⚠️     |      8 |  2-sim |       0.330 |     2302 |                0 |
+
+**Takeaway:** On this setup, compressing keys aggressively was far more damaging
+to ExactKV acceptance than compressing values.
+
+> ⚠️ `_sim` = simulated sub-INT8 numeric quantization stored in `int8` containers
+> (no real bit-packing). `k8_v_full` and `k_full_v8` carry no `_sim` suffix
+> because they use only full precision and INT8. Average effective bit width is a
+> comparison aid, not a real memory metric. ExactKV reports exactness,
+> acceptance, divergence, rejection, and correction behaviour — **not**
+> performance.
+
+Full report: [`docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md`](docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md)
+· Project status: [`docs/PROJECT_STATUS_V0.4.0.md`](docs/PROJECT_STATUS_V0.4.0.md)
+
+---
+
 ## Status
 
 **V4 — asymmetric K/V compression experiments (v0.4.0).**  V1 proved correctness; V2 added the compressor registry, CLI, JSON/CSV reporting, sweep orchestration, and analysis layer; V3 added prompt suites, Markdown report generation, acceptance leaderboards, and the `report` CLI; V4 adds asymmetric K/V compressors, K/V metadata in reports and leaderboards, and Experiment 003.
@@ -811,6 +846,19 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 See [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md)
 for the full writeup. See [`docs/RELEASE_NOTES_V0.4.0.md`](docs/RELEASE_NOTES_V0.4.0.md)
 for V4 release notes.
+
+---
+
+## Key documents
+
+| Document | Purpose |
+|---|---|
+| [`docs/PROJECT_STATUS_V0.4.0.md`](docs/PROJECT_STATUS_V0.4.0.md) | Internal project status, version timeline, what ExactKV does/doesn't prove |
+| [`docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md`](docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md) | Full Experiment 003 asymmetric K/V sweep report |
+| [`docs/RELEASE_NOTES_V0.4.0.md`](docs/RELEASE_NOTES_V0.4.0.md) | v0.4.0 release notes (V1–V4 history, results, limitations) |
+| [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md) | Research note on asymmetric K/V and workspace-aware memory |
+| [`docs/V5_SCOPE_DRAFT.md`](docs/V5_SCOPE_DRAFT.md) | Draft V5 plan (workspace memory + real backend planning) — not implemented |
+| `docs/PRIVATE_FUTURE_POST_NOTES_EXPERIMENT_003.md` | 🔒 Private draft announcement notes for later — not for posting |
 
 ---
 
