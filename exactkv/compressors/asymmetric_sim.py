@@ -1,5 +1,27 @@
 """AsymmetricQuantSimCompressor — per-side K/V quantisation with independent widths.
 
+Named no-arg subclasses for registry use
+-----------------------------------------
+The seven named compressors at the bottom of this module are thin no-arg
+subclasses of ``AsymmetricQuantSimCompressor``.  They exist solely to satisfy
+the registry contract (``get_compressor(name)`` → ``_REGISTRY[name]()``) and
+bind a canonical name and ``(k_bits, v_bits)`` pair:
+
+    K8/V4-sim   k8_v4_sim     is_simulated=True
+    K8/V2-sim   k8_v2_sim     is_simulated=True
+    K4/V8-sim   k4_v8_sim     is_simulated=True
+    Kfull/V4-sim k_full_v4_sim is_simulated=True
+    K4/Vfull-sim k4_v_full_sim is_simulated=True
+    K8/Vfull    k8_v_full     is_simulated=False  ← no _sim (real storage only)
+    Kfull/V8    k_full_v8     is_simulated=False  ← no _sim (real storage only)
+
+The ``_sim`` suffix is present only when a compressor uses a simulated sub-INT8
+width (4-bit or 2-bit), where the values are stored in ``int8`` containers
+rather than being real packed sub-INT8.  ``k8_v_full`` and ``k_full_v8`` use
+only real INT8 and full-precision passthrough — no simulated sub-INT8 — so they
+carry no ``_sim`` suffix and report ``is_simulated=False``.
+
+
 What "asymmetric" means here
 -----------------------------
 Keys and values are quantised (or left at full precision) **independently**,
@@ -382,3 +404,62 @@ class AsymmetricQuantSimCompressor:
             seq_len=seq_len,
             num_layers=num_layers,
         )
+
+
+# ---------------------------------------------------------------------------
+# Named no-arg subclasses — registry-compatible (Phase C)
+# ---------------------------------------------------------------------------
+# Each class delegates to AsymmetricQuantSimCompressor with fixed (k_bits, v_bits)
+# and the canonical registry name.  All seven are no-arg-constructible so the
+# registry contract get_compressor(name) → _REGISTRY[name]() works.
+#
+# Naming rule: _sim suffix iff either side uses a simulated sub-INT8 width.
+
+class K8V4SimCompressor(AsymmetricQuantSimCompressor):
+    """K=INT8, V=INT4-sim.  is_simulated=True (V side sub-INT8)."""
+    def __init__(self) -> None:
+        super().__init__(k_bits=8, v_bits=4, name="k8_v4_sim")
+
+
+class K8V2SimCompressor(AsymmetricQuantSimCompressor):
+    """K=INT8, V=INT2-sim.  is_simulated=True (V side sub-INT8)."""
+    def __init__(self) -> None:
+        super().__init__(k_bits=8, v_bits=2, name="k8_v2_sim")
+
+
+class K4V8SimCompressor(AsymmetricQuantSimCompressor):
+    """K=INT4-sim, V=INT8.  is_simulated=True (K side sub-INT8)."""
+    def __init__(self) -> None:
+        super().__init__(k_bits=4, v_bits=8, name="k4_v8_sim")
+
+
+class KFullV4SimCompressor(AsymmetricQuantSimCompressor):
+    """K=full precision, V=INT4-sim.  is_simulated=True (V side sub-INT8)."""
+    def __init__(self) -> None:
+        super().__init__(k_bits=None, v_bits=4, name="k_full_v4_sim")
+
+
+class K4VFullSimCompressor(AsymmetricQuantSimCompressor):
+    """K=INT4-sim, V=full precision.  is_simulated=True (K side sub-INT8)."""
+    def __init__(self) -> None:
+        super().__init__(k_bits=4, v_bits=None, name="k4_v_full_sim")
+
+
+class K8VFullCompressor(AsymmetricQuantSimCompressor):
+    """K=INT8, V=full precision.  is_simulated=False (no sub-INT8 side).
+
+    No ``_sim`` suffix: both sides use real storage only (INT8 or full
+    precision).  ``supports_real_bytes_claim=True``.
+    """
+    def __init__(self) -> None:
+        super().__init__(k_bits=8, v_bits=None, name="k8_v_full")
+
+
+class KFullV8Compressor(AsymmetricQuantSimCompressor):
+    """K=full precision, V=INT8.  is_simulated=False (no sub-INT8 side).
+
+    No ``_sim`` suffix: both sides use real storage only (full precision or
+    INT8).  ``supports_real_bytes_claim=True``.
+    """
+    def __init__(self) -> None:
+        super().__init__(k_bits=None, v_bits=8, name="k_full_v8")

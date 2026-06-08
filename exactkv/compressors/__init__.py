@@ -1,13 +1,36 @@
 """ExactKV compressors package.
 
-Importing this package registers the three built-in compressors so that
+Importing this package registers all built-in compressors so that
 ``get_compressor("noop")`` etc. work without any extra imports.
 
 Public API::
 
     from exactkv.compressors import get_compressor, list_compressors, register_compressor
     from exactkv.compressors import NoOpCompressor, Int8Compressor, DebugNoiseCompressor
+
+V4 asymmetric compressors (all simulated or real-only; no real bit-packing)::
+
+    from exactkv.compressors import (
+        AsymmetricQuantSimCompressor,  # base class
+        K8V4SimCompressor,    # k8_v4_sim
+        K8V2SimCompressor,    # k8_v2_sim
+        K4V8SimCompressor,    # k4_v8_sim
+        KFullV4SimCompressor, # k_full_v4_sim
+        K4VFullSimCompressor, # k4_v_full_sim
+        K8VFullCompressor,    # k8_v_full  (no _sim: real storage only)
+        KFullV8Compressor,    # k_full_v8  (no _sim: real storage only)
+    )
 """
+from exactkv.compressors.asymmetric_sim import (
+    AsymmetricQuantSimCompressor,
+    K4V8SimCompressor,
+    K4VFullSimCompressor,
+    K8V2SimCompressor,
+    K8V4SimCompressor,
+    K8VFullCompressor,
+    KFullV4SimCompressor,
+    KFullV8Compressor,
+)
 from exactkv.compressors.debug_noise import DebugNoiseCompressor
 from exactkv.compressors.int4_sim import Int4SimCompressor
 from exactkv.compressors.int8 import Int8Compressor
@@ -18,17 +41,39 @@ from exactkv.compressors.registry import (
     register_compressor,
 )
 
-# Register built-in compressors (idempotent on re-import)
+# V1–V3 symmetric compressors (idempotent on re-import)
 register_compressor("noop", NoOpCompressor)
 register_compressor("int8", Int8Compressor)
 register_compressor("int4_sim", Int4SimCompressor)
 register_compressor("debug_noise", DebugNoiseCompressor)
 
+# V4 asymmetric compressors
+# _sim suffix = includes at least one simulated sub-INT8 side (4-bit or 2-bit)
+# no _sim     = only real INT8 and/or full precision; is_simulated=False
+register_compressor("k8_v4_sim", K8V4SimCompressor)
+register_compressor("k8_v2_sim", K8V2SimCompressor)
+register_compressor("k4_v8_sim", K4V8SimCompressor)
+register_compressor("k_full_v4_sim", KFullV4SimCompressor)
+register_compressor("k4_v_full_sim", K4VFullSimCompressor)
+register_compressor("k8_v_full", K8VFullCompressor)
+register_compressor("k_full_v8", KFullV8Compressor)
+
 __all__ = [
+    # V1–V3
     "NoOpCompressor",
     "Int8Compressor",
     "Int4SimCompressor",
     "DebugNoiseCompressor",
+    # V4
+    "AsymmetricQuantSimCompressor",
+    "K8V4SimCompressor",
+    "K8V2SimCompressor",
+    "K4V8SimCompressor",
+    "KFullV4SimCompressor",
+    "K4VFullSimCompressor",
+    "K8VFullCompressor",
+    "KFullV8Compressor",
+    # registry
     "register_compressor",
     "get_compressor",
     "list_compressors",

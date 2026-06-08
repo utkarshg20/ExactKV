@@ -210,6 +210,32 @@ savings.
 
 ---
 
+### V4 asymmetric compressors (experimental)
+
+V4 adds seven asymmetric compressors that quantise K and V at **different**
+bit-widths. All are simulated or use only real INT8 and full precision. None
+perform real bit-packing below 8 bits.
+
+| Name | K width | V width | `is_simulated` | Notes |
+|---|---|---|---|---|
+| `k8_v4_sim` ⚠️ | INT8 | INT4-sim | yes | V simulated in int8 container |
+| `k8_v2_sim` ⚠️ | INT8 | INT2-sim | yes | V simulated in int8 container |
+| `k4_v8_sim` ⚠️ | INT4-sim | INT8 | yes | K simulated in int8 container |
+| `k_full_v4_sim` ⚠️ | full | INT4-sim | yes | V simulated in int8 container |
+| `k4_v_full_sim` ⚠️ | INT4-sim | full | yes | K simulated in int8 container |
+| `k8_v_full` | INT8 | full | **no** | Real INT8 K, full V |
+| `k_full_v8` | full | INT8 | **no** | Full K, real INT8 V |
+
+**Naming rule:** `_sim` suffix is present only when a compressor includes a
+simulated sub-INT8 width (4-bit or 2-bit). `k8_v_full` and `k_full_v8` use
+only real INT8 and full precision — no simulated storage — so they carry no
+`_sim` suffix and report `is_simulated=False`.
+
+These compressors are for **acceptance-rate experiments only**. Do not cite
+their `compressed_kv_bytes` for simulated sides as real memory savings.
+
+---
+
 ## Project structure
 
 ```
@@ -227,13 +253,14 @@ exactkv/
 │   ├── compressed_state.py   # CompressedKVState (compressor-specific)
 │   └── utils.py              # kv_seq_len, extract_kv_tensors, rebuild_cache
 ├── compressors/
-│   ├── __init__.py           # registers all built-in compressors
+│   ├── __init__.py           # registers all built-in compressors (V1–V3 + V4)
 │   ├── base.py               # KVCompressor Protocol, CompressionStats, CompressorCapabilities
 │   ├── registry.py           # register_compressor, get_compressor, list_compressors
 │   ├── noop.py               # NoOpCompressor (identity, acceptance=100%)
 │   ├── int8.py               # Int8Compressor (per-tensor symmetric INT8)
 │   ├── int4_sim.py           # Int4SimCompressor (simulated INT4, int8 storage)
-│   └── debug_noise.py        # DebugNoiseCompressor (forces rejection, test only)
+│   ├── debug_noise.py        # DebugNoiseCompressor (forces rejection, test only)
+│   └── asymmetric_sim.py     # V4: AsymmetricQuantSimCompressor + 7 named subclasses
 ├── verification/
 │   ├── acceptance.py         # compute_acceptance, AcceptanceResult, traces
 │   └── engine.py             # VerificationEngine.verify_sequential

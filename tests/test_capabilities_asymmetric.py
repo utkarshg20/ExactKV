@@ -228,6 +228,9 @@ class TestAsdictRoundTrip:
 # 7.  All registered compressors expose the new fields
 # ---------------------------------------------------------------------------
 
+_SYMMETRIC_NAMES = _ALL_BUILTIN_NAMES  # only the four V1–V3 symmetric compressors
+
+
 class TestAllRegisteredCompressors:
     @pytest.mark.parametrize("name", list_compressors())
     def test_has_key_bit_width_attribute(self, name):
@@ -245,15 +248,15 @@ class TestAllRegisteredCompressors:
         comp = get_compressor(name)
         assert hasattr(comp.capabilities, "asymmetric")
 
-    @pytest.mark.parametrize("name", list_compressors())
-    def test_symmetric_compressors_are_not_asymmetric(self, name):
-        """All V1–V3 compressors are symmetric; none should have asymmetric=True."""
+    @pytest.mark.parametrize("name", _SYMMETRIC_NAMES)
+    def test_v1_v3_compressors_are_not_asymmetric(self, name):
+        """V1–V3 compressors are symmetric; none should have asymmetric=True."""
         comp = get_compressor(name)
         assert comp.capabilities.asymmetric is False
 
-    @pytest.mark.parametrize("name", list_compressors())
-    def test_widths_are_consistent(self, name):
-        """For V1–V3 compressors: both widths are either both None or both equal ints."""
+    @pytest.mark.parametrize("name", _SYMMETRIC_NAMES)
+    def test_v1_v3_widths_are_consistent(self, name):
+        """V1–V3 compressors: both widths are either both None or both equal ints."""
         caps = get_compressor(name).capabilities
         k, v = caps.key_bit_width, caps.value_bit_width
         both_none = k is None and v is None
