@@ -19,7 +19,7 @@ KV-cache generation and benchmark evaluation.
 
 ## Status
 
-**V2 — experimental framework (v0.2.0).**  V1 proved correctness; V2 adds the compressor registry, CLI, JSON/CSV reporting, sweep orchestration, and an analysis layer.
+**V3 — presentation and storytelling layer (v0.3.0-dev).**  V1 proved correctness; V2 added the compressor registry, CLI, JSON/CSV reporting, sweep orchestration, and analysis layer; V3 adds stronger prompt suites, Markdown report generation, acceptance leaderboards, divergence examples, mismatch histograms, and the `report` CLI command.
 
 **V1 gates (correctness prototype)**
 
@@ -43,6 +43,18 @@ KV-cache generation and benchmark evaluation.
 | Acceptance counts reconcile in analysis; mismatch and failure reports correct | ✅ |
 | CLI `bench --suite smoke` runs with locally cached weights, writes valid reports | ✅ |
 | No tokens/sec, latency, or speedup language in any V2 output | ✅ |
+
+**V3 gates (presentation and storytelling layer)**
+
+| Gate | Status |
+|---|---|
+| Four named prompt suites (`core`, `structured`, `code`, `stress`) load and validate | ✅ |
+| Histogram and example analysis functions reconcile counts on real sweep reports | ✅ |
+| Markdown generator produces complete report from sweep JSON (leaderboard, examples, histograms) | ✅ |
+| Every rendered artifact preserves `int4_sim` simulation labelling | ✅ |
+| `python -m exactkv report` writes Markdown from existing JSON | ✅ |
+| `docs/EXPERIMENT_002_CORE_SWEEP.md` written from real core-suite sweep with `exactkv_failures == 0` | ✅ |
+| No-performance-field audit passes across all V3 code, reports, and docs | ✅ |
 
 ---
 
@@ -77,7 +89,7 @@ pytest tests/test_acceptance_logic.py -v
 TRANSFORMERS_OFFLINE=1 pytest tests/test_int8_exactkv.py -v
 ```
 
-Expected: **all 344 tests pass** in ~180–210 s on CPU with `Qwen/Qwen2.5-0.5B` in `float32`.
+Expected: **all 542 tests pass** in ~240–280 s on CPU with `Qwen/Qwen2.5-0.5B` in `float32`.
 
 ---
 

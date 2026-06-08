@@ -348,22 +348,22 @@ None of these block starting Phase A.
 
 V3 is complete when all of the following hold:
 
-- [ ] Four new prompt suites (`core`, `structured`, `code`, `stress`) load, validate,
+- [x] Four new prompt suites (`core`, `structured`, `code`, `stress`) load, validate,
       and resolve as named suites; correctness spot-checks pass with zero ExactKV
       failures.
-- [ ] Histogram and example analysis functions reconcile counts and pass on both
+- [x] Histogram and example analysis functions reconcile counts and pass on both
       synthetic and real reports.
-- [ ] Markdown generator produces a complete, readable report from a sweep JSON,
+- [x] Markdown generator produces a complete, readable report from a sweep JSON,
       including leaderboard, divergence examples, and histograms.
-- [ ] Every rendered artifact preserves `int4_sim` simulation labelling and the
+- [x] Every rendered artifact preserves `int4_sim` simulation labelling and the
       "lossy divergence expected vs ExactKV failure" distinction.
-- [ ] `python -m exactkv report` writes a markdown report from an existing JSON.
-- [ ] README has a compact benchmark table and links to a generated report and the
+- [x] `python -m exactkv report` writes a markdown report from an existing JSON.
+- [x] README has a compact benchmark table and links to a generated report and the
       experiment docs.
-- [ ] `docs/EXPERIMENT_002_CORE_SWEEP.md` is written from a real core-suite sweep
+- [x] `docs/EXPERIMENT_002_CORE_SWEEP.md` is written from a real core-suite sweep
       with `exactkv_failures == 0`.
-- [ ] No-performance-field audit passes across all V3 code, reports, and docs.
-- [ ] Full prior test suite remains green.
+- [x] No-performance-field audit passes across all V3 code, reports, and docs.
+- [x] Full prior test suite remains green (542 tests).
 
 ---
 

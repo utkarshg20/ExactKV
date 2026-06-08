@@ -1,5 +1,5 @@
 # Experiment 002: Core Suite Sweep (v0.3.0-dev)
-_Generated 2026-06-07 by ExactKV. See disclaimers below._
+_Generated 2026-06-08 by ExactKV. See disclaimers below._
 
 ## Experiment Summary
 * **Total results:** 204
@@ -269,6 +269,7 @@ _Sorted by total rejected tokens descending. High rejection is expected for aggr
 * **No production readiness.** ExactKV runs with locally cached model weights under a research/experimental framework.
 * **`int4_sim` is simulated.** No real packed 4-bit storage is used; memory figures are conservative `int8` estimates.
 * **No real compressor backends.** All compressors in V2/V3 are implemented in PyTorch for research purposes.
+* **VeriCache attribution.** ExactKV is inspired by the VeriCache paper (Yao et al., arXiv:2605.17613, 2026) and does not claim to have invented the draft-then-verify algorithm. This report evaluates the current Hugging Face correctness and analysis framework, not the paper's system.
 
 ## Disclaimers
 > **Interpretation notes**
