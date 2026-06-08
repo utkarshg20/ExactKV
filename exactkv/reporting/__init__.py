@@ -1,4 +1,4 @@
-"""ExactKV V3 reporting package.
+"""ExactKV V3/V4 reporting package.
 
 Converts existing benchmark/sweep report dicts into docs-ready Markdown.
 No model re-runs.  No timing, latency, throughput, or speedup fields.
@@ -8,6 +8,7 @@ Modules
 markdown     Top-level renderer: ``render_markdown_report`` and
              ``write_markdown_report``.
 leaderboard  Markdown tables for acceptance by compressor / draft_len / grid.
+             Also exports ``average_effective_bit_width`` (V4 metadata aid).
 examples     Markdown renderers for lossy-divergence and rejection examples.
 histograms   Text table renderers for accepted-length, divergence-position,
              and rejection-count histograms.
@@ -20,6 +21,7 @@ output — this is a correctness bug and must always be zero.
 """
 from exactkv.reporting.markdown import render_markdown_report, write_markdown_report
 from exactkv.reporting.leaderboard import (
+    average_effective_bit_width,
     render_compressor_leaderboard,
     render_draft_len_leaderboard,
     render_compressor_x_draft_leaderboard,
@@ -36,6 +38,7 @@ from exactkv.reporting.histograms import (
 )
 
 __all__ = [
+    "average_effective_bit_width",
     "render_markdown_report",
     "write_markdown_report",
     "render_compressor_leaderboard",

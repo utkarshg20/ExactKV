@@ -79,6 +79,9 @@ def _cmd_list_compressors(args: argparse.Namespace) -> int:
     names = list_compressors()
     print(f"Registered compressors ({len(names)} total):\n")
 
+    def _fmt_bits(b: int | None) -> str:
+        return "full" if b is None else str(b)
+
     for name in names:
         comp = get_compressor(name)
         caps = getattr(comp, "capabilities", None)
@@ -87,6 +90,9 @@ def _cmd_list_compressors(args: argparse.Namespace) -> int:
             print(f"    compressor_type           : {caps.compressor_type}")
             print(f"    is_simulated              : {caps.is_simulated}")
             print(f"    supports_real_bytes_claim : {caps.supports_real_bytes_claim}")
+            print(f"    key_bit_width             : {_fmt_bits(caps.key_bit_width)}")
+            print(f"    value_bit_width           : {_fmt_bits(caps.value_bit_width)}")
+            print(f"    asymmetric                : {caps.asymmetric}")
             print(f"    supports_quantization     : {caps.supports_quantization}")
             print(f"    supports_token_dropping   : {caps.supports_token_dropping}")
             if caps.notes:

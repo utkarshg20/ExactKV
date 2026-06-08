@@ -22,6 +22,54 @@ from typing import Any
 
 
 # ---------------------------------------------------------------------------
+# Public utility: average effective bit width
+# ---------------------------------------------------------------------------
+
+def average_effective_bit_width(
+    key_bit_width: int | None,
+    value_bit_width: int | None,
+    full_bit_width: int = 32,
+) -> float:
+    """Return the average of K and V effective bit-widths.
+
+    ``None`` means full precision and is treated as ``full_bit_width`` (default 32).
+
+    This is a **metadata comparison aid only** — it is not a real memory
+    measurement and must not be presented as evidence of memory savings.
+
+    Args:
+        key_bit_width:   Key-side bit width, or ``None`` for full precision.
+        value_bit_width: Value-side bit width, or ``None`` for full precision.
+        full_bit_width:  Bit width to use for full-precision sides (default 32).
+
+    Returns:
+        ``(k_bits + v_bits) / 2`` as a float.
+
+    Examples:
+        >>> average_effective_bit_width(8, 8)    # int8   → 8.0
+        8.0
+        >>> average_effective_bit_width(4, 4)    # int4   → 4.0
+        4.0
+        >>> average_effective_bit_width(8, 4)    # k8_v4  → 6.0
+        6.0
+        >>> average_effective_bit_width(8, 2)    # k8_v2  → 5.0
+        5.0
+        >>> average_effective_bit_width(None, 4) # kfull_v4, full=32 → 18.0
+        18.0
+        >>> average_effective_bit_width(8, None) # k8_vfull, full=32 → 20.0
+        20.0
+    """
+    k = key_bit_width if key_bit_width is not None else full_bit_width
+    v = value_bit_width if value_bit_width is not None else full_bit_width
+    return (k + v) / 2.0
+
+
+def _fmt_bits(bits: int | None) -> str:
+    """Render a bit-width for table display: integer or 'full'."""
+    return "full" if bits is None else str(bits)
+
+
+# ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
 
@@ -89,14 +137,15 @@ def render_compressor_leaderboard(
     Args:
         table:           Output of ``group_acceptance_by_compressor``.
         compressor_caps: Optional mapping ``compressor_name → capabilities dict``
-                         used to add ``is_simulated`` and ``supports_real_bytes_claim``
-                         columns.
+                         used to add ``is_simulated``, ``supports_real_bytes_claim``,
+                         K/V bit-width, and average effective bit-width columns.
 
     Returns:
         Markdown table string.  Empty string if ``table`` is empty.
 
     Note:
         No timing, throughput, latency, or speedup columns are included.
+        Average effective bits is a metadata comparison aid only.
     """
     if not table:
         return "_No data._"
@@ -105,7 +154,7 @@ def render_compressor_leaderboard(
 
     headers = ["compressor"]
     if use_caps:
-        headers += ["simulated", "real-bytes"]
+        headers += ["simulated", "real-bytes", "K bits", "V bits", "avg eff bits"]
     headers += [
         "accept_rate", "avg_accept_len",
         "drafted", "accepted", "rejected", "corrections",
@@ -120,6 +169,12 @@ def render_compressor_leaderboard(
             caps = (compressor_caps or {}).get(comp, {})
             cells.append("yes" if caps.get("is_simulated") else "no")
             cells.append("yes" if caps.get("supports_real_bytes_claim") else "no")
+            k_bits = caps.get("key_bit_width")    # None or int
+            v_bits = caps.get("value_bit_width")  # None or int
+            cells.append(_fmt_bits(k_bits))
+            cells.append(_fmt_bits(v_bits))
+            avg = average_effective_bit_width(k_bits, v_bits)
+            cells.append(f"{avg:.1f}")
         cells += [
             _fmt(row.get("mean_acceptance_rate", 0.0)),
             _fmt(row.get("mean_average_accepted_length", 0.0), decimals=2),
@@ -176,12 +231,19 @@ def render_draft_len_leaderboard(table: list[dict[str, Any]]) -> str:
 # Compressor × draft-length grid leaderboard (sweep reports)
 # ---------------------------------------------------------------------------
 
-def render_compressor_x_draft_leaderboard(table: list[dict[str, Any]]) -> str:
+def render_compressor_x_draft_leaderboard(
+    table: list[dict[str, Any]],
+    *,
+    compressor_caps: dict[str, dict[str, Any]] | None = None,
+) -> str:
     """Render an acceptance leaderboard table with one row per
     (compressor, draft_len) combination.
 
     Args:
-        table: Output of ``build_acceptance_table`` (the primary sweep table).
+        table:           Output of ``build_acceptance_table`` (primary sweep table).
+        compressor_caps: Optional mapping ``compressor_name → capabilities dict``
+                         used to add K/V bit-width and average effective bit-width
+                         columns.
 
     Returns:
         Markdown table string.  Empty string if ``table`` is empty.
@@ -189,16 +251,29 @@ def render_compressor_x_draft_leaderboard(table: list[dict[str, Any]]) -> str:
     if not table:
         return "_No data._"
 
-    headers = [
-        "compressor", "draft_len", "accept_rate", "avg_accept_len",
+    use_caps = compressor_caps is not None
+
+    headers = ["compressor", "draft_len"]
+    if use_caps:
+        headers += ["K bits", "V bits", "avg eff bits"]
+    headers += [
+        "accept_rate", "avg_accept_len",
         "drafted", "accepted", "rejected", "corrections",
         "runs", "exactkv_fail",
     ]
+
     rows = []
     for row in table:
-        rows.append([
-            str(row.get("compressor_name", "—")),
-            str(row.get("draft_len", "—")),
+        comp = str(row.get("compressor_name", "—"))
+        cells = [comp, str(row.get("draft_len", "—"))]
+        if use_caps:
+            caps = (compressor_caps or {}).get(comp, {})
+            k_bits = caps.get("key_bit_width")
+            v_bits = caps.get("value_bit_width")
+            cells.append(_fmt_bits(k_bits))
+            cells.append(_fmt_bits(v_bits))
+            cells.append(f"{average_effective_bit_width(k_bits, v_bits):.1f}")
+        cells += [
             _fmt(row.get("mean_acceptance_rate", 0.0)),
             _fmt(row.get("mean_average_accepted_length", 0.0), decimals=2),
             str(row.get("total_drafted", 0)),
@@ -207,5 +282,6 @@ def render_compressor_x_draft_leaderboard(table: list[dict[str, Any]]) -> str:
             str(row.get("total_corrections", 0)),
             str(row.get("num_runs", 0)),
             str(row.get("exactkv_failures", 0)),
-        ])
+        ]
+        rows.append(cells)
     return _md_table(headers, rows)

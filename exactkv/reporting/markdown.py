@@ -69,8 +69,17 @@ is not a production-serving benchmark.
 weights under a research/experimental framework.
 * **`int4_sim` is simulated.** No real packed 4-bit storage is used; \
 memory figures are conservative `int8` estimates.
-* **No real compressor backends.** All compressors in V2/V3 are implemented \
+* **No real compressor backends.** All compressors in V2/V3/V4 are implemented \
 in PyTorch for research purposes.
+* **Sub-INT8 asymmetric compressors are simulated.** V4 compressors with `_sim` \
+suffix (e.g. `k8_v4_sim`, `k4_v8_sim`) quantise K or V to a sub-INT8 numeric \
+range but store values in `int8` containers — no real bit-packing. Do not cite \
+their `compressed_kv_bytes` as evidence of real packed memory savings. \
+`k8_v_full` and `k_full_v8` use only real INT8 and full precision and carry \
+`is_simulated=False`.
+* **Average effective bit width is a comparison aid only.** It is defined as \
+(K bits + V bits) / 2, where full precision counts as 32 bits. It is not a \
+real memory measurement.
 * **VeriCache attribution.** ExactKV is inspired by the VeriCache paper \
 (Yao et al., arXiv:2605.17613, 2026) and does not claim to have invented \
 the draft-then-verify algorithm. This report evaluates the current \
@@ -101,6 +110,15 @@ def _has_int4_sim(report: dict[str, Any]) -> bool:
             return True
         caps = r.get("compressor_capabilities", {})
         if caps.get("is_simulated", False):
+            return True
+    return False
+
+
+def _has_asymmetric(report: dict[str, Any]) -> bool:
+    """Return True if any result uses an asymmetric compressor."""
+    for r in report.get("results", []):
+        caps = r.get("compressor_capabilities", {})
+        if caps.get("asymmetric", False):
             return True
     return False
 
@@ -154,6 +172,44 @@ def _render_correctness_summary(
         f"| Lossy divergences | {div_count} _(expected for lossy compressors)_ |",
     ]
     return "\n".join(lines) + "\n"
+
+
+def _render_kv_metadata_section(
+    comp_caps: dict[str, dict[str, Any]],
+) -> str:
+    """Render a 'K/V Compression Metadata' table for all compressors in this report."""
+    from exactkv.reporting.leaderboard import average_effective_bit_width, _fmt_bits
+
+    lines = [
+        "| Compressor | K bits | V bits | Avg eff bits | Simulated | Real bytes |",
+        "|------------|--------|--------|--------------|-----------|------------|",
+    ]
+    for comp, caps in sorted(comp_caps.items()):
+        k = caps.get("key_bit_width")
+        v = caps.get("value_bit_width")
+        avg = average_effective_bit_width(k, v)
+        lines.append(
+            f"| `{comp}` "
+            f"| {_fmt_bits(k)} "
+            f"| {_fmt_bits(v)} "
+            f"| {avg:.1f} "
+            f"| {'yes ⚠️' if caps.get('is_simulated') else 'no'} "
+            f"| {'yes' if caps.get('supports_real_bytes_claim') else 'no'} |"
+        )
+
+    note = (
+        "\n"
+        "**Notes:**\n"
+        "* `full` means full-precision passthrough; that side is not quantised.\n"
+        "* **Average effective bits = (K bits + V bits) / 2**, treating full "
+        "precision as 32 bits. This is a metadata comparison aid — not a real "
+        "memory measurement.\n"
+        "* Compressors marked **simulated** store sub-INT8 values in `int8` "
+        "containers. Do not cite their `compressed_kv_bytes` as evidence of real "
+        "packed memory savings.\n"
+    )
+
+    return "\n".join(lines) + note
 
 
 def _render_memory_notes(report: dict[str, Any]) -> str:
@@ -255,6 +311,7 @@ def render_markdown_report(
     comp_caps = _collect_compressor_caps(report)
     sweep = _is_sweep(report)
     has_int4 = _has_int4_sim(report)
+    has_asym = _has_asymmetric(report)
 
     sections: list[str] = []
 
@@ -300,7 +357,11 @@ def render_markdown_report(
     if sweep:
         sections.append(_h(2, "Acceptance Grid — Compressor × Draft Length"))
         full_table = build_acceptance_table(report)
-        sections.append(render_compressor_x_draft_leaderboard(full_table))
+        sections.append(
+            render_compressor_x_draft_leaderboard(
+                full_table, compressor_caps=comp_caps if comp_caps else None
+            )
+        )
         sections.append("")
 
     # ── 7. Histogram tables ───────────────────────────────────────────────────
@@ -367,6 +428,18 @@ def render_markdown_report(
             "`int4_sim` reflect `int8` storage only.\n"
         )
     sections.append(_render_memory_notes(report))
+
+    # ── 9b. K/V compression metadata (only when asymmetric compressors present) ──
+    if has_asym and comp_caps:
+        sections.append(_h(2, "K/V Compression Metadata"))
+        sections.append(
+            "_This report includes asymmetric compressors that compress keys and values "
+            "at different bit-widths.  K bits and V bits are declared by each "
+            "compressor's capabilities; they are not derived from measured memory. "
+            "Average effective bits is a comparison aid only._\n"
+        )
+        sections.append(_render_kv_metadata_section(comp_caps))
+        sections.append("")
 
     # ── 10. What this proves ──────────────────────────────────────────────────
     sections.append(_h(2, "What This Report Proves"))

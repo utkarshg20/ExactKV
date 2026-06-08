@@ -310,16 +310,16 @@ to "Implemented in V4 (see EXPERIMENT_003)".
 
 V4 is complete when all of the following hold:
 
-- [ ] `AsymmetricQuantSimCompressor(k_bits, v_bits)` implemented, reusing existing
+- [x] `AsymmetricQuantSimCompressor(k_bits, v_bits)` implemented, reusing existing
       quantisation logic, with `full` passthrough and per-side scales.
-- [ ] All seven named compressors (`k8_v4_sim`, `k8_v2_sim`, `k4_v8_sim`,
+- [x] All seven named compressors (`k8_v4_sim`, `k8_v2_sim`, `k4_v8_sim`,
       `k_full_v4_sim`, `k4_v_full_sim`, `k8_v_full`, `k_full_v8`) resolve through
       the registry and run end-to-end with `exactkv_failures == 0`.
-- [ ] `CompressorCapabilities` carries `key_bit_width`, `value_bit_width`,
+- [x] `CompressorCapabilities` carries `key_bit_width`, `value_bit_width`,
       `asymmetric`; the four existing compressors backfilled correctly.
-- [ ] Report JSON/CSV include the three new fields; no-performance-field audit
+- [x] Report JSON/CSV include the three new fields; no-performance-field audit
       passes.
-- [ ] Leaderboard renders K/V widths and average effective bit width.
+- [x] Leaderboard renders K/V widths and average effective bit width.
 - [ ] `docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md` written from a real core-suite
       sweep with `exactkv_failures == 0` and full honesty disclaimers.
 - [ ] README V4 results section and `docs/RELEASE_NOTES_V0.4.0.md` written.

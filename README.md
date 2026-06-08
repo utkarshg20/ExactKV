@@ -234,6 +234,12 @@ only real INT8 and full precision — no simulated storage — so they carry no
 These compressors are for **acceptance-rate experiments only**. Do not cite
 their `compressed_kv_bytes` for simulated sides as real memory savings.
 
+The **asymmetric leaderboard** (rendered via `exactkv report` and the
+`render_compressor_leaderboard` API) compares acceptance behaviour across symmetric
+and asymmetric configurations. The **K bits**, **V bits**, and **avg eff bits** columns
+are metadata from compressor capabilities — they are not real memory measurements.
+Average effective bits = (K bits + V bits) / 2, counting full precision as 32 bits.
+
 ---
 
 ## Project structure
@@ -626,11 +632,16 @@ report tokens/second, latency, throughput, or speedup.
 
 ### list-compressors
 
-Print all registered compressors with their capabilities:
+Print all registered compressors with their capabilities, including K/V bit-width
+metadata added in V4:
 
 ```bash
 python -m exactkv list-compressors
 ```
+
+Each compressor entry now shows `key_bit_width`, `value_bit_width`, and `asymmetric`.
+Full-precision sides display as `full`. This metadata is a comparison aid — it is not
+a real memory measurement.
 
 ### bench
 
