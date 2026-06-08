@@ -184,11 +184,24 @@ def _materialize_side(
 
 
 def _side_storage_bytes(side_data: dict[str, Any], bits: int | None) -> int:
-    """Actual storage bytes for one compressed side."""
+    """Actual storage bytes for one compressed side (tensor + metadata)."""
     if bits is None:
         t = side_data["full"]
         return int(t.nelement()) * int(t.element_size())
     return int(side_data["q"].nelement()) * 1 + _SCALE_BYTES
+
+
+def _side_tensor_bytes(side_data: dict[str, Any], bits: int | None) -> int:
+    """Tensor-only bytes for one side (excludes scale metadata)."""
+    if bits is None:
+        t = side_data["full"]
+        return int(t.nelement()) * int(t.element_size())
+    return int(side_data["q"].nelement()) * 1  # int8 container, 1 byte/element
+
+
+def _side_metadata_bytes(bits: int | None) -> int:
+    """Scale metadata bytes for one side (0 for full-precision passthrough)."""
+    return 0 if bits is None else _SCALE_BYTES  # one float64 scale per quantised side
 
 
 # ---------------------------------------------------------------------------
@@ -360,6 +373,12 @@ class AsymmetricQuantSimCompressor:
         tensor storage (fp32/fp16/bf16).
 
         ``full_bytes`` is the fp32 reference (4 bytes/element per tensor).
+
+        V5 workspace-aware fields:
+            stored_kv_bytes     tensor-only bytes (K + V, no scales).
+            metadata_bytes      float64 scale bytes for quantised sides only.
+            materialized_working_kv_bytes  full_bytes (dequantised for attention).
+            total_kv_footprint_bytes       stored + materialized + metadata + scratch.
         """
         d = compressed.data
         k_bits: int | None = d["k_bits"]
@@ -368,32 +387,44 @@ class AsymmetricQuantSimCompressor:
         seq_len = d["seq_len"]
 
         full_bytes = 0
-        compressed_bytes = 0
+        stored_tensor_bytes = 0
+        scale_bytes = 0
         num_layers = len(layers)
 
         for layer in layers:
             k_data = layer["k_data"]
             v_data = layer["v_data"]
 
-            # Reference element count (same for k and v)
-            if k_bits is None:
-                k_nelems = int(k_data["full"].nelement())
-            else:
-                k_nelems = int(k_data["q"].nelement())
-
-            if v_bits is None:
-                v_nelems = int(v_data["full"].nelement())
-            else:
-                v_nelems = int(v_data["q"].nelement())
+            # fp32 reference element count.
+            k_nelems = (
+                int(k_data["full"].nelement())
+                if k_bits is None
+                else int(k_data["q"].nelement())
+            )
+            v_nelems = (
+                int(v_data["full"].nelement())
+                if v_bits is None
+                else int(v_data["q"].nelement())
+            )
 
             full_bytes += (k_nelems + v_nelems) * _FP32_BYTES
-            compressed_bytes += (
-                _side_storage_bytes(k_data, k_bits)
-                + _side_storage_bytes(v_data, v_bits)
+            stored_tensor_bytes += (
+                _side_tensor_bytes(k_data, k_bits)
+                + _side_tensor_bytes(v_data, v_bits)
+            )
+            scale_bytes += (
+                _side_metadata_bytes(k_bits)
+                + _side_metadata_bytes(v_bits)
             )
 
         full_bytes = max(full_bytes, 1)
-        compressed_bytes = max(compressed_bytes, 1)
+        # compressed_bytes = tensor storage + scale metadata (backward compat).
+        compressed_bytes = max(stored_tensor_bytes + scale_bytes, 1)
+        stored_tensor_bytes = max(stored_tensor_bytes, 1)
+
+        # Dequantisation creates a full-precision working copy for attention.
+        materialized_working = full_bytes
+        total_footprint = stored_tensor_bytes + materialized_working + scale_bytes
 
         return CompressionStats(
             compressor_name=self.name,
@@ -403,6 +434,11 @@ class AsymmetricQuantSimCompressor:
             memory_reduction_factor=full_bytes / compressed_bytes,
             seq_len=seq_len,
             num_layers=num_layers,
+            stored_kv_bytes=stored_tensor_bytes,
+            materialized_working_kv_bytes=materialized_working,
+            metadata_bytes=scale_bytes,
+            temporary_workspace_bytes=0,
+            total_kv_footprint_bytes=total_footprint,
         )
 
 

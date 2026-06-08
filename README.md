@@ -831,21 +831,25 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
   reporting, and Experiment 003 (612-run core-suite sweep; `exactkv_failures == 0`).
   No real backends, no performance claims. See
   [`docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md`](docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md).
-* **V5 (recommended) — workspace-aware memory accounting** — Stored compressed
-  bytes omit dequantisation scratch buffer cost. Future `MemorySummary` will
-  distinguish `stored_kv_bytes`, `materialized_working_kv_bytes`,
-  `metadata_bytes`, and `temporary_workspace_bytes`.
-* **V5 (recommended) — real backend adapter** — Design a `BackendAdapter`
-  interface so real quantisation backends (bitsandbytes, KIVI, kvpress) can
-  plug into the existing `KVCompressor` protocol. First step toward a real
-  memory and acceptance comparison.
-* **Attention-aware divergence analysis** — Correlate first-divergence
-  position with attention entropy to understand compression sensitivity
-  by prompt type and position. Experiment 003 data is a good starting point.
+* **V5 — workspace-aware memory accounting.** Distinguish `stored_kv_bytes`,
+  `materialized_working_kv_bytes`, `metadata_bytes`, and
+  `temporary_workspace_bytes`, because stored compressed bytes omit the
+  dequantisation working set. No backend, no performance claims.
+* **V6 — real backend adapter interface and first backend candidate.** Design a
+  `BackendAdapter` so a real quantisation format (e.g. a KIVI- or
+  TurboQuant-style quantizer) could plug into the `KVCompressor` protocol and be
+  evaluated by acceptance behaviour. Implementation only behind separate approval.
+* **V7 — attention-aware and V-specific backend ideas.** Sparse V dequantization,
+  layer-aware V compression, and real asymmetric compressor comparisons —
+  evaluated, not just reconstructed.
+* **V8 — serving-stack integration.** Only after correctness/acceptance are well
+  understood; without adopting any serving-stack performance claims as ExactKV's.
 
 See [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md)
-for the full writeup. See [`docs/RELEASE_NOTES_V0.4.0.md`](docs/RELEASE_NOTES_V0.4.0.md)
-for V4 release notes.
+for the asymmetric-K/V writeup,
+[`docs/RELATED_WORK_KV_CACHE_COMPRESSION.md`](docs/RELATED_WORK_KV_CACHE_COMPRESSION.md)
+for the full related-work survey, and
+[`docs/RELEASE_NOTES_V0.4.0.md`](docs/RELEASE_NOTES_V0.4.0.md) for V4 release notes.
 
 ---
 
@@ -857,8 +861,28 @@ for V4 release notes.
 | [`docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md`](docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md) | Full Experiment 003 asymmetric K/V sweep report |
 | [`docs/RELEASE_NOTES_V0.4.0.md`](docs/RELEASE_NOTES_V0.4.0.md) | v0.4.0 release notes (V1–V4 history, results, limitations) |
 | [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md) | Research note on asymmetric K/V and workspace-aware memory |
+| [`docs/RELATED_WORK_KV_CACHE_COMPRESSION.md`](docs/RELATED_WORK_KV_CACHE_COMPRESSION.md) | Survey of KV-cache compression/quantization/eviction/serving + TurboQuant+ section |
+| [`docs/RESEARCH_BACKLOG.md`](docs/RESEARCH_BACKLOG.md) | Concrete future-experiment backlog (real backends, eviction, serving) |
 | [`docs/V5_SCOPE_DRAFT.md`](docs/V5_SCOPE_DRAFT.md) | Draft V5 plan (workspace memory + real backend planning) — not implemented |
 | `docs/PRIVATE_FUTURE_POST_NOTES_EXPERIMENT_003.md` | 🔒 Private draft announcement notes for later — not for posting |
+
+---
+
+## Related work
+
+ExactKV is a verification/evaluation framework, not a compression backend. It
+does **not** implement KIVI, KVQuant, KV-AdaQuant, TurboQuant/TurboQuant+, KVTC,
+Palu, SnapKV, H2O, StreamingLLM, PyramidKV, LMCache, vLLM, or PagedAttention, and
+makes no speedup/throughput/latency claims. Its sub-INT8 `_sim` compressors store
+values in `int8` containers and are not real packed-bit backends.
+
+* [`docs/RELATED_WORK_KV_CACHE_COMPRESSION.md`](docs/RELATED_WORK_KV_CACHE_COMPRESSION.md)
+  — full survey (quantization, asymmetric K/V, eviction, transform coding,
+  serving) and a dedicated TurboQuant+ section.
+* [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md)
+  — asymmetric K/V deep dive and matched-budget caveat.
+* VeriCache (below) — the draft-with-compressed-KV, verify-with-full-KV algorithm
+  ExactKV is built on.
 
 ---
 

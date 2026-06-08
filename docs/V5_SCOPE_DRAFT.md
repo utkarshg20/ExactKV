@@ -7,6 +7,23 @@
 
 ---
 
+> **Related-work note.** This draft is grounded in a survey of current KV-cache
+> compression research — see
+> [`docs/RELATED_WORK_KV_CACHE_COMPRESSION.md`](RELATED_WORK_KV_CACHE_COMPRESSION.md).
+> That survey supports three V5+ themes:
+> * **workspace-aware memory accounting** (stored vs materialized vs metadata vs
+>   scratch), motivated by KIVI residuals, Palu/KVTC reconstruction, and
+>   TurboQuant+ Sparse-V observations;
+> * **future real backend adapter planning** (KIVI / TurboQuant-style formats
+>   behind the `KVCompressor` protocol) — design only, not implemented;
+> * **future attention-aware and V-specific experiments** (Sparse V
+>   dequantization, layer-aware V compression).
+>
+> ExactKV does not implement any of these backends. The finalized, approved
+> scope lives in [`docs/V5_SCOPE_STATEMENT.md`](V5_SCOPE_STATEMENT.md).
+
+---
+
 ## V5 goal
 
 Add **workspace-aware memory accounting** and **prepare for real backend

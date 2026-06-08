@@ -143,19 +143,29 @@ class Int8Compressor:
         layers = compressed.data["layers"]
         seq_len = compressed.data["seq_len"]
 
+        # fp32 reference bytes (4 bytes/element).
         full_bytes = sum(
             l["k_q"].nelement() * _FP32_BYTES + l["v_q"].nelement() * _FP32_BYTES
             for l in layers
         )
-        compressed_bytes = sum(
-            l["k_q"].nelement() * _INT8_BYTES
-            + l["v_q"].nelement() * _INT8_BYTES
-            + _SCALE_BYTES
+        # V5: separate tensor storage from scale metadata.
+        # stored_kv_bytes = int8 tensor bytes only (1 byte/element).
+        # metadata_bytes  = two float64 scales per layer (k_scale, v_scale = 16 B).
+        stored_tensor_bytes = sum(
+            l["k_q"].nelement() * _INT8_BYTES + l["v_q"].nelement() * _INT8_BYTES
             for l in layers
         )
+        scale_bytes = len(layers) * _SCALE_BYTES
+
+        # compressed_bytes kept as the original sum for backward compatibility.
+        compressed_bytes = stored_tensor_bytes + scale_bytes
 
         compression_ratio = compressed_bytes / max(full_bytes, 1)
         memory_reduction_factor = full_bytes / max(compressed_bytes, 1)
+
+        # Dequantisation creates a full-precision working copy for attention.
+        materialized_working = full_bytes
+        total_footprint = stored_tensor_bytes + materialized_working + scale_bytes
 
         return CompressionStats(
             compressor_name=self.name,
@@ -165,4 +175,9 @@ class Int8Compressor:
             memory_reduction_factor=memory_reduction_factor,
             seq_len=seq_len,
             num_layers=len(layers),
+            stored_kv_bytes=stored_tensor_bytes,
+            materialized_working_kv_bytes=materialized_working,
+            metadata_bytes=scale_bytes,
+            temporary_workspace_bytes=0,
+            total_kv_footprint_bytes=total_footprint,
         )

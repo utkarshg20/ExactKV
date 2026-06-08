@@ -43,6 +43,37 @@ names themselves distinguish stored from materialized.
 
 **V4 opened the question. V5 answers it honestly.**
 
+### Related-work motivation
+
+The need for workspace-aware accounting is reinforced by how real KV-cache
+backends actually use memory (see
+[`docs/RELATED_WORK_KV_CACHE_COMPRESSION.md`](RELATED_WORK_KV_CACHE_COMPRESSION.md)):
+
+* **KIVI** keeps a full-precision residual alongside its 2-bit grouped cache, so
+  stored bytes understate the working footprint.
+* **KVQuant** carries per-channel scales, non-uniform datatypes, and a sparse
+  outlier side-channel — all of which are metadata beyond the quantised tensors.
+* **Palu** and **KVTC** reconstruct a dense working cache on the fly from a
+  low-rank / transform-coded stored form, plus projection matrices, codebooks, or
+  entropy-coder state as metadata.
+* **TurboQuant / TurboQuant+** dequantize (and rotate) during decode, and its
+  "Sparse V dequant" work exists precisely because decode-time dequantization
+  cost is real.
+* **PagedAttention (vLLM)** and **LMCache** define the realistic memory hierarchy
+  (GPU pages, CPU offload, remote storage) a real backend would live in.
+
+The shared lesson: **stored compressed KV bytes alone are incomplete** when
+decode requires:
+
+* materialized working KV (dequantized/reconstructed form used for attention),
+* metadata (scales, zero-points, codebooks, projection matrices),
+* temporary dequantization workspace, and
+* dense scratch buffers.
+
+ExactKV does **not** implement TurboQuant+, KVTC, KIVI, KVQuant, LMCache, or
+PagedAttention. They are cited as **motivation** for honest memory accounting.
+**V5 stays focused on memory accounting, not backend implementation.**
+
 ---
 
 ## 3. What V5 adds

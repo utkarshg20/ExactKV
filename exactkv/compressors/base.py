@@ -76,8 +76,19 @@ class CompressionStats:
     """Byte-level compression statistics for one compressed state snapshot.
 
     Naming convention (matches docs/METRICS.md):
-        compression_ratio      = compressed_bytes / full_bytes  (< 1 means smaller, 1.0 for NoOp)
-        memory_reduction_factor = full_bytes / compressed_bytes (> 1 means savings, 1.0 for NoOp)
+        compression_ratio       = compressed_bytes / full_bytes  (< 1 means smaller, 1.0 for NoOp)
+        memory_reduction_factor = full_bytes / compressed_bytes  (> 1 means savings, 1.0 for NoOp)
+
+    V5 workspace-aware fields (all optional; default 0 for backward compatibility):
+        stored_kv_bytes             — bytes of compressed/quantised tensors only (no metadata).
+        materialized_working_kv_bytes — bytes needed when the cache is dequantised for attention.
+                                       Equals full_bytes for all current compressors.
+        metadata_bytes              — scales, zero-points, or similar compression metadata.
+        temporary_workspace_bytes   — transient scratch during compress/materialise (conservative).
+        total_kv_footprint_bytes    — stored + materialized + metadata + temporary (conservative sum).
+
+    The existing ``compressed_bytes`` field equals ``stored_kv_bytes + metadata_bytes`` and is
+    kept for backward compatibility.
     """
     compressor_name: str
     full_bytes: int
@@ -86,6 +97,12 @@ class CompressionStats:
     memory_reduction_factor: float  # full_bytes / compressed_bytes; > 1 means savings
     seq_len: int
     num_layers: int
+    # V5 workspace-aware fields — additive, backward-compatible
+    stored_kv_bytes: int = field(default=0)
+    materialized_working_kv_bytes: int = field(default=0)
+    metadata_bytes: int = field(default=0)
+    temporary_workspace_bytes: int = field(default=0)
+    total_kv_footprint_bytes: int = field(default=0)
 
 
 class KVCompressor(Protocol):

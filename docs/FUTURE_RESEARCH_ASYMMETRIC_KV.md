@@ -42,6 +42,30 @@ The practical implication: an aggressive V compressor paired with a
 conservative K compressor may achieve a better acceptance rate than a
 uniform compressor at the same average bit-width.
 
+### External evidence for the asymmetric-K/V thesis
+
+ExactKV is not alone in this hypothesis. Two external lines of work provide
+stronger, independent evidence (see
+[`docs/RELATED_WORK_KV_CACHE_COMPRESSION.md`](RELATED_WORK_KV_CACHE_COMPRESSION.md)):
+
+* **KV-AdaQuant** ("More for Keys, Less for Values" / "Quantize What Counts",
+  arXiv:2502.15075) gives a *theoretical* grounding: key projections
+  systematically have larger spectral and Frobenius norms than value
+  projections (the **key–value norm disparity**), and for a fixed bit budget,
+  giving keys more bits strictly reduces quantization error
+  (**key-prioritized quantization**). Their experiments report **4-bit keys /
+  2-bit values ≈ 75% accuracy** versus the reversed **2-bit keys / 4-bit values
+  ≈ 55%** — the same direction ExactKV observes in acceptance.
+
+* **KIVI** (arXiv:2402.02750) treats keys and values asymmetrically in
+  *granularity* — keys per-channel, values per-token — based on KV
+  element-distribution analysis, reflecting that key distributions carry
+  channel-structured outliers the softmax is sensitive to.
+
+These are **external claims about accuracy/perplexity**, not ExactKV acceptance
+results. ExactKV's contribution is to test whether the same asymmetry shows up
+in **acceptance behaviour under full-KV verification**.
+
 ---
 
 ## 2. Why This Matters for ExactKV
@@ -97,6 +121,31 @@ reconstruction MSE.  The ExactKV-specific metrics are:
 
 These metrics directly measure the deployment-relevant effect of compression
 on generation quality, not the distance between compressed and full tensors.
+
+### Matched-budget caveat: the cleanest V4 comparison
+
+It is tempting to summarise Experiment 003 as "`k_full_v8` is best." That is
+true but not the most informative comparison, because `k_full_v8` simply keeps
+keys at full precision. The **cleanest matched-budget comparison** is:
+
+| Compressor | K bits | V bits | Acceptance |
+|---|---|---|---|
+| `k8_v4_sim` ⚠️ | 8 | 4-sim | **0.858** |
+| `k4_v8_sim` ⚠️ | 4-sim | 8 | **0.562** |
+
+Both spend the *same* average effective bit budget — one side at 8 bits, the
+other at 4 — but **putting the extra bits on the keys (`k8_v4_sim`) is far
+better** than putting them on the values (`k4_v8_sim`). This is the comparison
+that isolates the asymmetry, and it matches KV-AdaQuant's prediction. (⚠️ both
+are simulated sub-INT8 in `int8` containers — not real packed bits.)
+
+### Acceptance behaviour as the main evaluation axis
+
+ExactKV deliberately uses **acceptance behaviour under full-KV verification** as
+its primary evaluation axis, not reconstruction MSE. Two compressors at the same
+average effective bit width can have very different acceptance rates (e.g.
+`k8_v4_sim` vs `k4_v8_sim` above). MSE, computed symmetrically over all
+positions, would not predict that gap; acceptance does (§3).
 
 ---
 
@@ -221,7 +270,56 @@ The following experiments are candidates for V4 or V5:
 
 ---
 
-## 6. Scope Boundary
+## 6. Relation to TurboQuant+
+
+[**TurboQuant+**](https://github.com/TheTom/turboquant_plus) is an external,
+community research workspace extending **TurboQuant** (ICLR 2026) for local
+inference. It independently explores asymmetric K/V compression and builds
+concrete, rotation-based KV formats (`turbo2`/`turbo3`/`turbo4`, via PolarQuant +
+Walsh–Hadamard rotation). **ExactKV does not implement TurboQuant or TurboQuant+
+and claims none of its results.** All TurboQuant+ figures below are external
+claims.
+
+TurboQuant+ reports several findings that *support* ExactKV's asymmetric-K/V
+direction:
+
+* K and V need not be compressed symmetrically (independent K/V cache types).
+* Quality degradation is dominated by **K** compression; **V** compression is
+  reported as nearly free when K precision is maintained.
+* MSE alone is an insufficient quality metric.
+* Stored bytes are not the full memory story (motivating Sparse-V dequant and
+  ExactKV V5 workspace accounting).
+
+### Important nuance: `k8_v2_sim` does not refute TurboQuant-style V methods
+
+ExactKV's `k8_v2_sim` had the lowest acceptance (0.330). This does **not**
+contradict TurboQuant+'s "aggressive V is nearly free" finding:
+
+* ExactKV's `k8_v2_sim` is a **naive simulated INT2 numeric quantizer in `int8`
+  containers**, per-tensor symmetric, **with no rotation**.
+* TurboQuant+'s `turbo2` is a **rotation-based PolarQuant format**: a
+  Walsh–Hadamard rotation Gaussianises the distribution (reported kurtosis
+  ~900 → ~2.9) *before* quantization, which is what makes 2-bit V viable.
+* `k8_v2_sim` is **not** `turbo2`, not Sparse V, not layer-aware V, and not a
+  real backend.
+
+So ExactKV's result only shows that **naive aggressive V quantization can hurt
+acceptance**; it says nothing against well-designed, rotation-based V-specific
+formats.
+
+### Future ExactKV directions inspired by TurboQuant+ (not implemented)
+
+* **Sparse V dequantization** — attention-gated decode that skips low-weight V
+  positions. A future *evaluation* target for ExactKV, not a current feature.
+* **Layer-aware ("boundary") V policies** — higher V precision on the most
+  sensitive layers (e.g. first/last few). A future asymmetric policy to evaluate.
+* **Real asymmetric backend comparison** — wrap a real rotation-based format
+  behind the `KVCompressor` protocol and evaluate it by acceptance behaviour
+  (V6+, behind separate approval).
+
+---
+
+## 7. Scope Boundary
 
 | Item | Status |
 |---|---|
@@ -236,7 +334,19 @@ The following experiments are candidates for V4 or V5:
 
 ---
 
-## 7. Related External References
+## 8. Related External References
+
+For a full survey of KV-cache compression, quantization, eviction, and serving
+work — with proper attribution and an explicit statement of what ExactKV does
+**not** implement — see
+[`docs/RELATED_WORK_KV_CACHE_COMPRESSION.md`](RELATED_WORK_KV_CACHE_COMPRESSION.md).
+
+Key external references for the asymmetric-K/V thesis:
+
+* **KV-AdaQuant** — More for Keys, Less for Values: <https://arxiv.org/abs/2502.15075>
+* **KIVI** — Asymmetric 2-bit KV quantization: <https://arxiv.org/abs/2402.02750>
+* **KVQuant** — Sub-4-bit, per-channel/pre-RoPE key quant: <https://arxiv.org/abs/2401.18079>
+* **TurboQuant** — Data-oblivious vector quantization: <https://arxiv.org/abs/2504.19874>
 
 The following are external research notes referenced as background reading.
 These links are not verified to be live; they are listed as directional

@@ -127,6 +127,10 @@ class DebugNoiseCompressor:
         k_bytes = sum(k.nelement() * k.element_size() for k in d["k_noisy"])
         v_bytes = sum(v.nelement() * v.element_size() for v in d["v_noisy"])
         total = k_bytes + v_bytes
+        # V5: stores full-precision (fp-dtype) noisy copies; no scales/metadata.
+        # materialize_for_draft rebuilds directly from noisy tensors — no dequant.
+        # total_footprint = stored + materialized_working (both full-precision copies).
+        total_footprint = total + total  # stored noisy copy + working copy for attention
         return CompressionStats(
             compressor_name=self.name,
             full_bytes=total,
@@ -135,4 +139,9 @@ class DebugNoiseCompressor:
             memory_reduction_factor=1.0,   # full / compressed = 1.0
             seq_len=d["seq_len"],
             num_layers=len(d["k_noisy"]),
+            stored_kv_bytes=total,
+            materialized_working_kv_bytes=total,
+            metadata_bytes=0,
+            temporary_workspace_bytes=0,
+            total_kv_footprint_bytes=total_footprint,
         )

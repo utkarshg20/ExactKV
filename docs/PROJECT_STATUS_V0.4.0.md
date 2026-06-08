@@ -134,6 +134,35 @@ for the full report.
   failures stayed at 0 — so the framework characterises compressor quality
   without ever sacrificing output correctness.
 
+### Evidence, not universal proof
+
+These V4 results are **evidence aligned with** the asymmetric-K/V thesis, not
+universal proof of it. Specifically:
+
+* Results are on a **single small model** (`Qwen/Qwen2.5-0.5B`) and do not
+  guarantee cross-family behaviour.
+* All asymmetric compressors are **simulated** sub-INT8 quantizers in `int8`
+  containers — not real packed-bit backends. The acceptance differences reflect
+  numeric quantization error, not a specific production format.
+* The cleanest matched-budget comparison is **`k8_v4_sim` (0.858) vs
+  `k4_v8_sim` (0.562)** — same average bit budget, keys-favoured wins — rather
+  than simply "`k_full_v8` is best."
+
+The direction matches external work (KV-AdaQuant's key–value norm-disparity
+theory; KIVI's per-channel key handling; TurboQuant+'s "degradation comes from K"
+findings), which strengthens confidence — but ExactKV's evidence on its own
+remains one small-model, simulated-compressor data point.
+
+### Related-work note
+
+For how ExactKV sits relative to KV-cache quantization (KIVI, KVQuant,
+KV-AdaQuant, TurboQuant), eviction (SnapKV, H2O, StreamingLLM, PyramidKV),
+transform coding (Palu, KVTC), and serving systems (vLLM/PagedAttention,
+LMCache) — and an explicit statement of what ExactKV does **not** implement — see
+[`RELATED_WORK_KV_CACHE_COMPRESSION.md`](RELATED_WORK_KV_CACHE_COMPRESSION.md).
+ExactKV is a verification/evaluation framework; it implements none of those
+backends and makes no performance or production-readiness claims.
+
 ---
 
 ## 8. Current supported compressors

@@ -181,25 +181,40 @@ class Int4SimCompressor:
         NOT theoretical INT4 packed size (0.5 bytes/element).  See
         ``capabilities.notes`` and ``capabilities.supports_real_bytes_claim``
         for the correct interpretation.
+
+        V5 workspace-aware fields:
+            stored_kv_bytes             int8 tensor bytes only (no scales).
+            metadata_bytes              float64 scale bytes (2 per layer × 8 B).
+            materialized_working_kv_bytes  full_bytes (dequantised for attention).
+            total_kv_footprint_bytes    stored + materialized + metadata + scratch.
         """
         layers = compressed.data["layers"]
         seq_len = compressed.data["seq_len"]
 
-        # Reference: how many bytes the tensors would occupy in fp32.
+        # fp32 reference bytes (4 bytes/element).
         full_bytes = sum(
             l["k_q"].nelement() * _FP32_BYTES + l["v_q"].nelement() * _FP32_BYTES
             for l in layers
         )
-        # Actual storage: int8 containers (not real 4-bit packed).
-        actual_bytes = sum(
+        # V5: separate tensor storage from scale metadata.
+        # stored_kv_bytes = int8 container bytes only (NOT real 4-bit packed).
+        # metadata_bytes  = two float64 scales per layer (k_scale, v_scale = 16 B).
+        stored_tensor_bytes = sum(
             l["k_q"].nelement() * _STORAGE_BYTES_PER_ELEMENT
             + l["v_q"].nelement() * _STORAGE_BYTES_PER_ELEMENT
-            + _SCALE_BYTES
             for l in layers
         )
+        scale_bytes = len(layers) * _SCALE_BYTES
+
+        # compressed_bytes kept as original sum for backward compatibility.
+        actual_bytes = stored_tensor_bytes + scale_bytes
 
         compression_ratio = actual_bytes / max(full_bytes, 1)
         memory_reduction_factor = full_bytes / max(actual_bytes, 1)
+
+        # Dequantisation creates a full-precision working copy for attention.
+        materialized_working = full_bytes
+        total_footprint = stored_tensor_bytes + materialized_working + scale_bytes
 
         return CompressionStats(
             compressor_name=self.name,
@@ -209,4 +224,9 @@ class Int4SimCompressor:
             memory_reduction_factor=memory_reduction_factor,
             seq_len=seq_len,
             num_layers=len(layers),
+            stored_kv_bytes=stored_tensor_bytes,
+            materialized_working_kv_bytes=materialized_working,
+            metadata_bytes=scale_bytes,
+            temporary_workspace_bytes=0,
+            total_kv_footprint_bytes=total_footprint,
         )

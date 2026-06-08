@@ -70,12 +70,22 @@ class NoOpCompressor:
             if isinstance(compressed.data, tuple)
             else 0
         )
+        # V5: NoOp passes the full cache through unchanged.
+        # stored == full; no metadata, no scratch, no dequantisation needed.
+        # materialized_working equals stored (same object; counted separately here
+        # for formula consistency: total = stored + working + metadata + scratch).
+        total_footprint = full_bytes + full_bytes  # stored + materialized_working
         return CompressionStats(
             compressor_name=self.name,
             full_bytes=full_bytes,
-            compressed_bytes=full_bytes,    # NoOp: no reduction
-            compression_ratio=1.0,          # compressed / full = 1.0
-            memory_reduction_factor=1.0,    # full / compressed = 1.0
+            compressed_bytes=full_bytes,        # NoOp: no reduction
+            compression_ratio=1.0,              # compressed / full = 1.0
+            memory_reduction_factor=1.0,        # full / compressed = 1.0
             seq_len=kv_seq_len(compressed.data),
             num_layers=num_layers,
+            stored_kv_bytes=full_bytes,
+            materialized_working_kv_bytes=full_bytes,
+            metadata_bytes=0,
+            temporary_workspace_bytes=0,
+            total_kv_footprint_bytes=total_footprint,
         )

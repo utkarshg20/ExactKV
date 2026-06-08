@@ -27,14 +27,26 @@ V0: understand
 V1: prove correctness
 V2: generalize framework
 V3: benchmark seriously
-V4: add real compressors
-V5: optimize runtime
-V6: integrate with serving systems
+V4: asymmetric K/V compression experiments (simulated)
+V5: workspace-aware memory accounting
+V6: real backend adapter interface + first backend candidate
+V7: attention-aware and V-specific backend ideas (Sparse V, layer-aware V)
+V8: serving-stack integration
 ```
 
 Do not skip versions.
 
 The project should not jump to CUDA, vLLM, LMCache, or TurboQuant before the core exactness loop is correct.
+
+> **Note (post-V4 update).** The original plan labelled V4 as "add real
+> compressors" and V5 as "optimize runtime." After V4 shipped *simulated*
+> asymmetric K/V compressors (Experiment 003), the roadmap was re-grounded in the
+> current KV-cache literature — see
+> [`RELATED_WORK_KV_CACHE_COMPRESSION.md`](RELATED_WORK_KV_CACHE_COMPRESSION.md).
+> Real backends (KIVI/TurboQuant-style) move to **V6** behind an adapter
+> interface, and "runtime optimization" is **not** adopted as a goal: ExactKV
+> makes no speedup, throughput, or latency claims. V5 is memory-accounting
+> honesty, not performance.
 
 ---
 
@@ -428,131 +440,126 @@ ExactKV can run the same benchmark suite over at least one external compressor b
 
 ---
 
-# V5: Runtime performance
+# V5: Workspace-aware memory accounting
+
+> **Re-grounded after V4.** This section replaces the original "Runtime
+> performance" V5. ExactKV does **not** adopt runtime optimization or speedup as
+> a goal, and makes **no** throughput, latency, or speedup claims. See
+> [`RELATED_WORK_KV_CACHE_COMPRESSION.md`](RELATED_WORK_KV_CACHE_COMPRESSION.md)
+> and [`V5_SCOPE_STATEMENT.md`](V5_SCOPE_STATEMENT.md).
 
 ## Goal
 
-Make ExactKV faster, not just correct.
+Make ExactKV's memory reporting **honest**, not faster.
 
 ## Why this version exists
 
-The full promise of the VeriCache idea depends on verification overhead being amortized.
+Stored compressed KV bytes are not the full memory story. Real backends keep
+full-precision residuals (KIVI), reconstruct dense working caches (Palu, KVTC),
+and carry scales/codebooks as metadata. Decode also needs temporary
+dequantization workspace.
 
 ## New features
 
-- Full KV offload to CPU
-- Compressed KV resident on GPU
-- Async CPU/GPU transfer experiments
-- Pinned memory
-- Draft length tuning
-- Adaptive draft length prototype
-- Better memory measurement
-- Optional parallel verification over draft span
+- Workspace-aware `MemorySummary`: `stored_kv_bytes`,
+  `materialized_working_kv_bytes`, `metadata_bytes`, `temporary_workspace_bytes`,
+  `total_kv_footprint_bytes`.
+- Per-compressor stats populate the new fields honestly.
+- Reports/CLI/Markdown surface stored vs materialized vs total.
 
 ## Non-goals
 
-- Still no full production serving scheduler unless V5 is stable.
-- No multi-node remote prefix caching yet.
+- No backend implementation.
+- No throughput, latency, or speedup measurement or claim.
+- No real bit-packing presented as a default.
 
 ## Success criteria
 
-ExactKV shows measurable speedup over full KV on at least one controlled setting.
-
-Potential target:
-
-```text
-> 1.2x throughput with exact outputs
-```
-
-Stretch target:
-
-```text
-> 1.5x throughput with exact outputs
-```
-
-## Exit tests
-
-- Benchmark shows speedup in a reproducible environment.
-- Exactness remains preserved.
-- Memory reporting is credible.
-- Draft length sensitivity is reported.
-
-## Deliverables
-
-- Performance report
-- Speedup plots
-- Memory plots
-- Draft length sweep
-- Compressor ratio sweep
+- Memory is reported honestly across all current compressors.
+- `materialized_working_kv_bytes == full_kv_bytes` is surfaced (it holds for all
+  current compressors).
+- `_sim` compressors keep `supports_real_bytes_claim=False`.
+- Exactness preserved; no forbidden performance fields.
 
 ---
 
-# V6: vLLM and LMCache integration
+# V6: Real backend adapter interface + first backend candidate
 
 ## Goal
 
-Move ExactKV toward real serving infrastructure.
+Design a `BackendAdapter` so a real quantisation format could plug into the
+`KVCompressor` protocol and be evaluated by acceptance behaviour.
 
 ## Why this version exists
 
-The paper's systems benefit depends on scheduler-level integration and KV movement across tiers.
+The asymmetric-K/V thesis (KIVI, KVQuant, KV-AdaQuant, TurboQuant) is best tested
+against ExactKV acceptance using a *real* format, not a simulated one.
 
-## New features
+## New features (design first; implement only on separate approval)
 
-- vLLM prototype integration
-- LMCache prototype integration
-- Paged cache awareness
-- Request-level scheduler experiments
-- Bandwidth and HBM resource model
-- Cross-resource staggering prototype
+- `BackendAdapter` interface spec (capabilities, real-bytes support, device
+  requirements).
+- One candidate real backend wrapped behind `KVCompressor`.
+- Honest simulated-vs-real labelling in reports.
 
 ## Non-goals
 
-- No claim of production readiness until robustly tested.
-- No multi-tenant reliability guarantees.
-- No broad model compatibility guarantee.
+- No throughput/latency/speedup claims; acceptance and (real) memory only.
+- No production-serving claims.
 
 ## Success criteria
 
-ExactKV can run as a prototype inside or alongside a serving stack.
-
-## Exit tests
-
-- vLLM path runs one model.
-- LMCache path can store or load KV in a controlled demo.
-- Scheduler can separate draft and verify phases.
-- Exactness remains preserved.
-
-## Deliverables
-
-- Integration docs
-- Prototype branch or module
-- Serving demo
-- System benchmark report
+- A real backend can be evaluated through the existing verification loop.
+- Exactness preserved; memory comparisons gated by `supports_real_bytes_claim`.
 
 ---
 
-# V7: Research extensions
+# V7: Attention-aware and V-specific backend ideas
 
 ## Goal
 
-Explore new research directions unlocked by ExactKV.
+Evaluate attention-aware and value-specific compression policies by acceptance
+behaviour.
 
 ## Possible directions
 
-- Acceptance-optimized compressors
-- Adaptive draft length
-- Prompt-aware compression selection
-- Learned acceptance predictors
-- Hybrid speculative decoding plus ExactKV
-- Sampling-compatible verification
-- Verification for approximate prefix reuse
-- Multi-compressor ensembles
-- Safety-focused structured-output verification
+- Sparse V dequantization (attention-gated decode) — *evaluated*, not for speed.
+- Layer-aware ("boundary") V precision policies.
+- Real asymmetric compressor comparisons (simulated vs real).
+- Attention-aware divergence analysis (first-divergence vs attention entropy).
+- Token-eviction policy evaluation (PyramidKV, SnapKV, H2O, StreamingLLM).
+
+## Non-goals
+
+- No speedup/throughput/latency claims.
 
 ## Success criteria
 
-At least one research extension produces a result worth a blog post, workshop paper, or viral launch.
+- At least one V-specific or attention-aware policy is characterised by
+  acceptance behaviour under full-KV verification, with exactness preserved.
+
+---
+
+# V8: Serving-stack integration (evaluation context only)
+
+## Goal
+
+Use a serving stack (vLLM/PagedAttention, LMCache) only as an **evaluation
+context** for compressed caches — never as a source of performance claims.
+
+## Non-goals
+
+- No throughput/latency benchmarks, no speedup claims, no production-serving
+  claims, no multi-tenant reliability guarantees.
+
+## Success criteria
+
+- ExactKV's acceptance evaluation can run against caches managed by a serving
+  stack, with exactness preserved. This is the most speculative version and is
+  gated on V5–V7 being stable.
+
+See [`RESEARCH_BACKLOG.md`](RESEARCH_BACKLOG.md) for the concrete experiment
+backlog behind V6–V8.
 
 ---
 
@@ -604,7 +611,9 @@ Corresponds to V4.
 
 Claim:
 
-> ExactKV supports real compressor adapters.
+> ExactKV evaluates **simulated** asymmetric K/V compressors by acceptance
+> behaviour under full-KV verification (Experiment 003; 0 failures). These are
+> not real packed-bit backends, and no performance claim is made.
 
 ### Release 1.0
 
@@ -613,8 +622,12 @@ Should not happen until:
 - multiple compressors
 - reproducible benchmarks
 - exactness tests
-- performance report
-- at least one serious integration path
+- honest workspace-aware memory reporting (V5)
+- at least one real backend adapter evaluated by acceptance behaviour (V6)
+
+> Note: "performance report" was intentionally removed from the Release 1.0
+> criteria. ExactKV makes no speedup/throughput/latency claims; release readiness
+> is judged on correctness, acceptance evaluation, and memory honesty.
 
 ## Final roadmap rule
 
