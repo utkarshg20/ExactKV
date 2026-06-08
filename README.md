@@ -280,6 +280,27 @@ tests/
 
 ---
 
+## Sample v0.2.0 smoke sweep
+
+See [`docs/EXPERIMENT_001_SMOKE_SWEEP.md`](docs/EXPERIMENT_001_SMOKE_SWEEP.md)
+for a full write-up. Headline results across 6 prompts × 3 compressors × 2 draft
+lengths (36 runs total):
+
+| Compressor | Accept rate | Lossy divergences | ExactKV failures |
+|---|---|---|---|
+| `noop` | 1.000 | 0 / 12 | 0 / 12 |
+| `int8` | **0.931** | 4 / 12 | **0 / 12** |
+| `int4_sim` ⚠️ | 0.459 | 12 / 12 | **0 / 12** |
+
+> ⚠️ `int4_sim` is **simulated** (quantised range `[-8, 7]`, stored in
+> `torch.int8`). Its 3.95× memory reduction factor does **not** reflect real
+> packed-4-bit savings. ExactKV corrected all 16 lossy divergences with zero
+> failures.
+
+No throughput, latency, or speedup is claimed.
+
+---
+
 ## V2 sweeps
 
 Use `run_sweep` to compare multiple compressors and draft lengths across a
