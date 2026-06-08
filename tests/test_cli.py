@@ -364,3 +364,166 @@ def test_python_m_exactkv_list_compressors():
 
 
 from pathlib import Path
+
+
+# ---------------------------------------------------------------------------
+# report command (V3 Phase D)
+# ---------------------------------------------------------------------------
+
+# Required Markdown section headings (lower-cased match)
+_MD_REQUIRED_SECTIONS = [
+    "experiment summary",
+    "correctness",
+    "acceptance",
+    "leaderboard",
+    "histogram",
+    "what this report proves",
+    "what this report does not prove",
+]
+
+# Patterns that must NOT appear as data fields in the Markdown
+_MD_FORBIDDEN_DATA_FIELD_PATTERNS = [
+    "| tokens_per_second",
+    "| throughput |",
+    "| latency |",
+    "| speedup |",
+    "| runtime_seconds",
+    "tokens_per_second:",
+    "throughput:",
+    "latency:",
+    "speedup:",
+    "runtime_seconds:",
+]
+
+
+@pytest.fixture(scope="module")
+def report_json(tmp_path_factory, mini_suite):
+    """Run a small sweep and write a JSON report for report-command tests."""
+    out = tmp_path_factory.mktemp("report_cmd") / "report.json"
+    from exactkv.cli import main
+    rc = main([
+        "sweep",
+        "--model", MODEL_NAME,
+        "--suite-file", mini_suite,
+        "--compressors", "noop,int8",
+        "--draft-lengths", "4",
+        "--max-new-tokens", "8",
+        "--json-out", str(out),
+    ])
+    assert rc == 0, "sweep fixture failed"
+    return out
+
+
+class TestReportCommand:
+    def test_report_writes_markdown(self, report_json, tmp_path):
+        from exactkv.cli import main
+        out_md = tmp_path / "out.md"
+        rc = main(["report", "--report", str(report_json),
+                   "--markdown-out", str(out_md)])
+        assert rc == 0
+        assert out_md.exists()
+        assert out_md.stat().st_size > 0
+
+    def test_report_creates_parent_directories(self, report_json, tmp_path):
+        from exactkv.cli import main
+        out_md = tmp_path / "nested" / "deep" / "report.md"
+        rc = main(["report", "--report", str(report_json),
+                   "--markdown-out", str(out_md)])
+        assert rc == 0
+        assert out_md.exists()
+
+    def test_report_custom_title(self, report_json, tmp_path):
+        from exactkv.cli import main
+        out_md = tmp_path / "titled.md"
+        rc = main(["report", "--report", str(report_json),
+                   "--markdown-out", str(out_md),
+                   "--title", "My Custom Title"])
+        assert rc == 0
+        content = out_md.read_text(encoding="utf-8")
+        assert "My Custom Title" in content
+
+    def test_report_required_sections_present(self, report_json, tmp_path):
+        from exactkv.cli import main
+        out_md = tmp_path / "sections.md"
+        main(["report", "--report", str(report_json), "--markdown-out", str(out_md)])
+        content = out_md.read_text(encoding="utf-8").lower()
+        for section in _MD_REQUIRED_SECTIONS:
+            assert section in content, f"Required section missing: {section!r}"
+
+    def test_report_lossy_divergence_described_as_expected(self, report_json, tmp_path):
+        from exactkv.cli import main
+        out_md = tmp_path / "wording.md"
+        main(["report", "--report", str(report_json), "--markdown-out", str(out_md)])
+        content = out_md.read_text(encoding="utf-8").lower()
+        assert "lossy divergence is expected" in content
+
+    def test_report_no_forbidden_data_fields(self, report_json, tmp_path):
+        from exactkv.cli import main
+        out_md = tmp_path / "forbidden.md"
+        main(["report", "--report", str(report_json), "--markdown-out", str(out_md)])
+        content = out_md.read_text(encoding="utf-8").lower()
+        for pattern in _MD_FORBIDDEN_DATA_FIELD_PATTERNS:
+            assert pattern not in content, (
+                f"Forbidden data-field pattern {pattern!r} in markdown report"
+            )
+
+    def test_report_nonzero_for_missing_file(self, tmp_path):
+        from exactkv.cli import main
+        out_md = tmp_path / "out.md"
+        rc = main(["report", "--report", str(tmp_path / "missing.json"),
+                   "--markdown-out", str(out_md)])
+        assert rc != 0
+
+    def test_report_nonzero_for_invalid_json(self, tmp_path):
+        from exactkv.cli import main
+        bad_json = tmp_path / "bad.json"
+        bad_json.write_text("{not valid json{{", encoding="utf-8")
+        out_md = tmp_path / "out.md"
+        rc = main(["report", "--report", str(bad_json),
+                   "--markdown-out", str(out_md)])
+        assert rc != 0
+
+    def test_report_no_examples_flag(self, report_json, tmp_path):
+        from exactkv.cli import main
+        out_md = tmp_path / "no_ex.md"
+        rc = main(["report", "--report", str(report_json),
+                   "--markdown-out", str(out_md), "--no-examples"])
+        assert rc == 0
+        content = out_md.read_text(encoding="utf-8").lower()
+        # Lossy divergence examples section should not appear
+        assert "lossy divergence examples" not in content
+
+    def test_report_int4_sim_disclaimer_when_int4_present(
+        self, tmp_path_factory, mini_suite
+    ):
+        """When int4_sim is in the report the simulation disclaimer must appear."""
+        from exactkv.cli import main
+        sweep_json = tmp_path_factory.mktemp("int4_report") / "sweep.json"
+        main([
+            "sweep", "--model", MODEL_NAME,
+            "--suite-file", mini_suite,
+            "--compressors", "int4_sim",
+            "--draft-lengths", "4",
+            "--max-new-tokens", "8",
+            "--json-out", str(sweep_json),
+        ])
+        out_md = tmp_path_factory.mktemp("int4_report") / "out.md"
+        rc = main(["report", "--report", str(sweep_json),
+                   "--markdown-out", str(out_md)])
+        assert rc == 0
+        content = out_md.read_text(encoding="utf-8").lower()
+        assert "simulated" in content
+
+
+# ---------------------------------------------------------------------------
+# report command in CLI help text
+# ---------------------------------------------------------------------------
+
+def test_report_appears_in_help(capsys):
+    from exactkv.cli import main
+    try:
+        main(["--help"])
+    except SystemExit:
+        pass
+    captured = capsys.readouterr()
+    assert "report" in captured.out

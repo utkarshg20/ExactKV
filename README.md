@@ -306,6 +306,32 @@ No throughput, latency, or speedup is claimed.
 
 ---
 
+## Experiment 002: Core suite sweep (v0.3.0-dev)
+
+See [`docs/EXPERIMENT_002_CORE_SWEEP.md`](docs/EXPERIMENT_002_CORE_SWEEP.md)
+for the full Markdown report (generated via `python -m exactkv report`). 34
+prompts × 3 compressors × 2 draft lengths = **204 runs total**:
+
+| Compressor | Runs | Accept rate | Drafted | Accepted | Rejected | ExactKV failures |
+|---|---|---|---|---|---|---|
+| `noop` | 68 | **1.000** | 1428 | 1428 | 0 | **0** |
+| `int8` | 68 | **0.951** | 1492 | 1400 | 92 | **0** |
+| `int4_sim` ⚠️ | 68 | 0.553 | 2369 | 1097 | 1272 | **0** |
+
+| Draft length | Accept rate | Drafted | Accepted |
+|---|---|---|---|
+| 4 | 0.865 | 2404 | 1960 |
+| 8 | 0.805 | 2885 | 1965 |
+
+> ⚠️ `int4_sim` is **simulated** (INT4 numeric range, stored in `torch.int8`).
+> Memory figures reflect `int8` storage, not real packed 4-bit savings.
+> ExactKV produced **0 failures** — every verified output matched
+> `generate_full_greedy` exactly.
+
+No throughput, latency, or speedup is claimed.
+
+---
+
 ## V2 sweeps
 
 Use `run_sweep` to compare multiple compressors and draft lengths across a
@@ -616,6 +642,22 @@ python -m exactkv analyze \
 ```
 
 Returns exit code 0 when `exactkv_failure_count == 0` ("pass"), 1 otherwise.
+
+### report (V3)
+
+Render an existing JSON report to a docs-ready Markdown document — no model
+re-run, no timing output:
+
+```bash
+python -m exactkv report \
+  --report reports/experiment_002_core_sweep.json \
+  --markdown-out docs/EXPERIMENT_002_CORE_SWEEP.md \
+  --title "Experiment 002: Core Suite Sweep" \
+  --max-examples 5
+```
+
+Options: `--no-examples` to skip example blocks, `--max-examples INT` to
+control how many per section (default 3).
 
 ### int4_sim disclaimer
 

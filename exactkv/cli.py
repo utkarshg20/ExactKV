@@ -6,6 +6,7 @@ list-compressors  Print all registered compressors with their capabilities.
 bench             Run a single-compressor benchmark over a prompt suite.
 sweep             Run a multi-compressor × multi-draft-length sweep.
 analyze           Analyse an existing JSON report (no model re-run).
+report            Render an existing JSON report to a Markdown document.
 
 Usage::
 
@@ -13,6 +14,7 @@ Usage::
     python -m exactkv bench   --model Qwen/Qwen2.5-0.5B --suite smoke ...
     python -m exactkv sweep   --model Qwen/Qwen2.5-0.5B --suite smoke ...
     python -m exactkv analyze --report reports/sweep.json ...
+    python -m exactkv report  --report reports/sweep.json --markdown-out docs/sweep.md
 
 Design constraints
 ------------------
@@ -290,6 +292,52 @@ def _cmd_analyze(args: argparse.Namespace) -> int:
 
 
 # ---------------------------------------------------------------------------
+# report
+# ---------------------------------------------------------------------------
+
+def _cmd_report(args: argparse.Namespace) -> int:
+    """Render an existing JSON report to a Markdown document.
+
+    Does not re-run the model.  No timing, throughput, latency, or speedup
+    output is produced.
+    """
+    from exactkv.benchmarks.reports import load_json_report
+    from exactkv.analysis.failure_report import build_failure_report
+    from exactkv.reporting.markdown import write_markdown_report
+
+    # 1. Load report
+    report_path = Path(args.report)
+    if not report_path.exists():
+        print(f"Error: Report file not found: {report_path}", file=sys.stderr)
+        return 1
+    try:
+        report = load_json_report(report_path)
+    except json.JSONDecodeError as exc:
+        print(f"Error: Invalid JSON in {report_path}: {exc}", file=sys.stderr)
+        return 1
+
+    # 2. Render and write Markdown
+    out_path = Path(args.markdown_out)
+    include_examples = not getattr(args, "no_examples", False)
+    write_markdown_report(
+        report,
+        path=out_path,
+        title=args.title or None,
+        include_examples=include_examples,
+        max_examples=args.max_examples,
+    )
+
+    # 3. Short summary (no timing fields)
+    fr = build_failure_report(report)
+    print(f"Input report  : {report_path}")
+    print(f"Markdown out  : {out_path}")
+    print(f"ExactKV failures  : {fr['exactkv_failure_count']}")
+    print(f"Lossy divergences : {fr['lossy_divergence_count']}")
+
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # Argument parser construction
 # ---------------------------------------------------------------------------
 
@@ -382,6 +430,28 @@ def _build_parser() -> argparse.ArgumentParser:
     p_analyze.add_argument("--failure-json", dest="failure_json", metavar="PATH",
                            help="Write failure report to this JSON path.")
 
+    # ── report ────────────────────────────────────────────────────────────
+    p_report = sub.add_parser(
+        "report",
+        help=(
+            "Render an existing JSON report to a Markdown document. "
+            "Does not re-run the model. "
+            "Reports exactness and acceptance — no speedup or throughput output."
+        ),
+    )
+    p_report.add_argument("--report", required=True, metavar="PATH",
+                          help="Path to a JSON report written by bench or sweep.")
+    p_report.add_argument("--markdown-out", dest="markdown_out", required=True,
+                          metavar="PATH",
+                          help="Output Markdown file path (parent dirs created automatically).")
+    p_report.add_argument("--title", default=None, metavar="TEXT",
+                          help="Report title (default: 'ExactKV Benchmark Report').")
+    p_report.add_argument("--max-examples", dest="max_examples", type=int, default=3,
+                          metavar="INT",
+                          help="Maximum examples per example section (default: 3).")
+    p_report.add_argument("--no-examples", dest="no_examples", action="store_true",
+                          help="Disable lossy-divergence and rejection example blocks.")
+
     return parser
 
 
@@ -414,6 +484,8 @@ def main(argv: list[str] | None = None) -> int:
             return _cmd_sweep(args)
         elif args.command == "analyze":
             return _cmd_analyze(args)
+        elif args.command == "report":
+            return _cmd_report(args)
         else:
             parser.print_help()
             return 1
