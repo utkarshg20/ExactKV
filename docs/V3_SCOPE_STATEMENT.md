@@ -367,6 +367,29 @@ V3 is complete when all of the following hold:
 
 ---
 
+## Future V4/V5 research candidates
+
+The following directions are documented for future consideration but are
+**not part of V3**:
+
+* **Asymmetric K/V compression** — Keys and values play different roles in
+  attention; compressing them symmetrically is likely suboptimal. Future work
+  should evaluate K8/V4, K-full/V-compressed, and similar asymmetric policies
+  using ExactKV's acceptance-rate metrics rather than MSE.
+* **Workspace-aware memory accounting** — Stored compressed bytes do not
+  capture the peak memory during decode (which includes dequantisation scratch
+  buffers). Future `MemorySummary` should distinguish `stored_kv_bytes`,
+  `materialized_working_kv_bytes`, `metadata_bytes`, and
+  `temporary_workspace_bytes`.
+* **Attention-aware divergence analysis** — Correlate first-divergence
+  position with attention entropy to understand which prompts and positions
+  are most sensitive to compression.
+
+See [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](FUTURE_RESEARCH_ASYMMETRIC_KV.md)
+for a full writeup.
+
+---
+
 ## Citation and novelty note
 
 The draft-then-verify compressed-KV algorithm is from:

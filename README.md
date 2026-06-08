@@ -514,6 +514,45 @@ divergence."*
 
 ---
 
+## V3 Markdown reports
+
+Existing JSON/CSV reports (from `bench`, `sweep`, or `run_suite`) can be
+rendered into docs-ready Markdown using the `exactkv.reporting` package.
+Reports document **exactness, acceptance behaviour, and divergence examples**
+— no performance claims, no timing, no speedup.
+
+```python
+from exactkv.reporting import render_markdown_report, write_markdown_report
+
+# Render to string
+md = render_markdown_report(sweep_report, title="My Sweep Report")
+
+# Write to file (creates parent dirs automatically)
+write_markdown_report(sweep_report, "reports/my_sweep.md")
+```
+
+The rendered Markdown includes:
+
+* **Correctness summary** — ExactKV failure count (must be 0) and lossy
+  divergence count (expected for lossy compressors).
+* **Acceptance leaderboard** — by compressor, by draft length, and
+  compressor × draft-length grid for sweep reports.
+* **Histogram tables** — accepted-length distribution, first-divergence
+  position, and rejection-count distribution (text tables, no images).
+* **Lossy divergence examples** — side-by-side Full / Lossy / ExactKV
+  output excerpts with an explanation that lossy divergence is expected.
+* **ExactKV failure examples** — should always be empty; included to surface
+  bugs immediately.
+* **Required disclaimers** — lossy divergence vs. ExactKV failure, `int4_sim`
+  simulation honesty, and explicit "no speedup/throughput/latency claim".
+
+> These reports are for exactness, acceptance, and divergence storytelling.
+> They do **not** claim speedup, throughput, latency, or production readiness.
+> `int4_sim` memory figures reflect `int8` container storage, not real packed
+> INT4 savings.
+
+---
+
 ## V2 CLI
 
 `python -m exactkv` exposes the most-used ExactKV operations as CLI subcommands.
@@ -595,6 +634,25 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 - **Sequential verification.** Parallel (single-pass) verification is deferred to a future version.
 - **DynamicCache note.** The cache utilities target transformers 5.8.1 internal structure;
   see `docs/V1_SCOPE_STATEMENT.md` for brittleness notes.
+
+---
+
+## Future research directions
+
+* **Asymmetric K/V compression** — Keys and values play different roles in
+  attention. K8/V4 or K-full/V-compressed policies may outperform symmetric
+  quantisation at the same average bit-width. Acceptance rate, not MSE, is
+  the right evaluation metric.
+* **Workspace-aware memory accounting** — Stored compressed bytes omit
+  dequantisation scratch buffer cost. Future `MemorySummary` will distinguish
+  `stored_kv_bytes`, `materialized_working_kv_bytes`, `metadata_bytes`, and
+  `temporary_workspace_bytes`.
+* **Attention-aware divergence analysis** — Correlate first-divergence
+  position with attention entropy to understand compression sensitivity
+  by prompt type and position.
+
+See [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md)
+for the full writeup.
 
 ---
 
