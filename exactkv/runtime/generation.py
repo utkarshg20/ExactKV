@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 from typing import Any
 
@@ -102,5 +103,107 @@ def generate_full_greedy(
         full_sequence_ids=full_sequence,
         output_text=output_text,
         past_key_values=past_key_values,
+        stopped_on_eos=stopped_on_eos,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Lossy greedy generation (no verification)
+# ---------------------------------------------------------------------------
+
+@dataclass
+class LossyGreedyResult:
+    """Result of generate_lossy_greedy.
+
+    No exactness guarantee — generated_ids may differ from full-KV output.
+    """
+    prompt_ids: torch.Tensor
+    generated_ids: torch.Tensor       # [1, gen_len]
+    full_sequence_ids: torch.Tensor   # [1, prompt_len + gen_len]
+    output_text: str
+    stopped_on_eos: bool
+
+
+@torch.no_grad()
+def generate_lossy_greedy(
+    runtime: ModelRuntime,
+    prompt: str,
+    compressor: Any,
+    max_new_tokens: int,
+) -> LossyGreedyResult:
+    """Greedy generation using a lossy (compressed) KV cache — no verification.
+
+    The initial prompt KV is compressed then materialised back to full-precision.
+    New token KVs are appended at full precision by the model during generation.
+    Depending on the compressor, the output may diverge from ``generate_full_greedy``.
+
+    This function does NOT implement the ExactKV verification loop; it exists
+    solely to characterise lossy mode and confirm that divergence is possible.
+
+    DynamicCache safety: the materialised cache is deep-copied before the
+    generation loop so that ``compressor.data`` (which may alias the full-state
+    cache for NoOp) is not extended in-place.
+
+    Args:
+        runtime:          Loaded ModelRuntime.
+        prompt:           Plain-text prompt string.
+        compressor:       Any KVCompressor-compatible object.
+        max_new_tokens:   Maximum number of tokens to generate.
+
+    Returns:
+        LossyGreedyResult (no exactness guarantee).
+    """
+    from exactkv.cache.full_state import FullKVState
+
+    prompt_ids = runtime.encode(prompt)  # [1, L]
+
+    # Prefill to get the authoritative initial KV
+    prefill_out = runtime.forward(prompt_ids, past_key_values=None, use_cache=True)
+    next_token_id = int(prefill_out.logits[:, -1, :].argmax(dim=-1).item())
+
+    empty_gen = torch.zeros(1, 0, dtype=torch.long, device=runtime.device)
+    full_state = FullKVState(
+        past_key_values=prefill_out.past_key_values,
+        prompt_ids=prompt_ids,
+        generated_ids=empty_gen,
+        full_sequence_ids=prompt_ids,
+        device=runtime.device,
+        dtype=runtime.dtype,
+        metadata={"next_token_id": next_token_id},
+    )
+
+    # Compress and materialise (deep-copy guards against aliasing with full_state)
+    compressed = compressor.compress(full_state)
+    lossy_kv = copy.deepcopy(compressor.materialize_for_draft(compressed))
+
+    # Generate using the lossy historical KV; new-token KVs are full-precision
+    generated_ids: list[int] = []
+    next_tok: int = compressed.next_token_id
+    stopped_on_eos = False
+
+    for _ in range(max_new_tokens):
+        generated_ids.append(next_tok)
+
+        if next_tok == runtime.eos_token_id:
+            stopped_on_eos = True
+            break
+
+        tok_tensor = torch.tensor(
+            [[next_tok]], dtype=torch.long, device=runtime.device
+        )
+        step_out = runtime.forward(tok_tensor, past_key_values=lossy_kv)
+        lossy_kv = step_out.past_key_values   # DynamicCache mutated in-place; that's fine here
+        next_tok = int(step_out.logits[:, -1, :].argmax(dim=-1).item())
+
+    gen_tensor = torch.tensor(
+        [generated_ids], dtype=torch.long, device=runtime.device
+    )
+    full_seq = torch.cat([prompt_ids, gen_tensor], dim=1)
+
+    return LossyGreedyResult(
+        prompt_ids=prompt_ids,
+        generated_ids=gen_tensor,
+        full_sequence_ids=full_seq,
+        output_text=runtime.decode(gen_tensor),
         stopped_on_eos=stopped_on_eos,
     )
