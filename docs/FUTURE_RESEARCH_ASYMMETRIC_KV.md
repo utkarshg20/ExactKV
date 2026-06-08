@@ -4,6 +4,15 @@
 > None of this is implemented in V3.
 > No real compressor backends, no speedup claims, no production-readiness claims.
 
+> **V4 implementation plan.** The asymmetric-compression directions in this note
+> (the asymmetric compressor simulator, K-only/V-only ablations, and K/V
+> bit-width sweeps) are scheduled for **V4**. See
+> [`docs/V4_SCOPE_STATEMENT.md`](V4_SCOPE_STATEMENT.md) for the concrete plan,
+> phases, and gates. V4 implements simulated compressors only — no real
+> backends, no real bit-packing, no performance claims. The **workspace-aware
+> memory accounting** section (§4) is **not** part of V4 and remains a **V5**
+> candidate.
+
 ---
 
 ## 1. Why Asymmetric K/V Compression Matters
@@ -207,9 +216,9 @@ The following experiments are candidates for V4 or V5:
 
 | Item | Status |
 |---|---|
-| Asymmetric compressor implementation | **Not in V3.** Candidate for V4. |
-| K-only / V-only ablations | **Not in V3.** Candidate for V4. |
-| Workspace-aware memory schema | **Not in V3.** Candidate for V4/V5. |
+| Asymmetric compressor implementation | **Planned for V4.** See [`docs/V4_SCOPE_STATEMENT.md`](V4_SCOPE_STATEMENT.md). |
+| K-only / V-only ablations | **Planned for V4.** See [`docs/V4_SCOPE_STATEMENT.md`](V4_SCOPE_STATEMENT.md). |
+| Workspace-aware memory schema | **Deferred to V5.** Not in V4. |
 | Real INT4 packed storage | **Not implemented.** Future work. |
 | Real compressor backends (KIVI, KVQuant, SnapKV) | **Out of scope for V4.** |
 | Speedup, throughput, or latency metrics | **Never.** ExactKV measures correctness and acceptance, not performance. |

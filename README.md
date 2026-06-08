@@ -693,6 +693,12 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 
 ## Future research directions
 
+* **V4 (planned) — asymmetric K/V acceptance experiments.** V4 adds simulated
+  asymmetric compressors (e.g. `k8_v4_sim`, `k4_v8_sim`) plus K-only/V-only
+  ablations to test whether compressing keys and values at different bit-widths
+  improves ExactKV acceptance behaviour. Simulated compressors only; no real
+  backends, no performance claims. See
+  [`docs/V4_SCOPE_STATEMENT.md`](docs/V4_SCOPE_STATEMENT.md).
 * **Asymmetric K/V compression** — Keys and values play different roles in
   attention. K8/V4 or K-full/V-compressed policies may outperform symmetric
   quantisation at the same average bit-width. Acceptance rate, not MSE, is
