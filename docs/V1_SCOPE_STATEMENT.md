@@ -60,6 +60,17 @@ single-request single-device execution.
 5. **Sampling-compatible exactness.**
    V1 is greedy-only. Rejection-sampling-compatible verification is future work.
 
+6. **Bonus-token acceptance.**
+   VeriCache proposes accepting one extra "bonus" token at the end of a fully-matching
+   draft (the verifier's prediction at the final accepted position).  V1 disables this
+   feature.  `bonus_token` is always `None` in V1 traces.  Bonus-token acceptance
+   changes the throughput/acceptance tradeoff and belongs to V2+.
+
+7. **Real serving stack.**
+   V1 has no integration with vLLM, TGI, SGLang, TensorRT-LLM, or any production
+   inference server.  It runs exclusively through Hugging Face Transformers
+   ``model.forward()`` in a single Python process.
+
 ## V1 scope boundary
 
 | In scope | Out of scope |
@@ -78,14 +89,17 @@ single-request single-device execution.
 
 All of the following must pass before V1 is considered complete:
 
-- [ ] `tests/test_full_generation.py` (gate): custom greedy == `model.generate`
-- [ ] `tests/test_acceptance_logic.py`: mocked accept/reject cases
-- [ ] `tests/test_verification_engine.py`: NoOp verification on real model
-- [ ] `tests/test_noop_exactkv.py`: NoOp ExactKV == full, acceptance 100%
-- [ ] `tests/test_int8_exactkv.py`: INT8 ExactKV == full
-- [ ] `tests/test_debug_noise_exactkv.py`: rejection forced, ExactKV still == full
-- [ ] `tests/test_metrics.py`: metric reconciliation
-- [ ] `tests/test_benchmark_runner.py`: JSON report, `exactkv_failures == 0`
+- [x] `tests/test_full_generation.py` (gate): custom greedy == `model.generate`
+- [x] `tests/test_acceptance_logic.py`: mocked accept/reject cases
+- [x] `tests/test_verification_engine.py`: NoOp verification on real model
+- [x] `tests/test_noop_exactkv.py`: NoOp ExactKV == full, acceptance 100%
+- [x] `tests/test_int8_exactkv.py`: INT8 ExactKV == full
+- [x] `tests/test_debug_noise_exactkv.py`: rejection gate — forced rejections, ExactKV still == full
+- [x] `tests/test_metrics.py`: metric reconciliation; compression_ratio naming verified
+- [x] `tests/test_benchmark_runner.py`: JSON report, `exactkv_failures == 0`
+- [x] `tests/test_int8_compressor.py`: stats ratio, bytes, forward-usability, no mutation
+- [x] `tests/test_lossy_generation.py`: lossy generation runs, divergence computable
+- [x] `tests/test_example_script.py`: demo script runs, `exactkv_matches_full=True`
 
 ## Known V1 limitations and brittleness notes
 

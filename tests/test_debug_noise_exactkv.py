@@ -1,4 +1,9 @@
-"""DebugNoiseCompressor tests — Step 12.
+"""DebugNoise rejection gate — Step 12.
+
+This is the gate that proves the ExactKV loop correctly handles rejected tokens
+and correction logic.  DebugNoiseCompressor intentionally corrupts the KV cache
+to guarantee that at least one round has a mismatch, exercising the correction
+path.  Despite this, ExactKV output must still equal full greedy output exactly.
 
 Behavioural invariants:
   * Lossy mode with DebugNoise diverges from full for at least one prompt.

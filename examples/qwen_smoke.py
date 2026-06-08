@@ -118,7 +118,8 @@ def main(
     print()
     print(f"  KV full bytes     (prompt): {mem.full_bytes:,}")
     print(f"  KV compressed bytes      : {mem.compressed_bytes:,}")
-    print(f"  Compression ratio        : {mem.compression_ratio:.2f}x")
+    print(f"  Compression ratio        : {mem.compression_ratio:.3f}  (compressed/full; < 1 means smaller)")
+    print(f"  Memory reduction factor  : {mem.memory_reduction_factor:.2f}x  (full/compressed; > 1 means savings)")
     print()
 
     if not exactkv_ok:

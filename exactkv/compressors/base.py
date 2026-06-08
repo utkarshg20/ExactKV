@@ -15,11 +15,17 @@ from exactkv.cache.full_state import FullKVState
 
 @dataclass
 class CompressionStats:
-    """Byte-level compression statistics for one compressed state snapshot."""
+    """Byte-level compression statistics for one compressed state snapshot.
+
+    Naming convention (matches docs/METRICS.md):
+        compression_ratio      = compressed_bytes / full_bytes  (< 1 means smaller, 1.0 for NoOp)
+        memory_reduction_factor = full_bytes / compressed_bytes (> 1 means savings, 1.0 for NoOp)
+    """
     compressor_name: str
     full_bytes: int
     compressed_bytes: int
-    compression_ratio: float   # full_bytes / compressed_bytes; 1.0 for NoOp
+    compression_ratio: float        # compressed_bytes / full_bytes; < 1 means compressed
+    memory_reduction_factor: float  # full_bytes / compressed_bytes; > 1 means savings
     seq_len: int
     num_layers: int
 

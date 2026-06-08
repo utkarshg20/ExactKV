@@ -202,11 +202,19 @@ def test_memory_compression_ratio_positive(runtime: ModelRuntime, compressor_cls
     assert summary.compression_ratio > 0.0
 
 
-def test_int8_memory_ratio_greater_than_one(runtime: ModelRuntime) -> None:
-    """INT8 must compress better than NoOp (ratio > 1.0)."""
+def test_int8_compression_ratio_less_than_one(runtime: ModelRuntime) -> None:
+    """INT8 compression_ratio (compressed/full) must be < 1.0."""
     summary = estimate_kv_memory(runtime, PROMPT, Int8Compressor())
-    assert summary.compression_ratio > 1.0, (
-        f"INT8 compression_ratio={summary.compression_ratio} should exceed 1.0"
+    assert 0.0 < summary.compression_ratio < 1.0, (
+        f"INT8 compression_ratio={summary.compression_ratio} should be in (0, 1)"
+    )
+
+
+def test_int8_memory_reduction_factor_greater_than_one(runtime: ModelRuntime) -> None:
+    """INT8 memory_reduction_factor (full/compressed) must exceed 1.0."""
+    summary = estimate_kv_memory(runtime, PROMPT, Int8Compressor())
+    assert summary.memory_reduction_factor > 1.0, (
+        f"INT8 memory_reduction_factor={summary.memory_reduction_factor} should exceed 1.0"
     )
 
 
@@ -214,4 +222,12 @@ def test_memory_summary_to_dict(runtime: ModelRuntime) -> None:
     summary = estimate_kv_memory(runtime, PROMPT, Int8Compressor())
     d = summary.to_dict()
     assert isinstance(d, dict)
-    assert "full_bytes" in d and "compressed_bytes" in d and "compression_ratio" in d
+    for key in ("full_bytes", "compressed_bytes", "compression_ratio", "memory_reduction_factor"):
+        assert key in d, f"Missing key {key!r} in MemorySummary.to_dict()"
+
+
+def test_noop_compression_ratio_is_one(runtime: ModelRuntime) -> None:
+    """NoOp: compression_ratio and memory_reduction_factor must both be 1.0."""
+    summary = estimate_kv_memory(runtime, PROMPT, NoOpCompressor())
+    assert abs(summary.compression_ratio - 1.0) < 1e-6
+    assert abs(summary.memory_reduction_factor - 1.0) < 1e-6

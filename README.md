@@ -89,13 +89,14 @@ TRANSFORMERS_OFFLINE=1 python examples/qwen_smoke.py \
 Example output (INT8, greedy, `Qwen/Qwen2.5-0.5B`):
 
 ```
-  ExactKV matches full : True
-  Lossy  matches full  : True/False   ← no guarantee
-  Acceptance rate      : 0.923
-  Avg accepted / round : 3.69
-  Correction count     : 2
-  Rejection count      : 5
-  Compression ratio    : 3.87x
+  ExactKV matches full    : True
+  Lossy  matches full     : True/False   ← no guarantee
+  Acceptance rate         : 0.923
+  Avg accepted / round    : 3.69
+  Correction count        : 2
+  Rejection count         : 5
+  Compression ratio       : 0.258  (compressed/full; < 1 means smaller)
+  Memory reduction factor : 3.87x  (full/compressed; > 1 means savings)
 ```
 
 ---

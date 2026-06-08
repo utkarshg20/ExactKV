@@ -1,4 +1,9 @@
-"""Benchmark runner tests — Step 14.
+"""Benchmark runner gate — Step 14.
+
+The key gate assertion is: ``aggregate.exactkv_failures == 0`` for all
+tested compressors.  This proves the end-to-end pipeline (prompt loader →
+full/lossy/exactkv runs → JSON report) is wired correctly and that ExactKV
+produces zero token-ID mismatches vs full greedy on the smoke suite.
 
 Tests:
   * Prompt loader loads smoke.jsonl (>= 10 prompts, required fields present)
@@ -102,7 +107,7 @@ def test_run_one_exactkv_keys(runtime: ModelRuntime, noop_config: RunConfig) -> 
 
 def test_run_one_memory_keys(runtime: ModelRuntime, noop_config: RunConfig) -> None:
     report = run_one(runtime, _TEST_PROMPT, noop_config)
-    for key in ("full_bytes", "compressed_bytes", "compression_ratio"):
+    for key in ("full_bytes", "compressed_bytes", "compression_ratio", "memory_reduction_factor"):
         assert key in report["memory"], f"Missing key {key!r} in report['memory']"
 
 

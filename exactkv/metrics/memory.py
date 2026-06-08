@@ -19,12 +19,16 @@ from exactkv.cache.utils import kv_total_bytes
 
 @dataclass
 class MemorySummary:
-    """Byte-level KV-cache memory estimates for one prompt after prefill."""
-    full_bytes: int           # fp32 KV cache after prefilling the prompt
-    compressed_bytes: int     # bytes according to compressor.stats()
-    compression_ratio: float  # full_bytes / compressed_bytes; 1.0 for NoOp
-    memory_reduction_factor: float  # alias for compression_ratio (kept separate
-                                    # so callers can add wall-time later)
+    """Byte-level KV-cache memory estimates for one prompt after prefill.
+
+    Naming convention (matches docs/METRICS.md and CompressionStats):
+        compression_ratio       = compressed_bytes / full_bytes  (< 1 means smaller, 1.0 for NoOp)
+        memory_reduction_factor = full_bytes / compressed_bytes  (> 1 means savings, 1.0 for NoOp)
+    """
+    full_bytes: int                 # fp32 KV cache after prefilling the prompt
+    compressed_bytes: int           # bytes according to compressor.stats()
+    compression_ratio: float        # compressed_bytes / full_bytes; < 1 means compressed
+    memory_reduction_factor: float  # full_bytes / compressed_bytes; > 1 means savings
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -73,11 +77,12 @@ def estimate_kv_memory(
     stats = compressor.stats(compressed)
     compressed_bytes = max(stats.compressed_bytes, 1)
 
-    ratio = full_bytes / compressed_bytes
+    compression_ratio = compressed_bytes / max(full_bytes, 1)
+    memory_reduction_factor = full_bytes / compressed_bytes
 
     return MemorySummary(
         full_bytes=full_bytes,
         compressed_bytes=compressed_bytes,
-        compression_ratio=ratio,
-        memory_reduction_factor=ratio,
+        compression_ratio=compression_ratio,
+        memory_reduction_factor=memory_reduction_factor,
     )

@@ -56,8 +56,9 @@ class NoOpCompressor:
         return CompressionStats(
             compressor_name=self.name,
             full_bytes=full_bytes,
-            compressed_bytes=full_bytes,   # NoOp: no reduction
-            compression_ratio=1.0,
+            compressed_bytes=full_bytes,    # NoOp: no reduction
+            compression_ratio=1.0,          # compressed / full = 1.0
+            memory_reduction_factor=1.0,    # full / compressed = 1.0
             seq_len=kv_seq_len(compressed.data),
             num_layers=num_layers,
         )

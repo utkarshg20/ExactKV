@@ -136,13 +136,15 @@ class Int8Compressor:
             for l in layers
         )
 
-        ratio = full_bytes / max(compressed_bytes, 1)
+        compression_ratio = compressed_bytes / max(full_bytes, 1)
+        memory_reduction_factor = full_bytes / max(compressed_bytes, 1)
 
         return CompressionStats(
             compressor_name=self.name,
             full_bytes=full_bytes,
             compressed_bytes=compressed_bytes,
-            compression_ratio=ratio,
+            compression_ratio=compression_ratio,
+            memory_reduction_factor=memory_reduction_factor,
             seq_len=seq_len,
             num_layers=len(layers),
         )

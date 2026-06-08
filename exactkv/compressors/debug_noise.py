@@ -113,7 +113,8 @@ class DebugNoiseCompressor:
             compressor_name=self.name,
             full_bytes=total,
             compressed_bytes=total,
-            compression_ratio=1.0,
+            compression_ratio=1.0,         # compressed / full = 1.0 (no size reduction)
+            memory_reduction_factor=1.0,   # full / compressed = 1.0
             seq_len=d["seq_len"],
             num_layers=len(d["k_noisy"]),
         )

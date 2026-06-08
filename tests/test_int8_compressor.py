@@ -58,12 +58,26 @@ def compressor() -> Int8Compressor:
 # ---------------------------------------------------------------------------
 
 
-def test_stats_compression_ratio_positive(
+def test_stats_compression_ratio_in_range(
     compressor: Int8Compressor, full_state: FullKVState
 ) -> None:
+    """compression_ratio = compressed/full must be in (0, 1) for INT8."""
     compressed = compressor.compress(full_state)
     stats = compressor.stats(compressed)
-    assert stats.compression_ratio > 0.0, f"ratio={stats.compression_ratio}"
+    assert 0.0 < stats.compression_ratio < 1.0, (
+        f"compression_ratio={stats.compression_ratio} should be in (0, 1)"
+    )
+
+
+def test_stats_memory_reduction_factor_greater_than_one(
+    compressor: Int8Compressor, full_state: FullKVState
+) -> None:
+    """memory_reduction_factor = full/compressed must exceed 1.0 for INT8."""
+    compressed = compressor.compress(full_state)
+    stats = compressor.stats(compressed)
+    assert stats.memory_reduction_factor > 1.0, (
+        f"memory_reduction_factor={stats.memory_reduction_factor} should exceed 1.0"
+    )
 
 
 def test_stats_full_bytes_positive(
