@@ -1,6 +1,7 @@
-"""ExactKV V2 analysis package.
+"""ExactKV analysis package.
 
 Operates on existing benchmark and sweep reports without re-running the model.
+No timing, latency, throughput, or speedup fields are produced by any function.
 
 Modules
 -------
@@ -9,6 +10,10 @@ acceptance_tables   Build and export acceptance-rate summaries grouped by
 mismatch            Analyse where lossy divergences and ExactKV rejections occur.
 failure_report      Classify and report ExactKV failures vs. expected lossy
                     divergences.
+histograms          Compute accepted-length, first-divergence, and rejection-count
+                    histograms from existing reports.  (V3)
+examples            Extract concrete lossy-divergence, ExactKV-failure, and
+                    rejection examples from existing reports.  (V3)
 
 Key distinction
 ---------------
@@ -27,11 +32,24 @@ from exactkv.analysis.acceptance_tables import (
     group_acceptance_by_draft_len,
     write_acceptance_table_csv,
 )
+from exactkv.analysis.examples import (
+    extract_exactkv_failure_examples,
+    extract_lossy_divergence_examples,
+    extract_rejection_examples,
+)
 from exactkv.analysis.failure_report import (
     build_failure_report,
     list_exactkv_failures,
     list_lossy_divergences,
     write_failure_report_json,
+)
+from exactkv.analysis.histograms import (
+    DEFAULT_ACCEPTED_BUCKETS,
+    DEFAULT_DIVERGENCE_BUCKETS,
+    DEFAULT_REJECTION_BUCKETS,
+    accepted_length_histogram,
+    first_divergence_histogram,
+    rejection_count_histogram,
 )
 from exactkv.analysis.mismatch import (
     first_lossy_divergences,
@@ -55,4 +73,15 @@ __all__ = [
     "list_exactkv_failures",
     "list_lossy_divergences",
     "write_failure_report_json",
+    # histograms (V3)
+    "accepted_length_histogram",
+    "first_divergence_histogram",
+    "rejection_count_histogram",
+    "DEFAULT_ACCEPTED_BUCKETS",
+    "DEFAULT_DIVERGENCE_BUCKETS",
+    "DEFAULT_REJECTION_BUCKETS",
+    # examples (V3)
+    "extract_lossy_divergence_examples",
+    "extract_exactkv_failure_examples",
+    "extract_rejection_examples",
 ]

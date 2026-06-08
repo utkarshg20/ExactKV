@@ -453,6 +453,67 @@ Use `--suite-file path/to/custom.jsonl` to supply your own prompts; this overrid
 
 ---
 
+## V3 analysis compute (histograms and examples)
+
+The `exactkv.analysis` package now includes compute utilities that summarise
+acceptance and divergence behaviour in text/table form — **no images, no model
+re-run, no performance metrics**.
+
+### Accepted-length histogram
+
+How many tokens are accepted per verification round, on average:
+
+```python
+from exactkv.analysis import accepted_length_histogram
+
+h = accepted_length_histogram(sweep_report)
+# h["buckets"] → {"0": 0, "1": 2, "2-3": 5, "4-7": 8, "8-15": 3, "16+": 0}
+# h["total"]   → 18
+
+# Group by compressor
+by_comp = accepted_length_histogram(sweep_report, group_by="compressor_name")
+# by_comp["int8"]["buckets"] → {...}
+```
+
+### First-divergence bucket table
+
+Where in the generated sequence does lossy divergence first appear:
+
+```python
+from exactkv.analysis import first_divergence_histogram
+
+h = first_divergence_histogram(sweep_report)
+# h["buckets"] → {"no_divergence": 12, "0": 0, "1-4": 3, "5-16": 1, ...}
+```
+
+### Lossy divergence examples
+
+Side-by-side text comparison of full / lossy / ExactKV output for results where
+the unverified lossy output diverged:
+
+```python
+from exactkv.analysis import extract_lossy_divergence_examples
+
+examples = extract_lossy_divergence_examples(sweep_report, limit=3)
+for ex in examples:
+    print(f"Prompt  : {ex['prompt']}")
+    print(f"Full    : {ex['full_text']}")
+    print(f"Lossy   : {ex['lossy_text']}")   # diverges at token ex['first_divergence_idx']
+    print(f"ExactKV : {ex['exactkv_text']}")  # always matches Full
+    print(f"Note    : {ex['explanation']}")
+```
+
+Every example includes an `explanation` field that states:
+*"Lossy divergence is expected … ExactKV corrects this … A non-zero
+`exactkv_matches_full=False` would be a correctness bug, not a lossy
+divergence."*
+
+> These functions produce text/table artifacts for acceptance and exactness
+> analysis. They do **not** produce tokens/second, latency, throughput, or
+> speedup metrics.
+
+---
+
 ## V2 CLI
 
 `python -m exactkv` exposes the most-used ExactKV operations as CLI subcommands.
