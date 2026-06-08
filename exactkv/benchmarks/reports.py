@@ -1,4 +1,4 @@
-"""ExactKV V2 reporting module.
+"""ExactKV reporting module (V2 JSON/CSV + V5 workspace-aware memory fields).
 
 Provides stable JSON and CSV report writing/reading for benchmark results.
 Every report includes a run manifest with provenance metadata so that results
@@ -12,6 +12,17 @@ Design constraints (V2)
   readers cannot misinterpret byte counts as real packed-INT4 savings.
 * JSON round-trips losslessly.
 * CSV has one row per prompt result; all compressor metadata is flattened.
+
+V5 additive changes
+-------------------
+* JSON memory sub-dict now includes workspace-aware fields when available:
+  ``stored_kv_bytes``, ``materialized_working_kv_bytes``, ``metadata_bytes``,
+  ``temporary_workspace_bytes``, ``total_kv_footprint_bytes``.
+* CSV adds five corresponding columns (after ``memory_reduction_factor``).
+* Legacy V1–V4 reports without these fields are still valid; missing values
+  default to 0 in CSV rows and are absent from JSON (no mutation of old files).
+* ``total_kv_footprint_bytes`` is a conservative accounting sum, NOT a
+  measured peak GPU memory value.  Active GPU measurement is deferred.
 
 Public API
 ----------
@@ -49,25 +60,38 @@ _FORBIDDEN_FIELDS = frozenset({
 def _memory_claim_note(compressor_name: str, caps: dict[str, Any]) -> str:
     """Return a human-readable note explaining any limitations on byte claims.
 
+    V5 framing: notes distinguish stored bytes, materialized working bytes,
+    and accounting totals.  total_kv_footprint_bytes is a conservative
+    accounting sum, NOT a measured peak GPU memory value.
+
     Args:
         compressor_name: The compressor's registry name.
-        caps:            Compressor capabilities dict (from report['compressor_capabilities']).
+        caps:            Compressor capabilities dict.
 
     Returns:
         A non-empty note when the byte numbers require qualification,
-        empty string when they can be taken at face value.
+        or a brief honesty note even for real-bytes compressors.
     """
-    if compressor_name == "int4_sim":
-        return (
-            "int4_sim uses int8 container storage in V2; "
-            "do not interpret this as real packed INT4 memory savings."
-        )
     if not caps.get("supports_real_bytes_claim", True):
-        return (
-            f"'{compressor_name}' is simulated; "
-            "compressed_kv_bytes reflects storage format, not real compression savings."
+        sim_note = (
+            f"'{compressor_name}' is simulated: sub-INT8 values are stored in "
+            "int8 containers — stored_kv_bytes reflects int8 container reality, "
+            "not packed sub-INT8 savings. "
         )
-    return ""
+    else:
+        sim_note = f"'{compressor_name}' uses real storage (no simulation). "
+
+    working_note = (
+        "materialized_working_kv_bytes == full_kv_bytes for all current "
+        "ExactKV compressors (dequantisation produces a full-precision working copy). "
+    )
+    total_note = (
+        "total_kv_footprint_bytes is a conservative accounting sum "
+        "(stored + materialized + metadata + temporary); "
+        "it is NOT a measured peak GPU memory value. "
+        "Active GPU memory measurement is deferred to a later CUDA-specific phase."
+    )
+    return sim_note + working_note + total_note
 
 
 # ---------------------------------------------------------------------------
@@ -172,11 +196,19 @@ def _enrich_result(result: dict[str, Any]) -> dict[str, Any]:
 
     ``result`` is the dict returned by ``runner.run_one``.  We add:
     * ``compressor_capabilities`` (copied from result if present, else minimal stub)
-    * An enriched ``memory`` sub-dict with ``full_kv_bytes``, ``compressed_kv_bytes``,
-      ``supports_real_bytes_claim``, ``is_simulated``, and ``memory_claim_note``.
+    * An enriched ``memory`` sub-dict with V1–V4 honesty fields and V5
+      workspace-aware fields.
+
+    V5 workspace-aware fields (all present when result comes from Phase-A runner):
+        stored_kv_bytes, materialized_working_kv_bytes, metadata_bytes,
+        temporary_workspace_bytes, total_kv_footprint_bytes.
 
     The original ``memory`` keys (``full_bytes``, ``compressed_bytes``, etc.) are
-    preserved for backward compatibility.
+    preserved for backward compatibility.  Legacy results without V5 fields are
+    handled gracefully — missing fields default to 0.
+
+    Note: total_kv_footprint_bytes is a conservative accounting total, NOT a
+    measured peak GPU memory value.
     """
     enriched = dict(result)
 
@@ -185,13 +217,38 @@ def _enrich_result(result: dict[str, Any]) -> dict[str, Any]:
 
     # Enrich memory section
     mem = dict(enriched.get("memory", {}))
-    mem["full_kv_bytes"] = mem.get("full_bytes", 0)
-    mem["compressed_kv_bytes"] = mem.get("compressed_bytes", 0)
-    mem["supports_real_bytes_claim"] = caps.get("supports_real_bytes_claim", True)
-    mem["is_simulated"] = caps.get("is_simulated", False)
-    mem["memory_claim_note"] = _memory_claim_note(compressor_name, caps)
-    enriched["memory"] = mem
 
+    # V1–V4 backward-compat aliases
+    mem["full_kv_bytes"] = mem.get("full_kv_bytes") or mem.get("full_bytes", 0)
+    mem["compressed_kv_bytes"] = (
+        mem.get("compressed_kv_bytes") or mem.get("compressed_bytes", 0)
+    )
+
+    # Honesty fields: prefer values already in mem (from MemorySummary.to_dict()),
+    # fall back to capabilities dict for older results that predate Phase A.
+    if "supports_real_bytes_claim" not in mem:
+        mem["supports_real_bytes_claim"] = caps.get("supports_real_bytes_claim", True)
+    if "is_simulated" not in mem:
+        mem["is_simulated"] = caps.get("is_simulated", False)
+
+    # memory_claim_note: prefer the richer note from MemorySummary (Phase A);
+    # fall back to the generated note for older results.
+    if not mem.get("memory_claim_note"):
+        mem["memory_claim_note"] = _memory_claim_note(compressor_name, caps)
+
+    # V5 workspace-aware fields: pass through if present (Phase A); default to 0
+    # for legacy results so CSV/JSON consumers always see a numeric value.
+    for field in (
+        "stored_kv_bytes",
+        "materialized_working_kv_bytes",
+        "metadata_bytes",
+        "temporary_workspace_bytes",
+        "total_kv_footprint_bytes",
+    ):
+        if field not in mem:
+            mem[field] = 0
+
+    enriched["memory"] = mem
     return enriched
 
 
@@ -285,6 +342,12 @@ _CSV_COLUMNS: list[str] = [
     "compressed_kv_bytes",
     "compression_ratio",
     "memory_reduction_factor",
+    # V5 workspace-aware memory fields (additive; 0 for legacy results)
+    "stored_kv_bytes",
+    "materialized_working_kv_bytes",
+    "metadata_bytes",
+    "temporary_workspace_bytes",
+    "total_kv_footprint_bytes",
     "memory_claim_note",
 ]
 
@@ -323,6 +386,12 @@ def _result_to_csv_row(result: dict[str, Any]) -> dict[str, Any]:
         "compressed_kv_bytes": mem.get("compressed_kv_bytes", mem.get("compressed_bytes", "")),
         "compression_ratio": mem.get("compression_ratio", ""),
         "memory_reduction_factor": mem.get("memory_reduction_factor", ""),
+        # V5 workspace-aware memory fields (0 for legacy results without Phase A)
+        "stored_kv_bytes": mem.get("stored_kv_bytes", 0),
+        "materialized_working_kv_bytes": mem.get("materialized_working_kv_bytes", 0),
+        "metadata_bytes": mem.get("metadata_bytes", 0),
+        "temporary_workspace_bytes": mem.get("temporary_workspace_bytes", 0),
+        "total_kv_footprint_bytes": mem.get("total_kv_footprint_bytes", 0),
         "memory_claim_note": mem.get("memory_claim_note", ""),
     }
 
@@ -401,7 +470,11 @@ def validate_report(report: dict[str, Any]) -> list[str]:
     Checks:
     * No forbidden performance fields.
     * Each result has required top-level keys.
-    * Each result's memory section has the honesty fields.
+    * Each result's memory section has the V1–V4 honesty fields.
+    * V5 workspace fields, when present, are non-negative and the total reconciles.
+
+    Backward compatibility: V1–V4 reports without V5 workspace fields pass
+    validation without warnings.  The new fields are optional.
     """
     warnings: list[str] = []
     required_result_keys = {
@@ -412,6 +485,14 @@ def validate_report(report: dict[str, Any]) -> list[str]:
         "memory_reduction_factor", "memory_claim_note", "supports_real_bytes_claim",
         "is_simulated",
     }
+    # V5 workspace fields: optional but validated when present.
+    v5_workspace_fields = (
+        "stored_kv_bytes",
+        "materialized_working_kv_bytes",
+        "metadata_bytes",
+        "temporary_workspace_bytes",
+        "total_kv_footprint_bytes",
+    )
 
     try:
         _assert_no_forbidden_fields(report)
@@ -427,6 +508,29 @@ def validate_report(report: dict[str, Any]) -> list[str]:
             if key not in mem:
                 warnings.append(
                     f"Result[{i}].memory missing honesty key {key!r}"
+                )
+        # V5 optional checks: only validate when fields are present.
+        v5_present = all(f in mem for f in v5_workspace_fields)
+        if v5_present:
+            for f in v5_workspace_fields:
+                val = mem[f]
+                if not isinstance(val, (int, float)) or val < 0:
+                    warnings.append(
+                        f"Result[{i}].memory.{f} must be a non-negative number, "
+                        f"got {val!r}"
+                    )
+            # Reconciliation: total == stored + materialized + metadata + temporary
+            expected_total = (
+                mem.get("stored_kv_bytes", 0)
+                + mem.get("materialized_working_kv_bytes", 0)
+                + mem.get("metadata_bytes", 0)
+                + mem.get("temporary_workspace_bytes", 0)
+            )
+            actual_total = mem.get("total_kv_footprint_bytes", 0)
+            if actual_total != expected_total:
+                warnings.append(
+                    f"Result[{i}].memory.total_kv_footprint_bytes ({actual_total}) "
+                    f"!= stored+materialized+metadata+temporary ({expected_total})"
                 )
 
     return warnings

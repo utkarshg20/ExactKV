@@ -222,6 +222,14 @@ total_kv_footprint_bytes = stored_kv_bytes + metadata_bytes + full_kv_bytes
 
 This is intentionally conservative. A real profiler would give a tighter number.
 
+> **Important (Phase B clarification):** `total_kv_footprint_bytes` is an
+> **accounting sum computed from tensor shapes and dtype widths**.  It is
+> **NOT a measured peak GPU memory value**.  Actual peak GPU memory depends on
+> PyTorch allocator behaviour, attention intermediate buffers, activation
+> memory, and other framework overhead that ExactKV does not instrument.
+> Active GPU memory measurement is deferred to a later CUDA-specific
+> validation phase (post-V5).
+
 ---
 
 ## 6. How each field is interpreted per compressor type
