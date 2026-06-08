@@ -320,10 +320,10 @@ V4 is complete when all of the following hold:
 - [x] Report JSON/CSV include the three new fields; no-performance-field audit
       passes.
 - [x] Leaderboard renders K/V widths and average effective bit width.
-- [ ] `docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md` written from a real core-suite
+- [x] `docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md` written from a real core-suite
       sweep with `exactkv_failures == 0` and full honesty disclaimers.
-- [ ] README V4 results section and `docs/RELEASE_NOTES_V0.4.0.md` written.
-- [ ] Full prior test suite remains green.
+- [x] README V4 results section and `docs/RELEASE_NOTES_V0.4.0.md` written.
+- [x] Full prior test suite remains green.
 
 ---
 

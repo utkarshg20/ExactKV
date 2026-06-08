@@ -19,7 +19,7 @@ KV-cache generation and benchmark evaluation.
 
 ## Status
 
-**V3 — presentation and storytelling layer (v0.3.0-dev).**  V1 proved correctness; V2 added the compressor registry, CLI, JSON/CSV reporting, sweep orchestration, and analysis layer; V3 adds stronger prompt suites, Markdown report generation, acceptance leaderboards, divergence examples, mismatch histograms, and the `report` CLI command.
+**V4 — asymmetric K/V compression experiments (v0.4.0).**  V1 proved correctness; V2 added the compressor registry, CLI, JSON/CSV reporting, sweep orchestration, and analysis layer; V3 added prompt suites, Markdown report generation, acceptance leaderboards, and the `report` CLI; V4 adds asymmetric K/V compressors, K/V metadata in reports and leaderboards, and Experiment 003.
 
 **V1 gates (correctness prototype)**
 
@@ -55,6 +55,18 @@ KV-cache generation and benchmark evaluation.
 | `python -m exactkv report` writes Markdown from existing JSON | ✅ |
 | `docs/EXPERIMENT_002_CORE_SWEEP.md` written from real core-suite sweep with `exactkv_failures == 0` | ✅ |
 | No-performance-field audit passes across all V3 code, reports, and docs | ✅ |
+
+**V4 gates (asymmetric K/V compression experiments)**
+
+| Gate | Status |
+|---|---|
+| `CompressorCapabilities` carries `key_bit_width`, `value_bit_width`, `asymmetric`; backfilled for V1–V3 | ✅ |
+| `AsymmetricQuantSimCompressor(k_bits, v_bits)` with independent K/V quantisation and `full` passthrough | ✅ |
+| All 7 named asymmetric compressors resolve via registry with `exactkv_failures == 0` | ✅ |
+| JSON/CSV reports include `key_bit_width`, `value_bit_width`, `asymmetric`; backward compatible | ✅ |
+| Leaderboard renders K bits, V bits, avg eff bits; `list-compressors` shows K/V metadata | ✅ |
+| `docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md` written from 612-run sweep with `exactkv_failures == 0` | ✅ |
+| No-performance-field audit passes across all V4 code, reports, and docs | ✅ |
 
 ---
 
@@ -351,7 +363,7 @@ No throughput, latency, or speedup is claimed.
 
 ---
 
-## Experiment 002: Core suite sweep (v0.3.0-dev)
+## Experiment 002: Core suite sweep (v0.3.0)
 
 See [`docs/EXPERIMENT_002_CORE_SWEEP.md`](docs/EXPERIMENT_002_CORE_SWEEP.md)
 for the full Markdown report (generated via `python -m exactkv report`). 34
@@ -376,6 +388,53 @@ prompts × 3 compressors × 2 draft lengths = **204 runs total**:
 No throughput, latency, or speedup is claimed.
 
 ---
+
+## Experiment 003: Asymmetric K/V sweep (v0.4.0)
+
+See [`docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md`](docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md)
+for the full Markdown report. 34 prompts × 9 compressors × 2 draft lengths = **612 runs total**.
+
+| Setting | Value |
+|---|---|
+| Model | `Qwen/Qwen2.5-0.5B` |
+| Prompt suite | `core.jsonl` (34 prompts) |
+| Compressors | 9 (see table below) |
+| Draft lengths | 4, 8 |
+| Max new tokens | 24 |
+| Total runs | **612** |
+| **ExactKV failures** | **0** |
+| Lossy divergences | 386 (expected) |
+| Mean accept rate | 0.739 |
+
+**Acceptance by compressor:**
+
+| Compressor | K bits | V bits | Simulated | Accept rate | Rejected | ExactKV fail |
+|---|---|---|---|---|---|---|
+| `k_full_v8` | full | 8 | no | **0.988** | 22 | **0** |
+| `k8_v_full` | 8 | full | no | **0.953** | 86 | **0** |
+| `int8` | 8 | 8 | no | **0.953** | 89 | **0** |
+| `k_full_v4_sim` ⚠️ | full | 4 | yes | 0.890 | 174 | **0** |
+| `k8_v4_sim` ⚠️ | 8 | 4 | yes | 0.858 | 240 | **0** |
+| `k4_v8_sim` ⚠️ | 4 | 8 | yes | 0.562 | 1253 | **0** |
+| `k4_v_full_sim` ⚠️ | 4 | full | yes | 0.561 | 1255 | **0** |
+| `int4_sim` ⚠️ | 4 | 4 | yes | 0.553 | 1272 | **0** |
+| `k8_v2_sim` ⚠️ | 8 | 2 | yes | 0.330 | 2302 | **0** |
+
+> ⚠️ Simulated compressors store sub-INT8 values in `torch.int8` containers.
+> Memory figures reflect `int8` storage, not real packed savings.
+> **All 612 runs: ExactKV failures = 0.** Every verified output matched
+> `generate_full_greedy` exactly.
+>
+> `k_full_v8` (full-precision K, INT8 V) is the highest-acceptance asymmetric
+> compressor tested. `k8_v2_sim` (INT8 K, INT2-sim V) has the lowest acceptance
+> at 0.330 — aggressive V compression severely damages acceptance.
+>
+> Average effective bit width is a metadata comparison aid, not a real memory
+> measurement. No throughput, latency, or speedup is claimed.
+
+---
+
+
 
 ## V2 sweeps
 
@@ -731,26 +790,27 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 
 ## Future research directions
 
-* **V4 (planned) — asymmetric K/V acceptance experiments.** V4 adds simulated
-  asymmetric compressors (e.g. `k8_v4_sim`, `k4_v8_sim`) plus K-only/V-only
-  ablations to test whether compressing keys and values at different bit-widths
-  improves ExactKV acceptance behaviour. Simulated compressors only; no real
-  backends, no performance claims. See
-  [`docs/V4_SCOPE_STATEMENT.md`](docs/V4_SCOPE_STATEMENT.md).
-* **Asymmetric K/V compression** — Keys and values play different roles in
-  attention. K8/V4 or K-full/V-compressed policies may outperform symmetric
-  quantisation at the same average bit-width. Acceptance rate, not MSE, is
-  the right evaluation metric.
-* **Workspace-aware memory accounting** — Stored compressed bytes omit
-  dequantisation scratch buffer cost. Future `MemorySummary` will distinguish
-  `stored_kv_bytes`, `materialized_working_kv_bytes`, `metadata_bytes`, and
-  `temporary_workspace_bytes`.
+* **V4 (complete) — asymmetric K/V acceptance experiments.** V4 implemented
+  simulated asymmetric compressors (`k8_v4_sim`, `k8_v2_sim`, `k4_v8_sim`,
+  `k_full_v4_sim`, `k4_v_full_sim`, `k8_v_full`, `k_full_v8`), K/V metadata
+  reporting, and Experiment 003 (612-run core-suite sweep; `exactkv_failures == 0`).
+  No real backends, no performance claims. See
+  [`docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md`](docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md).
+* **V5 (recommended) — workspace-aware memory accounting** — Stored compressed
+  bytes omit dequantisation scratch buffer cost. Future `MemorySummary` will
+  distinguish `stored_kv_bytes`, `materialized_working_kv_bytes`,
+  `metadata_bytes`, and `temporary_workspace_bytes`.
+* **V5 (recommended) — real backend adapter** — Design a `BackendAdapter`
+  interface so real quantisation backends (bitsandbytes, KIVI, kvpress) can
+  plug into the existing `KVCompressor` protocol. First step toward a real
+  memory and acceptance comparison.
 * **Attention-aware divergence analysis** — Correlate first-divergence
   position with attention entropy to understand compression sensitivity
-  by prompt type and position.
+  by prompt type and position. Experiment 003 data is a good starting point.
 
 See [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md)
-for the full writeup.
+for the full writeup. See [`docs/RELEASE_NOTES_V0.4.0.md`](docs/RELEASE_NOTES_V0.4.0.md)
+for V4 release notes.
 
 ---
 

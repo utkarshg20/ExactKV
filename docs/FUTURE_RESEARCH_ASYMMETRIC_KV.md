@@ -1,17 +1,19 @@
 # Future Research: Asymmetric K/V Compression and Workspace-Aware Memory Accounting
 
 > **Scope:** This document describes V4/V5 research directions.
-> None of this is implemented in V3.
+> The asymmetric-compression directions (asymmetric compressor simulator,
+> K-only/V-only ablations, K/V bit-width sweeps) have been **implemented in V4**.
 > No real compressor backends, no speedup claims, no production-readiness claims.
 
-> **V4 implementation plan.** The asymmetric-compression directions in this note
-> (the asymmetric compressor simulator, K-only/V-only ablations, and K/V
-> bit-width sweeps) are scheduled for **V4**. See
-> [`docs/V4_SCOPE_STATEMENT.md`](V4_SCOPE_STATEMENT.md) for the concrete plan,
-> phases, and gates. V4 implements simulated compressors only — no real
-> backends, no real bit-packing, no performance claims. The **workspace-aware
-> memory accounting** section (§4) is **not** part of V4 and remains a **V5**
-> candidate.
+> **V4 implementation status.** The asymmetric compressor simulator
+> (`AsymmetricQuantSimCompressor`), K-only/V-only ablations (`k8_v_full`,
+> `k_full_v8`, `k_full_v4_sim`, `k4_v_full_sim`), and the K/V bit-width sweep
+> (`k8_v4_sim`, `k8_v2_sim`, `k4_v8_sim`) are all **implemented and tested in
+> V4**. Experiment 003 documents the acceptance-behaviour results. See
+> [`docs/V4_SCOPE_STATEMENT.md`](V4_SCOPE_STATEMENT.md) and
+> [`docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md`](EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md).
+> The **workspace-aware memory accounting** section (§4) is **not** part of V4
+> and remains a **V5** candidate.
 
 ---
 
@@ -44,7 +46,7 @@ uniform compressor at the same average bit-width.
 
 ## 2. Why This Matters for ExactKV
 
-ExactKV currently evaluates symmetric toy compressors:
+ExactKV V1–V3 evaluated symmetric toy compressors:
 
 | Compressor | K policy | V policy |
 |---|---|---|
@@ -55,23 +57,30 @@ ExactKV currently evaluates symmetric toy compressors:
 
 All four treat K and V identically.
 
-A future ExactKV direction is to support and evaluate asymmetric compressor
-policies such as:
+**V4 implemented asymmetric compressor policies** for acceptance-rate comparison:
 
-| Policy label | K bit-width | V bit-width |
-|---|---|---|
-| K8/V4 | INT8 | INT4 (simulated) |
-| K8/V2 | INT8 | INT2 (simulated) |
-| K4/V8 | INT4 (simulated) | INT8 |
-| K-full/V-int8 | full precision | INT8 |
-| K-int8/V-full | INT8 | full precision |
+| V4 name | K bit-width | V bit-width | Simulated |
+|---|---|---|---|
+| `k8_v4_sim` | INT8 | INT4 (simulated) | yes ⚠️ |
+| `k8_v2_sim` | INT8 | INT2 (simulated) | yes ⚠️ |
+| `k4_v8_sim` | INT4 (simulated) | INT8 | yes ⚠️ |
+| `k_full_v4_sim` | full precision | INT4 (simulated) | yes ⚠️ |
+| `k4_v_full_sim` | INT4 (simulated) | full precision | yes ⚠️ |
+| `k8_v_full` | INT8 | full precision | **no** |
+| `k_full_v8` | full precision | INT8 | **no** |
+
+> ⚠️ Compressors marked simulated store sub-INT8 values in `int8` containers.
+> Do not cite their memory figures as real packed bit savings.
 
 ExactKV is well-positioned to evaluate these policies because it already
 separates the draft-and-verify loop from the compressor implementation.
-Adding an `AsymmetricQuantCompressor` would require only a new compressor
-class and no changes to the verification engine or the analysis layer.
+`AsymmetricQuantSimCompressor` (V4) required only a new compressor class;
+the verification engine and analysis layer were unchanged.
 
-### What ExactKV would measure
+See [`docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md`](EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md)
+for acceptance-rate results across these policies.
+
+### What ExactKV measures
 
 The primary evaluation metric for asymmetric compression should NOT be
 reconstruction MSE.  The ExactKV-specific metrics are:
@@ -216,11 +225,12 @@ The following experiments are candidates for V4 or V5:
 
 | Item | Status |
 |---|---|
-| Asymmetric compressor implementation | **Planned for V4.** See [`docs/V4_SCOPE_STATEMENT.md`](V4_SCOPE_STATEMENT.md). |
-| K-only / V-only ablations | **Planned for V4.** See [`docs/V4_SCOPE_STATEMENT.md`](V4_SCOPE_STATEMENT.md). |
+| Asymmetric compressor simulator (`AsymmetricQuantSimCompressor`) | **Implemented in V4.** |
+| K-only / V-only ablations (`k8_v_full`, `k_full_v8`, `k_full_v4_sim`, `k4_v_full_sim`) | **Implemented in V4.** |
+| K/V bit-width sweep (`k8_v4_sim`, `k8_v2_sim`, `k4_v8_sim`) | **Implemented in V4.** See [`docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md`](EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md). |
 | Workspace-aware memory schema | **Deferred to V5.** Not in V4. |
 | Real INT4 packed storage | **Not implemented.** Future work. |
-| Real compressor backends (KIVI, KVQuant, SnapKV) | **Out of scope for V4.** |
+| Real compressor backends (KIVI, KVQuant, SnapKV) | **Out of scope for V4.** V5 candidate. |
 | Speedup, throughput, or latency metrics | **Never.** ExactKV measures correctness and acceptance, not performance. |
 | Production-readiness claim | **Never.** ExactKV is a research/experimental framework. |
 
