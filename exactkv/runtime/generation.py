@@ -7,6 +7,7 @@ from typing import Any
 import torch
 
 from exactkv.runtime.model_runtime import ModelRuntime
+from exactkv.runtime.prefill import prefill_to_full_state
 
 
 @dataclass
@@ -55,24 +56,16 @@ def generate_full_greedy(
         FullGreedyResult with generated_ids, full_sequence_ids, output_text, and
         the final past_key_values.
     """
-    prompt_ids: torch.Tensor = runtime.encode(prompt)  # [1, prompt_len]
-
-    # --- Prefill -----------------------------------------------------------
-    prefill_out = runtime.forward(
-        input_ids=prompt_ids,
-        past_key_values=None,
-        use_cache=True,
-    )
-    # The logits at the last prompt position tell us the first generated token.
-    past_key_values: Any = prefill_out.past_key_values
-    next_logits: torch.Tensor = prefill_out.logits[:, -1, :]  # [1, vocab]
+    # --- Prefill (via shared helper) ----------------------------------------
+    full_state = prefill_to_full_state(runtime, prompt)
+    past_key_values: Any = full_state.past_key_values
+    next_token_id: int = full_state.metadata["next_token_id"]
 
     # --- Decode ------------------------------------------------------------
     generated_ids: list[int] = []
     stopped_on_eos = False
 
     for _ in range(max_new_tokens):
-        next_token_id: int = int(next_logits.argmax(dim=-1).item())
         generated_ids.append(next_token_id)
 
         if next_token_id == runtime.eos_token_id:
@@ -89,16 +82,16 @@ def generate_full_greedy(
             use_cache=True,
         )
         past_key_values = step_out.past_key_values
-        next_logits = step_out.logits[:, -1, :]  # [1, vocab]
+        next_token_id = int(step_out.logits[:, -1, :].argmax(dim=-1).item())
 
     gen_tensor = torch.tensor(
         [generated_ids], dtype=torch.long, device=runtime.device
     )
-    full_sequence = torch.cat([prompt_ids, gen_tensor], dim=1)
+    full_sequence = torch.cat([full_state.prompt_ids, gen_tensor], dim=1)
     output_text = runtime.decode(gen_tensor)
 
     return FullGreedyResult(
-        prompt_ids=prompt_ids,
+        prompt_ids=full_state.prompt_ids,
         generated_ids=gen_tensor,
         full_sequence_ids=full_sequence,
         output_text=output_text,
@@ -153,24 +146,8 @@ def generate_lossy_greedy(
     Returns:
         LossyGreedyResult (no exactness guarantee).
     """
-    from exactkv.cache.full_state import FullKVState
-
-    prompt_ids = runtime.encode(prompt)  # [1, L]
-
-    # Prefill to get the authoritative initial KV
-    prefill_out = runtime.forward(prompt_ids, past_key_values=None, use_cache=True)
-    next_token_id = int(prefill_out.logits[:, -1, :].argmax(dim=-1).item())
-
-    empty_gen = torch.zeros(1, 0, dtype=torch.long, device=runtime.device)
-    full_state = FullKVState(
-        past_key_values=prefill_out.past_key_values,
-        prompt_ids=prompt_ids,
-        generated_ids=empty_gen,
-        full_sequence_ids=prompt_ids,
-        device=runtime.device,
-        dtype=runtime.dtype,
-        metadata={"next_token_id": next_token_id},
-    )
+    # Prefill to get the authoritative initial KV (via shared helper)
+    full_state = prefill_to_full_state(runtime, prompt)
 
     # Compress and materialise (deep-copy guards against aliasing with full_state)
     compressed = compressor.compress(full_state)
@@ -198,10 +175,10 @@ def generate_lossy_greedy(
     gen_tensor = torch.tensor(
         [generated_ids], dtype=torch.long, device=runtime.device
     )
-    full_seq = torch.cat([prompt_ids, gen_tensor], dim=1)
+    full_seq = torch.cat([full_state.prompt_ids, gen_tensor], dim=1)
 
     return LossyGreedyResult(
-        prompt_ids=prompt_ids,
+        prompt_ids=full_state.prompt_ids,
         generated_ids=gen_tensor,
         full_sequence_ids=full_seq,
         output_text=runtime.decode(gen_tensor),

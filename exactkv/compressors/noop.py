@@ -15,13 +15,27 @@ from typing import Any
 from exactkv.cache.compressed_state import CompressedKVState
 from exactkv.cache.full_state import FullKVState
 from exactkv.cache.utils import kv_seq_len, kv_total_bytes
-from exactkv.compressors.base import CompressionStats
+from exactkv.compressors.base import CompressorCapabilities, CompressionStats
 
 
 class NoOpCompressor:
     """Identity compressor: full KV cache is used as-is for drafting."""
 
     name: str = "noop"
+
+    capabilities: CompressorCapabilities = CompressorCapabilities(
+        name="noop",
+        compressor_type="identity",
+        is_simulated=False,
+        supports_real_bytes_claim=False,
+        supports_token_dropping=False,
+        supports_quantization=False,
+        notes=(
+            "Returns the full KV cache unchanged.  Used as the correctness "
+            "baseline: ExactKV with NoOp must always accept 100% of drafted "
+            "tokens and produce identical output to generate_full_greedy."
+        ),
+    )
 
     def compress(self, state: FullKVState) -> CompressedKVState:
         """Wrap the full past_key_values without modification."""

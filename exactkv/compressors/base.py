@@ -6,11 +6,52 @@ from any base class — they just need to provide the methods listed below.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Protocol
 
 from exactkv.cache.compressed_state import CompressedKVState
 from exactkv.cache.full_state import FullKVState
+
+
+@dataclass
+class CompressorCapabilities:
+    """Metadata describing a compressor's nature and claims.
+
+    These fields help downstream tools (CLI, report renderer, sweep planner)
+    understand what a compressor can and cannot claim.  They are purely
+    informational and do not affect the compression algorithm itself.
+
+    Fields
+    ------
+    name
+        Canonical string name used in the registry (e.g. ``"int8"``).
+    compressor_type
+        Broad category: ``"identity"`` | ``"quantization"`` | ``"debug"``.
+        Future categories include ``"token_dropping"`` and ``"mixed"``.
+    is_simulated
+        ``True`` if the compressor simulates a target algorithm in a wider
+        dtype (e.g. INT4 stored as INT8 — no real bit-packing is done).
+        ``False`` for genuinely implemented algorithms (INT8, identity, etc.).
+    supports_real_bytes_claim
+        ``True`` if the compressed storage genuinely uses fewer bytes than
+        fp32 (e.g. INT8 q-tensors occupy 1 B/element vs 4 B for fp32).
+        ``False`` for NoOp (same bytes) or debug compressors.
+    supports_token_dropping
+        ``True`` if the compressor discards KV tokens (e.g. SnapKV, H2O).
+        All V1 compressors are ``False``.
+    supports_quantization
+        ``True`` if the compressor quantises KV values.
+    notes
+        Free-form annotation for documentation / reporting.
+    """
+
+    name: str
+    compressor_type: str              # "identity" | "quantization" | "debug"
+    is_simulated: bool
+    supports_real_bytes_claim: bool
+    supports_token_dropping: bool
+    supports_quantization: bool
+    notes: str = field(default="")
 
 
 @dataclass

@@ -24,7 +24,8 @@ from typing import Optional
 # Allow running as a script from anywhere inside the repo
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from exactkv.benchmarks.runner import RunConfig, _make_compressor
+from exactkv.benchmarks.runner import RunConfig
+from exactkv.compressors import get_compressor
 from exactkv.metrics.acceptance import summarize_acceptance
 from exactkv.metrics.exactness import first_divergence_idx, token_exact_match
 from exactkv.metrics.memory import estimate_kv_memory
@@ -65,7 +66,7 @@ def main(
         print(f"Loading {model_name} …")
         runtime = ModelRuntime(model_name=model_name, device="auto", dtype="float32")
 
-    compressor = _make_compressor(compressor_name)
+    compressor = get_compressor(compressor_name)
 
     _print_section(f"Prompt")
     print(f"  {prompt!r}")

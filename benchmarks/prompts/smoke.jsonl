@@ -1,0 +1,16 @@
+{"prompt_id": "nat_001", "category": "natural_language", "prompt": "The capital of France is"}
+{"prompt_id": "nat_002", "category": "natural_language", "prompt": "In machine learning, a neural network is"}
+{"prompt_id": "nat_003", "category": "natural_language", "prompt": "The theory of relativity states that"}
+{"prompt_id": "nat_004", "category": "natural_language", "prompt": "Once upon a time in a land far away, there lived a"}
+{"prompt_id": "code_001", "category": "code", "prompt": "Write a Python function that computes the factorial of n:"}
+{"prompt_id": "code_002", "category": "code", "prompt": "def binary_search(arr, target):\n    \"\"\"Return the index of target in sorted arr, or -1.\"\"\""}
+{"prompt_id": "code_003", "category": "code", "prompt": "# Sort a list of integers in Python using merge sort\ndef merge_sort(arr):"}
+{"prompt_id": "json_001", "category": "json", "prompt": "Generate a JSON object describing a person with name, age, and email fields:"}
+{"prompt_id": "json_002", "category": "json", "prompt": "{\"name\": \"Alice\", \"age\": 30, \"city\":"}
+{"prompt_id": "cmd_001", "category": "command", "prompt": "List all files in the current directory sorted by modification time using the ls command:"}
+{"prompt_id": "cmd_002", "category": "command", "prompt": "The git command to create and switch to a new branch named feature/login is:"}
+{"prompt_id": "trans_001", "category": "translation", "prompt": "Translate 'Hello, how are you?' into French:"}
+{"prompt_id": "trans_002", "category": "translation", "prompt": "Translate 'The weather is beautiful today' into Spanish:"}
+{"prompt_id": "trans_003", "category": "translation", "prompt": "Translate 'Thank you very much' into Japanese:"}
+{"prompt_id": "long_001", "category": "long_prompt", "prompt": "You are a helpful assistant. The user has asked you to summarize the following passage about climate change: Global warming refers to the long-term rise in Earth's average surface temperature due to human-induced greenhouse gas emissions. Since the Industrial Revolution, CO2 levels have increased significantly. The effects include rising sea levels, more frequent extreme weather events, and disruption of ecosystems. To mitigate these effects, experts recommend transitioning to renewable energy sources. In summary,"}
+{"prompt_id": "long_002", "category": "long_prompt", "prompt": "Consider the following mathematical problem: If a train travels at 60 miles per hour for 2.5 hours, and then at 80 miles per hour for 1.5 hours, what is the total distance traveled? Show your work step by step. Step 1:"}

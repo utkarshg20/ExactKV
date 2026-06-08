@@ -31,7 +31,7 @@ from exactkv.cache.utils import (
     kv_seq_len,
     rebuild_cache,
 )
-from exactkv.compressors.base import CompressionStats
+from exactkv.compressors.base import CompressorCapabilities, CompressionStats
 
 # Bytes per element for the original fp32 tensors.
 _FP32_BYTES = 4
@@ -66,6 +66,21 @@ class Int8Compressor:
     """Per-tensor symmetric INT8 compressor for KV cache tensors."""
 
     name: str = "int8"
+
+    capabilities: CompressorCapabilities = CompressorCapabilities(
+        name="int8",
+        compressor_type="quantization",
+        is_simulated=False,
+        supports_real_bytes_claim=True,
+        supports_token_dropping=False,
+        supports_quantization=True,
+        notes=(
+            "Per-tensor symmetric INT8 quantisation (scale = max(|x|) / 127). "
+            "Compressed storage is genuinely INT8 (1 B/element vs 4 B for fp32). "
+            "V1 materialises back to fp32 for inference; a production backend "
+            "would keep INT8 in-kernel."
+        ),
+    )
 
     def compress(self, state: FullKVState) -> CompressedKVState:
         """Quantise all KV tensors to INT8.  Does NOT mutate ``state``."""

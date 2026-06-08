@@ -12,9 +12,8 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from typing import Any, Optional
 
-import torch
-
 from exactkv.cache.utils import kv_total_bytes
+from exactkv.runtime.prefill import prefill_to_full_state
 
 
 @dataclass
@@ -34,7 +33,6 @@ class MemorySummary:
         return asdict(self)
 
 
-@torch.no_grad()
 def estimate_kv_memory(
     runtime: Any,         # ModelRuntime
     prompt: str,
@@ -54,23 +52,8 @@ def estimate_kv_memory(
     Returns:
         MemorySummary with full_bytes, compressed_bytes, and ratios.
     """
-    from exactkv.cache.full_state import FullKVState
-
-    prompt_ids = runtime.encode(prompt)
-    out = runtime.forward(prompt_ids, past_key_values=None, use_cache=True)
-    next_tok = int(out.logits[:, -1, :].argmax(dim=-1).item())
-
-    empty_gen = torch.zeros(1, 0, dtype=torch.long, device=runtime.device)
-    full_state = FullKVState(
-        past_key_values=out.past_key_values,
-        prompt_ids=prompt_ids,
-        generated_ids=empty_gen,
-        full_sequence_ids=prompt_ids,
-        device=runtime.device,
-        dtype=runtime.dtype,
-        metadata={"next_token_id": next_tok},
-    )
-
+    # Prefill via shared helper (avoids duplicating encode → forward → FullKVState)
+    full_state = prefill_to_full_state(runtime, prompt)
     full_bytes = kv_total_bytes(full_state.past_key_values)
 
     compressed = compressor.compress(full_state)

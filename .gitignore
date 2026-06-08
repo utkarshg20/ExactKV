@@ -44,8 +44,14 @@ htmlcov/
 *.safetensors
 *.gguf
 
-# Benchmark outputs
+# Benchmark outputs (keep .gitkeep, ignore generated files)
 outputs/
 results/
-*.jsonl
+reports/*.json
+reports/*.csv
 *.log
+
+# Prompt JSONL files committed under benchmarks/prompts/ are tracked explicitly.
+# All other *.jsonl are ignored (e.g. benchmark output reports).
+*.jsonl
+!benchmarks/prompts/*.jsonl

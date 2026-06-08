@@ -45,6 +45,7 @@ from exactkv.cache.full_state import FullKVState
 from exactkv.cache.utils import kv_seq_len
 from exactkv.compressors.base import KVCompressor
 from exactkv.runtime.model_runtime import ModelRuntime
+from exactkv.runtime.prefill import prefill_to_full_state
 from exactkv.verification.acceptance import (
     AcceptanceResult,
     DraftResult,
@@ -89,25 +90,8 @@ class ExactKVGenerator:
             ExactKVResult with output_ids matching generate_full_greedy exactly
             when NoOpCompressor is used.
         """
-        prompt_ids = self.runtime.encode(prompt)           # [1, L]
-
-        # ── Prefill ──────────────────────────────────────────────────────
-        with torch.no_grad():
-            prefill_out = self.runtime.forward(
-                prompt_ids, past_key_values=None, use_cache=True
-            )
-        next_token_id = int(prefill_out.logits[:, -1, :].argmax(dim=-1).item())
-
-        empty_gen = torch.zeros(1, 0, dtype=torch.long, device=self.runtime.device)
-        full_state = FullKVState(
-            past_key_values=prefill_out.past_key_values,
-            prompt_ids=prompt_ids,
-            generated_ids=empty_gen,
-            full_sequence_ids=prompt_ids,
-            device=self.runtime.device,
-            dtype=self.runtime.dtype,
-            metadata={"next_token_id": next_token_id},
-        )
+        # ── Prefill (via shared helper) ───────────────────────────────────
+        full_state = prefill_to_full_state(self.runtime, prompt)
 
         compressed = self.compressor.compress(full_state)
         self._assert_alignment(full_state, compressed, round_idx=-1)
@@ -181,6 +165,7 @@ class ExactKVGenerator:
         output_ids = torch.tensor(
             [all_generated], dtype=torch.long, device=self.runtime.device
         )
+        prompt_ids = full_state.prompt_ids
         full_seq = torch.cat([prompt_ids, output_ids], dim=1)
         output_text = self.runtime.decode(output_ids)
 

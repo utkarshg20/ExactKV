@@ -37,7 +37,7 @@ from exactkv.cache.utils import (
     kv_total_bytes,
     rebuild_cache,
 )
-from exactkv.compressors.base import CompressionStats
+from exactkv.compressors.base import CompressorCapabilities, CompressionStats
 
 # We use modular arithmetic to guarantee next_token_id differs from the full
 # model's prediction.  Any modulus > 1 works; we pick a small prime so the
@@ -52,6 +52,21 @@ class DebugNoiseCompressor:
     """
 
     name: str = "debug_noise"
+
+    capabilities: CompressorCapabilities = CompressorCapabilities(
+        name="debug_noise",
+        compressor_type="debug",
+        is_simulated=True,
+        supports_real_bytes_claim=False,
+        supports_token_dropping=False,
+        supports_quantization=False,
+        notes=(
+            "Artificially perturbs KV tensors with large Gaussian noise to force "
+            "rejection in every verification round.  Exists exclusively to test the "
+            "rejection and correction code paths in VerificationEngine and "
+            "ExactKVGenerator.  Must not appear in real benchmark comparisons."
+        ),
+    )
 
     def __init__(self, noise_scale: float = 10.0) -> None:
         self.noise_scale = noise_scale

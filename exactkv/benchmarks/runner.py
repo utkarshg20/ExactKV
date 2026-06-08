@@ -16,9 +16,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from exactkv.benchmarks.prompts import load_prompts
-from exactkv.compressors.debug_noise import DebugNoiseCompressor
-from exactkv.compressors.int8 import Int8Compressor
-from exactkv.compressors.noop import NoOpCompressor
+from exactkv.compressors import get_compressor
 from exactkv.metrics.acceptance import summarize_acceptance
 from exactkv.metrics.exactness import first_divergence_idx, token_exact_match
 from exactkv.metrics.memory import estimate_kv_memory
@@ -33,19 +31,6 @@ class RunConfig:
     compressor_name: str = "int8"
     draft_len: int = 4
     max_new_tokens: int = 32
-
-
-def _make_compressor(name: str) -> Any:
-    if name == "noop":
-        return NoOpCompressor()
-    if name == "int8":
-        return Int8Compressor()
-    if name == "debug_noise":
-        return DebugNoiseCompressor()
-    raise ValueError(
-        f"Unknown compressor {name!r}. "
-        "Choose from: noop, int8, debug_noise"
-    )
 
 
 def run_one(
@@ -65,7 +50,7 @@ def run_one(
         compressor_name, draft_len, max_new_tokens, full, lossy, exactkv,
         memory, exactkv_failure.
     """
-    compressor = _make_compressor(config.compressor_name)
+    compressor = get_compressor(config.compressor_name)
     prompt = prompt_entry["prompt"]
     max_new = config.max_new_tokens
 
