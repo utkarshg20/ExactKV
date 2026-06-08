@@ -541,7 +541,161 @@ class TestCliWorkspaceLines:
 
 
 # ===========================================================================
-# SECTION E: __init__.py exports
+# SECTION E: Memory notes readability cleanup (Phase C cleanup)
+# ===========================================================================
+
+class TestMemoryNotesCompactness:
+    """Memory Honesty Notes section is compact after Phase C cleanup.
+
+    The verbose per-compressor paragraphs are replaced with a short table.
+    All required honesty wording must still appear somewhere in the full report
+    (either in the compact table footer, the workspace section, or the disclaimers).
+    """
+
+    _FORBIDDEN_PATTERNS = [
+        "| tokens_per_second",
+        "| throughput |",
+        "| latency |",
+        "| speedup |",
+        "| runtime_seconds",
+    ]
+
+    def test_memory_honesty_section_present(self):
+        """Memory Honesty Notes section heading is still in the rendered Markdown."""
+        from exactkv.reporting.markdown import render_markdown_report
+        report = _multi_compressor_v5_report()
+        md = render_markdown_report(report, include_examples=False)
+        assert "memory honesty" in md.lower(), (
+            "Memory Honesty Notes section heading missing"
+        )
+
+    def test_no_table_row_exceeds_200_chars(self):
+        """No single pipe-table row in the Memory Honesty Notes is a full paragraph."""
+        from exactkv.reporting.markdown import render_markdown_report
+        report = _multi_compressor_v5_report()
+        md = render_markdown_report(report, include_examples=False)
+
+        # Isolate the Memory Honesty Notes section
+        start = md.lower().find("## memory honesty notes")
+        end_marker = "\n## "
+        end = md.find(end_marker, start + 5) if start != -1 else -1
+        section = md[start:end] if start != -1 and end != -1 else md
+
+        for line in section.split("\n"):
+            if line.startswith("|") and "compressor" not in line.lower() and "---" not in line:
+                assert len(line) <= 200, (
+                    f"Memory notes row exceeds 200 chars ({len(line)}): {line!r}"
+                )
+
+    def test_key_honesty_wording_accounting_sum(self):
+        """'accounting' still appears in the full Markdown."""
+        from exactkv.reporting.markdown import render_markdown_report
+        report = _multi_compressor_v5_report()
+        md = render_markdown_report(report, include_examples=False)
+        assert "accounting" in md.lower()
+
+    def test_key_honesty_wording_not_measured_peak(self):
+        """Disclaimer about non-measured peak appears in the full Markdown."""
+        from exactkv.reporting.markdown import render_markdown_report
+        report = _multi_compressor_v5_report()
+        md = render_markdown_report(report, include_examples=False)
+        md_lower = md.lower()
+        assert "not" in md_lower and "measured" in md_lower
+
+    def test_key_honesty_wording_deferred(self):
+        """'deferred' appears in the full Markdown."""
+        from exactkv.reporting.markdown import render_markdown_report
+        report = _multi_compressor_v5_report()
+        md = render_markdown_report(report, include_examples=False)
+        assert "deferred" in md.lower()
+
+    def test_key_honesty_wording_int8_containers(self):
+        """int8 container wording appears somewhere in the full Markdown."""
+        from exactkv.reporting.markdown import render_markdown_report
+        report = _multi_compressor_v5_report()
+        md = render_markdown_report(report, include_examples=False)
+        assert "int8" in md.lower()
+        assert "container" in md.lower()
+
+    def test_key_honesty_wording_simulated(self):
+        """'simulated' appears in the full Markdown."""
+        from exactkv.reporting.markdown import render_markdown_report
+        report = _multi_compressor_v5_report()
+        md = render_markdown_report(report, include_examples=False)
+        assert "simulated" in md.lower()
+
+    def test_key_honesty_wording_materialized(self):
+        """'materialized' appears in the full Markdown."""
+        from exactkv.reporting.markdown import render_markdown_report
+        report = _multi_compressor_v5_report()
+        md = render_markdown_report(report, include_examples=False)
+        assert "materialized" in md.lower()
+
+    def test_workspace_section_still_present(self):
+        """Workspace-Aware Memory Accounting section unchanged by cleanup."""
+        from exactkv.reporting.markdown import render_markdown_report
+        report = _multi_compressor_v5_report()
+        md = render_markdown_report(report, include_examples=False)
+        assert "workspace-aware memory accounting" in md.lower()
+
+    def test_simulated_flag_in_compact_table(self):
+        """int4_sim row in compact table shows simulated."""
+        from exactkv.reporting.markdown import render_markdown_report
+        report = _multi_compressor_v5_report()
+        md = render_markdown_report(report, include_examples=False)
+        # int4_sim should appear in the compact table rows
+        assert "`int4_sim`" in md
+
+    def test_real_bytes_flag_in_compact_table(self):
+        """int8 row shows real bytes = yes in compact table."""
+        from exactkv.reporting.markdown import render_markdown_report
+        report = _multi_compressor_v5_report()
+        md = render_markdown_report(report, include_examples=False)
+        assert "`int8`" in md
+
+    def test_compact_table_footer_references_workspace_section(self):
+        """Compact table footer points to workspace section."""
+        from exactkv.reporting.markdown import render_markdown_report
+        report = _multi_compressor_v5_report()
+        md = render_markdown_report(report, include_examples=False)
+        assert "workspace-aware memory accounting" in md.lower()
+
+    def test_no_forbidden_data_fields_in_cleaned_md(self):
+        from exactkv.reporting.markdown import render_markdown_report
+        report = _multi_compressor_v5_report()
+        md = render_markdown_report(report, include_examples=False)
+        lower = md.lower()
+        for pat in self._FORBIDDEN_PATTERNS:
+            assert pat not in lower, f"Forbidden pattern {pat!r} in Markdown"
+
+    def test_legacy_report_compact_table_no_crash(self):
+        """Legacy V4-style report still renders compact table without crashing."""
+        from exactkv.reporting.markdown import render_markdown_report
+        report = make_report(
+            make_result("int8"),
+            make_result("int4_sim", is_simulated=True, supports_real_bytes_claim=False),
+        )
+        # Inject a note so the compact table has something to truncate
+        report["results"][1]["memory"]["memory_claim_note"] = (
+            "int4_sim uses int8 container storage. "
+            "sub-INT8 values are not bit-packed. "
+            "supports_real_bytes_claim=False. "
+            "total_kv_footprint_bytes is an accounting sum. "
+            "Active GPU measurement is deferred."
+        )
+        md = render_markdown_report(report, include_examples=False)
+        assert isinstance(md, str)
+        # The compact table renders without paragraphs per row
+        start = md.lower().find("## memory honesty notes")
+        end = md.find("\n## ", start + 5) if start != -1 else -1
+        section = md[start:end] if start != -1 and end != -1 else md
+        for line in section.split("\n"):
+            if line.startswith("|") and "compressor" not in line.lower() and "---" not in line:
+                assert len(line) <= 200, f"Row too long after cleanup: {line!r}"
+
+
+# ===========================================================================
+# SECTION G: __init__.py exports
 # ===========================================================================
 
 class TestReportingPackageExports:

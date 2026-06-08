@@ -244,23 +244,62 @@ def _render_kv_metadata_section(
     return "\n".join(lines) + note
 
 
-def _render_memory_notes(report: dict[str, Any]) -> str:
-    """Collect memory honesty notes from all results."""
-    notes: dict[str, str] = {}
-    for r in report.get("results", []):
-        mem = r.get("memory", {})
-        note = mem.get("memory_claim_note", "")
-        comp = r.get("compressor_name", "")
-        if note and comp not in notes:
-            notes[comp] = note
+_NOTE_MAX_CHARS: int = 90  # truncation limit for compact note column
 
-    if not notes:
+
+def _truncate_note(note: str, max_chars: int = _NOTE_MAX_CHARS) -> str:
+    """Return the first sentence of ``note``, capped at ``max_chars`` chars."""
+    if not note:
+        return "—"
+    dot_pos = note.find(". ")
+    first = note[:dot_pos + 1] if dot_pos != -1 else note
+    if len(first) > max_chars:
+        return first[:max_chars - 1] + "…"
+    return first
+
+
+def _render_memory_notes(report: dict[str, Any]) -> str:
+    """Render a compact per-compressor memory honesty summary table.
+
+    Shows one row per compressor with real-bytes flag, simulated flag, and a
+    single-sentence key note.  The full workspace-aware accounting prose and
+    per-compressor byte table are in the Workspace-Aware Memory Accounting
+    section that immediately follows.
+    """
+    rows_data: list[tuple[str, bool, bool, str]] = []
+    for r in report.get("results", []):
+        comp = r.get("compressor_name", "")
+        if not comp or any(row[0] == comp for row in rows_data):
+            continue
+        mem: dict[str, Any] = r.get("memory", {})
+        caps: dict[str, Any] = r.get("compressor_capabilities", {})
+        real = caps.get("supports_real_bytes_claim", mem.get("supports_real_bytes_claim", True))
+        sim = caps.get("is_simulated", mem.get("is_simulated", False))
+        note = mem.get("memory_claim_note", "")
+        rows_data.append((comp, bool(real), bool(sim), note))
+
+    if not rows_data:
         return "_No special memory honesty notes for this report._\n"
 
-    lines = []
-    for comp, note in sorted(notes.items()):
-        lines.append(f"* **`{comp}`:** {note}")
-    return "\n".join(lines) + "\n"
+    lines = [
+        "| Compressor | Real bytes? | Simulated? | Key note |",
+        "|------------|-------------|------------|----------|",
+    ]
+    for comp, real, sim, note in sorted(rows_data):
+        short = _truncate_note(note)
+        real_cell = "yes" if real else "no ⚠️"
+        sim_cell  = "yes ⚠️" if sim else "no"
+        lines.append(f"| `{comp}` | {real_cell} | {sim_cell} | {short} |")
+
+    footer = (
+        "\n_For all compressors: `total_kv_footprint_bytes` is a conservative "
+        "accounting sum, not a measured peak GPU memory value. "
+        "Current materializing compressors dequantise to full working KV for attention. "
+        "Active GPU measurement is deferred. "
+        "See **Workspace-Aware Memory Accounting** below for the per-compressor table "
+        "and full notes._\n"
+    )
+    return "\n".join(lines) + footer
 
 
 # ---------------------------------------------------------------------------
