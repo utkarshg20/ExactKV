@@ -359,6 +359,78 @@ limitation.
 
 ---
 
+## V2 CLI
+
+`python -m exactkv` exposes the most-used ExactKV operations as CLI subcommands.
+The CLI reports **exactness and acceptance behaviour only** — it does **not**
+report tokens/second, latency, throughput, or speedup.
+
+### list-compressors
+
+Print all registered compressors with their capabilities:
+
+```bash
+python -m exactkv list-compressors
+```
+
+### bench
+
+Run a single-compressor benchmark over a named (or custom) prompt suite:
+
+```bash
+python -m exactkv bench \
+  --model Qwen/Qwen2.5-0.5B \
+  --suite smoke \
+  --compressor int8 \
+  --draft-len 8 \
+  --max-new-tokens 32 \
+  --json-out reports/bench_int8.json \
+  --csv-out  reports/bench_int8.csv
+```
+
+**Defaults:** `--compressor int8`, `--draft-len 8`, `--max-new-tokens 16`.
+
+Use `--suite-file path/to/custom.jsonl` to supply your own prompt suite.
+
+### sweep
+
+Run a multi-compressor × multi-draft-length grid sweep:
+
+```bash
+python -m exactkv sweep \
+  --model Qwen/Qwen2.5-0.5B \
+  --suite smoke \
+  --compressors noop,int8,int4_sim \
+  --draft-lengths 2,4,8 \
+  --max-new-tokens 32 \
+  --json-out reports/sweep.json \
+  --csv-out  reports/sweep.csv
+```
+
+The summary printed to stdout includes `total_runs`, `exactkv_failures`,
+`lossy_divergence_count`, and `mean_acceptance_rate`. No timing fields.
+
+### analyze
+
+Analyse an existing JSON report without re-running the model:
+
+```bash
+python -m exactkv analyze \
+  --report reports/sweep.json \
+  --acceptance-csv reports/acceptance.csv \
+  --failure-json  reports/failures.json
+```
+
+Returns exit code 0 when `exactkv_failure_count == 0` ("pass"), 1 otherwise.
+
+### int4_sim disclaimer
+
+`int4_sim` is a **simulated** INT4 compressor. All CLI outputs set
+`is_simulated=True` and `supports_real_bytes_claim=False` for `int4_sim` rows.
+Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
+
+---
+
 ## V1 design principles
 
 - **Correctness first.** Every output token ID must match `generate_full_greedy`.
