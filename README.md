@@ -216,7 +216,12 @@ exactkv/
 └── benchmarks/
     ├── prompts.py            # load_prompts, load_smoke_prompts
     ├── runner.py             # run_one, run_suite, RunConfig
-    └── reports.py            # write_json_report, write_csv_report, build_run_manifest
+    ├── reports.py            # write_json_report, write_csv_report, build_run_manifest
+    └── sweeps.py             # run_sweep (multi-compressor × multi-draft-length)
+├── analysis/
+│   ├── acceptance_tables.py  # build_acceptance_table, group_by_*, write_acceptance_table_csv
+│   ├── mismatch.py           # first_lossy_divergences, mismatch_position_summary
+│   └── failure_report.py     # build_failure_report, list_exactkv_failures, write_failure_report_json
 
 benchmarks/
 └── prompts/
@@ -242,6 +247,115 @@ tests/
 ├── test_benchmark_runner.py
 └── test_example_script.py
 ```
+
+---
+
+## V2 analysis
+
+The `exactkv.analysis` package analyses existing benchmark and sweep reports
+without re-running the model.
+
+### Acceptance tables
+
+Summarise acceptance rate, accepted/rejected/corrected counts grouped by
+compressor, draft length, or prompt category:
+
+```python
+from exactkv.analysis import (
+    build_acceptance_table,
+    group_acceptance_by_compressor,
+    group_acceptance_by_draft_len,
+    group_acceptance_by_category,
+    write_acceptance_table_csv,
+)
+
+table = build_acceptance_table(sweep_report)        # per (compressor × draft_len)
+by_comp = group_acceptance_by_compressor(sweep_report)  # draft_len collapsed
+by_dl   = group_acceptance_by_draft_len(sweep_report)   # compressor collapsed
+by_cat  = group_acceptance_by_category(sweep_report)    # grouped by prompt type
+
+write_acceptance_table_csv(table, "reports/acceptance.csv")
+```
+
+### Mismatch analysis
+
+Identify where lossy divergences and ExactKV rejections occur:
+
+```python
+from exactkv.analysis import (
+    first_lossy_divergences,
+    mismatch_position_summary,
+    rejection_position_summary,
+)
+
+divergences = first_lossy_divergences(sweep_report)  # first_divergence_idx per result
+summary     = mismatch_position_summary(sweep_report)  # aggregate stats
+rejections  = rejection_position_summary(sweep_report) # per-result rejection counts
+
+print(f"Lossy diverged: {summary['lossy_divergence_count']} / {summary['total_runs']}")
+print(f"Mean first divergence at token: {summary['mean_first_divergence_idx']}")
+```
+
+### Failure reports
+
+Classify ExactKV failures vs. expected lossy divergences:
+
+```python
+from exactkv.analysis import build_failure_report, write_failure_report_json
+
+fr = build_failure_report(sweep_report)
+print(f"Status: {fr['status']}")            # "pass" or "fail"
+print(f"ExactKV failures: {fr['exactkv_failure_count']}")    # must be 0
+print(f"Lossy divergences: {fr['lossy_divergence_count']}")  # expected for real compressors
+
+write_failure_report_json(fr, "reports/failures.json")
+```
+
+**Key distinction:**
+- **Lossy divergence** (`lossy.token_exact_match == False`) is *expected*. It proves that the compressor changes the output and demonstrates why verification is necessary.
+- **ExactKV failure** (`exactkv_failure == True`) means the verified output did *not* match `generate_full_greedy`. This is a correctness bug and must always be zero.
+
+No timing, throughput, latency, or speedup metrics are produced by any analysis function.
+
+---
+
+## V2 sweeps
+
+Use `run_sweep` to compare multiple compressors and draft lengths across a
+prompt suite in a single call. The model is loaded once and reused across all
+cells.
+
+```python
+from exactkv.benchmarks.prompts import load_smoke_prompts
+from exactkv.benchmarks.reports import write_csv_report, write_json_report
+from exactkv.benchmarks.sweeps import run_sweep
+from exactkv.runtime.model_runtime import ModelRuntime
+
+rt = ModelRuntime("Qwen/Qwen2.5-0.5B", device="auto", dtype="float32")
+
+sweep = run_sweep(
+    runtime=rt,
+    prompts=load_smoke_prompts()[:4],
+    compressor_names=["noop", "int8", "int4_sim"],
+    draft_lengths=[4, 8],
+    max_new_tokens=32,
+    prompt_suite="smoke",
+)
+
+# Results: 4 prompts × 3 compressors × 2 draft_lengths = 24 rows
+write_json_report(sweep, "reports/sweep.json")
+write_csv_report(sweep, "reports/sweep.csv")
+print(f"ExactKV failures: {sweep['aggregate']['exactkv_failures']}")
+print(f"Mean acceptance rate: {sweep['aggregate']['mean_acceptance_rate']:.3f}")
+```
+
+Sweeps report **acceptance rate**, **exactness**, and **memory byte estimates**
+across the full compressor × draft-length grid. They do **not** report
+tokens/second, latency, throughput, or speedup.
+
+`int4_sim` rows carry `is_simulated=True` and `supports_real_bytes_claim=False`
+in every output format; the `memory_claim_note` field explains the int8 storage
+limitation.
 
 ---
 

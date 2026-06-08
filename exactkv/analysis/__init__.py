@@ -1,0 +1,58 @@
+"""ExactKV V2 analysis package.
+
+Operates on existing benchmark and sweep reports without re-running the model.
+
+Modules
+-------
+acceptance_tables   Build and export acceptance-rate summaries grouped by
+                    compressor, draft length, or prompt category.
+mismatch            Analyse where lossy divergences and ExactKV rejections occur.
+failure_report      Classify and report ExactKV failures vs. expected lossy
+                    divergences.
+
+Key distinction
+---------------
+*Lossy divergence* (``lossy.token_exact_match == False``) is expected and
+is not a failure.  It proves that the compressor changes the output and
+demonstrates why verification is necessary.
+
+*ExactKV failure* (``exactkv_failure == True``) means the ExactKV loop
+produced output that did **not** match ``generate_full_greedy``.  This is
+a bug and must always be zero in a correct implementation.
+"""
+from exactkv.analysis.acceptance_tables import (
+    build_acceptance_table,
+    group_acceptance_by_category,
+    group_acceptance_by_compressor,
+    group_acceptance_by_draft_len,
+    write_acceptance_table_csv,
+)
+from exactkv.analysis.failure_report import (
+    build_failure_report,
+    list_exactkv_failures,
+    list_lossy_divergences,
+    write_failure_report_json,
+)
+from exactkv.analysis.mismatch import (
+    first_lossy_divergences,
+    mismatch_position_summary,
+    rejection_position_summary,
+)
+
+__all__ = [
+    # acceptance_tables
+    "build_acceptance_table",
+    "group_acceptance_by_compressor",
+    "group_acceptance_by_draft_len",
+    "group_acceptance_by_category",
+    "write_acceptance_table_csv",
+    # mismatch
+    "first_lossy_divergences",
+    "mismatch_position_summary",
+    "rejection_position_summary",
+    # failure_report
+    "build_failure_report",
+    "list_exactkv_failures",
+    "list_lossy_divergences",
+    "write_failure_report_json",
+]
