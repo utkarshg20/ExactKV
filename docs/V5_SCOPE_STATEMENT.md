@@ -330,19 +330,31 @@ that ignore the new fields continue to work.
 
 ---
 
-### Phase C — CLI and Markdown updates
+### Phase C — CLI and Markdown updates ✅ Complete
 
-**Files:**
-- `exactkv/cli.py` — `list-compressors` shows new memory field names.
-- `exactkv/reporting/markdown.py` — "Memory Honesty Notes" section updated to
-  explain stored vs working vs total.
-- `exactkv/reporting/leaderboard.py` — optional column for
-  `total_kv_footprint_bytes`.
+**Files changed:**
+- `exactkv/reporting/memory.py` (new) — `format_bytes`, `render_workspace_memory_table`.
+- `exactkv/reporting/markdown.py` — New "Workspace-Aware Memory Accounting" section with
+  table per compressor and V5 accounting note.
+- `exactkv/reporting/__init__.py` — Exports `format_bytes`, `render_workspace_memory_table`.
+- `exactkv/cli.py` — `bench`/`sweep` summary prints workspace memory note when fields are
+  present; `report` subcommand prints "Workspace memory: included in Markdown report".
+- `tests/test_reporting_workspace_memory.py` (new) — Tests for all rendering and CLI behavior.
 
-**Exit gates:**
-- `list-compressors` output shows new field names.
-- Markdown report includes stored vs materialized note.
-- No forbidden performance fields in any output.
+**Exit gates (all passing):**
+- Markdown report includes "Workspace-Aware Memory Accounting" heading.
+- Section says `total_kv_footprint_bytes` is a conservative accounting sum, NOT measured peak.
+- Section says active GPU memory measurement is deferred.
+- Section mentions int8 containers for simulated compressors.
+- Workspace table renders for V5 reports; graceful legacy note for all-zero (V1–V4) reports.
+- `report` CLI output contains "Workspace memory" line.
+- No forbidden performance fields in any rendered output.
+
+**Phase C clarification (reiterated):**
+`total_kv_footprint_bytes` in the rendered table is a **conservative accounting sum**,
+NOT a measured peak GPU memory value. Active GPU memory measurement (via
+`torch.cuda.memory_reserved` or equivalent) is deferred to a later CUDA-specific
+validation phase and is not performed in V5.
 
 ---
 
@@ -404,13 +416,18 @@ the V5 memory fields.
 | Legacy report loads safely | No `KeyError` when fields absent |
 | Backward compat alias | `"compressed_kv_bytes" in csv_row` |
 
-### Phase C gates
+### Phase C gates ✅ Complete
 
 | Test | Assertion |
 |---|---|
-| `list-compressors` shows new fields | Output contains `stored_kv_bytes` |
-| Markdown memory section updated | Section contains `materialized_working_kv_bytes` |
-| No forbidden performance output | Pattern audit passes on rendered Markdown |
+| Markdown includes workspace section | `"workspace-aware memory accounting" in md.lower()` |
+| Section says accounting total | `"accounting" in md.lower()` |
+| Section disclaims measured peak | `"not" and "measured" or "peak" in md.lower()` |
+| Section says active GPU deferred | `"deferred" in md.lower()` |
+| Section mentions int8 containers | `"int8" and "container" in md.lower()` |
+| Legacy report renders gracefully | No crash; legacy note appears |
+| `report` CLI prints workspace line | `"workspace memory" in stdout.lower()` |
+| No forbidden performance fields | Pattern audit passes on rendered Markdown |
 
 ### Phase D gates
 

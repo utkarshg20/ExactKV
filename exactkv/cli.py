@@ -175,6 +175,15 @@ def _cmd_bench(args: argparse.Namespace) -> int:
     print(f"  Mean accept rate  : {mean_ar:.3f}")
     print(f"  Lossy divergences : {lossy_div}")
 
+    # V5 workspace memory note (only when fields are populated from Phase A)
+    if results:
+        total_fp = results[0].get("memory", {}).get("total_kv_footprint_bytes", 0)
+        if total_fp > 0:
+            print(
+                "  Workspace memory  : stored/materialized/metadata/total "
+                "included in report (accounting totals, not measured GPU memory)"
+            )
+
     return 0
 
 
@@ -250,6 +259,16 @@ def _cmd_sweep(args: argparse.Namespace) -> int:
     print(f"  Total accepted    : {agg['total_accepted']}")
     print(f"  Total rejected    : {agg['total_rejected']}")
     print(f"  Total corrections : {agg['total_corrections']}")
+
+    # V5 workspace memory note (only when fields are populated from Phase A)
+    sweep_results = sweep.get("results", [])
+    if sweep_results:
+        total_fp = sweep_results[0].get("memory", {}).get("total_kv_footprint_bytes", 0)
+        if total_fp > 0:
+            print(
+                "  Workspace memory  : stored/materialized/metadata/total "
+                "included in report (accounting totals, not measured GPU memory)"
+            )
 
     return 0
 
@@ -339,6 +358,7 @@ def _cmd_report(args: argparse.Namespace) -> int:
     print(f"Markdown out  : {out_path}")
     print(f"ExactKV failures  : {fr['exactkv_failure_count']}")
     print(f"Lossy divergences : {fr['lossy_divergence_count']}")
+    print(f"Workspace memory  : included in Markdown report")
 
     return 0
 

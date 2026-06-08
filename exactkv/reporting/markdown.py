@@ -80,10 +80,42 @@ their `compressed_kv_bytes` as evidence of real packed memory savings. \
 * **Average effective bit width is a comparison aid only.** It is defined as \
 (K bits + V bits) / 2, where full precision counts as 32 bits. It is not a \
 real memory measurement.
+* **`total_kv_footprint_bytes` is a conservative accounting sum, not a measured \
+peak GPU memory value.** It equals stored KV + materialized working KV + metadata \
++ temporary workspace — all derived from tensor shapes and dtype widths. \
+Active GPU memory measurement (torch.cuda.memory_reserved, etc.) is deferred to a \
+later CUDA-specific validation phase and is not performed in V5.
+* **Current materializing compressors dequantise to full precision for attention.** \
+This means `materialized_working_kv_bytes` equals `full_kv_bytes` for all current \
+ExactKV compressors. Stored-byte savings and working-cache footprint are different \
+concepts; the table in the Workspace-Aware Memory Accounting section makes both \
+visible.
 * **VeriCache attribution.** ExactKV is inspired by the VeriCache paper \
 (Yao et al., arXiv:2605.17613, 2026) and does not claim to have invented \
 the draft-then-verify algorithm. This report evaluates the current \
 Hugging Face correctness and analysis framework, not the paper's system.
+"""
+
+
+# ---------------------------------------------------------------------------
+# V5 workspace memory section header/prose
+# ---------------------------------------------------------------------------
+
+_WORKSPACE_PREAMBLE = """\
+> **V5 accounting note:** `total_kv_footprint_bytes` is a **conservative \
+accounting sum** (stored KV + materialized working KV + metadata + temporary \
+workspace). It is **NOT** a measured peak GPU memory value. Active GPU memory \
+measurement is deferred to a later CUDA-specific validation phase.
+
+For all current ExactKV compressors, attention requires a full-precision \
+dequantised working copy of the KV cache during each attention call, so \
+`materialized_working_kv_bytes` equals `full_kv_bytes`. The practical peak KV \
+memory footprint during attention is therefore dominated by this working copy, \
+not the stored bytes alone.
+
+For simulated sub-INT8 compressors (`_sim` suffix), `stored_kv_bytes` reflects \
+**int8 container storage** — no real packed 4-bit or 2-bit bit-packing is used. \
+Do not cite these figures as evidence of real packed-bit memory savings.
 """
 
 
@@ -255,6 +287,8 @@ def render_markdown_report(
     8. ExactKV failure examples (always — should be empty)
     9. Histogram tables
     10. Memory honesty notes
+    10b. K/V compression metadata (asymmetric reports only)
+    10c. Workspace-Aware Memory Accounting (V5 — table + framing)
     11. What this report proves
     12. What this report does not prove
     13. Required disclaimers
@@ -440,6 +474,13 @@ def render_markdown_report(
         )
         sections.append(_render_kv_metadata_section(comp_caps))
         sections.append("")
+
+    # ── 9c. Workspace-aware memory accounting (V5) ───────────────────────────
+    from exactkv.reporting.memory import render_workspace_memory_table
+    sections.append(_h(2, "Workspace-Aware Memory Accounting"))
+    sections.append(_WORKSPACE_PREAMBLE)
+    sections.append(render_workspace_memory_table(report))
+    sections.append("")
 
     # ── 10. What this proves ──────────────────────────────────────────────────
     sections.append(_h(2, "What This Report Proves"))

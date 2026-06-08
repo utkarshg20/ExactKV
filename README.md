@@ -831,10 +831,13 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
   reporting, and Experiment 003 (612-run core-suite sweep; `exactkv_failures == 0`).
   No real backends, no performance claims. See
   [`docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md`](docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md).
-* **V5 — workspace-aware memory accounting.** Distinguish `stored_kv_bytes`,
-  `materialized_working_kv_bytes`, `metadata_bytes`, and
-  `temporary_workspace_bytes`, because stored compressed bytes omit the
-  dequantisation working set. No backend, no performance claims.
+* **V5 — workspace-aware memory accounting (Phases A–C complete).** Distinguish
+  `stored_kv_bytes`, `materialized_working_kv_bytes`, `metadata_bytes`, and
+  `temporary_workspace_bytes` in JSON/CSV reports and Markdown renders. Stored
+  bytes omit the dequantisation working set; `total_kv_footprint_bytes` is a
+  conservative accounting sum, not a measured peak GPU value. Markdown reports
+  now include a "Workspace-Aware Memory Accounting" section with a per-compressor
+  table. No backend, no performance claims.
 * **V6 — real backend adapter interface and first backend candidate.** Design a
   `BackendAdapter` so a real quantisation format (e.g. a KIVI- or
   TurboQuant-style quantizer) could plug into the `KVCompressor` protocol and be

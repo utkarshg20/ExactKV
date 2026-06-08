@@ -1,4 +1,4 @@
-"""ExactKV V3/V4 reporting package.
+"""ExactKV V3/V4/V5 reporting package.
 
 Converts existing benchmark/sweep report dicts into docs-ready Markdown.
 No model re-runs.  No timing, latency, throughput, or speedup fields.
@@ -12,6 +12,8 @@ leaderboard  Markdown tables for acceptance by compressor / draft_len / grid.
 examples     Markdown renderers for lossy-divergence and rejection examples.
 histograms   Text table renderers for accepted-length, divergence-position,
              and rejection-count histograms.
+memory       V5 workspace-aware memory rendering: ``format_bytes`` and
+             ``render_workspace_memory_table``.
 
 Key distinction (printed in every rendered report)
 ---------------------------------------------------
@@ -36,6 +38,7 @@ from exactkv.reporting.histograms import (
     render_first_divergence_table,
     render_rejection_count_table,
 )
+from exactkv.reporting.memory import format_bytes, render_workspace_memory_table
 
 __all__ = [
     "average_effective_bit_width",
@@ -50,4 +53,6 @@ __all__ = [
     "render_accepted_length_table",
     "render_first_divergence_table",
     "render_rejection_count_table",
+    "format_bytes",
+    "render_workspace_memory_table",
 ]
