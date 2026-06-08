@@ -1,0 +1,28 @@
+{"prompt_id": "struct_json_001", "category": "json_object", "prompt": "Generate a JSON object for a product listing with fields: id (integer), name (string), price (float), in_stock (boolean):"}
+{"prompt_id": "struct_json_002", "category": "json_object", "prompt": "{\"user\": {\"id\": 1, \"name\": \"Alice\", \"roles\": [\"admin\","}
+{"prompt_id": "struct_json_003", "category": "json_object", "prompt": "Return a JSON object representing an HTTP error response with fields status_code, error, and message:"}
+{"prompt_id": "struct_json_004", "category": "json_object", "prompt": "{\"order\": {\"id\": \"ORD-9821\", \"items\": [{\"sku\": \"A1\", \"qty\": 2}, {\"sku\":"}
+{"prompt_id": "struct_json_005", "category": "json_object", "prompt": "A JSON schema for a blog post object with title, author, tags (array), and published_at (ISO date string):"}
+{"prompt_id": "struct_json_006", "category": "json_object", "prompt": "[{\"id\": 1, \"name\": \"Alice\"}, {\"id\": 2, \"name\":"}
+{"prompt_id": "struct_json_007", "category": "json_object", "prompt": "Return a JSON object for a weather API response with city, temperature_celsius, humidity_percent, and description fields:"}
+{"prompt_id": "struct_table_001", "category": "markdown_table", "prompt": "Create a markdown table with columns Name, Age, and City for three people: Alice (30, New York), Bob (25, London), Carol (35, Tokyo):"}
+{"prompt_id": "struct_table_002", "category": "markdown_table", "prompt": "| Language | Paradigm | Typing |\n|---|---|---|\n| Python | Multi-paradigm |"}
+{"prompt_id": "struct_table_003", "category": "markdown_table", "prompt": "Create a markdown table comparing SQL and NoSQL databases across the dimensions: Schema, Scalability, Transactions, and Best Use Case:"}
+{"prompt_id": "struct_table_004", "category": "markdown_table", "prompt": "| Model | Parameters | Release Year |\n|---|---|---|\n| GPT-2 | 1.5B | 2019 |\n| GPT-3 |"}
+{"prompt_id": "struct_func_001", "category": "function_call", "prompt": "{\"function\": \"get_weather\", \"arguments\": {\"city\": \"Paris\", \"units\":"}
+{"prompt_id": "struct_func_002", "category": "function_call", "prompt": "A function call JSON to search for products by category and max price, with function name search_products:"}
+{"prompt_id": "struct_func_003", "category": "function_call", "prompt": "{\"tool\": \"calculator\", \"operation\": \"multiply\", \"inputs\": {\"a\": 7, \"b\":"}
+{"prompt_id": "struct_func_004", "category": "function_call", "prompt": "Generate a tool-call JSON to send an email with fields: to, subject, body:"}
+{"prompt_id": "struct_schema_001", "category": "schema", "prompt": "Write a JSON Schema for a User object with required fields: username (string, min 3 chars), email (string, format email), age (integer, min 18):"}
+{"prompt_id": "struct_schema_002", "category": "schema", "prompt": "A Pydantic model definition for an Address with fields: street (str), city (str), postal_code (str), country (str):"}
+{"prompt_id": "struct_schema_003", "category": "schema", "prompt": "Write a Python TypedDict definition for a BenchmarkResult with fields: prompt_id, compressor_name, acceptance_rate, exactkv_match:"}
+{"prompt_id": "struct_csv_001", "category": "csv_output", "prompt": "Generate a CSV with header and three data rows for a sales report with columns: date, product, quantity, revenue:"}
+{"prompt_id": "struct_csv_002", "category": "csv_output", "prompt": "date,product,units_sold\n2024-01-01,Widget A,150\n2024-01-02,Widget A,"}
+{"prompt_id": "struct_list_001", "category": "structured_list", "prompt": "List the seven continents in order of area from largest to smallest as a numbered list:"}
+{"prompt_id": "struct_list_002", "category": "structured_list", "prompt": "The five main programming paradigms are:\n1. Procedural\n2. Object-oriented\n3."}
+{"prompt_id": "struct_list_003", "category": "structured_list", "prompt": "Enumerate the OSI model layers from 1 (Physical) to 7 (Application) with a one-line description of each:"}
+{"prompt_id": "struct_kv_001", "category": "key_value", "prompt": "Model: GPT-4\nProvider: OpenAI\nRelease: 2023\nParameters:"}
+{"prompt_id": "struct_kv_002", "category": "key_value", "prompt": "Name: ExactKV\nVersion: 0.2.0\nLanguage: Python\nLicense:"}
+{"prompt_id": "struct_kv_003", "category": "key_value", "prompt": "Generate a configuration key-value block for a database connection with keys: host, port, dbname, user, password:"}
+{"prompt_id": "struct_yaml_001", "category": "yaml_output", "prompt": "Write a YAML configuration for a Python web service with keys: name, version, host, port, debug, allowed_origins:"}
+{"prompt_id": "struct_yaml_002", "category": "yaml_output", "prompt": "name: my-app\nversion: 1.0.0\ndependencies:\n  - torch>=2.0\n  - transformers>=4.36\n  -"}

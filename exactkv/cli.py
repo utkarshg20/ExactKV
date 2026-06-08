@@ -39,14 +39,10 @@ def _load_prompts(suite: str | None, suite_file: str | None) -> list[dict]:
     if suite_file:
         from exactkv.benchmarks.prompts import load_prompts
         return load_prompts(suite_file)
+    from exactkv.benchmarks.prompts import list_suites, load_suite
     name = suite or "smoke"
-    if name == "smoke":
-        from exactkv.benchmarks.prompts import load_smoke_prompts
-        return load_smoke_prompts()
-    raise ValueError(
-        f"Unknown prompt suite {name!r}. "
-        "Use --suite smoke or --suite-file PATH."
-    )
+    # Delegate to the registry; raises ValueError with helpful message if unknown.
+    return load_suite(name)
 
 
 # ---------------------------------------------------------------------------
@@ -327,8 +323,14 @@ def _build_parser() -> argparse.ArgumentParser:
 
     def _add_prompt_args(p: argparse.ArgumentParser) -> None:
         g = p.add_mutually_exclusive_group()
-        g.add_argument("--suite", default="smoke",
-                       help="Named prompt suite: smoke (default: smoke)")
+        g.add_argument(
+            "--suite", default="smoke",
+            help=(
+                "Named prompt suite: smoke (fast CI, default), core, "
+                "structured, code, stress. "
+                "Use --suite-file for a custom JSONL file."
+            ),
+        )
         g.add_argument("--suite-file", dest="suite_file", metavar="PATH",
                        help="Path to a custom JSONL prompt file (overrides --suite)")
 

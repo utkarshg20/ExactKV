@@ -1,0 +1,30 @@
+{"prompt_id": "code_py_001", "category": "python_function", "prompt": "def factorial(n: int) -> int:\n    \"\"\"Return n! using recursion.\"\"\""}
+{"prompt_id": "code_py_002", "category": "python_function", "prompt": "def is_palindrome(s: str) -> bool:\n    \"\"\"Return True if s is a palindrome, ignoring case and spaces.\"\"\""}
+{"prompt_id": "code_py_003", "category": "python_function", "prompt": "def flatten(nested: list) -> list:\n    \"\"\"Flatten an arbitrarily nested list into a flat list.\"\"\""}
+{"prompt_id": "code_py_004", "category": "python_function", "prompt": "def two_sum(nums: list[int], target: int) -> list[int]:\n    \"\"\"Return indices of two numbers that add up to target.\"\"\""}
+{"prompt_id": "code_py_005", "category": "python_function", "prompt": "def count_words(text: str) -> dict[str, int]:\n    \"\"\"Return a dictionary mapping each word to its count in text.\"\"\""}
+{"prompt_id": "code_py_006", "category": "python_function", "prompt": "import heapq\n\ndef top_k_frequent(nums: list[int], k: int) -> list[int]:\n    \"\"\"Return the k most frequent elements in nums.\"\"\""}
+{"prompt_id": "code_py_007", "category": "python_function", "prompt": "def longest_common_prefix(strs: list[str]) -> str:\n    \"\"\"Return the longest common prefix among all strings in strs.\"\"\""}
+{"prompt_id": "code_py_008", "category": "python_function", "prompt": "class Stack:\n    \"\"\"A stack implemented with a Python list.\"\"\"\n    def __init__(self):"}
+{"prompt_id": "code_complete_001", "category": "code_completion", "prompt": "# Complete this Python function that checks if a number is prime\ndef is_prime(n: int) -> bool:"}
+{"prompt_id": "code_complete_002", "category": "code_completion", "prompt": "# Complete this binary search implementation\ndef binary_search(arr: list[int], target: int) -> int:\n    left, right = 0, len(arr) - 1\n    while left <= right:"}
+{"prompt_id": "code_complete_003", "category": "code_completion", "prompt": "# Complete this decorator that caches function results\ndef memoize(func):\n    cache = {}\n    def wrapper(*args):"}
+{"prompt_id": "code_complete_004", "category": "code_completion", "prompt": "# Implement __repr__ for this dataclass\nfrom dataclasses import dataclass\n\n@dataclass\nclass Point:\n    x: float\n    y: float\n\n    def __repr__(self):"}
+{"prompt_id": "code_debug_001", "category": "code_debug", "prompt": "# This function has a bug. Fix it:\ndef remove_duplicates(lst):\n    seen = []\n    for x in lst:\n        if x not in seen:\n            seen.append(x)\n    return lst  # Bug: should return 'seen'\n\n# Fixed version:"}
+{"prompt_id": "code_debug_002", "category": "code_debug", "prompt": "# This function sometimes returns None. Fix it:\ndef find_max(lst):\n    if not lst:\n        return\n    max_val = lst[0]\n    for x in lst[1:]:\n        if x > max_val:\n            max_val = x\n\n# Fixed version adds the missing return:"}
+{"prompt_id": "code_snippet_001", "category": "code_snippet", "prompt": "# Python: read a JSON file and print each key-value pair\nimport json\n\nwith open('data.json') as f:"}
+{"prompt_id": "code_snippet_002", "category": "code_snippet", "prompt": "# Python: download a URL using requests and save to disk\nimport requests\n\ndef download_file(url: str, dest: str) -> None:"}
+{"prompt_id": "code_snippet_003", "category": "code_snippet", "prompt": "# Python: list all .py files recursively under a directory\nfrom pathlib import Path\n\ndef find_python_files(root: str) -> list[str]:"}
+{"prompt_id": "code_snippet_004", "category": "code_snippet", "prompt": "# Python: retry a function up to n times on exception\nimport time\n\ndef retry(func, n: int, delay: float = 0.5):"}
+{"prompt_id": "code_sql_001", "category": "sql", "prompt": "-- Return the names and salaries of all employees in department 5, ordered by salary descending\nSELECT"}
+{"prompt_id": "code_sql_002", "category": "sql", "prompt": "-- Count the number of orders placed per customer in the orders table, only for customers with more than 3 orders\nSELECT customer_id, COUNT(*) as order_count\nFROM orders\nGROUP BY customer_id\nHAVING"}
+{"prompt_id": "code_sql_003", "category": "sql", "prompt": "-- Create a table named products with columns: id (primary key), name, price, stock_count\nCREATE TABLE products ("}
+{"prompt_id": "code_bash_001", "category": "bash", "prompt": "#!/bin/bash\n# Script to back up a directory to a timestamped archive\nSOURCE_DIR=\"$1\"\nBACKUP_DIR=\"$2\"\nTIMESTAMP=$(date +%Y%m%d_%H%M%S)"}
+{"prompt_id": "code_bash_002", "category": "bash", "prompt": "# Find all log files older than 30 days and delete them\nfind /var/log"}
+{"prompt_id": "code_regex_001", "category": "regex", "prompt": "# Python regex to extract all email addresses from a string\nimport re\n\ndef extract_emails(text: str) -> list[str]:\n    pattern ="}
+{"prompt_id": "code_regex_002", "category": "regex", "prompt": "# Python regex to validate an ISO 8601 date string (YYYY-MM-DD)\nimport re\n\nDATE_PATTERN ="}
+{"prompt_id": "code_docstring_001", "category": "docstring", "prompt": "def merge_dicts(base: dict, override: dict) -> dict:\n    \"\"\""}
+{"prompt_id": "code_docstring_002", "category": "docstring", "prompt": "def chunk(lst: list, size: int) -> list[list]:\n    \"\"\""}
+{"prompt_id": "code_explain_001", "category": "code_explanation", "prompt": "# Explain what this Python code does:\nresult = list(map(lambda x: x**2, filter(lambda x: x % 2 == 0, range(10))))\n# Explanation:"}
+{"prompt_id": "code_explain_002", "category": "code_explanation", "prompt": "# Explain this decorator:\ndef singleton(cls):\n    instances = {}\n    def get_instance(*args, **kwargs):\n        if cls not in instances:\n            instances[cls] = cls(*args, **kwargs)\n        return instances[cls]\n    return get_instance\n# Explanation:"}
+{"prompt_id": "code_test_001", "category": "unit_test", "prompt": "# Write a pytest unit test for this function:\ndef add(a: int, b: int) -> int:\n    return a + b\n\n# Test:"}

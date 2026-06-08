@@ -1,0 +1,34 @@
+{"prompt_id": "core_nat_001", "category": "natural_language", "prompt": "The capital of France is"}
+{"prompt_id": "core_nat_002", "category": "natural_language", "prompt": "In machine learning, a neural network is"}
+{"prompt_id": "core_nat_003", "category": "natural_language", "prompt": "The theory of relativity states that"}
+{"prompt_id": "core_nat_004", "category": "natural_language", "prompt": "Once upon a time in a land far away, there lived a"}
+{"prompt_id": "core_nat_005", "category": "natural_language", "prompt": "The process of photosynthesis converts"}
+{"prompt_id": "core_nat_006", "category": "natural_language", "prompt": "Climate change refers to long-term shifts in global temperatures and weather patterns. The main cause since the 1800s has been"}
+{"prompt_id": "core_nat_007", "category": "natural_language", "prompt": "Water boils at 100 degrees Celsius at sea level because"}
+{"prompt_id": "core_nat_008", "category": "natural_language", "prompt": "The French Revolution began in 1789 when"}
+{"prompt_id": "core_code_001", "category": "code", "prompt": "Write a Python function that computes the factorial of n:"}
+{"prompt_id": "core_code_002", "category": "code", "prompt": "def binary_search(arr, target):\n    \"\"\"Return the index of target in sorted arr, or -1.\"\"\""}
+{"prompt_id": "core_code_003", "category": "code", "prompt": "# Sort a list of integers using merge sort\ndef merge_sort(arr):"}
+{"prompt_id": "core_code_004", "category": "code", "prompt": "Write a Python function that checks whether a string is a palindrome:"}
+{"prompt_id": "core_code_005", "category": "code", "prompt": "def fibonacci(n):\n    \"\"\"Return the nth Fibonacci number using dynamic programming.\"\"\""}
+{"prompt_id": "core_code_006", "category": "code", "prompt": "# Python: reverse a linked list iteratively\nclass ListNode:\n    def __init__(self, val=0, next=None):\n        self.val = val\n        self.next = next\n\ndef reverse_list(head):"}
+{"prompt_id": "core_json_001", "category": "json", "prompt": "Generate a JSON object describing a person with name, age, and email fields:"}
+{"prompt_id": "core_json_002", "category": "json", "prompt": "{\"name\": \"Alice\", \"age\": 30, \"city\":"}
+{"prompt_id": "core_json_003", "category": "json", "prompt": "A JSON response from a REST API that returns a list of two products, each with id, name, and price:"}
+{"prompt_id": "core_json_004", "category": "json", "prompt": "{\"status\": \"success\", \"data\": {\"user_id\": 42, \"username\":"}
+{"prompt_id": "core_cmd_001", "category": "command", "prompt": "List all files in the current directory sorted by modification time:"}
+{"prompt_id": "core_cmd_002", "category": "command", "prompt": "The git command to create and switch to a new branch named feature/login is:"}
+{"prompt_id": "core_cmd_003", "category": "command", "prompt": "To recursively copy a directory named src to dest using the cp command:"}
+{"prompt_id": "core_cmd_004", "category": "command", "prompt": "The curl command to send a POST request with JSON body to https://api.example.com/data is:"}
+{"prompt_id": "core_trans_001", "category": "translation", "prompt": "Translate 'Hello, how are you?' into French:"}
+{"prompt_id": "core_trans_002", "category": "translation", "prompt": "Translate 'The weather is beautiful today' into Spanish:"}
+{"prompt_id": "core_trans_003", "category": "translation", "prompt": "Translate 'Thank you very much' into Japanese:"}
+{"prompt_id": "core_trans_004", "category": "translation", "prompt": "Translate 'Good morning, have a nice day' into German:"}
+{"prompt_id": "core_qa_001", "category": "question_answering", "prompt": "Q: What is the speed of light in a vacuum?\nA:"}
+{"prompt_id": "core_qa_002", "category": "question_answering", "prompt": "Q: Who wrote the play Hamlet?\nA:"}
+{"prompt_id": "core_qa_003", "category": "question_answering", "prompt": "Q: What is the chemical symbol for gold?\nA:"}
+{"prompt_id": "core_qa_004", "category": "question_answering", "prompt": "Q: In what year did the first moon landing occur?\nA:"}
+{"prompt_id": "core_long_001", "category": "long_prompt", "prompt": "You are a helpful assistant. The user has asked you to summarize the following passage about climate change: Global warming refers to the long-term rise in Earth's average surface temperature due to human-induced greenhouse gas emissions. Since the Industrial Revolution, CO2 levels have increased significantly. The effects include rising sea levels, more frequent extreme weather events, and disruption of ecosystems. To mitigate these effects, experts recommend transitioning to renewable energy sources. In summary,"}
+{"prompt_id": "core_long_002", "category": "long_prompt", "prompt": "Consider the following mathematical problem: If a train travels at 60 miles per hour for 2.5 hours, and then at 80 miles per hour for 1.5 hours, what is the total distance traveled? Show your work step by step. Step 1:"}
+{"prompt_id": "core_long_003", "category": "long_prompt", "prompt": "The following is a description of a software architecture: The system uses a microservices pattern with three main services: an authentication service, a data processing service, and an API gateway. Each service communicates via REST APIs. The authentication service handles JWT token generation and validation. The data processing service reads from a message queue. The API gateway routes requests to the appropriate service. To improve reliability, the recommended next step is"}
+{"prompt_id": "core_long_004", "category": "long_prompt", "prompt": "In Greek mythology, Prometheus was a Titan who stole fire from the gods and gave it to humanity. As punishment, Zeus chained him to a rock where an eagle ate his liver each day, only for it to regenerate overnight. This myth has been interpreted as a symbol of"}

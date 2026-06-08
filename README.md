@@ -242,7 +242,11 @@ exactkv/
 
 benchmarks/
 └── prompts/
-    └── smoke.jsonl           # 16 prompts across 6 categories
+    ├── smoke.jsonl           # 16 prompts — fast CI suite
+    ├── core.jsonl            # 34 prompts — broad coverage
+    ├── structured.jsonl      # 28 prompts — JSON/tables/schemas
+    ├── code.jsonl            # 30 prompts — code generation/completion
+    └── stress.jsonl          # 25 prompts — harder, lower-acceptance
 
 examples/
 └── qwen_smoke.py             # Demo script with side-by-side comparison
@@ -275,7 +279,8 @@ tests/
 ├── test_analysis_acceptance_tables.py  # analysis: acceptance tables gate
 ├── test_analysis_mismatch.py           # analysis: mismatch gate
 ├── test_analysis_failure_report.py     # analysis: failure report gate
-└── test_cli.py                     # CLI gate
+├── test_cli.py                     # CLI gate
+└── test_prompt_suites.py           # V3: named-suite validation + CLI gate
 ```
 
 ---
@@ -407,6 +412,44 @@ write_failure_report_json(fr, "reports/failures.json")
 - **ExactKV failure** (`exactkv_failure == True`) means the verified output did *not* match `generate_full_greedy`. This is a correctness bug and must always be zero.
 
 No timing, throughput, latency, or speedup metrics are produced by any analysis function.
+
+---
+
+## V3 prompt suites
+
+ExactKV ships five named prompt suites. All report **acceptance and exactness
+behaviour** — none of them make throughput, latency, or speedup claims.
+
+| Suite | Prompts | Purpose |
+|---|---|---|
+| `smoke` | 16 | Fast CI and quick sanity checks. **Default for tests.** |
+| `core` | 34 | Broad category coverage. Default for documented experiments. |
+| `structured` | 28 | JSON, tables, schemas, function-calls, YAML. Tests acceptance on highly-templated output. |
+| `code` | 30 | Code generation, completion, debugging, SQL, bash. Tests acceptance on syntax-sensitive continuations. |
+| `stress` | 25 | Longer, harder, higher-entropy prompts. Designed to surface lower acceptance rates and more lossy divergence. |
+
+Use a named suite from Python:
+
+```python
+from exactkv.benchmarks.prompts import load_suite, list_suites
+
+print(list_suites())            # ['code', 'core', 'smoke', 'stress', 'structured']
+prompts = load_suite("core")    # 34 prompts
+```
+
+Or from the CLI:
+
+```bash
+python -m exactkv bench --suite core  --compressor int8 --max-new-tokens 32 ...
+python -m exactkv sweep --suite stress --compressors noop,int8 --draft-lengths 4,8 ...
+```
+
+Use `--suite-file path/to/custom.jsonl` to supply your own prompts; this overrides
+`--suite`.
+
+> All suites produce reports that measure acceptance rate, exactness, and memory
+> byte estimates. They do **not** measure tokens/second, latency, throughput, or
+> speedup.
 
 ---
 
