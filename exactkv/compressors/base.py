@@ -41,6 +41,20 @@ class CompressorCapabilities:
         All V1 compressors are ``False``.
     supports_quantization
         ``True`` if the compressor quantises KV values.
+    key_bit_width
+        Effective bit-width used for key tensors. ``None`` means full precision
+        or not applicable (e.g. identity / noise compressors). ``8`` = INT8
+        (real storage); ``4`` = INT4-range stored in an ``int8`` container
+        (simulated); ``2`` = INT2-range stored in an ``int8`` container
+        (simulated). Added in V4; default ``None`` is backward-compatible with
+        all V1–V3 compressors.
+    value_bit_width
+        Effective bit-width used for value tensors. Same semantics as
+        ``key_bit_width``.
+    asymmetric
+        ``True`` if ``key_bit_width != value_bit_width`` (or one side is
+        ``None`` and the other is not). ``False`` for all symmetric V1–V3
+        compressors. Added in V4; default ``False`` is backward-compatible.
     notes
         Free-form annotation for documentation / reporting.
     """
@@ -51,6 +65,9 @@ class CompressorCapabilities:
     supports_real_bytes_claim: bool
     supports_token_dropping: bool
     supports_quantization: bool
+    key_bit_width: int | None = field(default=None)
+    value_bit_width: int | None = field(default=None)
+    asymmetric: bool = field(default=False)
     notes: str = field(default="")
 
 

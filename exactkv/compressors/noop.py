@@ -30,6 +30,9 @@ class NoOpCompressor:
         supports_real_bytes_claim=False,
         supports_token_dropping=False,
         supports_quantization=False,
+        key_bit_width=None,
+        value_bit_width=None,
+        asymmetric=False,
         notes=(
             "Returns the full KV cache unchanged.  Used as the correctness "
             "baseline: ExactKV with NoOp must always accept 100% of drafted "

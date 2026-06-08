@@ -60,6 +60,9 @@ class DebugNoiseCompressor:
         supports_real_bytes_claim=False,
         supports_token_dropping=False,
         supports_quantization=False,
+        key_bit_width=None,
+        value_bit_width=None,
+        asymmetric=False,
         notes=(
             "Artificially perturbs KV tensors with large Gaussian noise to force "
             "rejection in every verification round.  Exists exclusively to test the "

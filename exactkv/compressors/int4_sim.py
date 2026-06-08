@@ -114,6 +114,9 @@ class Int4SimCompressor:
         supports_real_bytes_claim=False,
         supports_token_dropping=False,
         supports_quantization=True,
+        key_bit_width=4,
+        value_bit_width=4,
+        asymmetric=False,
         notes=_NOTES,
     )
 

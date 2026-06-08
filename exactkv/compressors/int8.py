@@ -74,6 +74,9 @@ class Int8Compressor:
         supports_real_bytes_claim=True,
         supports_token_dropping=False,
         supports_quantization=True,
+        key_bit_width=8,
+        value_bit_width=8,
+        asymmetric=False,
         notes=(
             "Per-tensor symmetric INT8 quantisation (scale = max(|x|) / 127). "
             "Compressed storage is genuinely INT8 (1 B/element vs 4 B for fp32). "
