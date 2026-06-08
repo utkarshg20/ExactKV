@@ -19,7 +19,9 @@ KV-cache generation and benchmark evaluation.
 
 ## Status
 
-**V1 — correctness prototype.**
+**V2 — experimental framework (v0.2.0).**  V1 proved correctness; V2 adds the compressor registry, CLI, JSON/CSV reporting, sweep orchestration, and an analysis layer.
+
+**V1 gates (correctness prototype)**
 
 | Gate | Status |
 |---|---|
@@ -27,8 +29,20 @@ KV-cache generation and benchmark evaluation.
 | NoOp ExactKV output == full greedy | ✅ |
 | INT8 ExactKV output == full greedy | ✅ |
 | DebugNoise forces rejection + ExactKV corrects | ✅ |
-| Metrics reconcile (drafted == accepted + rejected) | ✅ |
+| Metrics reconcile (`drafted == accepted + rejected`) | ✅ |
 | Benchmark runner emits valid JSON; `exactkv_failures == 0` | ✅ |
+
+**V2 gates (experimental framework)**
+
+| Gate | Status |
+|---|---|
+| INT4-sim ExactKV output == full greedy (≥2 prompts × ≥2 draft lengths) | ✅ |
+| Registry resolves every compressor by name; all run end-to-end | ✅ |
+| Sweep (`noop × int8 × int4_sim` × multiple draft lengths) with `exactkv_failures == 0` | ✅ |
+| JSON round-trip lossless; CSV schema stable, one row per cell | ✅ |
+| Acceptance counts reconcile in analysis; mismatch and failure reports correct | ✅ |
+| CLI `bench --suite smoke` runs with locally cached weights, writes valid reports | ✅ |
+| No tokens/sec, latency, or speedup language in any V2 output | ✅ |
 
 ---
 
@@ -63,7 +77,7 @@ pytest tests/test_acceptance_logic.py -v
 TRANSFORMERS_OFFLINE=1 pytest tests/test_int8_exactkv.py -v
 ```
 
-Expected: **all tests pass** in ~90–120 s on CPU with `Qwen/Qwen2.5-0.5B` in `float32`.
+Expected: **all 344 tests pass** in ~180–210 s on CPU with `Qwen/Qwen2.5-0.5B` in `float32`.
 
 ---
 
@@ -188,7 +202,9 @@ savings.
 
 ```
 exactkv/
-├── config.py             # ExactKVConfig, BenchmarkConfig
+├── __main__.py               # python -m exactkv entry point
+├── cli.py                    # CLI subcommands: bench, sweep, analyze, list-compressors
+├── config.py                 # ExactKVConfig, BenchmarkConfig
 ├── runtime/
 │   ├── model_runtime.py      # ModelRuntime (HF model + tokenizer wrapper)
 │   ├── prefill.py            # prefill_to_full_state (shared helper)
@@ -199,9 +215,9 @@ exactkv/
 │   ├── compressed_state.py   # CompressedKVState (compressor-specific)
 │   └── utils.py              # kv_seq_len, extract_kv_tensors, rebuild_cache
 ├── compressors/
+│   ├── __init__.py           # registers all built-in compressors
 │   ├── base.py               # KVCompressor Protocol, CompressionStats, CompressorCapabilities
 │   ├── registry.py           # register_compressor, get_compressor, list_compressors
-│   ├── __init__.py           # registers all built-in compressors
 │   ├── noop.py               # NoOpCompressor (identity, acceptance=100%)
 │   ├── int8.py               # Int8Compressor (per-tensor symmetric INT8)
 │   ├── int4_sim.py           # Int4SimCompressor (simulated INT4, int8 storage)
@@ -213,15 +229,16 @@ exactkv/
 │   ├── exactness.py          # token_exact_match, first_divergence_idx
 │   ├── acceptance.py         # summarize_acceptance, AcceptanceSummary
 │   └── memory.py             # estimate_kv_memory, MemorySummary
-└── benchmarks/
-    ├── prompts.py            # load_prompts, load_smoke_prompts
-    ├── runner.py             # run_one, run_suite, RunConfig
-    ├── reports.py            # write_json_report, write_csv_report, build_run_manifest
-    └── sweeps.py             # run_sweep (multi-compressor × multi-draft-length)
-├── analysis/
-│   ├── acceptance_tables.py  # build_acceptance_table, group_by_*, write_acceptance_table_csv
-│   ├── mismatch.py           # first_lossy_divergences, mismatch_position_summary
-│   └── failure_report.py     # build_failure_report, list_exactkv_failures, write_failure_report_json
+├── benchmarks/
+│   ├── prompts.py            # load_prompts, load_smoke_prompts
+│   ├── runner.py             # run_one, run_suite, RunConfig
+│   ├── reports.py            # write_json_report, write_csv_report, build_run_manifest
+│   └── sweeps.py             # run_sweep (multi-compressor × multi-draft-length)
+└── analysis/
+    ├── __init__.py           # public API re-exports
+    ├── acceptance_tables.py  # build_acceptance_table, group_by_*, write_acceptance_table_csv
+    ├── mismatch.py           # first_lossy_divergences, mismatch_position_summary
+    └── failure_report.py     # build_failure_report, write_failure_report_json
 
 benchmarks/
 └── prompts/
@@ -232,90 +249,34 @@ examples/
 
 docs/
 ├── V1_SCOPE_STATEMENT.md
+├── V2_SCOPE_STATEMENT.md
+├── RELEASE_NOTES_V0.2.0.md
 └── IMPLEMENTATION_PLAN.md
 
 tests/
-├── test_acceptance_logic.py
-├── test_full_generation.py
-├── test_verification_engine.py
-├── test_noop_exactkv.py
-├── test_int8_compressor.py
-├── test_int8_exactkv.py
-├── test_debug_noise_exactkv.py
-├── test_lossy_generation.py
-├── test_metrics.py
-├── test_benchmark_runner.py
-└── test_example_script.py
+├── test_acceptance_logic.py        # acceptance logic unit tests (model-free)
+├── test_full_generation.py         # full baseline gate
+├── test_verification_engine.py     # verification engine
+├── test_noop_exactkv.py            # NoOp ExactKV gate
+├── test_int8_compressor.py         # INT8 compressor unit tests
+├── test_int8_exactkv.py            # INT8 ExactKV gate
+├── test_debug_noise_exactkv.py     # DebugNoise rejection gate
+├── test_lossy_generation.py        # lossy generation
+├── test_metrics.py                 # metrics unit tests
+├── test_benchmark_runner.py        # benchmark runner gate
+├── test_example_script.py          # example script smoke test
+├── test_prefill_helper.py          # shared prefill helper
+├── test_compressor_registry.py     # compressor registry gate
+├── test_config_unified.py          # unified config
+├── test_int4_sim_compressor.py     # INT4-sim unit tests
+├── test_int4_sim_exactkv.py        # INT4-sim ExactKV gate
+├── test_reports.py                 # reporting gate (JSON/CSV)
+├── test_sweeps.py                  # sweep gate
+├── test_analysis_acceptance_tables.py  # analysis: acceptance tables gate
+├── test_analysis_mismatch.py           # analysis: mismatch gate
+├── test_analysis_failure_report.py     # analysis: failure report gate
+└── test_cli.py                     # CLI gate
 ```
-
----
-
-## V2 analysis
-
-The `exactkv.analysis` package analyses existing benchmark and sweep reports
-without re-running the model.
-
-### Acceptance tables
-
-Summarise acceptance rate, accepted/rejected/corrected counts grouped by
-compressor, draft length, or prompt category:
-
-```python
-from exactkv.analysis import (
-    build_acceptance_table,
-    group_acceptance_by_compressor,
-    group_acceptance_by_draft_len,
-    group_acceptance_by_category,
-    write_acceptance_table_csv,
-)
-
-table = build_acceptance_table(sweep_report)        # per (compressor × draft_len)
-by_comp = group_acceptance_by_compressor(sweep_report)  # draft_len collapsed
-by_dl   = group_acceptance_by_draft_len(sweep_report)   # compressor collapsed
-by_cat  = group_acceptance_by_category(sweep_report)    # grouped by prompt type
-
-write_acceptance_table_csv(table, "reports/acceptance.csv")
-```
-
-### Mismatch analysis
-
-Identify where lossy divergences and ExactKV rejections occur:
-
-```python
-from exactkv.analysis import (
-    first_lossy_divergences,
-    mismatch_position_summary,
-    rejection_position_summary,
-)
-
-divergences = first_lossy_divergences(sweep_report)  # first_divergence_idx per result
-summary     = mismatch_position_summary(sweep_report)  # aggregate stats
-rejections  = rejection_position_summary(sweep_report) # per-result rejection counts
-
-print(f"Lossy diverged: {summary['lossy_divergence_count']} / {summary['total_runs']}")
-print(f"Mean first divergence at token: {summary['mean_first_divergence_idx']}")
-```
-
-### Failure reports
-
-Classify ExactKV failures vs. expected lossy divergences:
-
-```python
-from exactkv.analysis import build_failure_report, write_failure_report_json
-
-fr = build_failure_report(sweep_report)
-print(f"Status: {fr['status']}")            # "pass" or "fail"
-print(f"ExactKV failures: {fr['exactkv_failure_count']}")    # must be 0
-print(f"Lossy divergences: {fr['lossy_divergence_count']}")  # expected for real compressors
-
-write_failure_report_json(fr, "reports/failures.json")
-```
-
-**Key distinction:**
-- **Lossy divergence** (`lossy.token_exact_match == False`) is *expected*. It proves that the compressor changes the output and demonstrates why verification is necessary.
-- **ExactKV failure** (`exactkv_failure == True`) means the verified output did *not* match `generate_full_greedy`. This is a correctness bug and must always be zero.
-
-No timing, throughput, latency, or speedup metrics are produced by any analysis function.
 
 ---
 
@@ -356,6 +317,75 @@ tokens/second, latency, throughput, or speedup.
 `int4_sim` rows carry `is_simulated=True` and `supports_real_bytes_claim=False`
 in every output format; the `memory_claim_note` field explains the int8 storage
 limitation.
+
+---
+
+## V2 analysis
+
+The `exactkv.analysis` package analyses existing benchmark and sweep reports
+without re-running the model.
+
+### Acceptance tables
+
+Summarise acceptance rate, accepted/rejected/corrected counts grouped by
+compressor, draft length, or prompt category:
+
+```python
+from exactkv.analysis import (
+    build_acceptance_table,
+    group_acceptance_by_compressor,
+    group_acceptance_by_draft_len,
+    group_acceptance_by_category,
+    write_acceptance_table_csv,
+)
+
+table   = build_acceptance_table(sweep_report)          # per (compressor × draft_len)
+by_comp = group_acceptance_by_compressor(sweep_report)  # draft_len collapsed
+by_dl   = group_acceptance_by_draft_len(sweep_report)   # compressor collapsed
+by_cat  = group_acceptance_by_category(sweep_report)    # grouped by prompt type
+
+write_acceptance_table_csv(table, "reports/acceptance.csv")
+```
+
+### Mismatch analysis
+
+Identify where lossy divergences and ExactKV rejections occur:
+
+```python
+from exactkv.analysis import (
+    first_lossy_divergences,
+    mismatch_position_summary,
+    rejection_position_summary,
+)
+
+divergences = first_lossy_divergences(sweep_report)    # first_divergence_idx per result
+summary     = mismatch_position_summary(sweep_report)  # aggregate stats
+rejections  = rejection_position_summary(sweep_report) # per-result rejection counts
+
+print(f"Lossy diverged: {summary['lossy_divergence_count']} / {summary['total_runs']}")
+print(f"Mean first divergence at token: {summary['mean_first_divergence_idx']}")
+```
+
+### Failure reports
+
+Classify ExactKV failures vs. expected lossy divergences:
+
+```python
+from exactkv.analysis import build_failure_report, write_failure_report_json
+
+fr = build_failure_report(sweep_report)
+print(f"Status: {fr['status']}")                         # "pass" or "fail"
+print(f"ExactKV failures: {fr['exactkv_failure_count']}")    # must be 0
+print(f"Lossy divergences: {fr['lossy_divergence_count']}")  # expected for real compressors
+
+write_failure_report_json(fr, "reports/failures.json")
+```
+
+**Key distinction:**
+- **Lossy divergence** (`lossy.token_exact_match == False`) is *expected*. It proves that the compressor changes the output and demonstrates why verification is necessary.
+- **ExactKV failure** (`exactkv_failure == True`) means the verified output did *not* match `generate_full_greedy`. This is a correctness bug and must always be zero.
+
+No timing, throughput, latency, or speedup metrics are produced by any analysis function.
 
 ---
 
@@ -435,9 +465,9 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 
 - **Correctness first.** Every output token ID must match `generate_full_greedy`.
 - **Compressor-agnostic.** Any class satisfying the `KVCompressor` protocol can be plugged in.
-- **No speedup claims.** V1 proves losslessness, not throughput.
-- **Greedy only.** Sampling, beam search, and speculative bonus tokens are V2+.
-- **Sequential verification.** Parallel verification is V2+.
+- **No speedup claims.** ExactKV proves losslessness and measures acceptance, not throughput.
+- **Greedy only.** Sampling, beam search, and speculative bonus tokens are deferred to a future version.
+- **Sequential verification.** Parallel (single-pass) verification is deferred to a future version.
 - **DynamicCache note.** The cache utilities target transformers 5.8.1 internal structure;
   see `docs/V1_SCOPE_STATEMENT.md` for brittleness notes.
 

@@ -97,7 +97,7 @@ work to a later version so the "no speedup claims" rule stays clean.
 | Compressor registry + capabilities | Real compressor backends (KIVI, kvpress, TurboQuant) |
 | Simulated INT4 (`int4_sim`, flagged) | Real INT4 bit-packing / real memory savings |
 | Unified config (`ExactKVConfig` + `BenchmarkConfig`) | Sampling, beam search, temperature |
-| CLI (`run` / `bench` / `analyze` / `list-compressors`) | Production serving entry points |
+| CLI (`bench` / `sweep` / `analyze` / `list-compressors`) | Production serving entry points |
 | JSON + CSV reports + run manifest | Plots, dashboards, leaderboards |
 | Draft_len × compressor sweeps | Throughput / latency / speedup metrics |
 | Acceptance tables, mismatch + failure analysis | Learned acceptance predictors |
@@ -117,8 +117,8 @@ work to a later version so the "no speedup claims" rule stays clean.
 - **Analysis package:** `analysis/acceptance_tables.py`, `analysis/mismatch.py`,
   `analysis/failure_report.py`.
 - **CLI:** `cli.py` + `__main__.py`.
-- **Prompt suites:** `benchmarks/prompts/core.jsonl`, `stress.jsonl` (smoke stays
-  the fast CI suite).
+- **Prompt suites:** `benchmarks/prompts/smoke.jsonl` (16 prompts, fast CI
+  suite). `core.jsonl` and `stress.jsonl` remain planned for a future version.
 - **Docs:** this file, README V2 usage section, updated `COMPRESSOR_INTERFACE.md`.
 
 ## V1 refactors required before V2 features (behavior-preserving)
@@ -140,20 +140,20 @@ All of the following must land first and must keep the V1 test suite green:
 
 All of the following must pass before V2 is considered complete:
 
-- [ ] All V1 gates still pass (full baseline, NoOp, INT8, DebugNoise rejection,
+- [x] All V1 gates still pass (full baseline, NoOp, INT8, DebugNoise rejection,
       benchmark runner) — regression bar.
-- [ ] INT4-sim ExactKV gate: `int4_sim` output_ids == full output_ids across
+- [x] INT4-sim ExactKV gate: `int4_sim` output_ids == full output_ids across
       ≥2 prompts × ≥2 draft lengths.
-- [ ] Registry gate: every registered compressor resolves by name and runs
+- [x] Registry gate: every registered compressor resolves by name and runs
       end-to-end with `exactkv_failures == 0`.
-- [ ] Sweep gate: a draft_len × compressor sweep completes with zero failures.
-- [ ] Reporting gate: JSON re-loads losslessly; CSV schema is stable and
+- [x] Sweep gate: a draft_len × compressor sweep completes with zero failures.
+- [x] Reporting gate: JSON re-loads losslessly; CSV schema is stable and
       one-row-per-cell.
-- [ ] Analysis gate: acceptance counts reconcile; mismatch and failure reports
+- [x] Analysis gate: acceptance counts reconcile; mismatch and failure reports
       are correct on synthetic and real traces.
-- [ ] CLI gate: `python -m exactkv bench --suite smoke` runs with locally cached
+- [x] CLI gate: `python -m exactkv bench --suite smoke` runs with locally cached
       model weights and writes valid reports.
-- [ ] No-performance-claim audit: no tokens/sec, latency, or speedup language in
+- [x] No-performance-claim audit: no tokens/sec, latency, or speedup language in
       V2 code or docs.
 
 ## How V2 prepares for real compressor backends (V4)
