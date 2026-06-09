@@ -359,7 +359,13 @@ Pre-Phase C research (`docs/KVPRESS_INTEGRATION_RESEARCH.md`) adds these
 - `exactkv_failures == 0`; `exactkv_output_ids == full_output_ids` on all prompts.
 - Hook-safety, full-state immutability, physical/logical seq, and workspace gates pass.
 - Lossy draft divergences expected (~39% draft acceptance); final output exact.
-- **Ready for Experiment 005** (not yet run).
+
+**Phase D Experiment 005 (2026-06-09, `docs/EXPERIMENT_005_KVPRESS_KNORM.md`):**
+
+- 272 cells (34 core prompts × 8 compressors), `draft_len=4`, `max_new_tokens=16`.
+- `exactkv_failures == 0` on all compressors including `kvpress_knorm_restricted`.
+- kvpress hook-safety and workspace-memory gates pass; lossy draft acceptance ~41%.
+- Artifacts: `reports/experiment_005_kvpress_knorm.{json,csv}` (gitignored).
 
 **Empirical research pass (2026-06-09, `docs/KVPRESS_INTEGRATION_RESEARCH.md`):**
 
@@ -537,8 +543,8 @@ for the external-systems survey and attribution.
 | **Phase 0** (this document) | Scope statement only; no code | `docs/V6_SCOPE_STATEMENT.md` committed and reviewed | ✅ Complete |
 | **Phase A** | `BackendAdapter` interface design document; capability/workspace field plan | `docs/BACKEND_ADAPTER_INTERFACE.md`; no backend yet | ✅ Complete |
 | **Phase B** | Minimal proof-of-concept adapter (trivial real/pass-through) exercising the boundary; exactness gate on smoke | PoC adapter + tests | ✅ Complete |
-| **Phase C** | kvpress safety scaffold + first real backend (recommended: kvpress, **restricted** — see `docs/KVPRESS_INTEGRATION_RESEARCH.md`); hook-safety + version-isolation + exactness gates | `KVPressKnormAdapter` + core-suite validation (`docs/KVPRESS_KNORM_VALIDATION.md`) | ✅ Validation complete; Experiment 005 pending |
-| **Phase D** | Experiment 005 (acceptance + workspace memory comparison); report rendering | `docs/EXPERIMENT_005_*.md` | Pending C |
+| **Phase C** | kvpress safety scaffold + first real backend (recommended: kvpress, **restricted** — see `docs/KVPRESS_INTEGRATION_RESEARCH.md`); hook-safety + version-isolation + exactness gates | `KVPressKnormAdapter` + core-suite validation (`docs/KVPRESS_KNORM_VALIDATION.md`) | ✅ Complete |
+| **Phase D** | Experiment 005 (acceptance + workspace memory comparison); report rendering | [`docs/EXPERIMENT_005_KVPRESS_KNORM.md`](EXPERIMENT_005_KVPRESS_KNORM.md) | ✅ Complete |
 | **Phase E** | V6 release notes; README/ROADMAP updates; audit; tag | `docs/RELEASE_NOTES_V0.6.0.md` | Pending D |
 
 > Phases B–E require **separate explicit approval** before any code is written.
