@@ -358,19 +358,28 @@ validation phase and is not performed in V5.
 
 ---
 
-### Phase D — Experiment 004
+### Phase D — Experiment 004 ✅ Complete
 
-Run a core-suite sweep and generate
-`docs/EXPERIMENT_004_MEMORY_ACCOUNTING.md` using `python -m exactkv report`,
-documenting the new memory schema across all current compressors.
+**Run:** core-suite sweep, 34 prompts × 10 compressors × 1 draft_len = 340 runs.
+**Model:** Qwen/Qwen2.5-0.5B, CPU, float32, draft_len=4, max_new_tokens=16.
+**Output:** `docs/EXPERIMENT_004_WORKSPACE_MEMORY.md`,
+`reports/experiment_004_workspace_memory.json` (not committed),
+`reports/experiment_004_workspace_memory.csv` (not committed).
 
-**Exit gates:**
-- `exactkv_failures == 0` across all runs.
-- Report contains `stored_kv_bytes`, `materialized_working_kv_bytes`, and
-  `total_kv_footprint_bytes` for every compressor.
-- Report includes the "stored ≠ working" honesty note.
-- No real-memory-savings claim for `_sim` compressors.
-- No forbidden performance fields.
+**Results:**
+- ExactKV failures: **0** (PASS)
+- Lossy divergences: 175 (expected for lossy compressors)
+- Mean acceptance rate: 0.800
+- Key workspace finding: `materialized_working_kv_bytes == full_kv_bytes` for all compressors.
+  `total_kv_footprint_bytes` > `full_kv_bytes` for all non-noop compressors.
+
+**Exit gates (all passing):**
+- `exactkv_failures == 0` ✓
+- Report contains all V5 workspace fields for every compressor ✓
+- Report includes "stored ≠ working" honesty note ✓
+- No real-memory-savings claim for `_sim` compressors ✓
+- No forbidden performance fields ✓
+- `total_kv_footprint_bytes` labelled as accounting sum, not measured peak GPU memory ✓
 
 ---
 
@@ -429,14 +438,17 @@ the V5 memory fields.
 | `report` CLI prints workspace line | `"workspace memory" in stdout.lower()` |
 | No forbidden performance fields | Pattern audit passes on rendered Markdown |
 
-### Phase D gates
+### Phase D gates ✅ Complete
 
 | Test | Assertion |
 |---|---|
-| Experiment 004 report exists | `docs/EXPERIMENT_004_MEMORY_ACCOUNTING.md` present |
-| `exactkv_failures == 0` | Hard correctness gate |
-| Report contains new fields | Section headings and table columns verified |
-| No real-memory claim for `_sim` | Audit passes |
+| Experiment 004 report exists | `docs/EXPERIMENT_004_WORKSPACE_MEMORY.md` present ✓ |
+| `exactkv_failures == 0` | 0/340 failures ✓ |
+| Report contains workspace fields | All five V5 fields in per-compressor table ✓ |
+| No real-memory claim for `_sim` | `supports_real_bytes_claim=False` enforced ✓ |
+| `total_kv_footprint_bytes` labelled as accounting total | Present in prose and footnote ✓ |
+| Active GPU measurement deferred | Explicitly stated ✓ |
+| No forbidden performance fields | Audit passes ✓ |
 
 ---
 

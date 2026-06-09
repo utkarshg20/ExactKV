@@ -831,13 +831,15 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
   reporting, and Experiment 003 (612-run core-suite sweep; `exactkv_failures == 0`).
   No real backends, no performance claims. See
   [`docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md`](docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md).
-* **V5 — workspace-aware memory accounting (Phases A–C complete).** Distinguish
+* **V5 — workspace-aware memory accounting (complete, `v0.5.0`).** Distinguish
   `stored_kv_bytes`, `materialized_working_kv_bytes`, `metadata_bytes`, and
   `temporary_workspace_bytes` in JSON/CSV reports and Markdown renders. Stored
   bytes omit the dequantisation working set; `total_kv_footprint_bytes` is a
   conservative accounting sum, not a measured peak GPU value. Markdown reports
-  now include a "Workspace-Aware Memory Accounting" section with a per-compressor
-  table. No backend, no performance claims.
+  include a "Workspace-Aware Memory Accounting" section with a per-compressor table.
+  Experiment 004 (340 runs, core suite, 10 compressors): `exactkv_failures == 0`.
+  No real backend, no performance claims. See
+  [`docs/EXPERIMENT_004_WORKSPACE_MEMORY.md`](docs/EXPERIMENT_004_WORKSPACE_MEMORY.md).
 * **V6 — real backend adapter interface and first backend candidate.** Design a
   `BackendAdapter` so a real quantisation format (e.g. a KIVI- or
   TurboQuant-style quantizer) could plug into the `KVCompressor` protocol and be
@@ -866,7 +868,9 @@ for the full related-work survey, and
 | [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md) | Research note on asymmetric K/V and workspace-aware memory |
 | [`docs/RELATED_WORK_KV_CACHE_COMPRESSION.md`](docs/RELATED_WORK_KV_CACHE_COMPRESSION.md) | Survey of KV-cache compression/quantization/eviction/serving + TurboQuant+ section |
 | [`docs/RESEARCH_BACKLOG.md`](docs/RESEARCH_BACKLOG.md) | Concrete future-experiment backlog (real backends, eviction, serving) |
-| [`docs/V5_SCOPE_DRAFT.md`](docs/V5_SCOPE_DRAFT.md) | Draft V5 plan (workspace memory + real backend planning) — not implemented |
+| [`docs/V5_SCOPE_DRAFT.md`](docs/V5_SCOPE_DRAFT.md) | Draft V5 plan (workspace memory + real backend planning) — superseded by scope statement |
+| [`docs/EXPERIMENT_004_WORKSPACE_MEMORY.md`](docs/EXPERIMENT_004_WORKSPACE_MEMORY.md) | Experiment 004: workspace-aware memory accounting, 340 runs, 10 compressors |
+| [`docs/RELEASE_NOTES_V0.5.0.md`](docs/RELEASE_NOTES_V0.5.0.md) | v0.5.0 release notes (V5 workspace-aware memory accounting) |
 | `docs/PRIVATE_FUTURE_POST_NOTES_EXPERIMENT_003.md` | 🔒 Private draft announcement notes for later — not for posting |
 
 ---
