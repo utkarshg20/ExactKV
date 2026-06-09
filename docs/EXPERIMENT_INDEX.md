@@ -1,6 +1,6 @@
 # ExactKV Experiment Index
 
-One-line reference for published experiments **001–007**. All report
+One-line reference for published experiments **001–008**. All report
 `exactkv_failures == 0` unless noted. JSON/CSV artifacts are **gitignored**
 under `reports/`.
 
@@ -20,6 +20,7 @@ under `reports/`.
 | 006 | Layer-aware V | [`EXPERIMENT_006_LAYER_AWARE_V.md`](EXPERIMENT_006_LAYER_AWARE_V.md) | Layer-aware boundary V sweep | 374 | `k8_v4_boundary_v8_sim` +0.013 vs `k8_v4_sim` | 0 | Simulated policies; int8 containers |
 | 006C | Boundary depth | [`EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md`](EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) | Boundary depth N=1/2/4 ablation | 170 | `k8_v4_boundary4_v8_sim` accept **0.954** | 0 | Not real packed-bit; not attention-gated |
 | 007 | Serving harness | [`EXPERIMENT_007_SERVING_CONTEXT.md`](EXPERIMENT_007_SERVING_CONTEXT.md) | Serving-context compatibility (Mode B) | 238 | All harness invariants pass; 907 commit rounds | 0 | **Not** vLLM/LMCache; identity phys/logical panel |
+| 008 | TurboQuant Python | [`EXPERIMENT_008_TURBOQUANT_PYTHON.md`](EXPERIMENT_008_TURBOQUANT_PYTHON.md) | Restricted TurboQuant adapter vs baselines | 272 | `turboquant_python_k3_v3` accept **0.435**; exactness preserved | 0 | Python path only; not llama.cpp/MLX; `supports_real_bytes_claim=False` |
 
 ---
 
@@ -30,6 +31,7 @@ under `reports/`.
 | 001–004, 006, 006C | `python3 -m exactkv sweep` (see each report) |
 | 005 | `.venv-kvpress/bin/python scripts/run_experiment_005_kvpress_knorm.py` |
 | 007 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_007_serving_context.py` |
+| 008 | `PYTHONPATH=vendor/turboquant_plus .venv-turboquant/bin/python scripts/run_experiment_008_turboquant_python.py` |
 
 ---
 

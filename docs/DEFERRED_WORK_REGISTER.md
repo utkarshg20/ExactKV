@@ -17,8 +17,8 @@ implemented** unless a linked experiment or release note says otherwise.
 
 | ID | Item | Status | V9 phase | Success criteria |
 |---|---|---|---|---|
-| D1 | **TurboQuant full integration** | **Prototype (Phase B)** | C / Exp 008 | `TurboQuantPythonAdapter` + factory; smoke exactness pass; see [`TURBOQUANT_ADAPTER_PROTOTYPE.md`](TURBOQUANT_ADAPTER_PROTOTYPE.md) |
-| D2 | **TurboQuant+ full integration** | **Prototype (Phase B, Python path)** | C / Exp 008 | Same adapter as D1; llama.cpp/MLX packed formats still deferred; Exp 008 pending |
+| D1 | **TurboQuant full integration** | **Evaluated (Phase C)** | D+ / Exp 009 anchor | Exp 008: 272 cells, `exactkv_failures == 0`; accept **0.435** vs `int8` **0.961**; see [`EXPERIMENT_008_TURBOQUANT_PYTHON.md`](EXPERIMENT_008_TURBOQUANT_PYTHON.md) |
+| D2 | **TurboQuant+ full integration** | **Evaluated (Python path only)** | D+ | Production llama.cpp/MLX formats still deferred; Python adapter evaluated in Exp 008 |
 | D3 | **KIVI adapter** | **Planned (V9)** | D / Exp 009 | Real per-channel K / per-token V + residual; acceptance vs `int8` |
 | D4 | **KVQuant-style adapter** | **Planned (V9)** | D / Exp 009 | Pre-RoPE key quant; hook safety; acceptance report |
 | D5 | **KVTC / Palu feasibility** | Planned (V9 optional) | D | Written feasibility + optional thin PoC; V5 metadata honesty |

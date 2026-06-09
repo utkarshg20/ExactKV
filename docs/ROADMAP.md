@@ -616,9 +616,9 @@ TurboQuant / TurboQuant+ first, then KIVI and KVQuant if feasible. V9 is the
 
 | Phase | Focus |
 |---|---|
-| A | TurboQuant / TurboQuant+ deep feasibility (no ExactKV integration yet) |
-| B | TurboQuant adapter prototype + smoke exactness gate |
-| C | Experiment 008 — real backend vs baselines |
+| A | TurboQuant / TurboQuant+ deep feasibility ✅ |
+| B | TurboQuant adapter prototype + smoke exactness gate ✅ |
+| C | Experiment 008 — restricted Python adapter vs baselines ✅ ([`EXPERIMENT_008_TURBOQUANT_PYTHON.md`](EXPERIMENT_008_TURBOQUANT_PYTHON.md)) |
 | D | KIVI / KVQuant feasibility + Experiment 009 |
 | E | RunPod larger-model validation (≥1.5B) |
 | F | `v0.9.0` release notes; v1.0.0 readiness decision |
