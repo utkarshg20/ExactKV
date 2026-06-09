@@ -1,7 +1,8 @@
 # BackendAdapter Interface Design
 
-**Status:** V6 Phase A — design document only. No code is implemented here.
-**Superseded by:** Code in `exactkv/compressors/backend_adapter.py` (V6 Phase B, not yet written).
+**Status:** V6 Phase A design + Phase B implementation reference.
+**Implementation:** `exactkv/compressors/backend_adapter.py` (Phase B complete).
+**Pre-Phase C research:** `docs/KVPRESS_INTEGRATION_RESEARCH.md`.
 **Scope context:** [`docs/V6_SCOPE_STATEMENT.md`](V6_SCOPE_STATEMENT.md).
 
 > ExactKV does not implement kvpress, KIVI, KVQuant, TurboQuant, TurboQuant+,
@@ -435,21 +436,78 @@ forward pass on `full_state.past_key_values` before the deep copy runs.
 draft model's forward path, not the full model's, or (b) check a flag that is
 off during all full-model forward calls.
 
-### 10.3 Hook-safety gate (Phase C prerequisite)
+### 10.3 Global monkeypatch risk (kvpress-specific)
 
-Before the Phase C real-backend integration is considered passing, a dedicated
-test must confirm:
+Pre-Phase C research found that `import kvpress` calls
+`patch_attention_functions()`, which **permanently** wraps every entry in
+`transformers.modeling_utils.ALL_ATTENTION_FUNCTIONS`. This is distinct from the
+removable forward hooks registered by `with press(model):`.
+
+The patch is mostly a pass-through when `module.masked_key_indices` is `None`
+(default for `KnormPress` and most ScorerPress subclasses), but it still executes
+on every attention call in the process. Phase C must include a **global
+attention-patch gate** confirming verify and regression tests remain correct
+after `import kvpress`.
+
+`AdaKVPress` and other head-wise presses set `masked_key_indices` and rely on
+this patch — they are **excluded** from V6 Phase C initial integration.
+
+### 10.4 `verification_mode()` (required for hook-based backends)
+
+kvpress hooks are scoped via `with press(model):` and removed on exit, but
+ExactKV still needs an explicit guard because verify and commit run forwards on
+the same `ModelRuntime.model` object.
+
+**Implemented API (Phase C scaffold — default no-op):**
+
+```python
+@contextmanager
+def verification_mode(self):
+    """Default: no-op yield. Hook-based subclasses may assert hooks inactive."""
+    yield
+```
+
+`BackendAdapter.verification_mode()` is implemented as a no-op context manager.
+Hook-based subclasses (e.g. future `KVPressKnormAdapter`) may override to assert
+no forward hooks are active or to disable hooks during verification.
+
+`ExactKVGenerator._verify_draft_tokens` wraps `verify_sequential` inside
+`compressor.verification_mode()` when the method exists (`callable` check).
+Legacy compressors without `verification_mode` are unchanged.
+
+### 10.5 Model-reference requirement (hook-based backends)
+
+kvpress has no standalone `compress(cache)` API. Compression happens during a
+model forward with `with press(model):` or via per-layer `press.compress()`
+calls that need the attention `module`, `hidden_states`, and `kwargs`.
+
+A `KVPressAdapter` must hold a `ModelRuntime` (or model) reference. The current
+`_backend_compress(k_tensors, v_tensors, cache_format)` signature is
+**insufficient** for full kvpress fidelity. Phase C options:
+
+1. **Replay path (recommended):** re-run prefill with `with press(model):` on
+   sequence tokens; store resulting `DynamicCache` in `backend_data`.
+2. **Offline path (KnormPress only):** call `press.compress()` per layer with
+   extracted keys/values and `model.model.layers[i].self_attn` as `module`.
+
+### 10.6 Hook-safety gate (Phase C prerequisite)
+
+Before the Phase C real-backend integration is considered passing, dedicated
+tests must confirm:
 
 ```
-Given: an active BackendAdapter with hooks registered
+Given: KVPressAdapter used press(model) during compress(); hooks now removed
 When:  VerificationEngine.verify_sequential runs
-Then:  full_state.past_key_values is bit-identical before and after
-       compressed_state.data is not modified
-       exactkv_failures == 0 on the smoke suite
+Then:  full_state.past_key_values unchanged (shapes, values, kv_total_bytes)
+       compressed_state.data unchanged
+       no forward hooks remain on model.model.layers[*].self_attn
 ```
+
+Additionally: after `import kvpress`, all existing ExactKV regression tests pass
+(attention-patch gate).
 
 **If hook-safety cannot be guaranteed, the backend is rejected for V6** and the
-design-only fallback path is taken (§17 of V6_SCOPE_STATEMENT.md).
+design-only fallback path is taken (§14 of V6_SCOPE_STATEMENT.md).
 
 ---
 
@@ -630,33 +688,37 @@ adapter boundary is sound and Phase C can proceed with a real backend.
 > ExactKV does not implement kvpress. This section describes how such an adapter
 > would fit the design if kvpress integration is approved in Phase C.
 
-kvpress exposes a `compress` hook that intercepts KV cache entries after each
-layer's attention during a forward pass. Its API is roughly:
+kvpress registers **forward hooks** on attention layers via a context manager.
+There is no `setup_hook()` API. The correct pattern is:
 ```python
-compressor = SnapKVCompressor(compression_ratio=0.5)
-with compressor.setup_hook(model):
-    output = model(**inputs)  # KV entries compressed on the fly inside this block
+from kvpress import KnormPress
+press = KnormPress(compression_ratio=0.5)
+with press(model):
+    output = model(input_ids, past_key_values=cache)  # hooks compress in-place
 compressed_cache = output.past_key_values
 ```
 
 A `KVPressAdapter` would:
 
-1. **In `_backend_compress`:** Run a forward pass with `compressor.setup_hook(model)`
-   active and the full-state KV tensors as the starting cache. Store the resulting
-   compressed cache as `backend_data`.
+1. **During compress (replay path):** Hold a `ModelRuntime` reference; re-run
+   prefill with `with press(model):` on sequence tokens; store the resulting
+   `DynamicCache` as `backend_data`. Do not mutate `full_state.past_key_values`.
 2. **`backend_name`:** `"kvpress"`. `backend_version`: pinned from
    `importlib.metadata.version("kvpress")`.
-3. **Hook-safety (§10):** The hook must be deactivated during
-   `VerificationEngine` forward passes. The `verification_mode()` context
-   manager disables the hook registration for the duration of the verify step.
-4. **`_backend_materialize`:** Return `backend_data` directly (kvpress's
+3. **Hook-safety (§10):** Hooks must be removed before verify/commit
+   (`with press(model):` scope). `verification_mode()` asserts no hooks remain
+   active. `import kvpress` also patches attention globally — test gate required.
+4. **Version pin:** `kvpress==0.5.3` with `transformers>=4.56,<5.3` — conflicts
+   with ExactKV's default 5.8.x; use isolated optional extra (see research doc).
+5. **Phase C initial press:** `KnormPress` only; no DecodingPress/AdaKVPress.
+6. **`_backend_materialize`:** Return `backend_data` directly (kvpress's
    compressed cache is already a `DynamicCache`).
-5. **`supports_real_bytes_claim`:** Depends on which kvpress compressor is used.
+7. **`supports_real_bytes_claim`:** Depends on which kvpress compressor is used.
    SnapKV (token dropping) returns a sparse cache that is smaller by token count
    but still stores full-precision tensors for retained tokens, so
    `stored_kv_bytes < full_kv_bytes` (real) but no bit-width reduction.
    A quantizing kvpress compressor would need per-compressor analysis.
-6. **`materialized_working_kv_bytes`:** For SnapKV and similar, retained tokens
+8. **`materialized_working_kv_bytes`:** For SnapKV and similar, retained tokens
    are already at full precision; attention uses them directly.
    `materialized_working_kv_bytes == stored_kv_bytes` (no separate dequantize
    step), which is < `full_kv_bytes`.

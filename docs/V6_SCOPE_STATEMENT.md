@@ -307,6 +307,31 @@ draft pass and the verify pass operate on the intended KV states and that the
 exactness gate still holds. **If this cannot be guaranteed, the backend is
 rejected and V6 falls back (KIVI) or stops at design (§14).**
 
+Pre-Phase C research (`docs/KVPRESS_INTEGRATION_RESEARCH.md`) adds these
+**required gates** before kvpress integration code:
+
+1. **Hook isolation:** no kvpress forward hooks registered during
+   `verify_sequential` or `_commit`; assert via `verification_mode()`.
+2. **Global attention patch:** `import kvpress` permanently patches
+   `ALL_ATTENTION_FUNCTIONS`; must not break verify or existing tests.
+3. **Transformers version isolation:** kvpress 0.5.3 requires
+   `transformers>=4.56,<5.3`; ExactKV currently runs 5.8.x — Phase C must use
+   an isolated optional extra or separate gate environment.
+4. **Initial press restriction:** Phase C starts with prefill-only `KnormPress`
+   only; no `DecodingPress`, `PrefillDecodingPress`, or `AdaKVPress`.
+5. **Model-reference extension:** kvpress needs `ModelRuntime.model` access;
+   `_backend_compress(k_tensors, …)` alone is insufficient.
+
+**Phase C scaffold (implemented):**
+
+- Optional `[kvpress]` extra in `pyproject.toml` (`kvpress==0.5.3`,
+  `transformers>=4.56,<5.3`) — not on the default install path.
+- `BackendAdapter.verification_mode()` default no-op context manager.
+- `ExactKVGenerator` wraps verification inside `verification_mode()` when present.
+- No `import kvpress` in default ExactKV module loading.
+
+`KVPressKnormAdapter` is **not** implemented in the scaffold PR.
+
 ---
 
 ## 11. GPU requirements
@@ -373,6 +398,8 @@ runtime.
 | Risk | Severity | Mitigation |
 |---|---|---|
 | Backend hooks invalidate the draft-verify correctness guarantee | High | Hook-safety gate (§10); reject backend if unmet |
+| kvpress `transformers<5.3` vs ExactKV 5.8.x | High | Isolated optional extra; pin versions; see research doc |
+| kvpress global `patch_attention_functions` on import | High | Attention-patch gate; reject if verify/regression breaks |
 | No backend wraps cleanly behind `KVCompressor` | High | V6 may stop at adapter design + minimal PoC (§14) |
 | Real backend still dequantises to full precision (`materialized == full`) | Medium | Report honestly; this does not block V6 |
 | Scale-granularity (per-channel/per-token) translation into honest `metadata_bytes` | Medium | Document the accounting; raise rather than emit misleading defaults |
@@ -473,7 +500,7 @@ for the external-systems survey and attribution.
 | **Phase 0** (this document) | Scope statement only; no code | `docs/V6_SCOPE_STATEMENT.md` committed and reviewed | ✅ Complete |
 | **Phase A** | `BackendAdapter` interface design document; capability/workspace field plan | `docs/BACKEND_ADAPTER_INTERFACE.md`; no backend yet | ✅ Complete |
 | **Phase B** | Minimal proof-of-concept adapter (trivial real/pass-through) exercising the boundary; exactness gate on smoke | PoC adapter + tests | ✅ Complete |
-| **Phase C** | First real backend candidate behind the adapter (recommended: kvpress); hook-safety + exactness gates | Real adapter passing core-suite exactness | Pending B |
+| **Phase C** | kvpress safety scaffold + first real backend (recommended: kvpress, **restricted** — see `docs/KVPRESS_INTEGRATION_RESEARCH.md`); hook-safety + version-isolation + exactness gates | Scaffold: optional `kvpress` extra, `verification_mode()` guard, no default import; then `KVPressKnormAdapter` | Scaffold in progress |
 | **Phase D** | Experiment 005 (acceptance + workspace memory comparison); report rendering | `docs/EXPERIMENT_005_*.md` | Pending C |
 | **Phase E** | V6 release notes; README/ROADMAP updates; audit; tag | `docs/RELEASE_NOTES_V0.6.0.md` | Pending D |
 

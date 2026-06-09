@@ -21,7 +21,8 @@ sum, not a measured peak GPU memory value.
 from __future__ import annotations
 
 import abc
-from typing import Any
+from contextlib import contextmanager
+from typing import Any, Generator
 
 from exactkv.cache.compressed_state import CompressedKVState
 from exactkv.cache.full_state import FullKVState
@@ -189,6 +190,21 @@ class BackendAdapter(abc.ABC):
             temporary_workspace_bytes=temporary,
             total_kv_footprint_bytes=total,
         )
+
+    # ── Verification lifecycle guard (hook-based backends override) ─────────
+
+    @contextmanager
+    def verification_mode(self) -> Generator[None, None, None]:
+        """Context manager guarding the verification path.
+
+        Default implementation is a no-op — safe for pass-through and future
+        offline backends.  Hook-based subclasses (e.g. kvpress) may override to
+        assert no forward hooks are active while ``VerificationEngine`` runs.
+
+        ``ExactKVGenerator`` wraps ``verify_sequential`` inside this context
+        when the compressor provides ``verification_mode``.
+        """
+        yield
 
     # ── Optional override (lossless adapters use default) ───────────────────
 

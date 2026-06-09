@@ -22,6 +22,13 @@ dev = [
     "pytest>=8.0",
     "pytest-timeout>=2.3",
 ]
+# V6 Phase C: isolated kvpress backend evaluation (not installed by default).
+# Pins transformers<5.3 per docs/KVPRESS_INTEGRATION_RESEARCH.md — separate
+# from the default ExactKV environment which may use transformers 5.x.
+kvpress = [
+    "kvpress==0.5.3",
+    "transformers>=4.56,<5.3",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]

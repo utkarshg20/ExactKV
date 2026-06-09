@@ -113,8 +113,8 @@ class ExactKVGenerator:
             n = min(self.draft_len, remaining)
             draft_result = self._draft(compressed, n)
 
-            # 2. Verify
-            acceptance = self.engine.verify_sequential(
+            # 2. Verify (inside verification_mode when compressor provides it)
+            acceptance = self._verify_draft_tokens(
                 full_state, draft_result.token_ids
             )
 
@@ -189,6 +189,19 @@ class ExactKVGenerator:
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
+
+    def _verify_draft_tokens(
+        self,
+        full_state: FullKVState,
+        draft_tokens: list[int],
+    ) -> AcceptanceResult:
+        """Run sequential verification, inside ``verification_mode`` when available."""
+        verify = self.engine.verify_sequential
+        mode = getattr(self.compressor, "verification_mode", None)
+        if callable(mode):
+            with mode():
+                return verify(full_state, draft_tokens)
+        return verify(full_state, draft_tokens)
 
     @torch.no_grad()
     def _draft(self, compressed: CompressedKVState, n: int) -> DraftResult:
