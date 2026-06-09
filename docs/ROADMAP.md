@@ -599,21 +599,38 @@ final yet.
 
 ---
 
-# V9: Real backend integration gauntlet
+# V9: Real backend integration gauntlet (Phase 0 — scope only)
 
 ## Goal
 
-Integrate and evaluate real compression backends behind `BackendAdapter`, starting
-with **TurboQuant / TurboQuant+** feasibility and adapter work, then KIVI and
-KVQuant-style paths.
+Integrate and **evaluate** real KV-compression backends behind `BackendAdapter` —
+TurboQuant / TurboQuant+ first, then KIVI and KVQuant if feasible. V9 is the
+**real backend credibility phase**; **not public launch**.
 
-## Deliverables (planned)
+## Phase 0 deliverable
 
-- TurboQuant+ feasibility + restricted adapter PoC
-- KIVI / KVQuant-style adapter scoping
-- New experiment(s) with `exactkv_failures == 0` gate
+- [`V9_SCOPE_STATEMENT.md`](V9_SCOPE_STATEMENT.md) — full phased scope, Experiments
+  008–009 plan, RunPod GPU requirements, exactness/memory contracts, exit criteria.
 
-See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V9.
+## Planned phases (A–F)
+
+| Phase | Focus |
+|---|---|
+| A | TurboQuant / TurboQuant+ deep feasibility (no ExactKV integration yet) |
+| B | TurboQuant adapter prototype + smoke exactness gate |
+| C | Experiment 008 — real backend vs baselines |
+| D | KIVI / KVQuant feasibility + Experiment 009 |
+| E | RunPod larger-model validation (≥1.5B) |
+| F | `v0.9.0` release notes; v1.0.0 readiness decision |
+
+See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) and
+[`V9_SCOPE_STATEMENT.md`](V9_SCOPE_STATEMENT.md).
+
+## Positioning
+
+- **v0.8.0 is not final public launch** — V9 makes the project more impressive first.
+- ExactKV does **not** claim TurboQuant, KIVI, or KVQuant results until integrated.
+- Valid outcome: documented **no-go** with blocker write-up.
 
 ---
 

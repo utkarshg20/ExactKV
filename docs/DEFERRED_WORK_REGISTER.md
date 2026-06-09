@@ -7,19 +7,22 @@ implemented** unless a linked experiment or release note says otherwise.
 > latency, speedup, runtime, or production-serving claims; `_sim` ≠ packed-bit storage;
 > external paper results are **not** ExactKV results.
 
-**Version path:** V9 → V10 → V11 → V12/v1.0.0 (public launch).
+**Version path:** V9 (active) → V10 → V11 → V12/v1.0.0 (public launch).
+
+**V9 scope:** [`V9_SCOPE_STATEMENT.md`](V9_SCOPE_STATEMENT.md) — Phase 0 complete.
 
 ---
 
-## V9 — Real backend integration gauntlet
+## V9 — Real backend integration gauntlet (active / planned)
 
-| ID | Item | Status | Success criteria |
-|---|---|---|---|
-| D1 | **TurboQuant full integration** | Deferred | `BackendAdapter` wrapping real TurboQuant path; acceptance + V5 memory on core suite; `exactkv_failures == 0` |
-| D2 | **TurboQuant+ full integration** | Deferred | Same as D1 for TurboQuant+; honest `supports_real_bytes_claim`; no external throughput claims |
-| D3 | **KIVI adapter** | Deferred | Real per-channel K / per-token V + residual; acceptance vs `int8` at comparable budget |
-| D4 | **KVQuant-style adapter** | Deferred | Pre-RoPE key quant + outlier handling; verify hook safety; acceptance report |
-| D5 | **KVTC / Palu feasibility** | Deferred | Written feasibility + optional thin adapter PoC; metadata accounting under V5 schema |
+| ID | Item | Status | V9 phase | Success criteria |
+|---|---|---|---|---|
+| D1 | **TurboQuant full integration** | **Planned (V9)** | A–C / Exp 008 | `BackendAdapter`; Experiment 008; `exactkv_failures == 0` or documented no-go |
+| D2 | **TurboQuant+ full integration** | **Planned (V9)** | A–C / Exp 008 | Same as D1; first recommended backend; honest `supports_real_bytes_claim` |
+| D3 | **KIVI adapter** | **Planned (V9)** | D / Exp 009 | Real per-channel K / per-token V + residual; acceptance vs `int8` |
+| D4 | **KVQuant-style adapter** | **Planned (V9)** | D / Exp 009 | Pre-RoPE key quant; hook safety; acceptance report |
+| D5 | **KVTC / Palu feasibility** | Planned (V9 optional) | D | Written feasibility + optional thin PoC; V5 metadata honesty |
+| D15 | **Larger-model RunPod validation** | **Planned (V9)** | E | ≥1.5B Qwen2.5; `exactkv_failures == 0`; hardware manifest |
 
 ---
 
@@ -43,8 +46,9 @@ implemented** unless a linked experiment or release note says otherwise.
 | D12 | **LMCache integration** | No-go (Phase A) | Re-approval only if ownership + verify isolation proven; else remain deferred |
 | D13 | **vLLM / LMCache sidecar probe** | Deferred | Metadata-only or isolated sidecar evaluation without breaking exactness gate |
 | D14 | **Active GPU memory profiling** | Deferred | Approved methodology; distinct from `total_kv_footprint_bytes`; optional field only |
-| D15 | **Larger-model RunPod validation** | Deferred | At least one model &gt;0.5B on documented GPU hardware; exactness gate preserved |
-| D16 | **PagedAttention kernel integration** | Deferred | Not planned; local harness remains default unless Phase C re-approved |
+| D16 | **PagedAttention kernel integration** | Deferred | Not planned; local harness remains default unless V8 Phase C re-approved |
+
+_Larger-model RunPod validation (formerly D15) is **active in V9 Phase E** — see V9 table above._
 
 ---
 
@@ -82,6 +86,7 @@ re-entry path if stack integration is revisited.
 
 ## Related
 
+- [`V9_SCOPE_STATEMENT.md`](V9_SCOPE_STATEMENT.md) — active V9 scope (Phase 0 complete)
 - [`ROADMAP.md`](ROADMAP.md) — version planning
 - [`RESEARCH_BACKLOG.md`](RESEARCH_BACKLOG.md) — experiment ideas
 - [`RELEASE_NOTES_V0.8.0.md`](RELEASE_NOTES_V0.8.0.md) — what shipped in v0.8.0

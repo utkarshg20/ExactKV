@@ -31,7 +31,7 @@ is faster. It does **not** claim throughput, latency, speedup, or production rea
 | Item | Value |
 |---|---|
 | **Latest release** | [`v0.8.0`](docs/RELEASE_NOTES_V0.8.0.md) — serving-context harness (Experiment 007) |
-| **Next** | **V9** — real backend integration, starting with TurboQuant / TurboQuant+ |
+| **Next** | [**V9**](docs/V9_SCOPE_STATEMENT.md) — real backend integration (TurboQuant+ first) |
 | **Status** | Research milestone; [not public-launch final](docs/PROJECT_STATUS_V0.8.0.md) |
 | **Hard gate** | `exactkv_failures == 0` on every published experiment |
 | **Default model** | `Qwen/Qwen2.5-0.5B` (greedy, single-request, CPU-first) |
@@ -69,7 +69,8 @@ boundary V depth N=4 → **0.954** accept (+0.063 vs uniform `k8_v4_sim`).
 | V6 | `v0.6.0` | `BackendAdapter`; restricted kvpress KnormPress; Experiment 005 | ✅ |
 | V7 | `v0.7.0` | Layer-aware V policies; Experiments 006 / 006C | ✅ |
 | V8 | `v0.8.0` | Serving harness; Experiment 007 | ✅ |
-| V9+ | — | Real backends (TurboQuant+), research, scale → v1.0.0 | Planned |
+| V9 | — | Real backend gauntlet (TurboQuant+, KIVI, KVQuant) | Phase 0 ✅ |
+| V10–V12 | — | Research, scale, launch → v1.0.0 | Planned |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
@@ -750,6 +751,7 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | Topic | Document |
 |---|---|
 | v0.8.0 docs | [`RELEASE_NOTES_V0.8.0.md`](docs/RELEASE_NOTES_V0.8.0.md) · [`EXPERIMENT_INDEX.md`](docs/EXPERIMENT_INDEX.md) · [`PROJECT_STATUS_V0.8.0.md`](docs/PROJECT_STATUS_V0.8.0.md) · [`DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) |
+| V9 scope (current) | [`V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) |
 | V9+ planning | [`ROADMAP.md`](docs/ROADMAP.md) · [`DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) |
 | V6–V8 planning detail | [`docs/FUTURE_ROADMAP_V6_V8.md`](docs/FUTURE_ROADMAP_V6_V8.md) |
 | Asymmetric K/V research | [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md) |
@@ -770,6 +772,7 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | [`docs/DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) | Deferred work V9–v1.0.0 |
 | [`docs/EXPERIMENT_007_SERVING_CONTEXT.md`](docs/EXPERIMENT_007_SERVING_CONTEXT.md) | Latest experiment — serving harness (238 runs) |
 | [`docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md`](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) | Experiment 006C — boundary-depth ablation |
+| [`docs/V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) | V9 — real backend integration gauntlet |
 | [`docs/SERVING_CACHE_LIFECYCLE_HARNESS.md`](docs/SERVING_CACHE_LIFECYCLE_HARNESS.md) | V8 Phase B — cache-lifecycle harness |
 | [`docs/SERVING_CONTEXT_FEASIBILITY.md`](docs/SERVING_CONTEXT_FEASIBILITY.md) | V8 Phase A — serving feasibility |
 | [`docs/V8_SCOPE_STATEMENT.md`](docs/V8_SCOPE_STATEMENT.md) | V8 scope (in progress) |
