@@ -31,7 +31,7 @@ is faster. It does **not** claim throughput, latency, speedup, or production rea
 | Item | Value |
 |---|---|
 | **Latest release** | [`v0.7.0`](docs/RELEASE_NOTES_V0.7.0.md) — layer-aware V experiments |
-| **In progress** | [V8](docs/V8_SCOPE_STATEMENT.md) serving-context evaluation (Phase A complete) |
+| **In progress** | [V8](docs/V8_SCOPE_STATEMENT.md) serving-context evaluation (Phase B harness complete) |
 | **Hard gate** | `exactkv_failures == 0` on every published experiment |
 | **Default model** | `Qwen/Qwen2.5-0.5B` (greedy, single-request, CPU-first) |
 | **Compressors** | 15 built-in (`noop`, `int8`, asymmetric `_sim`, layer-aware boundary, `backend_passthrough`, …) |
@@ -70,7 +70,7 @@ are far more fragile than values** under compression (`k4_v8_sim` ~56% acceptanc
 | V5 | `v0.5.0` | Workspace-aware memory accounting; Experiment 004 | ✅ |
 | V6 | `v0.6.0` | `BackendAdapter`; restricted kvpress KnormPress; Experiment 005 | ✅ |
 | V7 | `v0.7.0` | Layer-aware V policies; Experiments 006 / 006C | ✅ |
-| V8 | — | Serving-context evaluation; local harness (planned) | Phase A ✅ |
+| V8 | — | Serving-context evaluation; local cache-lifecycle harness | Phase B ✅ |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
@@ -749,7 +749,7 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 
 | Topic | Document |
 |---|---|
-| V8 serving-context (current) | [`docs/V8_SCOPE_STATEMENT.md`](docs/V8_SCOPE_STATEMENT.md) · [`docs/SERVING_CONTEXT_FEASIBILITY.md`](docs/SERVING_CONTEXT_FEASIBILITY.md) |
+| V8 serving-context (current) | [`docs/V8_SCOPE_STATEMENT.md`](docs/V8_SCOPE_STATEMENT.md) · [`docs/SERVING_CACHE_LIFECYCLE_HARNESS.md`](docs/SERVING_CACHE_LIFECYCLE_HARNESS.md) |
 | V6–V8 planning detail | [`docs/FUTURE_ROADMAP_V6_V8.md`](docs/FUTURE_ROADMAP_V6_V8.md) |
 | Asymmetric K/V research | [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md) |
 | Related work survey | [`docs/RELATED_WORK_KV_CACHE_COMPRESSION.md`](docs/RELATED_WORK_KV_CACHE_COMPRESSION.md) |
@@ -765,6 +765,7 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 |---|---|
 | [`docs/RELEASE_NOTES_V0.7.0.md`](docs/RELEASE_NOTES_V0.7.0.md) | Latest release (`v0.7.0`) |
 | [`docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md`](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) | Latest experiment report |
+| [`docs/SERVING_CACHE_LIFECYCLE_HARNESS.md`](docs/SERVING_CACHE_LIFECYCLE_HARNESS.md) | V8 Phase B — cache-lifecycle harness |
 | [`docs/SERVING_CONTEXT_FEASIBILITY.md`](docs/SERVING_CONTEXT_FEASIBILITY.md) | V8 Phase A — serving feasibility |
 | [`docs/V8_SCOPE_STATEMENT.md`](docs/V8_SCOPE_STATEMENT.md) | V8 scope (in progress) |
 

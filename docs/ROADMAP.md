@@ -569,10 +569,16 @@ claims.
 - [`SERVING_CONTEXT_FEASIBILITY.md`](SERVING_CONTEXT_FEASIBILITY.md) — vLLM/LMCache
   **no-go** for Phase C; PagedAttention concepts via local harness; Phase B primary.
 
+## Phase B complete
+
+- [`SERVING_CACHE_LIFECYCLE_HARNESS.md`](SERVING_CACHE_LIFECYCLE_HARNESS.md) —
+  `exactkv/serving/cache_lifecycle.py`; local ownership/block-mapping harness;
+  exactness smoke gate; no vLLM/LMCache dependency.
+
 ## Recommended direction
 
-Restricted local harness (Phase B) → Experiment 007 Mode B harness evaluation
-(Phase D) → launch package (Phase E). vLLM/LMCache PoC deferred.
+Experiment 007 Mode B harness evaluation (Phase D) → launch package (Phase E).
+vLLM/LMCache PoC remains deferred (Phase C no-go).
 
 ## Non-goals
 
