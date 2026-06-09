@@ -1,11 +1,9 @@
 # V8 Scope Statement: Serving-Context Evaluation
 
-**Status:** Phase D complete (Experiment 007 harness evaluation). Phase B complete.
-Phase A complete. Phase 0 complete. See
-[`docs/EXPERIMENT_007_SERVING_CONTEXT.md`](EXPERIMENT_007_SERVING_CONTEXT.md),
-[`docs/SERVING_CACHE_LIFECYCLE_HARNESS.md`](SERVING_CACHE_LIFECYCLE_HARNESS.md), and
-[`docs/SERVING_CONTEXT_FEASIBILITY.md`](SERVING_CONTEXT_FEASIBILITY.md).
-Phase C remains **no-go/deferred** for vLLM/LMCache integration.
+**Status:** **V8 complete — `v0.8.0`.** Phases 0, A, B, D, E complete. Phase C
+**no-go/deferred** (vLLM/LMCache). **Not public-launch final** — see
+[`docs/PROJECT_STATUS_V0.8.0.md`](PROJECT_STATUS_V0.8.0.md) and
+[`docs/DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md).
 **Builds on:** `v0.7.0` — V7 complete; simulated layer-aware V policies
 (`k8_v4_boundary*_v8_sim`); Experiments 006 and 006C (`exactkv_failures == 0`);
 proxy divergence analysis (006A).
@@ -406,15 +404,17 @@ Either mode must produce:
 
 V8 is complete when:
 
-- [ ] Phase A feasibility document exists and is reviewed
+- [x] Phase A feasibility document exists and is reviewed
 - [x] Phase B harness passes exactness smoke gate (or Phase C PoC passes equivalent gate)
 - [x] Experiment 007 completes with **`exactkv_failures == 0`**
 - [x] `docs/EXPERIMENT_007_SERVING_CONTEXT.md` written with required disclaimers
-- [ ] Final documentation package drafted (release notes, experiment index, project status)
-- [ ] Launch narrative draft reviewed against no-performance-claim policy
-- [ ] No forbidden performance fields in code, tests, or docs
-- [ ] `docs/RELEASE_NOTES_V0.8.0.md` or `docs/RELEASE_NOTES_V1.0.0.md` written
-- [ ] Git tag assigned (`v0.8.0` or `v1.0.0`)
+- [x] Final documentation package drafted (release notes, experiment index, project status, deferred-work register)
+- [ ] Launch narrative draft reviewed against no-performance-claim policy — **deferred to v1.0.0**
+- [x] No forbidden performance fields in docs (Phase E audit)
+- [x] `docs/RELEASE_NOTES_V0.8.0.md` written
+- [ ] Git tag assigned (`v0.8.0`) — ready; not yet applied in this document
+
+**v0.8.0 is a research milestone, not public launch.** v1.0.0 requires V9–V11 deferred work.
 
 **Valid partial success:** Harness-based Experiment 007 with documented
 incompatibility of vLLM/LMCache — still satisfies V8 if exactness and honesty
@@ -452,18 +452,22 @@ methodology requirements.
 
 ## 18. Relationship to final public launch
 
-V8 is the **last planned research version** before a consolidated public launch
-package. Phase E may produce:
+**Decision (Phase E):** Tag **`v0.8.0`**. **Do not prepare public launch yet.**
 
-| Deliverable | Purpose |
+V8 Phase E delivers the documentation package below. Public launch narrative,
+raw report bundle, and `v1.0.0` tag are **deferred** until V9–V11 work makes the
+project substantially more impressive. See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md).
+
+| Deliverable | Status |
 |---|---|
-| `docs/RELEASE_NOTES_V0.8.0.md` or `docs/RELEASE_NOTES_V1.0.0.md` | Full changelog V1–V8 |
-| `docs/EXPERIMENT_INDEX.md` | One-line summary per experiment 001–007 |
-| `docs/PROJECT_STATUS_V1.0.md` | Public project status |
-| `docs/LAUNCH_NARRATIVE_DRAFT.md` | Private launch post draft (reviewed for honesty) |
-| Updated `README.md` | Public-facing overview |
+| [`RELEASE_NOTES_V0.8.0.md`](RELEASE_NOTES_V0.8.0.md) | ✅ Complete |
+| [`EXPERIMENT_INDEX.md`](EXPERIMENT_INDEX.md) | ✅ Complete |
+| [`PROJECT_STATUS_V0.8.0.md`](PROJECT_STATUS_V0.8.0.md) | ✅ Complete |
+| [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) | ✅ Complete |
+| `LAUNCH_NARRATIVE_DRAFT.md` | ❌ Deferred to v1.0.0 |
+| Updated `README.md` / `ROADMAP.md` | ✅ Complete |
 
-**Default public story (even without serving-stack integration):**
+**Default public story (for eventual v1.0.0, not posted at v0.8.0):**
 
 > ExactKV is a correctness-first verification and evaluation framework for lossy
 > KV-cache compression. It proves exact greedy outputs under verification,
@@ -472,11 +476,8 @@ package. Phase E may produce:
 > It is not a production serving system and does not claim throughput or latency
 > advantages.
 
-Serving-context evaluation **strengthens** the story if feasible; it is **not
-required** for an honest launch if incompatibility is documented.
-
-**Tag decision:** `v0.8.0` if V8 delivers serving-context evaluation without full
-launch package; `v1.0.0` if Phase E completes the full public launch criteria in §16.
+Serving-context evaluation **strengthens** the eventual story; vLLM/LMCache
+incompatibility is **documented**, not hidden.
 
 ---
 
@@ -489,7 +490,7 @@ launch package; `v1.0.0` if Phase E completes the full public launch criteria in
 | **Phase B** | Restricted serving-context / cache-lifecycle harness (**primary path**) | [`SERVING_CACHE_LIFECYCLE_HARNESS.md`](SERVING_CACHE_LIFECYCLE_HARNESS.md) + `exactkv/serving/` | ✅ Complete |
 | **Phase C** | Optional vLLM or LMCache PoC | **Deferred (no-go)** per Phase A; re-approval only for metadata-only export study | ❌ No-go default |
 | **Phase D** | Experiment 007 + report (Mode B harness) | [`EXPERIMENT_007_SERVING_CONTEXT.md`](EXPERIMENT_007_SERVING_CONTEXT.md); gitignored JSON/CSV | ✅ Complete |
-| **Phase E** | Release notes, audit, launch package, tag | `RELEASE_NOTES_V0.8.0.md` or `V1.0.0.md` | Pending D |
+| **Phase E** | Release notes, docs package, v0.8.0 readiness (no public launch) | [`RELEASE_NOTES_V0.8.0.md`](RELEASE_NOTES_V0.8.0.md), index, status, deferred register | ✅ Complete |
 
 > Phases A–E require **separate explicit approval** before any code is written.
 > Phase 0 (this document) is design-only and introduces no code and no behaviour
@@ -507,6 +508,10 @@ launch package; `v1.0.0` if Phase E completes the full public launch criteria in
 | [`EXPERIMENT_005_KVPRESS_KNORM.md`](EXPERIMENT_005_KVPRESS_KNORM.md) | External stack isolation precedent |
 | [`SERVING_CACHE_LIFECYCLE_HARNESS.md`](SERVING_CACHE_LIFECYCLE_HARNESS.md) | Phase B harness design and API |
 | [`EXPERIMENT_007_SERVING_CONTEXT.md`](EXPERIMENT_007_SERVING_CONTEXT.md) | Phase D harness evaluation report |
+| [`RELEASE_NOTES_V0.8.0.md`](RELEASE_NOTES_V0.8.0.md) | v0.8.0 release notes |
+| [`EXPERIMENT_INDEX.md`](EXPERIMENT_INDEX.md) | Experiments 001–007 index |
+| [`PROJECT_STATUS_V0.8.0.md`](PROJECT_STATUS_V0.8.0.md) | Project status at v0.8.0 |
+| [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) | Deferred work V9–v1.0.0 |
 | [`EXPERIMENT_004_WORKSPACE_MEMORY.md`](EXPERIMENT_004_WORKSPACE_MEMORY.md) | V5 accounting reference |
 | [`RESEARCH_BACKLOG.md`](RESEARCH_BACKLOG.md) | B10 serving-stack backlog item |
 | [`RELATED_WORK_KV_CACHE_COMPRESSION.md`](RELATED_WORK_KV_CACHE_COMPRESSION.md) | vLLM, LMCache survey |

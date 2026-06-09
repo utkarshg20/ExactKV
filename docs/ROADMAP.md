@@ -551,7 +551,7 @@ verification, acceptance, divergence, and workspace-memory framework.
 
 ---
 
-# V8: Serving-context evaluation (Phase 0 — scope only)
+# V8: Serving-context evaluation (complete — v0.8.0)
 
 ## Goal
 
@@ -581,20 +581,74 @@ claims.
   Mode B harness evaluation; 238 runs; `exactkv_failures == 0`; all harness
   gates pass. Artifacts gitignored.
 
-## Recommended direction
+## Phase E complete — V8 / v0.8.0
 
-Launch package (Phase E) → tag `v0.8.0`. vLLM/LMCache PoC remains deferred
-(Phase C no-go).
+- [`RELEASE_NOTES_V0.8.0.md`](RELEASE_NOTES_V0.8.0.md) — V8 changelog
+- [`EXPERIMENT_INDEX.md`](EXPERIMENT_INDEX.md) — experiments 001–007
+- [`PROJECT_STATUS_V0.8.0.md`](PROJECT_STATUS_V0.8.0.md) — status at v0.8.0
+- [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) — V9–v1.0.0 tracker
 
-## Non-goals
+**V8 is complete.** Tag `v0.8.0` ready. **Public launch deferred** — project not
+final yet.
 
-- No vLLM, LMCache, or PagedAttention implementation in Phase 0.
+## Non-goals (V8, unchanged)
+
+- No vLLM, LMCache, or PagedAttention implementation.
 - No throughput/latency/speedup/runtime/production claims as ExactKV results.
+- Phase C (direct stack integration) **no-go/deferred**, not forgotten.
 
-See [`RESEARCH_BACKLOG.md`](RESEARCH_BACKLOG.md) and
-[`FUTURE_ROADMAP_V6_V8.md`](FUTURE_ROADMAP_V6_V8.md) for planning context.
+---
 
-> Phases A–E require separate explicit approval before any code is written.
+# V9: Real backend integration gauntlet
+
+## Goal
+
+Integrate and evaluate real compression backends behind `BackendAdapter`, starting
+with **TurboQuant / TurboQuant+** feasibility and adapter work, then KIVI and
+KVQuant-style paths.
+
+## Deliverables (planned)
+
+- TurboQuant+ feasibility + restricted adapter PoC
+- KIVI / KVQuant-style adapter scoping
+- New experiment(s) with `exactkv_failures == 0` gate
+
+See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V9.
+
+---
+
+# V10: Compression research gauntlet
+
+## Goal
+
+Sparse V dequantization, true attention logging, per-layer/head/token divergence
+forensics, pre-RoPE key quantization experiments.
+
+See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V10.
+
+---
+
+# V11: Scale and serving gauntlet
+
+## Goal
+
+Larger-model RunPod validation, active GPU memory profiling methodology, vLLM/LMCache
+**sidecar probes** (direct integration remains deferred per V8 Phase A).
+
+See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V11.
+
+---
+
+# V12 / v1.0.0: Final public launch package
+
+## Goal
+
+Curated raw report bundle, reviewed public launch narrative, `PROJECT_STATUS_v1.0.0`,
+and git tag `v1.0.0` — only after V9–V11 bars are met or honestly scoped.
+
+**Public posting is delayed until deferred work is addressed.**
+
+See [`PROJECT_STATUS_V0.8.0.md`](PROJECT_STATUS_V0.8.0.md) §11.
 
 ---
 

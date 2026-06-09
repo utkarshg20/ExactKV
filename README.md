@@ -30,34 +30,32 @@ is faster. It does **not** claim throughput, latency, speedup, or production rea
 
 | Item | Value |
 |---|---|
-| **Latest release** | [`v0.7.0`](docs/RELEASE_NOTES_V0.7.0.md) — layer-aware V experiments |
-| **In progress** | [V8](docs/V8_SCOPE_STATEMENT.md) serving-context evaluation (Experiment 007 complete) |
+| **Latest release** | [`v0.8.0`](docs/RELEASE_NOTES_V0.8.0.md) — serving-context harness (Experiment 007) |
+| **Next** | **V9** — real backend integration, starting with TurboQuant / TurboQuant+ |
+| **Status** | Research milestone; [not public-launch final](docs/PROJECT_STATUS_V0.8.0.md) |
 | **Hard gate** | `exactkv_failures == 0` on every published experiment |
 | **Default model** | `Qwen/Qwen2.5-0.5B` (greedy, single-request, CPU-first) |
 | **Compressors** | 15 built-in (`noop`, `int8`, asymmetric `_sim`, layer-aware boundary, `backend_passthrough`, …) |
 
 ---
 
-## Latest results (v0.7.0)
+## Latest results (v0.8.0)
 
-**Experiment 006C — boundary-depth ablation.** Protecting more boundary V layers
-improves draft acceptance without breaking exactness. On the core suite (170 runs,
-`exactkv_failures == 0`):
+**Experiment 007 — serving harness (Mode B).** 238 cells on the core suite;
+`exactkv_failures == 0`; all harness invariants pass. Not vLLM/LMCache integration.
 
-| Policy | Accept rate | vs uniform `k8_v4_sim` |
-|---|---:|---|
-| `k8_v4_sim` (uniform K8/V4) | 0.891 | — |
-| `k8_v4_boundary_v8_sim` (N=1) | 0.904 | +0.013 |
-| `k8_v4_boundary4_v8_sim` (N=4) | **0.954** | **+0.063** |
+| Compressor | Accept rate |
+|---|---:|
+| `k_full_v8` | 0.990 |
+| `k8_v4_boundary4_v8_sim` | 0.954 |
+| `k8_v4_sim` | 0.891 |
 
-Earlier finding ([Experiment 003](docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md)): **keys
-are far more fragile than values** under compression (`k4_v8_sim` ~56% acceptance vs
-`k_full_v8` ~99%).
+Prior highlight ([Experiment 006C](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md)):
+boundary V depth N=4 → **0.954** accept (+0.063 vs uniform `k8_v4_sim`).
 
-> ⚠️ `_sim` and layer-aware compressors use **int8 containers** — not real packed-bit
-> storage. `total_kv_footprint_bytes` is a conservative accounting sum, not measured
-> peak GPU memory. See [release notes](docs/RELEASE_NOTES_V0.7.0.md) and
-> [Experiment 006C](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md).
+> ⚠️ Harness is local compatibility evaluation only. `_sim` compressors use **int8
+> containers**. No throughput, latency, or production-serving claims. See
+> [v0.8.0 release notes](docs/RELEASE_NOTES_V0.8.0.md).
 
 ---
 
@@ -70,7 +68,8 @@ are far more fragile than values** under compression (`k4_v8_sim` ~56% acceptanc
 | V5 | `v0.5.0` | Workspace-aware memory accounting; Experiment 004 | ✅ |
 | V6 | `v0.6.0` | `BackendAdapter`; restricted kvpress KnormPress; Experiment 005 | ✅ |
 | V7 | `v0.7.0` | Layer-aware V policies; Experiments 006 / 006C | ✅ |
-| V8 | — | Serving-context evaluation; Experiment 007 harness | Phase D ✅ |
+| V8 | `v0.8.0` | Serving harness; Experiment 007 | ✅ |
+| V9+ | — | Real backends (TurboQuant+), research, scale → v1.0.0 | Planned |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
@@ -750,7 +749,8 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 
 | Topic | Document |
 |---|---|
-| V8 serving-context (current) | [`docs/V8_SCOPE_STATEMENT.md`](docs/V8_SCOPE_STATEMENT.md) · [`docs/SERVING_CACHE_LIFECYCLE_HARNESS.md`](docs/SERVING_CACHE_LIFECYCLE_HARNESS.md) |
+| v0.8.0 docs | [`RELEASE_NOTES_V0.8.0.md`](docs/RELEASE_NOTES_V0.8.0.md) · [`EXPERIMENT_INDEX.md`](docs/EXPERIMENT_INDEX.md) · [`PROJECT_STATUS_V0.8.0.md`](docs/PROJECT_STATUS_V0.8.0.md) · [`DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) |
+| V9+ planning | [`ROADMAP.md`](docs/ROADMAP.md) · [`DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) |
 | V6–V8 planning detail | [`docs/FUTURE_ROADMAP_V6_V8.md`](docs/FUTURE_ROADMAP_V6_V8.md) |
 | Asymmetric K/V research | [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md) |
 | Related work survey | [`docs/RELATED_WORK_KV_CACHE_COMPRESSION.md`](docs/RELATED_WORK_KV_CACHE_COMPRESSION.md) |
@@ -764,7 +764,10 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 
 | Document | Purpose |
 |---|---|
-| [`docs/RELEASE_NOTES_V0.7.0.md`](docs/RELEASE_NOTES_V0.7.0.md) | Latest release (`v0.7.0`) |
+| [`docs/RELEASE_NOTES_V0.8.0.md`](docs/RELEASE_NOTES_V0.8.0.md) | Latest release (`v0.8.0`) |
+| [`docs/EXPERIMENT_INDEX.md`](docs/EXPERIMENT_INDEX.md) | All experiments 001–007 |
+| [`docs/PROJECT_STATUS_V0.8.0.md`](docs/PROJECT_STATUS_V0.8.0.md) | Project status (not launch-final) |
+| [`docs/DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) | Deferred work V9–v1.0.0 |
 | [`docs/EXPERIMENT_007_SERVING_CONTEXT.md`](docs/EXPERIMENT_007_SERVING_CONTEXT.md) | Latest experiment — serving harness (238 runs) |
 | [`docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md`](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) | Experiment 006C — boundary-depth ablation |
 | [`docs/SERVING_CACHE_LIFECYCLE_HARNESS.md`](docs/SERVING_CACHE_LIFECYCLE_HARNESS.md) | V8 Phase B — cache-lifecycle harness |
@@ -783,7 +786,7 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | 006C | [`EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md`](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) |
 | 007 | [`EXPERIMENT_007_SERVING_CONTEXT.md`](docs/EXPERIMENT_007_SERVING_CONTEXT.md) |
 
-**Release notes:** [`v0.4.0`](docs/RELEASE_NOTES_V0.4.0.md) · [`v0.5.0`](docs/RELEASE_NOTES_V0.5.0.md) · [`v0.6.0`](docs/RELEASE_NOTES_V0.6.0.md) · [`v0.7.0`](docs/RELEASE_NOTES_V0.7.0.md)
+**Release notes:** [`v0.4.0`](docs/RELEASE_NOTES_V0.4.0.md) · [`v0.5.0`](docs/RELEASE_NOTES_V0.5.0.md) · [`v0.6.0`](docs/RELEASE_NOTES_V0.6.0.md) · [`v0.7.0`](docs/RELEASE_NOTES_V0.7.0.md) · [`v0.8.0`](docs/RELEASE_NOTES_V0.8.0.md)
 
 **Scope and design:** [`V6_SCOPE_STATEMENT.md`](docs/V6_SCOPE_STATEMENT.md) · [`V7_SCOPE_STATEMENT.md`](docs/V7_SCOPE_STATEMENT.md) · [`BACKEND_ADAPTER_INTERFACE.md`](docs/BACKEND_ADAPTER_INTERFACE.md) · [`RELATED_WORK_KV_CACHE_COMPRESSION.md`](docs/RELATED_WORK_KV_CACHE_COMPRESSION.md)
 
