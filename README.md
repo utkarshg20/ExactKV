@@ -31,7 +31,7 @@ is faster. It does **not** claim throughput, latency, speedup, or production rea
 | Item | Value |
 |---|---|
 | **Latest release** | [`v0.8.0`](docs/RELEASE_NOTES_V0.8.0.md) — serving-context harness (Experiment 007) |
-| **Next** | [**V9**](docs/V9_SCOPE_STATEMENT.md) — real backend integration (TurboQuant+ first) |
+| **Next** | [**V9**](docs/V9_SCOPE_STATEMENT.md) — Phase B [TurboQuant adapter](docs/TURBOQUANT_ADAPTER_PROTOTYPE.md); Experiment 008 pending |
 | **Status** | Research milestone; [not public-launch final](docs/PROJECT_STATUS_V0.8.0.md) |
 | **Hard gate** | `exactkv_failures == 0` on every published experiment |
 | **Default model** | `Qwen/Qwen2.5-0.5B` (greedy, single-request, CPU-first) |

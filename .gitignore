@@ -22,7 +22,12 @@ share/python-wheels/
 
 # Virtual environments
 .venv/
+.venv-turboquant/
+.venv-kvpress/
+.venv-kvpress312/
 venv/
+# V9: upstream turboquant_plus clone (dev-only; set PYTHONPATH)
+vendor/turboquant_plus/
 ENV/
 env/
 

@@ -1,7 +1,7 @@
 # V9 Scope Statement: Real Backend Integration Gauntlet
 
-**Status:** Phase 0 complete (this document only). **No code, no experiments, no
-compressors** in Phase 0.
+**Status:** Phase 0 complete; Phase A complete; **Phase B complete** (restricted Python
+adapter prototype). **TurboQuant not in default registry.** Experiment 008 not run.
 **Builds on:** `v0.8.0` — V8 complete; serving harness (Experiment 007);
 `BackendAdapter` + restricted kvpress (V6); simulated layer-aware policies (V7).
 **Not public launch.** V9 is the **real backend credibility phase**.
@@ -124,7 +124,7 @@ prototype picks the feasible path).
 | **Research alignment** | V7 layer-aware and 006A proxy analysis motivate **V-specific** and rotation-aware policies; TurboQuant+ is the closest real asymmetric V backend |
 | **Naive sim gap** | `k8_v2_sim` (0.33 accept in Exp 003) ≠ TurboQuant `turbo2`; integrating real format tests whether aggressive V can work under verification |
 | **Adapter precedent** | V6 `BackendAdapter` + kvpress lesson ([`EXPERIMENT_005_KVPRESS_KNORM.md`](EXPERIMENT_005_KVPRESS_KNORM.md)) — hook isolation, separate env, honest bytes |
-| **HF compatibility** | TurboQuant+ community repo targets HF-style caches; feasibility must confirm Qwen2.5 compatibility |
+| **HF compatibility** | Python `turboquant` bridge on HF `past_key_values` confirmed in Phase A ([`TURBOQUANT_INTEGRATION_RESEARCH.md`](TURBOQUANT_INTEGRATION_RESEARCH.md)); llama.cpp GGUF path is **not** the ExactKV integration route |
 | **Honest evaluation** | ExactKV evaluates **acceptance + memory**, not TurboQuant+ paper throughput |
 
 **Fallback:** If TurboQuant+ integration is blocked, Phase A documents why and
@@ -397,8 +397,8 @@ requirements.
 
 **v0.9.0 tag criteria (Phase F):**
 
-- [ ] Phase A TurboQuant feasibility doc
-- [ ] Phase B adapter smoke (`exactkv_failures == 0`) **or** documented no-go
+- [x] Phase A TurboQuant feasibility doc ([`TURBOQUANT_INTEGRATION_RESEARCH.md`](TURBOQUANT_INTEGRATION_RESEARCH.md))
+- [x] Phase B adapter smoke (`exactkv_failures == 0`) — [`TURBOQUANT_ADAPTER_PROTOTYPE.md`](TURBOQUANT_ADAPTER_PROTOTYPE.md)
 - [ ] Experiment 008 complete **or** honest skip report
 - [ ] Phase D KIVI/KVQuant decision documented
 - [ ] Phase E RunPod validation (≥1.5B) **or** documented GPU blocker
@@ -415,9 +415,9 @@ requirements.
 | Phase | Scope | Deliverable | Status |
 |---|---|---|---|
 | **Phase 0** (this document) | Scope statement only; no code | `docs/V9_SCOPE_STATEMENT.md` | ✅ Complete |
-| **Phase A** | TurboQuant / TurboQuant+ deep feasibility | Install, API/cache-format doc, device/model matrix, go/no-go | Pending A approval |
-| **Phase B** | TurboQuant adapter prototype (if feasible) | Adapter code + smoke exactness tests | Pending A |
-| **Phase C** | Experiment 008 + report | `EXPERIMENT_008_TURBOQUANT.md`; gitignored JSON/CSV | Pending B |
+| **Phase A** | TurboQuant / TurboQuant+ deep feasibility | Install, API/cache-format doc, device/model matrix, go/no-go | ✅ Complete — **restricted go** (Python path; see research doc §23) |
+| **Phase B** | TurboQuant adapter prototype (if feasible) | Adapter code + smoke exactness tests | ✅ Complete — see [`TURBOQUANT_ADAPTER_PROTOTYPE.md`](TURBOQUANT_ADAPTER_PROTOTYPE.md) |
+| **Phase C** | Experiment 008 + report | `EXPERIMENT_008_TURBOQUANT.md`; gitignored JSON/CSV | Pending C approval |
 | **Phase D** | KIVI / KVQuant feasibility + optional adapter | Feasibility doc; adapter if go; Exp 009 plan | Pending C |
 | **Phase E** | RunPod larger-model validation | ≥1.5B exactness gate report | Pending D or C |
 | **Phase F** | Release notes v0.9.0, index, bundle plan, v1.0.0 readiness decision | `RELEASE_NOTES_V0.9.0.md` | Pending E |
@@ -440,6 +440,8 @@ requirements.
 | [`RELATED_WORK_KV_CACHE_COMPRESSION.md`](RELATED_WORK_KV_CACHE_COMPRESSION.md) | Backend survey |
 | [`RESEARCH_BACKLOG.md`](RESEARCH_BACKLOG.md) | B1–B4 backlog items |
 | [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) | V9–v1.0.0 tracker |
+| [`TURBOQUANT_INTEGRATION_RESEARCH.md`](TURBOQUANT_INTEGRATION_RESEARCH.md) | Phase A feasibility + restricted go |
+| [`TURBOQUANT_ADAPTER_PROTOTYPE.md`](TURBOQUANT_ADAPTER_PROTOTYPE.md) | Phase B restricted Python adapter |
 | [`PROJECT_STATUS_V0.8.0.md`](PROJECT_STATUS_V0.8.0.md) | Pre-V9 status |
 
 ---

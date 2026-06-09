@@ -29,6 +29,12 @@ kvpress = [
     "kvpress==0.5.3",
     "transformers>=4.56,<5.3",
 ]
+# V9 Phase B: isolated TurboQuant Python adapter (not installed by default).
+# The upstream ``turboquant`` package is dev-only inside TheTom/turboquant_plus —
+# not on PyPI.  Clone that repo and set PYTHONPATH to its root in .venv-turboquant.
+turboquant = [
+    "scipy>=1.10",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
