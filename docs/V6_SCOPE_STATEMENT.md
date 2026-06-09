@@ -1,6 +1,6 @@
 # V6 Scope Statement: Real Backend Adapter Interface and First Backend Candidate
 
-**Status:** Phase 0 scope statement. No V6 code is included in this document.
+**Status:** V6 complete (Phases 0–E). See [`docs/RELEASE_NOTES_V0.6.0.md`](RELEASE_NOTES_V0.6.0.md).
 **Builds on:** `v0.5.0` — workspace-aware memory accounting complete; Experiment 004
 (340 runs, `exactkv_failures == 0`).
 **Expands:** [`docs/FUTURE_ROADMAP_V6_V8.md`](FUTURE_ROADMAP_V6_V8.md) §V6 into an
@@ -367,6 +367,12 @@ Pre-Phase C research (`docs/KVPRESS_INTEGRATION_RESEARCH.md`) adds these
 - kvpress hook-safety and workspace-memory gates pass; lossy draft acceptance ~41%.
 - Artifacts: `reports/experiment_005_kvpress_knorm.{json,csv}` (gitignored).
 
+**Phase E release (2026-06-09, `docs/RELEASE_NOTES_V0.6.0.md`):**
+
+- V6 release notes, README/ROADMAP updates, git hygiene and no-performance-claim audits.
+- Default env remains kvpress-free; `kvpress_knorm_restricted` not in default registry.
+- Ready to tag `v0.6.0`.
+
 **Empirical research pass (2026-06-09, `docs/KVPRESS_INTEGRATION_RESEARCH.md`):**
 
 - Dedicated `.venv-kvpress` install succeeds with `transformers==5.2.0`, `kvpress==0.5.3`.
@@ -459,18 +465,18 @@ V6 is complete when **either** the full path or the design-only fallback is met.
 
 **Full path:**
 
-- [ ] `BackendAdapter` interface designed, documented, and reviewed.
-- [ ] At least one real backend adapter implemented, passing the exactness gate
+- [x] `BackendAdapter` interface designed, documented, and reviewed.
+- [x] At least one real backend adapter implemented, passing the exactness gate
       (`exactkv_failures == 0`) on the core suite.
-- [ ] Adapter populates all five V5 workspace fields with an honest
+- [x] Adapter populates all five V5 workspace fields with an honest
       `supports_real_bytes_claim`.
-- [ ] Capability fields (`backend_name`, `backend_version`) added additively;
+- [x] Capability fields (`backend_name`, `backend_version`) added additively;
       backward compatibility preserved.
-- [ ] Experiment 005 report generated, clearly comparing the real backend to
+- [x] Experiment 005 report generated, clearly comparing the real backend to
       simulated/INT8 compressors by acceptance and workspace memory, with real
       vs simulated memory claims kept distinct.
-- [ ] No forbidden performance fields anywhere in V6 code, tests, or docs.
-- [ ] Full prior test suite remains green.
+- [x] No forbidden performance fields anywhere in V6 code, tests, or docs.
+- [x] Full prior test suite remains green.
 
 **Design-only fallback (acceptable V6 outcome):** if no backend integrates
 cleanly without risking the exactness gate, V6 may deliver:
@@ -545,7 +551,7 @@ for the external-systems survey and attribution.
 | **Phase B** | Minimal proof-of-concept adapter (trivial real/pass-through) exercising the boundary; exactness gate on smoke | PoC adapter + tests | ✅ Complete |
 | **Phase C** | kvpress safety scaffold + first real backend (recommended: kvpress, **restricted** — see `docs/KVPRESS_INTEGRATION_RESEARCH.md`); hook-safety + version-isolation + exactness gates | `KVPressKnormAdapter` + core-suite validation (`docs/KVPRESS_KNORM_VALIDATION.md`) | ✅ Complete |
 | **Phase D** | Experiment 005 (acceptance + workspace memory comparison); report rendering | [`docs/EXPERIMENT_005_KVPRESS_KNORM.md`](EXPERIMENT_005_KVPRESS_KNORM.md) | ✅ Complete |
-| **Phase E** | V6 release notes; README/ROADMAP updates; audit; tag | `docs/RELEASE_NOTES_V0.6.0.md` | Pending D |
+| **Phase E** | V6 release notes; README/ROADMAP updates; audit; tag | [`docs/RELEASE_NOTES_V0.6.0.md`](RELEASE_NOTES_V0.6.0.md) | ✅ Complete |
 
 > Phases B–E require **separate explicit approval** before any code is written.
 > Phases 0 and A (this document and `BACKEND_ADAPTER_INTERFACE.md`) are

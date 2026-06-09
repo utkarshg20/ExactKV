@@ -840,10 +840,13 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
   Experiment 004 (340 runs, core suite, 10 compressors): `exactkv_failures == 0`.
   No real backend, no performance claims. See
   [`docs/EXPERIMENT_004_WORKSPACE_MEMORY.md`](docs/EXPERIMENT_004_WORKSPACE_MEMORY.md).
-* **V6 — real backend adapter interface and first backend candidate.** Design a
-  `BackendAdapter` so a real quantisation format (e.g. KIVI or kvpress) could
-  plug into the `KVCompressor` protocol and be evaluated by acceptance behaviour.
-  Implementation only behind separate approval.
+* **V6 — real backend adapter interface and first backend candidate (complete,
+  `v0.6.0`).** `BackendAdapter` boundary, `backend_passthrough` PoC, and restricted
+  `KVPressKnormAdapter` (KnormPress only; not in default registry). Experiment 005
+  (272 runs, 8 compressors): `exactkv_failures == 0`. No performance claims. See
+  [`docs/RELEASE_NOTES_V0.6.0.md`](docs/RELEASE_NOTES_V0.6.0.md),
+  [`docs/EXPERIMENT_005_KVPRESS_KNORM.md`](docs/EXPERIMENT_005_KVPRESS_KNORM.md),
+  [`docs/KVPRESS_KNORM_VALIDATION.md`](docs/KVPRESS_KNORM_VALIDATION.md).
 * **V7 — attention-aware and V-specific backend ideas.** Sparse V dequantization,
   layer-aware V compression, pre-RoPE key quantization evaluation, and real
   asymmetric compressor comparisons — evaluated, not just reconstructed.
@@ -879,7 +882,9 @@ detailed roadmap (planning document only, no code).
 | [`docs/EXPERIMENT_004_WORKSPACE_MEMORY.md`](docs/EXPERIMENT_004_WORKSPACE_MEMORY.md) | Experiment 004: workspace-aware memory accounting, 340 runs, 10 compressors |
 | [`docs/RELEASE_NOTES_V0.5.0.md`](docs/RELEASE_NOTES_V0.5.0.md) | v0.5.0 release notes (V5 workspace-aware memory accounting) |
 | [`docs/FUTURE_ROADMAP_V6_V8.md`](docs/FUTURE_ROADMAP_V6_V8.md) | V6–V8 detailed roadmap: adapter interface, backends, experiments, risks (planning only) |
-| [`docs/V6_SCOPE_STATEMENT.md`](docs/V6_SCOPE_STATEMENT.md) | V6 scope: real-backend adapter interface, candidate backends (recommended: kvpress) |
+| [`docs/V6_SCOPE_STATEMENT.md`](docs/V6_SCOPE_STATEMENT.md) | V6 scope: real-backend adapter interface (complete) |
+| [`docs/RELEASE_NOTES_V0.6.0.md`](docs/RELEASE_NOTES_V0.6.0.md) | v0.6.0 release notes (BackendAdapter, restricted kvpress KnormPress, Experiment 005) |
+| [`docs/KVPRESS_KNORM_VALIDATION.md`](docs/KVPRESS_KNORM_VALIDATION.md) | Phase C validation: restricted KVPressKnormAdapter, 34 core prompts, `exactkv_failures == 0` |
 | [`docs/EXPERIMENT_005_KVPRESS_KNORM.md`](docs/EXPERIMENT_005_KVPRESS_KNORM.md) | Experiment 005: restricted KVPress KnormPress vs baselines, 272 runs, `exactkv_failures == 0` |
 | `docs/PRIVATE_FUTURE_POST_NOTES_EXPERIMENT_003.md` | 🔒 Private draft announcement notes for later — not for posting |
 

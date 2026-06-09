@@ -483,39 +483,30 @@ dequantization workspace.
 
 ---
 
-# V6: Real backend adapter interface + first backend candidate
+# V6: Real backend adapter interface + first backend candidate ✅ complete (`v0.6.0`)
 
 ## Goal
 
 Design a `BackendAdapter` so a real quantisation format could plug into the
 `KVCompressor` protocol and be evaluated by acceptance behaviour.
 
-## Why this version exists
+## Delivered
 
-The asymmetric-K/V thesis (KIVI, KVQuant, KV-AdaQuant, TurboQuant) is best tested
-against ExactKV acceptance using a *real* format, not a simulated one.
+- `BackendAdapter` interface (`docs/BACKEND_ADAPTER_INTERFACE.md`) and
+  `backend_passthrough` PoC in the default registry.
+- Restricted experimental `KVPressKnormAdapter` (KnormPress only; **not** in default
+  registry; requires isolated `[kvpress]` environment).
+- Phase C validation (`docs/KVPRESS_KNORM_VALIDATION.md`) and Experiment 005
+  (`docs/EXPERIMENT_005_KVPRESS_KNORM.md`): 272 cells, `exactkv_failures == 0`.
+- Release notes: [`RELEASE_NOTES_V0.6.0.md`](RELEASE_NOTES_V0.6.0.md).
 
-## New features (design first; implement only on separate approval)
-
-- `BackendAdapter` interface spec (capabilities, real-bytes support, device
-  requirements).
-- One candidate real backend wrapped behind `KVCompressor`.
-- Honest simulated-vs-real labelling in reports.
-
-## Non-goals
+## Non-goals (unchanged)
 
 - No throughput/latency/speedup claims; acceptance and (real) memory only.
-- No production-serving claims.
+- No production-serving claims; kvpress not in default dependencies.
 
-## Success criteria
-
-- A real backend can be evaluated through the existing verification loop.
-- Exactness preserved; memory comparisons gated by `supports_real_bytes_claim`.
-
-> See [`V6_SCOPE_STATEMENT.md`](V6_SCOPE_STATEMENT.md) for the detailed, phased V6
-> scope: adapter interface requirements, candidate backend comparison
-> (recommended first backend: kvpress), workspace-memory requirements, test/gate
-> plan, Experiment 005, risks, and exit criteria. Phase 0 (scope) only; no code.
+> See [`V6_SCOPE_STATEMENT.md`](V6_SCOPE_STATEMENT.md) for the full phased scope,
+> restrictions, and exit criteria (all phases complete).
 
 ---
 
