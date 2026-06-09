@@ -40,6 +40,10 @@ from exactkv.compressors.backend_adapter import BackendAdapter, PassThroughBacke
 from exactkv.compressors.debug_noise import DebugNoiseCompressor
 from exactkv.compressors.int4_sim import Int4SimCompressor
 from exactkv.compressors.int8 import Int8Compressor
+from exactkv.compressors.layer_aware_sim import (
+    K8V4BoundaryV8SimCompressor,
+    LayerAwareVSimCompressor,
+)
 from exactkv.compressors.noop import NoOpCompressor
 from exactkv.compressors.registry import (
     get_compressor,
@@ -64,6 +68,9 @@ register_compressor("k4_v_full_sim", K4VFullSimCompressor)
 register_compressor("k8_v_full", K8VFullCompressor)
 register_compressor("k_full_v8", KFullV8Compressor)
 
+# V7 layer-aware simulated V policy
+register_compressor("k8_v4_boundary_v8_sim", K8V4BoundaryV8SimCompressor)
+
 # V6 backend adapter PoC
 register_compressor("backend_passthrough", PassThroughBackendAdapter)
 
@@ -82,6 +89,9 @@ __all__ = [
     "K4VFullSimCompressor",
     "K8VFullCompressor",
     "KFullV8Compressor",
+    # V7 layer-aware sim
+    "LayerAwareVSimCompressor",
+    "K8V4BoundaryV8SimCompressor",
     # V6 backend adapter
     "BackendAdapter",
     "PassThroughBackendAdapter",

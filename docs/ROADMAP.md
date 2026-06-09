@@ -527,6 +527,11 @@ verification, acceptance, divergence, and workspace-memory framework.
 - [`EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md) —
   proxy divergence analysis on Experiments 003–005; `exactkv/analysis/attention_weighted.py`.
 
+## Phase B complete
+
+- `k8_v4_boundary_v8_sim` — simulated layer-aware V policy in
+  `exactkv/compressors/layer_aware_sim.py` (no attention weights; not Sparse V).
+
 ## Non-goals
 
 - No speedup/throughput/latency/runtime/production claims.

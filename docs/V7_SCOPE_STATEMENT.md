@@ -1,7 +1,7 @@
 # V7 Scope Statement: Attention-Aware and V-Specific Experiments
 
-**Status:** Phase A complete (proxy divergence analysis). Phase 0 scope + Phase A
-analysis report: [`docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md).
+**Status:** Phase B complete (simulated layer-aware V policy). Phase A analysis:
+[`docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md).
 **Builds on:** `v0.6.0` — `BackendAdapter` boundary complete; restricted
 `KVPressKnormAdapter` (KnormPress only); Experiment 005 (272 runs,
 `exactkv_failures == 0`).
@@ -251,7 +251,7 @@ analysis report only (valid design-only outcome per §15).
 |---|---|---|---|
 | **Phase 0** (this document) | Scope statement only; no code | `docs/V7_SCOPE_STATEMENT.md` committed and reviewed | ✅ Complete |
 | **Phase A** | Proxy divergence analysis on Experiments 003/004/005; no generation change | [`docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md); `exactkv/analysis/attention_weighted.py` | ✅ Complete |
-| **Phase B** | Simulated V-specific / layer-aware policy design (only if Phase A warrants) | Design note + minimal simulated policy compressor(s) | Pending A |
+| **Phase B** | Simulated layer-aware V policy (`k8_v4_boundary_v8_sim`); no attention weights | `exactkv/compressors/layer_aware_sim.py` + tests | ✅ Complete |
 | **Phase C** | Optional real asymmetric adapter (KIVI / KVQuant / TurboQuant-style) — **each requires separate approval** | Scoped adapter + exactness gate on core suite | Pending scope |
 | **Phase D** | Experiment 006 (attention-aware or V-specific sweep) + report | `docs/EXPERIMENT_006_*.md`; gitignored JSON/CSV | Pending B or A |
 | **Phase E** | V7 release notes; README/ROADMAP updates; audit; tag | `docs/RELEASE_NOTES_V0.7.0.md` | Pending D |
@@ -404,6 +404,16 @@ policy as Experiment 005).
 ## 15. Exit criteria
 
 V7 is complete when **either** the full path or the analysis-only fallback is met.
+
+**Phase B layer-aware simulated compressor (2026-06-09):**
+
+- `k8_v4_boundary_v8_sim`: K=INT8 all layers; V=INT8 on first/last layer,
+  V=INT4-sim on interior (`boundary_layers=1`).
+- `is_simulated=True`, `supports_real_bytes_claim=False`, `value_bit_width=None`
+  (mixed per-layer V precision).
+- No true attention weights, Sparse V, TurboQuant+, or pre-RoPE logic.
+- ExactKV gate: 2 prompts × 2 draft lengths × 2 max_new_tokens →
+  `exactkv_failures == 0`.
 
 **Phase A proxy divergence analysis (2026-06-09, `docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`):**
 

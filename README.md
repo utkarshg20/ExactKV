@@ -847,10 +847,10 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
   [`docs/RELEASE_NOTES_V0.6.0.md`](docs/RELEASE_NOTES_V0.6.0.md),
   [`docs/EXPERIMENT_005_KVPRESS_KNORM.md`](docs/EXPERIMENT_005_KVPRESS_KNORM.md),
   [`docs/KVPRESS_KNORM_VALIDATION.md`](docs/KVPRESS_KNORM_VALIDATION.md).
-* **V7 — attention-aware and V-specific experiments (Phase A complete).**
-  Proxy divergence analysis on Experiments 003–005; Phase B conditional.
-  See [`docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md),
-  [`docs/V7_SCOPE_STATEMENT.md`](docs/V7_SCOPE_STATEMENT.md).
+* **V7 — attention-aware and V-specific experiments (Phase B complete).**
+  Proxy divergence analysis (Phase A) + simulated `k8_v4_boundary_v8_sim` layer-aware
+  V policy (Phase B). No true attention weights. Experiment 006 deferred to Phase D.
+  See [`docs/V7_SCOPE_STATEMENT.md`](docs/V7_SCOPE_STATEMENT.md).
 * **V8 — serving-stack context and final public launch.** Only after
   correctness/acceptance are well understood; without adopting any serving-stack
   performance claims as ExactKV's. Default story: exactness + acceptance + memory
