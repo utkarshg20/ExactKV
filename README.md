@@ -1,107 +1,81 @@
 # ExactKV
 
-**Lossy KV-cache compression. Exact full-KV outputs.**
+**Compress the KV cache. Keep every output token.**
 
-ExactKV is an open-source inference runtime and benchmark suite that lets lossy KV-cache
-compressors draft tokens quickly, then verifies those tokens against full-KV decoding so
-the final output remains identical to normal full-KV inference under deterministic
-(greedy) decoding.
+Lossy KV-cache compression makes drafting cheaper — but one bad draft token can
+derail the whole sequence. ExactKV runs a **draft → verify → commit** loop: compressors
+draft on a lossy cache, verification always uses **full-precision KV**, and the final
+greedy output **matches uncompressed inference exactly** (`exactkv_output_ids ==
+full_output_ids`).
 
-Inspired by the [VeriCache paper](https://arxiv.org/abs/2605.17613).
-ExactKV is not a reimplementation — it is a compressor-agnostic platform for verified
-KV-cache generation and benchmark evaluation.
-
-> **V1 is correctness-first.** It does not claim throughput gains or speedups over
-> standard full-KV inference. The goal is to prove that the output is lossless, not that
-> it is faster.
+Inspired by [VeriCache](https://arxiv.org/abs/2605.17613). ExactKV is not a
+reimplementation — it is a **compressor-agnostic research platform** for evaluating
+KV-cache compression by exactness, acceptance, divergence, and honest memory accounting.
 
 ---
 
-## Headline result (v0.4.0)
+## How it works
 
-**Experiment 003 — asymmetric K/V sweep.** Across a 612-run core-suite sweep
-(`Qwen/Qwen2.5-0.5B`, 34 prompts × 9 compressors × 2 draft lengths), ExactKV had
-**0 failures** while revealing that **keys are far more fragile than values under
-compression**. Keeping keys at full precision with INT8 values (`k_full_v8`)
-accepted 98.8% of drafted tokens; compressing keys to simulated 4-bit
-(`k4_v8_sim`) collapsed acceptance to 56.2%.
+1. **Draft** — generate candidate tokens using a compressed (lossy) KV cache.
+2. **Verify** — check each draft token against full-KV greedy predictions.
+3. **Commit** — accept the matching prefix; on mismatch, correct and advance authoritative full KV.
+4. **Repeat** — recompress from the updated full state; alignment invariant holds every round.
 
-| Compressor       | K bits | V bits | Accept rate | Rejected | ExactKV failures |
-| ---------------- | -----: | -----: | ----------: | -------: | ---------------: |
-| k_full_v8        |   full |      8 |       0.988 |       22 |                0 |
-| k8_v_full        |      8 |   full |       0.953 |       86 |                0 |
-| int8             |      8 |      8 |       0.953 |       89 |                0 |
-| k_full_v4_sim ⚠️ |   full |  4-sim |       0.890 |      174 |                0 |
-| k8_v4_sim ⚠️     |      8 |  4-sim |       0.858 |      240 |                0 |
-| k4_v8_sim ⚠️     |  4-sim |      8 |       0.562 |     1253 |                0 |
-| int4_sim ⚠️      |  4-sim |  4-sim |       0.553 |     1272 |                0 |
-| k8_v2_sim ⚠️     |      8 |  2-sim |       0.330 |     2302 |                0 |
-
-**Takeaway:** On this setup, compressing keys aggressively was far more damaging
-to ExactKV acceptance than compressing values.
-
-> ⚠️ `_sim` = simulated sub-INT8 numeric quantization stored in `int8` containers
-> (no real bit-packing). `k8_v_full` and `k_full_v8` carry no `_sim` suffix
-> because they use only full precision and INT8. Average effective bit width is a
-> comparison aid, not a real memory metric. ExactKV reports exactness,
-> acceptance, divergence, rejection, and correction behaviour — **not**
-> performance.
-
-Full report: [`docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md`](docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md)
-· Project status: [`docs/PROJECT_STATUS_V0.4.0.md`](docs/PROJECT_STATUS_V0.4.0.md)
+ExactKV measures **whether compression is compatible with exact decoding**, not whether it
+is faster. It does **not** claim throughput, latency, speedup, or production readiness.
 
 ---
 
-## Status
+## At a glance
 
-**V4 — asymmetric K/V compression experiments (v0.4.0).**  V1 proved correctness; V2 added the compressor registry, CLI, JSON/CSV reporting, sweep orchestration, and analysis layer; V3 added prompt suites, Markdown report generation, acceptance leaderboards, and the `report` CLI; V4 adds asymmetric K/V compressors, K/V metadata in reports and leaderboards, and Experiment 003.
-
-**V1 gates (correctness prototype)**
-
-| Gate | Status |
+| Item | Value |
 |---|---|
-| `generate_full_greedy` matches `model.generate` | ✅ |
-| NoOp ExactKV output == full greedy | ✅ |
-| INT8 ExactKV output == full greedy | ✅ |
-| DebugNoise forces rejection + ExactKV corrects | ✅ |
-| Metrics reconcile (`drafted == accepted + rejected`) | ✅ |
-| Benchmark runner emits valid JSON; `exactkv_failures == 0` | ✅ |
+| **Latest release** | [`v0.7.0`](docs/RELEASE_NOTES_V0.7.0.md) — layer-aware V experiments |
+| **In progress** | [V8](docs/V8_SCOPE_STATEMENT.md) serving-context evaluation (Phase A complete) |
+| **Hard gate** | `exactkv_failures == 0` on every published experiment |
+| **Default model** | `Qwen/Qwen2.5-0.5B` (greedy, single-request, CPU-first) |
+| **Compressors** | 15 built-in (`noop`, `int8`, asymmetric `_sim`, layer-aware boundary, `backend_passthrough`, …) |
 
-**V2 gates (experimental framework)**
+---
 
-| Gate | Status |
-|---|---|
-| INT4-sim ExactKV output == full greedy (≥2 prompts × ≥2 draft lengths) | ✅ |
-| Registry resolves every compressor by name; all run end-to-end | ✅ |
-| Sweep (`noop × int8 × int4_sim` × multiple draft lengths) with `exactkv_failures == 0` | ✅ |
-| JSON round-trip lossless; CSV schema stable, one row per cell | ✅ |
-| Acceptance counts reconcile in analysis; mismatch and failure reports correct | ✅ |
-| CLI `bench --suite smoke` runs with locally cached weights, writes valid reports | ✅ |
-| No tokens/sec, latency, or speedup language in any V2 output | ✅ |
+## Latest results (v0.7.0)
 
-**V3 gates (presentation and storytelling layer)**
+**Experiment 006C — boundary-depth ablation.** Protecting more boundary V layers
+improves draft acceptance without breaking exactness. On the core suite (170 runs,
+`exactkv_failures == 0`):
 
-| Gate | Status |
-|---|---|
-| Four named prompt suites (`core`, `structured`, `code`, `stress`) load and validate | ✅ |
-| Histogram and example analysis functions reconcile counts on real sweep reports | ✅ |
-| Markdown generator produces complete report from sweep JSON (leaderboard, examples, histograms) | ✅ |
-| Every rendered artifact preserves `int4_sim` simulation labelling | ✅ |
-| `python -m exactkv report` writes Markdown from existing JSON | ✅ |
-| `docs/EXPERIMENT_002_CORE_SWEEP.md` written from real core-suite sweep with `exactkv_failures == 0` | ✅ |
-| No-performance-field audit passes across all V3 code, reports, and docs | ✅ |
+| Policy | Accept rate | vs uniform `k8_v4_sim` |
+|---|---:|---|
+| `k8_v4_sim` (uniform K8/V4) | 0.891 | — |
+| `k8_v4_boundary_v8_sim` (N=1) | 0.904 | +0.013 |
+| `k8_v4_boundary4_v8_sim` (N=4) | **0.954** | **+0.063** |
 
-**V4 gates (asymmetric K/V compression experiments)**
+Earlier finding ([Experiment 003](docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md)): **keys
+are far more fragile than values** under compression (`k4_v8_sim` ~56% acceptance vs
+`k_full_v8` ~99%).
 
-| Gate | Status |
-|---|---|
-| `CompressorCapabilities` carries `key_bit_width`, `value_bit_width`, `asymmetric`; backfilled for V1–V3 | ✅ |
-| `AsymmetricQuantSimCompressor(k_bits, v_bits)` with independent K/V quantisation and `full` passthrough | ✅ |
-| All 7 named asymmetric compressors resolve via registry with `exactkv_failures == 0` | ✅ |
-| JSON/CSV reports include `key_bit_width`, `value_bit_width`, `asymmetric`; backward compatible | ✅ |
-| Leaderboard renders K bits, V bits, avg eff bits; `list-compressors` shows K/V metadata | ✅ |
-| `docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md` written from 612-run sweep with `exactkv_failures == 0` | ✅ |
-| No-performance-field audit passes across all V4 code, reports, and docs | ✅ |
+> ⚠️ `_sim` and layer-aware compressors use **int8 containers** — not real packed-bit
+> storage. `total_kv_footprint_bytes` is a conservative accounting sum, not measured
+> peak GPU memory. See [release notes](docs/RELEASE_NOTES_V0.7.0.md) and
+> [Experiment 006C](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md).
+
+---
+
+## Version timeline
+
+| Version | Tag | Focus | Status |
+|---|---|---|---|
+| V1–V3 | — | Correctness prototype, registry, CLI, sweeps, Markdown reports | ✅ |
+| V4 | `v0.4.0` | Asymmetric K/V compressors; Experiment 003 (612 runs) | ✅ |
+| V5 | `v0.5.0` | Workspace-aware memory accounting; Experiment 004 | ✅ |
+| V6 | `v0.6.0` | `BackendAdapter`; restricted kvpress KnormPress; Experiment 005 | ✅ |
+| V7 | `v0.7.0` | Layer-aware V policies; Experiments 006 / 006C | ✅ |
+| V8 | — | Serving-context evaluation; local harness (planned) | Phase A ✅ |
+
+All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
+acceptance behaviour — **not** tokens/sec, throughput, or latency.
+
+**Contents:** [Install](#install) · [Tests](#run-tests) · [Example](#run-the-example-script) · [Benchmarks](#run-the-benchmark-suite) · [CLI](#v2-cli) · [Compressors](#v4-asymmetric-compressors-experimental) · [Roadmap](#roadmap-and-research) · [Docs](#key-documents)
 
 ---
 
@@ -116,7 +90,7 @@ cd ExactKV
 pip install -e ".[dev]"
 
 # Download model weights (first run only — ~1 GB)
-python -c "from transformers import AutoModelForCausalLM, AutoTokenizer; \
+python3 -c "from transformers import AutoModelForCausalLM, AutoTokenizer; \
     AutoModelForCausalLM.from_pretrained('Qwen/Qwen2.5-0.5B'); \
     AutoTokenizer.from_pretrained('Qwen/Qwen2.5-0.5B')"
 ```
@@ -136,7 +110,7 @@ pytest tests/test_acceptance_logic.py -v
 TRANSFORMERS_OFFLINE=1 pytest tests/test_int8_exactkv.py -v
 ```
 
-Expected: **all 542 tests pass** in ~240–280 s on CPU with `Qwen/Qwen2.5-0.5B` in `float32`.
+Expected: **all ~1,400 tests pass** in a few minutes on CPU with `Qwen/Qwen2.5-0.5B` in `float32`.
 
 ---
 
@@ -287,6 +261,21 @@ and asymmetric configurations. The **K bits**, **V bits**, and **avg eff bits** 
 are metadata from compressor capabilities — they are not real memory measurements.
 Average effective bits = (K bits + V bits) / 2, counting full precision as 32 bits.
 
+### V7 layer-aware boundary compressors (experimental)
+
+V7 adds three compressors that keep **full-precision V** on the first *N* layers
+and **INT4-sim V** elsewhere, with uniform INT8 K. All are simulated (`is_simulated=True`).
+
+| Name | Boundary depth (N) | Notes |
+|---|---|---|
+| `k8_v4_boundary_v8_sim` ⚠️ | 1 | First layer V protected |
+| `k8_v4_boundary2_v8_sim` ⚠️ | 2 | First two layers V protected |
+| `k8_v4_boundary4_v8_sim` ⚠️ | 4 | First four layers V protected |
+
+See [Experiment 006C](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) for acceptance
+results. Leaderboard columns show `mixed 8/4-sim` for V where applicable — metadata
+only, not real packed-bit storage.
+
 ---
 
 ## Project structure
@@ -306,14 +295,17 @@ exactkv/
 │   ├── compressed_state.py   # CompressedKVState (compressor-specific)
 │   └── utils.py              # kv_seq_len, extract_kv_tensors, rebuild_cache
 ├── compressors/
-│   ├── __init__.py           # registers all built-in compressors (V1–V3 + V4)
-│   ├── base.py               # KVCompressor Protocol, CompressionStats, CompressorCapabilities
+│   ├── __init__.py           # registers 15 built-in compressors
+│   ├── base.py               # KVCompressor Protocol, CompressorCapabilities
 │   ├── registry.py           # register_compressor, get_compressor, list_compressors
+│   ├── backend_adapter.py    # V6: BackendAdapter + PassThroughBackendAdapter
 │   ├── noop.py               # NoOpCompressor (identity, acceptance=100%)
 │   ├── int8.py               # Int8Compressor (per-tensor symmetric INT8)
 │   ├── int4_sim.py           # Int4SimCompressor (simulated INT4, int8 storage)
-│   ├── debug_noise.py        # DebugNoiseCompressor (forces rejection, test only)
-│   └── asymmetric_sim.py     # V4: AsymmetricQuantSimCompressor + 7 named subclasses
+│   ├── asymmetric_sim.py     # V4: asymmetric K/V quant compressors
+│   ├── layer_aware_sim.py    # V7: boundary-layer V policies (N=1/2/4)
+│   ├── kvpress_knorm.py      # V6: restricted KVPress KnormPress adapter
+│   └── debug_noise.py        # DebugNoiseCompressor (forces rejection, test only)
 ├── verification/
 │   ├── acceptance.py         # compute_acceptance, AcceptanceResult, traces
 │   └── engine.py             # VerificationEngine.verify_sequential
@@ -326,11 +318,16 @@ exactkv/
 │   ├── runner.py             # run_one, run_suite, RunConfig
 │   ├── reports.py            # write_json_report, write_csv_report, build_run_manifest
 │   └── sweeps.py             # run_sweep (multi-compressor × multi-draft-length)
-└── analysis/
-    ├── __init__.py           # public API re-exports
-    ├── acceptance_tables.py  # build_acceptance_table, group_by_*, write_acceptance_table_csv
-    ├── mismatch.py           # first_lossy_divergences, mismatch_position_summary
-    └── failure_report.py     # build_failure_report, write_failure_report_json
+├── analysis/
+│   ├── __init__.py           # public API re-exports
+│   ├── acceptance_tables.py  # build_acceptance_table, group_by_*, write_acceptance_table_csv
+│   ├── mismatch.py           # first_lossy_divergences, mismatch_position_summary
+│   └── failure_report.py     # build_failure_report, write_failure_report_json
+└── reporting/
+    ├── markdown.py           # render_markdown_report, write_markdown_report
+    ├── leaderboard.py        # asymmetric + layer-aware leaderboard rendering
+    ├── histograms.py         # histogram tables for Markdown reports
+    └── examples.py           # divergence / failure example blocks
 
 benchmarks/
 └── prompts/
@@ -377,98 +374,23 @@ tests/
 
 ---
 
-## Sample v0.2.0 smoke sweep
+## Earlier experiments
 
-See [`docs/EXPERIMENT_001_SMOKE_SWEEP.md`](docs/EXPERIMENT_001_SMOKE_SWEEP.md)
-for a full write-up. Headline results across 6 prompts × 3 compressors × 2 draft
-lengths (36 runs total):
+Full Markdown reports for every published sweep. All report **`exactkv_failures == 0`**.
 
-| Compressor | Accept rate | Lossy divergences | ExactKV failures |
-|---|---|---|---|
-| `noop` | 1.000 | 0 / 12 | 0 / 12 |
-| `int8` | **0.931** | 4 / 12 | **0 / 12** |
-| `int4_sim` ⚠️ | 0.459 | 12 / 12 | **0 / 12** |
+| # | Release | Suite | Runs | Headline | Report |
+|---|---|---|---:|---|---|
+| 001 | v0.2.0 | smoke (6) | 36 | `int8` accept 0.931 | [`EXPERIMENT_001`](docs/EXPERIMENT_001_SMOKE_SWEEP.md) |
+| 002 | v0.3.0 | core (34) | 204 | `int8` accept 0.951 | [`EXPERIMENT_002`](docs/EXPERIMENT_002_CORE_SWEEP.md) |
+| 003 | v0.4.0 | core (34) | 612 | Keys more fragile than values | [`EXPERIMENT_003`](docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md) |
+| 004 | v0.5.0 | core (34) | 340 | Workspace memory accounting | [`EXPERIMENT_004`](docs/EXPERIMENT_004_WORKSPACE_MEMORY.md) |
+| 005 | v0.6.0 | core (34) | 272 | Restricted kvpress KnormPress | [`EXPERIMENT_005`](docs/EXPERIMENT_005_KVPRESS_KNORM.md) |
+| 006 | v0.7.0 | core (34) | 374 | Layer-aware V sweep | [`EXPERIMENT_006`](docs/EXPERIMENT_006_LAYER_AWARE_V.md) |
+| 006C | v0.7.0 | core (34) | 170 | Boundary depth ablation | [`EXPERIMENT_006C`](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) |
 
-> ⚠️ `int4_sim` is **simulated** (quantised range `[-8, 7]`, stored in
-> `torch.int8`). Its 3.95× memory reduction factor does **not** reflect real
-> packed-4-bit savings. ExactKV corrected all 16 lossy divergences with zero
-> failures.
-
-No throughput, latency, or speedup is claimed.
+No throughput, latency, or speedup is claimed in any experiment report.
 
 ---
-
-## Experiment 002: Core suite sweep (v0.3.0)
-
-See [`docs/EXPERIMENT_002_CORE_SWEEP.md`](docs/EXPERIMENT_002_CORE_SWEEP.md)
-for the full Markdown report (generated via `python -m exactkv report`). 34
-prompts × 3 compressors × 2 draft lengths = **204 runs total**:
-
-| Compressor | Runs | Accept rate | Drafted | Accepted | Rejected | ExactKV failures |
-|---|---|---|---|---|---|---|
-| `noop` | 68 | **1.000** | 1428 | 1428 | 0 | **0** |
-| `int8` | 68 | **0.951** | 1492 | 1400 | 92 | **0** |
-| `int4_sim` ⚠️ | 68 | 0.553 | 2369 | 1097 | 1272 | **0** |
-
-| Draft length | Accept rate | Drafted | Accepted |
-|---|---|---|---|
-| 4 | 0.865 | 2404 | 1960 |
-| 8 | 0.805 | 2885 | 1965 |
-
-> ⚠️ `int4_sim` is **simulated** (INT4 numeric range, stored in `torch.int8`).
-> Memory figures reflect `int8` storage, not real packed 4-bit savings.
-> ExactKV produced **0 failures** — every verified output matched
-> `generate_full_greedy` exactly.
-
-No throughput, latency, or speedup is claimed.
-
----
-
-## Experiment 003: Asymmetric K/V sweep (v0.4.0)
-
-See [`docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md`](docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md)
-for the full Markdown report. 34 prompts × 9 compressors × 2 draft lengths = **612 runs total**.
-
-| Setting | Value |
-|---|---|
-| Model | `Qwen/Qwen2.5-0.5B` |
-| Prompt suite | `core.jsonl` (34 prompts) |
-| Compressors | 9 (see table below) |
-| Draft lengths | 4, 8 |
-| Max new tokens | 24 |
-| Total runs | **612** |
-| **ExactKV failures** | **0** |
-| Lossy divergences | 386 (expected) |
-| Mean accept rate | 0.739 |
-
-**Acceptance by compressor:**
-
-| Compressor | K bits | V bits | Simulated | Accept rate | Rejected | ExactKV fail |
-|---|---|---|---|---|---|---|
-| `k_full_v8` | full | 8 | no | **0.988** | 22 | **0** |
-| `k8_v_full` | 8 | full | no | **0.953** | 86 | **0** |
-| `int8` | 8 | 8 | no | **0.953** | 89 | **0** |
-| `k_full_v4_sim` ⚠️ | full | 4 | yes | 0.890 | 174 | **0** |
-| `k8_v4_sim` ⚠️ | 8 | 4 | yes | 0.858 | 240 | **0** |
-| `k4_v8_sim` ⚠️ | 4 | 8 | yes | 0.562 | 1253 | **0** |
-| `k4_v_full_sim` ⚠️ | 4 | full | yes | 0.561 | 1255 | **0** |
-| `int4_sim` ⚠️ | 4 | 4 | yes | 0.553 | 1272 | **0** |
-| `k8_v2_sim` ⚠️ | 8 | 2 | yes | 0.330 | 2302 | **0** |
-
-> ⚠️ Simulated compressors store sub-INT8 values in `torch.int8` containers.
-> Memory figures reflect `int8` storage, not real packed savings.
-> **All 612 runs: ExactKV failures = 0.** Every verified output matched
-> `generate_full_greedy` exactly.
->
-> `k_full_v8` (full-precision K, INT8 V) is the highest-acceptance asymmetric
-> compressor tested. `k8_v2_sim` (INT8 K, INT2-sim V) has the lowest acceptance
-> at 0.330 — aggressive V compression severely damages acceptance.
->
-> Average effective bit width is a metadata comparison aid, not a real memory
-> measurement. No throughput, latency, or speedup is claimed.
-
----
-
 
 
 ## V2 sweeps
@@ -823,79 +745,43 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 
 ---
 
-## Future research directions
+## Roadmap and research
 
-* **V4 (complete) — asymmetric K/V acceptance experiments.** V4 implemented
-  simulated asymmetric compressors (`k8_v4_sim`, `k8_v2_sim`, `k4_v8_sim`,
-  `k_full_v4_sim`, `k4_v_full_sim`, `k8_v_full`, `k_full_v8`), K/V metadata
-  reporting, and Experiment 003 (612-run core-suite sweep; `exactkv_failures == 0`).
-  No real backends, no performance claims. See
-  [`docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md`](docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md).
-* **V5 — workspace-aware memory accounting (complete, `v0.5.0`).** Distinguish
-  `stored_kv_bytes`, `materialized_working_kv_bytes`, `metadata_bytes`, and
-  `temporary_workspace_bytes` in JSON/CSV reports and Markdown renders. Stored
-  bytes omit the dequantisation working set; `total_kv_footprint_bytes` is a
-  conservative accounting sum, not a measured peak GPU value. Markdown reports
-  include a "Workspace-Aware Memory Accounting" section with a per-compressor table.
-  Experiment 004 (340 runs, core suite, 10 compressors): `exactkv_failures == 0`.
-  No real backend, no performance claims. See
-  [`docs/EXPERIMENT_004_WORKSPACE_MEMORY.md`](docs/EXPERIMENT_004_WORKSPACE_MEMORY.md).
-* **V6 — real backend adapter interface and first backend candidate (complete,
-  `v0.6.0`).** `BackendAdapter` boundary, `backend_passthrough` PoC, and restricted
-  `KVPressKnormAdapter` (KnormPress only; not in default registry). Experiment 005
-  (272 runs, 8 compressors): `exactkv_failures == 0`. No performance claims. See
-  [`docs/RELEASE_NOTES_V0.6.0.md`](docs/RELEASE_NOTES_V0.6.0.md),
-  [`docs/EXPERIMENT_005_KVPRESS_KNORM.md`](docs/EXPERIMENT_005_KVPRESS_KNORM.md),
-  [`docs/KVPRESS_KNORM_VALIDATION.md`](docs/KVPRESS_KNORM_VALIDATION.md).
-* **V7 — attention-aware and V-specific experiments (complete, `v0.7.0`).**
-  Proxy divergence analysis (006A), simulated layer-aware V policies
-  (`k8_v4_boundary*_v8_sim`), Experiments 006 (374 runs) and 006C (170 runs);
-  `exactkv_failures == 0`. No true attention weights; no performance claims. See
-  [`docs/RELEASE_NOTES_V0.7.0.md`](docs/RELEASE_NOTES_V0.7.0.md),
-  [`docs/V7_SCOPE_STATEMENT.md`](docs/V7_SCOPE_STATEMENT.md).
-* **V8 — serving-context evaluation (Phase 0 scope).** Feasibility-first study of
-  serving/cache compatibility (vLLM, LMCache, PagedAttention context, local harness);
-  not production-serving; no performance claims. See
-  [`docs/V8_SCOPE_STATEMENT.md`](docs/V8_SCOPE_STATEMENT.md).
-* See [`docs/FUTURE_ROADMAP_V6_V8.md`](docs/FUTURE_ROADMAP_V6_V8.md) for the
-  detailed V6–V8 scope, adapter interface design, candidate backends, experiment
-  plans, risks, and exit criteria. No code is implemented there.
-
-See [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md)
-for the asymmetric-K/V writeup,
-[`docs/RELATED_WORK_KV_CACHE_COMPRESSION.md`](docs/RELATED_WORK_KV_CACHE_COMPRESSION.md)
-for the full related-work survey,
-[`docs/RELEASE_NOTES_V0.4.0.md`](docs/RELEASE_NOTES_V0.4.0.md) for V4 release notes, and
-[`docs/FUTURE_ROADMAP_V6_V8.md`](docs/FUTURE_ROADMAP_V6_V8.md) for the V6–V8
-detailed roadmap (planning document only, no code).
+| Topic | Document |
+|---|---|
+| V8 serving-context (current) | [`docs/V8_SCOPE_STATEMENT.md`](docs/V8_SCOPE_STATEMENT.md) · [`docs/SERVING_CONTEXT_FEASIBILITY.md`](docs/SERVING_CONTEXT_FEASIBILITY.md) |
+| V6–V8 planning detail | [`docs/FUTURE_ROADMAP_V6_V8.md`](docs/FUTURE_ROADMAP_V6_V8.md) |
+| Asymmetric K/V research | [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md) |
+| Related work survey | [`docs/RELATED_WORK_KV_CACHE_COMPRESSION.md`](docs/RELATED_WORK_KV_CACHE_COMPRESSION.md) |
+| Experiment backlog | [`docs/RESEARCH_BACKLOG.md`](docs/RESEARCH_BACKLOG.md) |
 
 ---
 
 ## Key documents
 
+**Start here**
+
 | Document | Purpose |
 |---|---|
-| [`docs/PROJECT_STATUS_V0.4.0.md`](docs/PROJECT_STATUS_V0.4.0.md) | Internal project status, version timeline, what ExactKV does/doesn't prove |
-| [`docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md`](docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md) | Full Experiment 003 asymmetric K/V sweep report |
-| [`docs/RELEASE_NOTES_V0.4.0.md`](docs/RELEASE_NOTES_V0.4.0.md) | v0.4.0 release notes (V1–V4 history, results, limitations) |
-| [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md) | Research note on asymmetric K/V and workspace-aware memory |
-| [`docs/RELATED_WORK_KV_CACHE_COMPRESSION.md`](docs/RELATED_WORK_KV_CACHE_COMPRESSION.md) | Survey of KV-cache compression/quantization/eviction/serving + TurboQuant+ section |
-| [`docs/RESEARCH_BACKLOG.md`](docs/RESEARCH_BACKLOG.md) | Concrete future-experiment backlog (real backends, eviction, serving) |
-| [`docs/V5_SCOPE_DRAFT.md`](docs/V5_SCOPE_DRAFT.md) | Draft V5 plan (workspace memory + real backend planning) — superseded by scope statement |
-| [`docs/EXPERIMENT_004_WORKSPACE_MEMORY.md`](docs/EXPERIMENT_004_WORKSPACE_MEMORY.md) | Experiment 004: workspace-aware memory accounting, 340 runs, 10 compressors |
-| [`docs/RELEASE_NOTES_V0.5.0.md`](docs/RELEASE_NOTES_V0.5.0.md) | v0.5.0 release notes (V5 workspace-aware memory accounting) |
-| [`docs/FUTURE_ROADMAP_V6_V8.md`](docs/FUTURE_ROADMAP_V6_V8.md) | V6–V8 detailed roadmap: adapter interface, backends, experiments, risks (planning only) |
-| [`docs/V6_SCOPE_STATEMENT.md`](docs/V6_SCOPE_STATEMENT.md) | V6 scope: real-backend adapter interface (complete) |
-| [`docs/RELEASE_NOTES_V0.6.0.md`](docs/RELEASE_NOTES_V0.6.0.md) | v0.6.0 release notes (BackendAdapter, restricted kvpress KnormPress, Experiment 005) |
-| [`docs/KVPRESS_KNORM_VALIDATION.md`](docs/KVPRESS_KNORM_VALIDATION.md) | Phase C validation: restricted KVPressKnormAdapter, 34 core prompts, `exactkv_failures == 0` |
-| [`docs/EXPERIMENT_005_KVPRESS_KNORM.md`](docs/EXPERIMENT_005_KVPRESS_KNORM.md) | Experiment 005: restricted KVPress KnormPress vs baselines, 272 runs, `exactkv_failures == 0` |
-| [`docs/RELEASE_NOTES_V0.7.0.md`](docs/RELEASE_NOTES_V0.7.0.md) | v0.7.0 release notes (V7 layer-aware V experiments, boundary-depth ablation) |
-| [`docs/V7_SCOPE_STATEMENT.md`](docs/V7_SCOPE_STATEMENT.md) | V7 scope: attention-aware and V-specific experiments (complete) |
-| [`docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md) | Experiment 006A: proxy divergence analysis (V7 Phase A) |
-| [`docs/EXPERIMENT_006_LAYER_AWARE_V.md`](docs/EXPERIMENT_006_LAYER_AWARE_V.md) | Experiment 006: layer-aware V sweep, 374 runs (V7 Phase D) |
-| [`docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md`](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) | Experiment 006C: boundary-depth ablation, 170 runs (V7 Phase C) |
-| [`docs/V8_SCOPE_STATEMENT.md`](docs/V8_SCOPE_STATEMENT.md) | V8 scope: serving-context evaluation (Phase 0 — planning only) |
-| `docs/PRIVATE_FUTURE_POST_NOTES_EXPERIMENT_003.md` | 🔒 Private draft announcement notes for later — not for posting |
+| [`docs/RELEASE_NOTES_V0.7.0.md`](docs/RELEASE_NOTES_V0.7.0.md) | Latest release (`v0.7.0`) |
+| [`docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md`](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) | Latest experiment report |
+| [`docs/SERVING_CONTEXT_FEASIBILITY.md`](docs/SERVING_CONTEXT_FEASIBILITY.md) | V8 Phase A — serving feasibility |
+| [`docs/V8_SCOPE_STATEMENT.md`](docs/V8_SCOPE_STATEMENT.md) | V8 scope (in progress) |
+
+**Experiments** (all with `exactkv_failures == 0`)
+
+| # | Report |
+|---|---|
+| 003 | [`EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md`](docs/EXPERIMENT_003_ASYMMETRIC_KV_SWEEP.md) |
+| 004 | [`EXPERIMENT_004_WORKSPACE_MEMORY.md`](docs/EXPERIMENT_004_WORKSPACE_MEMORY.md) |
+| 005 | [`EXPERIMENT_005_KVPRESS_KNORM.md`](docs/EXPERIMENT_005_KVPRESS_KNORM.md) |
+| 006 | [`EXPERIMENT_006_LAYER_AWARE_V.md`](docs/EXPERIMENT_006_LAYER_AWARE_V.md) |
+| 006A | [`EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md) |
+| 006C | [`EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md`](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) |
+
+**Release notes:** [`v0.4.0`](docs/RELEASE_NOTES_V0.4.0.md) · [`v0.5.0`](docs/RELEASE_NOTES_V0.5.0.md) · [`v0.6.0`](docs/RELEASE_NOTES_V0.6.0.md) · [`v0.7.0`](docs/RELEASE_NOTES_V0.7.0.md)
+
+**Scope and design:** [`V6_SCOPE_STATEMENT.md`](docs/V6_SCOPE_STATEMENT.md) · [`V7_SCOPE_STATEMENT.md`](docs/V7_SCOPE_STATEMENT.md) · [`BACKEND_ADAPTER_INTERFACE.md`](docs/BACKEND_ADAPTER_INTERFACE.md) · [`RELATED_WORK_KV_CACHE_COMPRESSION.md`](docs/RELATED_WORK_KV_CACHE_COMPRESSION.md)
 
 ---
 

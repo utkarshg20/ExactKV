@@ -1,6 +1,8 @@
 # V8 Scope Statement: Serving-Context Evaluation
 
-**Status:** Phase 0 (this document) — scope statement only; no code, no experiments.
+**Status:** Phase A complete (serving-context feasibility research). Phase 0
+complete. See [`docs/SERVING_CONTEXT_FEASIBILITY.md`](SERVING_CONTEXT_FEASIBILITY.md).
+Phase B recommended: restricted local harness (vLLM/LMCache Phase C **no-go**).
 **Builds on:** `v0.7.0` — V7 complete; simulated layer-aware V policies
 (`k8_v4_boundary*_v8_sim`); Experiments 006 and 006C (`exactkv_failures == 0`);
 proxy divergence analysis (006A).
@@ -480,9 +482,9 @@ launch package; `v1.0.0` if Phase E completes the full public launch criteria in
 | Phase | Scope | Deliverable | Status |
 |---|---|---|---|
 | **Phase 0** (this document) | Scope statement only; no code | `docs/V8_SCOPE_STATEMENT.md` | ✅ Complete |
-| **Phase A** | Serving-stack feasibility research | Feasibility doc (vLLM, LMCache, PagedAttention context vs ExactKV) | Pending approval |
-| **Phase B** | Restricted serving-context / cache-lifecycle harness | Harness code + exactness smoke tests | Pending A |
-| **Phase C** | Optional vLLM or LMCache PoC | Scoped PoC **only if** Phase A go + explicit approval | Conditional |
+| **Phase A** | Serving-stack feasibility research | [`docs/SERVING_CONTEXT_FEASIBILITY.md`](SERVING_CONTEXT_FEASIBILITY.md) | ✅ Complete |
+| **Phase B** | Restricted serving-context / cache-lifecycle harness (**primary path**) | Harness code + exactness smoke tests | Pending B approval |
+| **Phase C** | Optional vLLM or LMCache PoC | **Deferred (no-go)** per Phase A; re-approval only for metadata-only export study | ❌ No-go default |
 | **Phase D** | Experiment 007 + report | `docs/EXPERIMENT_007_SERVING_CONTEXT.md`; gitignored JSON/CSV | Pending B or C |
 | **Phase E** | Release notes, audit, launch package, tag | `RELEASE_NOTES_V0.8.0.md` or `V1.0.0.md` | Pending D |
 

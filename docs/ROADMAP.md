@@ -562,14 +562,17 @@ claims.
 ## Phase 0 deliverable
 
 - [`V8_SCOPE_STATEMENT.md`](V8_SCOPE_STATEMENT.md) — full phased scope, Experiment
-  007 plan, serving-context questions, feasibility-first direction, restrictions,
-  exit criteria.
+  007 plan, serving-context questions, restrictions, exit criteria.
+
+## Phase A complete
+
+- [`SERVING_CONTEXT_FEASIBILITY.md`](SERVING_CONTEXT_FEASIBILITY.md) — vLLM/LMCache
+  **no-go** for Phase C; PagedAttention concepts via local harness; Phase B primary.
 
 ## Recommended direction
 
-Feasibility study (Phase A) → restricted local harness (Phase B) → optional
-vLLM/LMCache PoC only if feasible (Phase C) → Experiment 007 (Phase D) → launch
-package (Phase E).
+Restricted local harness (Phase B) → Experiment 007 Mode B harness evaluation
+(Phase D) → launch package (Phase E). vLLM/LMCache PoC deferred.
 
 ## Non-goals
 
