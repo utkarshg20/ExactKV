@@ -510,35 +510,44 @@ Design a `BackendAdapter` so a real quantisation format could plug into the
 
 ---
 
-# V7: Attention-aware and V-specific experiments (Phase 0 — scope only)
+# V7: Attention-aware and V-specific experiments (complete — `v0.7.0`)
 
 ## Goal
 
 Evaluate attention-aware and V-specific compression ideas through ExactKV's
 verification, acceptance, divergence, and workspace-memory framework.
 
-## Phase 0 deliverable
+## Deliverables
 
-- [`V7_SCOPE_STATEMENT.md`](V7_SCOPE_STATEMENT.md) — full phased scope,
-  Experiment 006 plan, analysis-first recommendation, restrictions, exit criteria.
+- [`RELEASE_NOTES_V0.7.0.md`](RELEASE_NOTES_V0.7.0.md) — full V7 summary, phase
+  results, limitations, deferred work.
+- [`V7_SCOPE_STATEMENT.md`](V7_SCOPE_STATEMENT.md) — phased scope and exit criteria
+  (all phases complete).
 
-## Phase A complete
+## Experiments
 
-- [`EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md) —
-  proxy divergence analysis on Experiments 003–005; `exactkv/analysis/attention_weighted.py`.
+| Phase | Report | Runs | `exactkv_failures` |
+|---|---|---:|---|
+| A (analysis) | [`EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md) | — (reuses 003–005) | — |
+| D | [`EXPERIMENT_006_LAYER_AWARE_V.md`](EXPERIMENT_006_LAYER_AWARE_V.md) | 374 | 0 |
+| C (boundary-depth ablation, not real-backend) | [`EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md`](EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) | 170 | 0 |
 
-## Phase B complete
+## Compressors added
 
-- `k8_v4_boundary_v8_sim` — simulated layer-aware V policy in
-  `exactkv/compressors/layer_aware_sim.py` (no attention weights; not Sparse V).
+- `k8_v4_boundary_v8_sim`, `k8_v4_boundary2_v8_sim`, `k8_v4_boundary4_v8_sim` —
+  simulated layer-aware V policies (`layer_aware_sim.py`); int8 containers; no
+  true attention weights.
 
-## Non-goals
+## Headline result
+
+`k8_v4_boundary4_v8_sim` acceptance **0.954** on Experiment 006C — +0.063 vs
+`k8_v4_sim`, +0.045 vs `k_full_v4_sim`.
+
+## Non-goals (unchanged)
 
 - No speedup/throughput/latency/runtime/production claims.
-- No implementation of Sparse V, KVQuant, TurboQuant+, KIVI, LMCache, vLLM, or
-  serving integrations in Phase 0.
-
-> Phases A–E require separate explicit approval before any code is written.
+- No Sparse V, KVQuant, TurboQuant+, KIVI, LMCache, vLLM, or PagedAttention in V7.
+- Phase C was boundary-depth ablation, **not** KIVI/KVQuant/TurboQuant adapter work.
 
 ---
 

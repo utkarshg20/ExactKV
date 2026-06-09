@@ -847,10 +847,12 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
   [`docs/RELEASE_NOTES_V0.6.0.md`](docs/RELEASE_NOTES_V0.6.0.md),
   [`docs/EXPERIMENT_005_KVPRESS_KNORM.md`](docs/EXPERIMENT_005_KVPRESS_KNORM.md),
   [`docs/KVPRESS_KNORM_VALIDATION.md`](docs/KVPRESS_KNORM_VALIDATION.md).
-* **V7 — attention-aware and V-specific experiments (Phase B complete).**
-  Proxy divergence analysis (Phase A) + simulated `k8_v4_boundary_v8_sim` layer-aware
-  V policy (Phase B). No true attention weights. Experiment 006 deferred to Phase D.
-  See [`docs/V7_SCOPE_STATEMENT.md`](docs/V7_SCOPE_STATEMENT.md).
+* **V7 — attention-aware and V-specific experiments (complete, `v0.7.0`).**
+  Proxy divergence analysis (006A), simulated layer-aware V policies
+  (`k8_v4_boundary*_v8_sim`), Experiments 006 (374 runs) and 006C (170 runs);
+  `exactkv_failures == 0`. No true attention weights; no performance claims. See
+  [`docs/RELEASE_NOTES_V0.7.0.md`](docs/RELEASE_NOTES_V0.7.0.md),
+  [`docs/V7_SCOPE_STATEMENT.md`](docs/V7_SCOPE_STATEMENT.md).
 * **V8 — serving-stack context and final public launch.** Only after
   correctness/acceptance are well understood; without adopting any serving-stack
   performance claims as ExactKV's. Default story: exactness + acceptance + memory
@@ -887,8 +889,11 @@ detailed roadmap (planning document only, no code).
 | [`docs/RELEASE_NOTES_V0.6.0.md`](docs/RELEASE_NOTES_V0.6.0.md) | v0.6.0 release notes (BackendAdapter, restricted kvpress KnormPress, Experiment 005) |
 | [`docs/KVPRESS_KNORM_VALIDATION.md`](docs/KVPRESS_KNORM_VALIDATION.md) | Phase C validation: restricted KVPressKnormAdapter, 34 core prompts, `exactkv_failures == 0` |
 | [`docs/EXPERIMENT_005_KVPRESS_KNORM.md`](docs/EXPERIMENT_005_KVPRESS_KNORM.md) | Experiment 005: restricted KVPress KnormPress vs baselines, 272 runs, `exactkv_failures == 0` |
-| [`docs/V7_SCOPE_STATEMENT.md`](docs/V7_SCOPE_STATEMENT.md) | V7 scope: attention-aware and V-specific experiments |
-| [`docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md) | Experiment 006A: proxy divergence analysis on Experiments 003–005 (V7 Phase A) |
+| [`docs/RELEASE_NOTES_V0.7.0.md`](docs/RELEASE_NOTES_V0.7.0.md) | v0.7.0 release notes (V7 layer-aware V experiments, boundary-depth ablation) |
+| [`docs/V7_SCOPE_STATEMENT.md`](docs/V7_SCOPE_STATEMENT.md) | V7 scope: attention-aware and V-specific experiments (complete) |
+| [`docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md) | Experiment 006A: proxy divergence analysis (V7 Phase A) |
+| [`docs/EXPERIMENT_006_LAYER_AWARE_V.md`](docs/EXPERIMENT_006_LAYER_AWARE_V.md) | Experiment 006: layer-aware V sweep, 374 runs (V7 Phase D) |
+| [`docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md`](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) | Experiment 006C: boundary-depth ablation, 170 runs (V7 Phase C) |
 | `docs/PRIVATE_FUTURE_POST_NOTES_EXPERIMENT_003.md` | 🔒 Private draft announcement notes for later — not for posting |
 
 ---

@@ -1,16 +1,22 @@
 # V7 Scope Statement: Attention-Aware and V-Specific Experiments
 
-**Status:** Phase B complete (simulated layer-aware V policy). Phase A analysis:
-[`docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md).
+**Status:** **V7 complete** (`v0.7.0`). All phases 0–E delivered;
+`exactkv_failures == 0` on Experiments 006 and 006C. Release notes:
+[`docs/RELEASE_NOTES_V0.7.0.md`](RELEASE_NOTES_V0.7.0.md).
+Phase A: [`docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md).
+Phase D: [`docs/EXPERIMENT_006_LAYER_AWARE_V.md`](EXPERIMENT_006_LAYER_AWARE_V.md).
+Phase C (boundary-depth ablation, **not** a real-backend adapter phase):
+[`docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md`](EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md).
 **Builds on:** `v0.6.0` — `BackendAdapter` boundary complete; restricted
 `KVPressKnormAdapter` (KnormPress only); Experiment 005 (272 runs,
 `exactkv_failures == 0`).
 **Expands:** [`docs/FUTURE_ROADMAP_V6_V8.md`](FUTURE_ROADMAP_V6_V8.md) §V7 into an
 approvable, phased scope.
 
-> No attention-aware compressors, Sparse V dequantization, layer-aware V policies,
-> pre-RoPE key quantization, KIVI, KVQuant, TurboQuant, TurboQuant+, LMCache,
-> vLLM, or PagedAttention are implemented in this document.
+> V7 **simulated** layer-aware V policies are implemented (`k8_v4_boundary*_v8_sim`).
+> ExactKV does **not** implement Sparse V dequantization, true attention-gated
+> materialization, pre-RoPE key quantization, KIVI, KVQuant, TurboQuant,
+> TurboQuant+, LMCache, vLLM, or PagedAttention.
 > No performance, throughput, latency, speedup, or production-readiness claims.
 > External systems named below are **research motivation and related work**,
 > not current ExactKV capabilities.
@@ -252,9 +258,9 @@ analysis report only (valid design-only outcome per §15).
 | **Phase 0** (this document) | Scope statement only; no code | `docs/V7_SCOPE_STATEMENT.md` committed and reviewed | ✅ Complete |
 | **Phase A** | Proxy divergence analysis on Experiments 003/004/005; no generation change | [`docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md); `exactkv/analysis/attention_weighted.py` | ✅ Complete |
 | **Phase B** | Simulated layer-aware V policy (`k8_v4_boundary_v8_sim`); no attention weights | `exactkv/compressors/layer_aware_sim.py` + tests | ✅ Complete |
-| **Phase C** | Optional real asymmetric adapter (KIVI / KVQuant / TurboQuant-style) — **each requires separate approval** | Scoped adapter + exactness gate on core suite | Pending scope |
-| **Phase D** | Experiment 006 (attention-aware or V-specific sweep) + report | `docs/EXPERIMENT_006_*.md`; gitignored JSON/CSV | Pending B or A |
-| **Phase E** | V7 release notes; README/ROADMAP updates; audit; tag | `docs/RELEASE_NOTES_V0.7.0.md` | Pending D |
+| **Phase C** | Boundary-depth ablation **after Experiment 006** (`k8_v4_boundary2_v8_sim`, `k8_v4_boundary4_v8_sim`) — **not** a real-backend adapter phase | [`docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md`](EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md); gitignored JSON/CSV | ✅ Complete |
+| **Phase D** | Experiment 006 (simulated layer-aware V sweep) + report | [`docs/EXPERIMENT_006_LAYER_AWARE_V.md`](EXPERIMENT_006_LAYER_AWARE_V.md); gitignored JSON/CSV | ✅ Complete |
+| **Phase E** | V7 release notes; README/ROADMAP updates; audit; tag | [`docs/RELEASE_NOTES_V0.7.0.md`](RELEASE_NOTES_V0.7.0.md) | ✅ Complete |
 
 > Phases B–E require **separate explicit approval** before any code is written.
 > Phase 0 (this document) is design-only and introduces no code and no behaviour
