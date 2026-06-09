@@ -468,8 +468,16 @@ def verification_mode(self):
 ```
 
 `BackendAdapter.verification_mode()` is implemented as a no-op context manager.
-Hook-based subclasses (e.g. future `KVPressKnormAdapter`) may override to assert
-no forward hooks are active or to disable hooks during verification.
+Hook-based subclasses (e.g. `KVPressKnormAdapter`) override to assert no forward
+hooks are active on attention modules during verification and commit.
+
+**`KVPressKnormAdapter` contract (Phase C — implemented):**
+
+- Before and after `yield`, count `_forward_hooks` on every `self_attn` module
+  under `model.model.layers`; raise `RuntimeError` if any hook is active.
+- Compression replay uses a **separate** `deepcopy` of the model by default so
+  kvpress's non-restored `rotary_emb` mutation does not affect the verification
+  model.
 
 `ExactKVGenerator._verify_draft_tokens` wraps `verify_sequential` inside
 `compressor.verification_mode()` when the method exists (`callable` check).
@@ -481,14 +489,40 @@ kvpress has no standalone `compress(cache)` API. Compression happens during a
 model forward with `with press(model):` or via per-layer `press.compress()`
 calls that need the attention `module`, `hidden_states`, and `kwargs`.
 
-A `KVPressAdapter` must hold a `ModelRuntime` (or model) reference. The current
-`_backend_compress(k_tensors, v_tensors, cache_format)` signature is
-**insufficient** for full kvpress fidelity. Phase C options:
+A `KVPressAdapter` must hold a `ModelRuntime` (or model) reference. Empirical
+research (2026-06-09, `docs/KVPRESS_INTEGRATION_RESEARCH.md`) confirmed the
+current `_backend_compress(k_tensors, v_tensors, cache_format)` signature is
+**insufficient** — kvpress requires replay prefill with `with press(model):`.
 
-1. **Replay path (recommended):** re-run prefill with `with press(model):` on
-   sequence tokens; store resulting `DynamicCache` in `backend_data`.
-2. **Offline path (KnormPress only):** call `press.compress()` per layer with
-   extracted keys/values and `model.model.layers[i].self_attn` as `module`.
+**Implemented extension (Phase C — Option A):**
+
+```python
+def _compresses_via_full_state(self) -> bool:
+    return False  # override to True for replay backends
+
+def _backend_compress_from_full_state(self, state: FullKVState) -> dict:
+    """Replay compression from authoritative FullKVState. Must not mutate state."""
+    ...
+```
+
+When `_compresses_via_full_state()` is `True`, `compress()` calls
+`_backend_compress_from_full_state(state)` instead of extracting KV tensors.
+Pass-through and tensor-only backends are unchanged (`False` default).
+
+**Logical vs physical sequence length (token-dropping backends):**
+
+- `CompressedKVState.logical_seq_len` always equals `full_state.seq_len`
+  (alignment invariant).
+- Physical `kv_seq_len(materialized_cache)` may be shorter when tokens are
+  pruned (e.g. KnormPress). Store pruned bytes in `__stored_kv_bytes__`;
+  set `materialized_working_kv_bytes == stored_kv_bytes` for token-dropping.
+
+**No default kvpress import rule:**
+
+- `kvpress` must not be imported at module top level in any default ExactKV
+  package path (`exactkv.compressors.__init__`, generator, verification).
+- `KVPressKnormAdapter` lives in `exactkv/compressors/kvpress_knorm.py` and
+  lazy-imports kvpress only in `__init__`; it is **not** in the default registry.
 
 ### 10.6 Hook-safety gate (Phase C prerequisite)
 
@@ -698,30 +732,24 @@ with press(model):
 compressed_cache = output.past_key_values
 ```
 
-A `KVPressAdapter` would:
+`KVPressKnormAdapter` (`exactkv/compressors/kvpress_knorm.py`) implements:
 
 1. **During compress (replay path):** Hold a `ModelRuntime` reference; re-run
-   prefill with `with press(model):` on sequence tokens; store the resulting
-   `DynamicCache` as `backend_data`. Do not mutate `full_state.past_key_values`.
+   prefill with `with press(compression_model):` on `state.full_sequence_ids`;
+   store the resulting `DynamicCache` as `backend_data`. Do not mutate
+   `full_state.past_key_values`. Default: `compression_model = deepcopy(runtime.model)`.
 2. **`backend_name`:** `"kvpress"`. `backend_version`: pinned from
    `importlib.metadata.version("kvpress")`.
-3. **Hook-safety (§10):** Hooks must be removed before verify/commit
-   (`with press(model):` scope). `verification_mode()` asserts no hooks remain
-   active. `import kvpress` also patches attention globally — test gate required.
-4. **Version pin:** `kvpress==0.5.3` with `transformers>=4.56,<5.3` — conflicts
-   with ExactKV's default 5.8.x; use isolated optional extra (see research doc).
-5. **Phase C initial press:** `KnormPress` only; no DecodingPress/AdaKVPress.
-6. **`_backend_materialize`:** Return `backend_data` directly (kvpress's
-   compressed cache is already a `DynamicCache`).
-7. **`supports_real_bytes_claim`:** Depends on which kvpress compressor is used.
-   SnapKV (token dropping) returns a sparse cache that is smaller by token count
-   but still stores full-precision tensors for retained tokens, so
-   `stored_kv_bytes < full_kv_bytes` (real) but no bit-width reduction.
-   A quantizing kvpress compressor would need per-compressor analysis.
-8. **`materialized_working_kv_bytes`:** For SnapKV and similar, retained tokens
-   are already at full precision; attention uses them directly.
-   `materialized_working_kv_bytes == stored_kv_bytes` (no separate dequantize
-   step), which is < `full_kv_bytes`.
+3. **Hook-safety (§10):** Hooks removed after `with press(model):`.
+   `verification_mode()` asserts no hooks on the verification model.
+4. **Version pin:** `kvpress==0.5.3` with `transformers>=4.56,<5.3` — isolated
+   optional extra (see research doc).
+5. **Press restriction:** `KnormPress` only in Phase C; no DecodingPress/AdaKVPress.
+6. **`_backend_materialize`:** Return `backend_data["dynamic_cache"]`.
+7. **`supports_real_bytes_claim`:** `True` — `stored_kv_bytes` reflects pruned
+   `DynamicCache` tensor bytes.
+8. **`materialized_working_kv_bytes`:** `== stored_kv_bytes` for KnormPress
+   (token-dropping; no separate dequantize step).
 
 This is the **only** V6-candidate adapter where `materialized_working_kv_bytes`
 might genuinely differ from `full_kv_bytes` — and it only applies to

@@ -330,7 +330,35 @@ Pre-Phase C research (`docs/KVPRESS_INTEGRATION_RESEARCH.md`) adds these
 - `ExactKVGenerator` wraps verification inside `verification_mode()` when present.
 - No `import kvpress` in default ExactKV module loading.
 
-`KVPressKnormAdapter` is **not** implemented in the scaffold PR.
+**Phase C restricted adapter (implemented — experimental, KnormPress only):**
+
+- `exactkv/compressors/kvpress_knorm.py` — `KVPressKnormAdapter` using
+  `KnormPress` only; **not** registered in the default compressor registry.
+- Lazy `import kvpress` inside adapter construction only.
+- Replay prefill: `with press(compression_model): model(input_ids, DynamicCache())`.
+- **Hook isolation gate:** `verification_mode()` asserts zero attention forward
+  hooks on the verification `ModelRuntime.model`; compression replay runs on an
+  isolated `deepcopy` of the model by default (`isolate_compression_model=True`)
+  because kvpress does not restore `rotary_emb` assignments on context exit.
+- **Full-state immutability gate:** verification uses authoritative full KV;
+  compress/verify tests assert `full_state.past_key_values` bytes and tensor
+  values unchanged after `verify_sequential`.
+- **Logical vs physical sequence length:** `CompressedKVState.logical_seq_len`
+  equals the full prefill length; physical `kv_seq_len` on the pruned
+  `DynamicCache` may be shorter under KnormPress.
+- **Isolated `[kvpress]` environment:** run adapter tests in `.venv-kvpress`
+  (`pip install -e ".[kvpress]"`); default env stays on `transformers==5.8.x`
+  without kvpress.
+- **Python 3.13:** `fire>=0.7.1` workaround required (`kvpress` pins `fire<0.7`
+  which imports removed `pipes`); install manually in the kvpress venv only.
+
+**Empirical research pass (2026-06-09, `docs/KVPRESS_INTEGRATION_RESEARCH.md`):**
+
+- Dedicated `.venv-kvpress` install succeeds with `transformers==5.2.0`, `kvpress==0.5.3`.
+- Python 3.13 requires `fire>=0.7.1` workaround (`kvpress` pins `fire<0.7`); document in kvpress CI.
+- Hooks: 0 → 24 → 0 across `with press(model):` on Qwen2.5-0.5B; global attention patch on `import kvpress`.
+- `dynamic_v5` cache compatible; physical seq shrinks; logical seq must be set separately.
+- Recommendation unchanged: **proceed with kvpress — only with restrictions**.
 
 ---
 
@@ -500,7 +528,7 @@ for the external-systems survey and attribution.
 | **Phase 0** (this document) | Scope statement only; no code | `docs/V6_SCOPE_STATEMENT.md` committed and reviewed | ✅ Complete |
 | **Phase A** | `BackendAdapter` interface design document; capability/workspace field plan | `docs/BACKEND_ADAPTER_INTERFACE.md`; no backend yet | ✅ Complete |
 | **Phase B** | Minimal proof-of-concept adapter (trivial real/pass-through) exercising the boundary; exactness gate on smoke | PoC adapter + tests | ✅ Complete |
-| **Phase C** | kvpress safety scaffold + first real backend (recommended: kvpress, **restricted** — see `docs/KVPRESS_INTEGRATION_RESEARCH.md`); hook-safety + version-isolation + exactness gates | Scaffold: optional `kvpress` extra, `verification_mode()` guard, no default import; then `KVPressKnormAdapter` | Scaffold in progress |
+| **Phase C** | kvpress safety scaffold + first real backend (recommended: kvpress, **restricted** — see `docs/KVPRESS_INTEGRATION_RESEARCH.md`); hook-safety + version-isolation + exactness gates | `KVPressKnormAdapter` (KnormPress only, isolated `[kvpress]` env); not in default registry | ✅ Restricted adapter complete; Experiment 005 pending |
 | **Phase D** | Experiment 005 (acceptance + workspace memory comparison); report rendering | `docs/EXPERIMENT_005_*.md` | Pending C |
 | **Phase E** | V6 release notes; README/ROADMAP updates; audit; tag | `docs/RELEASE_NOTES_V0.6.0.md` | Pending D |
 

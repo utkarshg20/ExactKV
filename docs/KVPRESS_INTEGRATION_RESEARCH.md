@@ -1,606 +1,417 @@
-# kvpress Integration Research (V6 Pre-Phase C)
+# kvpress Integration Research (V6 Phase C)
 
-**Status:** Research-only. ExactKV does **not** implement kvpress.
+**Status:** Research-only — empirical validation completed 2026-06-09.
+ExactKV does **not** implement kvpress, `KVPressKnormAdapter`, or any kvpress compressor registration.
+
 **Purpose:** Determine whether kvpress can safely serve as the first real backend
-candidate for V6 Phase C, and define hook-safety requirements before any
-integration code is written.
-**Sources:** [NVIDIA/kvpress](https://github.com/NVIDIA/kvpress) (v0.5.3,
-2026-04-09), [arXiv:2510.00636](https://arxiv.org/abs/2510.00636), ExactKV
-adapter design (`docs/BACKEND_ADAPTER_INTERFACE.md`, `exactkv/compressors/backend_adapter.py`).
+candidate for V6 Phase C, and define hook-safety requirements before adapter
+implementation.
 
-> ExactKV does not implement kvpress, KIVI, or any external compression backend.
+**Methods:** Source review of [NVIDIA/kvpress](https://github.com/NVIDIA/kvpress)
+v0.5.3, plus hands-on experiments in a dedicated `.venv-kvpress` environment
+(`pip install -e ".[kvpress]"`) using `Qwen/Qwen2.5-0.5B` on CPU/float32.
+
 > No performance, throughput, latency, speedup, runtime, or production-readiness
-> claim. External kvpress benchmark numbers are **not** ExactKV results.
+> claim. External kvpress leaderboard numbers are **not** ExactKV results.
 
 ---
 
-## 1. What kvpress is
+## 1. kvpress summary
 
-**kvpress** is an NVIDIA-maintained, PyPI-distributed Python library
-(`pip install kvpress`, current version **0.5.3**) that implements a large
-family of **training-free KV-cache compression methods** called **presses**.
-Each press reduces KV-cache memory by either:
+**kvpress** (v0.5.3, NVIDIA, Apache 2.0) is a research framework for
+training-free KV-cache compression on Hugging Face transformer models. Compression
+is implemented via **presses** — dataclass objects that register **forward hooks**
+on attention layers during `with press(model):` and prune KV tokens (or key
+channels) in-place inside a `DynamicCache`.
 
-- **Token dropping** — pruning low-importance key-value pairs along the sequence
-  dimension (e.g. `KnormPress`, `SnapKVPress`, `ExpectedAttentionPress`).
-- **Dimension pruning** — zeroing low-importance key channels (e.g. `ThinKPress`;
-  no real byte savings without additional packing).
-- **Quantization** — via Hugging Face `QuantizedCache` (opt-in; requires
-  `optimum-quanto`).
+kvpress is **not** a standalone tensor compressor. There is no public
+`compress_past_key_values(cache)` API. Compression happens during model forward
+passes with hooks active, or via per-layer `press.compress(module, hidden_states,
+keys, values, attentions, kwargs)` when full layer context is available.
 
-kvpress is a **research and benchmarking framework**, not a serving stack. Its
-stated goal is to simplify development and fair comparison of KV-cache compression
-methods on Hugging Face transformer models. It ships a leaderboard and evaluation
-CLI; those external results must not be cited as ExactKV measurements.
+ExactKV evaluates backends by exactness, acceptance, divergence, rejection,
+correction, and workspace-memory fields — never by external speed or serving claims.
 
 ---
 
-## 2. How kvpress integrates with Hugging Face models
+## 2. Version and dependency constraints
 
-### 2.1 Primary integration path
+### 2.1 Pinned optional extra (ExactKV `pyproject.toml`)
 
-kvpress integrates at the **Hugging Face transformer layer**, not as a standalone
-tensor compressor:
+```toml
+kvpress = [
+    "kvpress==0.5.3",
+    "transformers>=4.56,<5.3",
+]
+```
 
-1. Load a `PreTrainedModel` (e.g. `Qwen2ForCausalLM`).
-2. Create a `BasePress` subclass instance with a `compression_ratio`.
-3. Wrap model forward passes in the press context manager: `with press(model):`.
-4. Run forward passes; hooks compress the `DynamicCache` in-place per layer.
+Install only in a dedicated environment: `pip install -e ".[kvpress]"`.
+**Not** on the default ExactKV install path.
 
-The recommended high-level API is `KVPressTextGenerationPipeline`, registered as
-a transformers pipeline (`"kv-press-text-generation"`) on `import kvpress`.
-The pipeline:
+### 2.2 Empirical install results (2026-06-09)
 
-- Compresses context during **prefill** (backbone `model.model()` call with hooks).
-- Generates answers with **greedy decoding** on the compressed cache.
-- Separates context tokens from question tokens so compression applies only to
-  context (important for fair evaluation).
+| Environment | Python | transformers | kvpress import | Notes |
+|---|---|---|---|---|
+| Default ExactKV | 3.13.3 | **5.8.1** | Not installed | `import exactkv.compressors` does **not** load kvpress |
+| `.venv-kvpress` (dedicated) | 3.13.3 | **5.2.0** | **0.5.3** | Requires `fire>=0.7.1` workaround (see below) |
+| `.venv-kvpress312` (attempted) | 3.12.3 | — | **Failed** | pyenv 3.12 missing `_lzma` module |
 
-### 2.2 Supported models
+### 2.3 Install blockers discovered
 
-`SUPPORTED_MODELS` in `kvpress/presses/base_press.py`:
+**Python 3.13 + kvpress 0.5.3 default pins:** `fire==0.6.0` imports removed stdlib
+module `pipes` → `ModuleNotFoundError` on `import kvpress`.
 
-- `LlamaForCausalLM`, `MistralForCausalLM`, `Phi3ForCausalLM`
-- `Qwen2ForCausalLM`, `Qwen3ForCausalLM`
-- `Gemma3ForConditionalGeneration` (partial — sliding-window layers skipped)
+**Workaround (research venv only):** `pip install 'fire>=0.7.1'` after
+`pip install -e ".[kvpress]"`. Conflicts with kvpress's `fire<0.7` pin but import
+succeeds. Document this in Phase C CI; do not add to default `pyproject.toml`
+until upstream fixes or ExactKV documents the override in the `[kvpress]` extra.
 
-`Qwen/Qwen2.5-0.5B` (ExactKV's gate model) maps to `Qwen2ForCausalLM` and is
-architecturally compatible, though not explicitly listed in `SUPPORTED_MODELS`
-(kvpress logs a warning for untested models).
-
-### 2.3 Cache format
-
-kvpress **requires** Hugging Face `DynamicCache` with `.layers[i].keys/.values`.
-Its `forward_hook` accesses `cache.layers[module.layer_idx]` directly. Legacy
-tuple caches and `dynamic_v4` (`key_cache`/`value_cache`) are **not** supported
-by kvpress hooks. ExactKV's `cache/utils.py` supports all three formats, but a
-kvpress adapter must materialize `dynamic_v5` caches.
-
-### 2.4 Global side effect on import
-
-**Critical finding:** `import kvpress` calls `patch_attention_functions()`, which
-**globally monkeypatches** every function in `transformers.modeling_utils.ALL_ATTENTION_FUNCTIONS`.
-The patch wraps attention to support head-wise key masking (`module.masked_key_indices`)
-for presses like `AdaKVPress`. The patch is **not scoped** to a context manager
-and **cannot be undone** without process restart.
-
-When `masked_key_indices` is `None` (default for most presses), the patch is
-mostly a pass-through during decode, but it still runs on every attention call.
-This is a hook-safety concern distinct from the removable forward hooks.
+**Transformers split:** Default ExactKV (5.8.x) and kvpress extra (≤5.2.x) **cannot
+coexist** in one environment. Phase C adapter development and kvpress-specific tests
+must run in the isolated `[kvpress]` venv. Main CI stays on default transformers.
 
 ---
 
-## 3. What kvpress compressor APIs exist
+## 3. API surface discovered
 
-### 3.1 Press class hierarchy
+### 3.1 Entry point
 
-| Class | Role |
+```python
+import kvpress  # side effect: patch_attention_functions() runs globally
+from kvpress import KnormPress
+```
+
+`kvpress.__all__` exports **29** `*Press` classes (empirical, 2026-06-09).
+
+### 3.2 BasePress public API
+
+| Method / attribute | Role |
 |---|---|
-| `BasePress` | Abstract base; defines `compress()`, `forward_hook()`, `__call__()` context manager |
-| `ScorerPress` | Score-based token pruning; `compression_ratio` ∈ [0, 1) |
-| Concrete presses | 25+ implementations (Knorm, SnapKV, ExpectedAttention, StreamingLLM, ThinK, …) |
-| Wrapper presses | `ComposedPress`, `AdaKVPress`, `DecodingPress`, `PrefillDecodingPress`, `KeyRerotationPress`, … |
+| `compression_ratio` | Fraction of KV pairs to remove (ScorerPress); ∈ [0, 1) |
+| `compress(module, hidden_states, keys, values, attentions, kwargs)` | Layer-local prune logic; returns `(keys, values)` |
+| `forward_hook(module, input, kwargs, output)` | Post-attention hook; mutates `DynamicCache` in-place |
+| `__call__(model)` | Context manager: register hooks on all attention layers; remove in `finally` |
+| `post_init_from_model(model)` | Optional model-dependent setup |
 
-### 3.2 Core methods
-
-**`compress(module, hidden_states, keys, values, attentions, kwargs)`**
-Layer-local compression logic. Returns pruned `(keys, values)` tensors. Can be
-called directly (offline) if all inputs are available.
-
-**`forward_hook(module, input, kwargs, output)`**
-Post-attention hook registered on `layer.self_attn`. Extracts keys/values from
-`past_key_values`, calls `compress()`, writes back to `cache.layers[layer_idx]`.
-Skips compression when `cache_position[-1] > q_len` (decode phase for prefill-only
-presses).
-
-**`__call__(model)` → context manager**
-Registers forward hooks on all attention layers; removes them in `finally`.
-Also assigns `layer.self_attn.rotary_emb = language_model.rotary_emb` per layer
-(not restored on exit).
-
-### 3.3 No standalone "compress this cache" API
-
-kvpress has **no** public function of the form `compress_past_key_values(cache)`.
-Compression is designed to happen **during a model forward pass** with hooks
-active, or by calling `press.compress()` per layer with full layer context
-(module, hidden_states, attentions, kwargs).
-
-ExactKV's `BackendAdapter._backend_compress` currently receives only cloned
-`(k_tensors, v_tensors, cache_format)` — **insufficient** for presses that need
-`hidden_states` (ExpectedAttention, SnapKV, ThinK) or attentions (ObservedAttention).
-
-### 3.4 Quantization path
-
-Optional `QuantizedCache` (via `optimum-quanto`) stores quantized keys/values in
-`cache_layer._quantized_keys/_quantized_values`. This is a separate path from
-token-dropping presses and requires additional dependencies.
-
----
-
-## 4. Hook, monkeypatch, and model-modification model
-
-kvpress uses **three distinct mechanisms**:
-
-| Mechanism | Scope | Reversible? | When active |
-|---|---|---|---|
-| **Forward hooks** (`register_forward_hook`) | Per attention layer | Yes — removed on context-manager exit | Only inside `with press(model):` |
-| **Global attention patch** (`patch_attention_functions`) | All models in process | **No** — permanent after `import kvpress` | Always, after import |
-| **Model attribute mutation** (`rotary_emb` assignment) | Per-layer `self_attn` | **No** — not restored on exit | During `with press(model):` setup |
-
-There is **no** `setup_hook()` API. The correct pattern is:
+There is **no** `setup_hook()`. Correct pattern:
 
 ```python
 with press(model):
-    outputs = model(input_ids, past_key_values=cache)
+    out = model(input_ids, past_key_values=cache)
 ```
 
-`DecodingPress` and `PrefillDecodingPress` register hooks that fire during
-decode-phase forwards — **incompatible** with ExactKV's per-round draft loop
-without careful scoping. These are **out of scope** for V6 Phase C.
-
-`ComposedPress` chains multiple `forward_hook` calls per layer. Order-sensitive;
-documented failure modes when presses depend on different inputs.
-
----
-
-## 5. How kvpress stores compressed KV
-
-After compression, kvpress writes pruned tensors back into the **same**
-`DynamicCache` object in-place:
+### 3.3 KnormPress (Phase C initial candidate)
 
 ```python
-cache_layer.keys = keys      # shape: [bsz, num_kv_heads, n_kept, head_dim]
-cache_layer.values = values  # n_kept < original seq_len for token-dropping presses
+KnormPress(compression_ratio: float = 0.0)
 ```
 
-For `QuantizedCache`, it stores quantized tensors and sets `keys`/`values` to
-empty placeholders with `cumulative_length` tracking.
+- MRO: `KnormPress → ScorerPress → BasePress`
+- Scoring: `score()` returns `-keys.norm(dim=-1)` (keys only; no hidden_states required for scoring)
+- Still uses `forward_hook` during forward; offline `compress()` alone is insufficient without `module` reference
+- `compression_ratio=0.5` on 5-token prefill → keeps `int(5 * 0.5) = 2` tokens per layer
 
-**Storage characteristics:**
+### 3.4 Internal state
 
-- Retained tokens remain at **full precision** (fp16/bf16/fp32) — no bit-width
-  reduction for token-dropping presses.
-- Physical sequence length decreases; logical token positions of retained tokens
-  are re-packed contiguously (0 … n_kept−1).
-- RoPE position semantics may be wrong after pruning unless `KeyRerotationPress`
-  is used — relevant for acceptance behaviour, not for ExactKV correctness
-  (which compares against full KV, not kvpress's own quality claims).
+Prefill-only presses do not persist hook handles on the press object. Hook handles
+live on `layer.self_attn._forward_hooks` during the context manager. `DecodingPress`
+maintains `hidden_states_buffer` and `layer_step_counts` — **excluded from V6 Phase C**.
 
 ---
 
-## 6. How kvpress materializes or uses compressed KV during generation
+## 4. Press classes relevant to V6
 
-kvpress does **not** dequantize or reconstruct a full-length cache. The compressed
-`DynamicCache` **is** the working cache for attention:
-
-- **Prefill-only presses:** hooks fire during prefill; during single-token decode
-  steps, `cache_position[-1] > q_len` causes hooks to return without compressing.
-- **Draft forwards** in ExactKV pass the compressed cache directly to
-  `model.forward()` — same as kvpress's own `generate_answer()` loop.
-- **No separate materialize step** for token-dropping presses: the pruned cache
-  is used as-is.
-
-Implication for ExactKV workspace memory:
-
-- `stored_kv_bytes` = bytes of pruned cache tensors (< `full_bytes`).
-- `materialized_working_kv_bytes` = same as `stored_kv_bytes` (no dequant step).
-- This is the **first case** where `materialized_working_kv_bytes < full_kv_bytes`
-  among ExactKV compressors.
-
----
-
-## 7. Whether kvpress can fit ExactKV's KVCompressor protocol
-
-**Partial fit — requires adapter extensions beyond current `BackendAdapter` shape.**
-
-| KVCompressor method | kvpress fit | Gap |
+| Press | V6 Phase C | Reason |
 |---|---|---|
-| `compress(full_state)` | Indirect | Needs model reference + forward replay or per-layer offline `press.compress()` |
-| `materialize_for_draft(compressed)` | Direct | Return stored `DynamicCache` from `backend_data` |
-| `update_after_commit(compressed, new_full)` | Indirect | Re-compress from new full state (replay or offline) |
-| `stats(compressed)` | Direct | Byte counts from pruned cache tensors |
-| `capabilities` | Direct | Map press type to `CompressorCapabilities` |
-
-**Alignment invariant:** ExactKV requires `compressed.logical_seq_len == full_state.seq_len`
-(logical token count). kvpress physically shortens the cache. The adapter must
-set `logical_seq_len = state.seq_len` while storing a shorter physical cache —
-this is valid (alignment tracks logical tokens, not `kv_seq_len`).
-
-**Determinism:** ScorerPress pruning uses `topk` — deterministic for fixed inputs.
-`RandomPress` is non-deterministic and must be excluded from Phase C.
+| **KnormPress** | **Initial gate press** | Simplest scorer; keys-only; prefill-only |
+| SnapKVPress | Phase C+ (if replay path works) | Needs hidden_states / attention context |
+| ExpectedAttentionPress | Phase C+ | Needs query statistics, RoPE, hidden_states |
+| StreamingLLMPress | Later | Sink+recent policy; still prefill-only |
+| RandomPress | **Never** | Non-deterministic |
+| DecodingPress | **Never in V6** | Hooks fire during decode |
+| PrefillDecodingPress | **Never in V6** | Combined decode hooks |
+| AdaKVPress | **Never in V6** | Requires global attention patch side effects |
+| ComposedPress | **Never in V6** | Ordering fragility |
+| ThinKPress | **Never in V6** | Dimension zeroing; no byte savings |
+| KVPressTextGenerationPipeline | **Never** | Bypasses ExactKV draft-verify-commit |
 
 ---
 
-## 8. Required adapter boundary if kvpress is used
+## 5. Hugging Face integration model
 
-A `KVPressAdapter` (not yet implemented) would need:
+1. Load `PreTrainedModel` (e.g. `Qwen2ForCausalLM` for `Qwen/Qwen2.5-0.5B`).
+2. Create `DynamicCache()` (kvpress requires `.layers[i].keys/.values`).
+3. `with press(model): model(input_ids, past_key_values=cache)`.
+4. Hooks fire per layer during prefill; cache tensors shortened in-place.
+5. Subsequent single-token decode steps: prefill-only hooks skip when
+   `cache_position[-1] > q_len` (no re-compression during decode **if hooks not registered**).
 
-### 8.1 Model reference
+**ExactKV integration must NOT use `KVPressTextGenerationPipeline`.** Use ExactKV's
+own prefill (`prefill_to_full_state`), draft, verify, commit loop with compression
+only inside adapter `compress()` replay.
 
-The adapter must hold a reference to `ModelRuntime.model` (or receive it at
-construction). `_backend_compress` alone cannot integrate kvpress — the adapter
-needs either:
+**Supported model types** (`SUPPORTED_MODELS`): Llama, Mistral, Phi3, Qwen2, Qwen3,
+Gemma3 (partial). `Qwen/Qwen2.5-0.5B` works empirically (maps to `Qwen2ForCausalLM`;
+kvpress logs a warning for untested models).
 
-- **Replay path (recommended for fidelity):** Re-run prefill forward with
-  `with press(model):` on the full sequence tokens, capturing the compressed
-  `DynamicCache`. Most faithful to kvpress semantics.
-- **Offline path (restricted):** Call `press.compress()` per layer on extracted
-  tensors. Only viable for presses whose `score()` uses keys alone (e.g.
-  `KnormPress`). Requires `module` reference from `model.model.layers[i].self_attn`.
+---
 
-### 8.2 Strict hook scoping
+## 6. Hook and global-patch behavior
+
+### 6.1 Forward hooks (`with press(model):`)
+
+**Empirical (Qwen2.5-0.5B, 24 layers):**
+
+| Phase | `_forward_hooks` per layer |
+|---|---|
+| Before `with press(model):` | 0 |
+| During | 1 per layer (24 total) |
+| After context exit | 0 |
+
+Hooks are **removed** on context exit (`try/finally` in `BasePress.__call__`).
+They are registered on `layer.self_attn`, not globally on the module tree root.
+
+**Side effect not restored:** `layer.self_attn.rotary_emb = language_model.rotary_emb`
+is assigned during hook setup and not reverted.
+
+### 6.2 Global attention monkeypatch (`import kvpress`)
+
+`kvpress/__init__.py` calls `patch_attention_functions()`, which wraps every entry
+in `transformers.modeling_utils.ALL_ATTENTION_FUNCTIONS` with `attention_patch`.
+This is **permanent** for the process lifetime.
+
+**Empirical:** `attention_fn.__wrapped__` exists after import — patch is active.
+For `KnormPress` (no `masked_key_indices`), the wrapper is mostly pass-through but
+still executes on every attention call.
+
+### 6.3 Hook inspection for `verification_mode()`
+
+Future `KVPressKnormAdapter.verification_mode()` can assert:
 
 ```python
-# Pseudocode — not implemented
-with press(model):
-    compressed_cache = replay_prefill(tokens, starting_cache=cloned_full_cache)
-# hooks removed here — safe for verify/draft/commit on full path
+for layer in model.model.layers:
+    assert len(layer.self_attn._forward_hooks) == 0
 ```
 
-Hooks must **never** be registered during:
-- `VerificationEngine.verify_sequential`
-- `ExactKVGenerator._commit` (full-model path)
-- Any forward on `full_state.past_key_values`
+This is testable and sufficient for removable forward hooks. It does **not** undo
+the global attention patch (no API for that).
 
-Prefill-only presses naturally skip compression during single-token decode
-(`cache_position[-1] > q_len`), so draft forwards with an already-compressed
-cache do not re-trigger hooks **if hooks are not registered**.
+### 6.4 Can hooks be disabled during ExactKV verification?
 
-### 8.3 `verification_mode()` context manager
+**Yes, if designed correctly:**
 
-Required on `BackendAdapter` for hook-based backends (see §11).
+- Register hooks only inside `compress()` replay (`with press(model):`).
+- Never register during `verify_sequential`, `_commit`, or `_draft`.
+- `ExactKVGenerator` already wraps verify in `verification_mode()` (scaffold).
+- Prefill-only presses do not fire during single-token decode when hooks are absent.
 
-### 8.4 Cache format constraint
-
-Materialized cache must be `dynamic_v5` (`DynamicCache` with `.layers`). The
-adapter should call `rebuild_cache(..., "dynamic_v5", ...)` or store the
-`DynamicCache` object directly.
-
-### 8.5 Press selection restrictions for Phase C
-
-| Allowed (Phase C initial) | Excluded from Phase C |
-|---|---|
-| `KnormPress` (keys-only, simplest offline path) | `DecodingPress`, `PrefillDecodingPress` |
-| `SnapKVPress` (if replay path used) | `AdaKVPress` (requires global attention patch side effects) |
-| `ExpectedAttentionPress` (if replay path used) | `RandomPress` (non-deterministic) |
-| `StreamingLLMPress` | `KVzipPress` (multi-forward; expensive) |
-| | `ComposedPress` (ordering fragility) |
-| | `ThinKPress` alone (no byte savings; dimension zeroing) |
-
-Start with **`KnormPress`** as the Phase C gate press.
+**Risk:** If hooks leak (exception before `finally`, or bug), verify path corrupts
+full KV. The `verification_mode()` override must assert zero hooks.
 
 ---
 
-## 9. Hook-safety risks
+## 7. Cache format behavior
 
-| Risk | Severity | Detail |
+### 7.1 Empirical (Qwen/Qwen2.5-0.5B, KnormPress 0.5)
+
+| Metric | Full prefill | After KnormPress 0.5 |
 |---|---|---|
-| Hooks active during `verify_sequential` | **Critical** | Would compress full-state cache in-place, corrupting authoritative KV |
-| Hooks active during `_commit` | **Critical** | Same — mutates full path cache |
-| Global `patch_attention_functions` | **High** | Permanent after `import kvpress`; affects all attention calls in process |
-| `rotary_emb` reassignment | **Medium** | Model state mutation during `with press(model):`; not restored |
-| `DecodingPress` hooks during draft | **High** | Would compress during ExactKV draft loop |
-| Hook leak (not removed on exception) | **High** | kvpress uses `try/finally` in `__call__` — should be safe if context manager used correctly |
-| Deep-copy insufficient | **Medium** | Hooks mutate cache in-place; deep-copy of `full_state.past_key_values` before verify protects against DynamicCache mutation, but not against hooks registered on the model |
-| `logical_seq_len` vs physical mismatch | **Low** | By design for token-dropping; adapter must set logical correctly |
+| `cache/utils._detect_format` | `dynamic_v5` | `dynamic_v5` |
+| Physical `kv_seq_len` | 5 | 2 |
+| `kv_total_bytes` | 122,880 | 49,152 |
+| Draft forward on compressed cache | — | **OK** (seq grows to 3 after one token) |
 
-**Most important invariant:** `VerificationEngine.verify_sequential` must run
-with **zero active kvpress forward hooks** and must not have
-`full_state.past_key_values` modified. The existing `copy.deepcopy` guard in
-the verification engine protects against DynamicCache in-place growth but **does
-not** protect against hook-driven in-place pruning of the authoritative cache if
-hooks are registered during verify.
+### 7.2 Compatibility with ExactKV `cache/utils.py`
 
----
+- `_detect_format`: **compatible** (`dynamic_v5`)
+- `extract_kv_tensors` / `rebuild_cache`: work on stored `DynamicCache`
+- Tuple and `dynamic_v4` caches: **not** produced by kvpress hooks; adapter must
+  store/materialize `dynamic_v5` only
 
-## 10. Exact hook-safety tests needed before Phase C
+### 7.3 Logical vs physical sequence length
 
-These tests must pass before any kvpress adapter is merged:
+**Critical:** `compressed.logical_seq_len` must equal `full_state.seq_len` (5) while
+physical `kv_seq_len` may be shorter (2). ExactKV alignment invariant uses logical
+length, not physical cache length.
 
-### 10.1 Hook isolation gate
+### 7.4 Greedy output under compression
 
-```
-Given: KVPressAdapter with KnormPress, hooks were used during compress()
-When:  VerificationEngine.verify_sequential(full_state, draft_tokens) runs
-Then:  full_state.past_key_values is unchanged (tensor shapes, values, kv_total_bytes)
-       compressed_state.data is unchanged
-       no forward hooks remain registered on model.model.layers[*].self_attn
-```
-
-### 10.2 Verify-path forward gate
-
-```
-Given: press was used in compress(); hooks now removed
-When:  runtime.forward(token, past_key_values=deepcopy(full_state.past_key_values)) runs
-Then:  returned past_key_values seq_len matches expectation
-       full_state.past_key_values unchanged
-```
-
-### 10.3 Draft-path gate
-
-```
-Given: compressed cache with n_kept < full_seq_len
-When:  ExactKVGenerator._draft runs
-Then:  draft completes without exception
-       no hooks fire during draft (assert hook call count == 0)
-```
-
-### 10.4 Exactness gate
-
-```
-Given: backend_kvpress_knorm (or similar) on Qwen/Qwen2.5-0.5B
-When:  ExactKV runs 2 prompts × 2 lengths × 2 draft lengths
-Then:  exactkv_output_ids == generate_full_greedy.generated_ids
-       (Same gate as NoOp/pass-through — lossy compression may fail this; that is a valid outcome)
-```
-
-### 10.5 Global attention-patch gate
-
-```
-Given: import kvpress has patched ALL_ATTENTION_FUNCTIONS
-When:  verify_sequential runs without any press hooks active
-Then:  full_state.past_key_values unchanged
-       (Confirms patch is no-op when masked_key_indices is None)
-```
-
-### 10.6 Import side-effect documentation gate
-
-```
-Given: kvpress imported in test process
-When:  ExactKV pass-through adapter tests run
-Then:  all pass (no regression from global attention patch)
-```
+Empirical: compressed-cache greedy decode **diverges** from `generate_full_greedy`
+on the same prompt (expected for lossy compression). ExactKV's job is to verify
+and correct so final output still matches full KV — acceptance rate may be < 1.0.
 
 ---
 
-## 11. Whether `verification_mode()` is needed and what it should do
+## 8. Whether kvpress fits BackendAdapter
 
-**Yes — required for hook-based backends.**
+**Partial fit — requires adapter extension beyond current `_backend_compress` signature.**
 
-The current `BackendAdapter` base class does not implement `verification_mode()`.
-Research confirms it is needed even though kvpress hooks are context-manager-scoped,
-because:
-
-1. The adapter must **assert** no hooks are registered before verify/commit.
-2. The generator should wrap verify in `verification_mode()` as a belt-and-suspenders
-   guard (minimal generation-logic change: one context manager wrap).
-3. It provides a documented, testable contract for Phase C.
-
-**Proposed behaviour (design only):**
-
-```python
-@contextmanager
-def verification_mode(self):
-    """Assert no backend hooks are active; yield; assert full_state unchanged."""
-    if self._hook_handles:  # adapter tracks handles if it ever registers globally
-        raise RuntimeError("Backend hooks active during verification")
-    yield
-    # Post-verify: optional full_state integrity check in tests
-```
-
-For kvpress specifically, if hooks are correctly scoped to `compress()` only,
-`verification_mode()` is primarily an **assertion guard**, not a hook-disabler.
-If a future press requires persistent hooks, `verification_mode()` must disable them.
-
-**Minimal `ExactKVGenerator` change for Phase C:** wrap only the
-`verify_sequential` call:
-
-```python
-with self._verification_guard():  # calls compressor.verification_mode() if present
-    acceptance = self.engine.verify_sequential(full_state, draft_tokens)
-```
-
-Use `hasattr(compressor, 'verification_mode')` to preserve backward compatibility
-with existing compressors.
-
----
-
-## 12. Whether `full_state.past_key_values` can remain authoritative and unmodified
-
-**Yes — if and only if hooks are not registered during verify or commit.**
-
-ExactKV already protects the verify path with `copy.deepcopy(full_state.past_key_values)`.
-The commit path (`_commit`) runs forwards on `full_state.past_key_values` directly
-— hooks **must not** be active here.
-
-The compress path may use hooks on a **clone** or replay forward, storing the
-result in `compressed_state.data` without touching `full_state.past_key_values`.
-The current `BackendAdapter.compress()` clones KV tensors before `_backend_compress`
-— a replay-based kvpress adapter should clone the full `DynamicCache` or replay
-from tokens without mutating the authoritative object.
-
----
-
-## 13. Whether `compressed_state` can store kvpress objects without breaking cache alignment
-
-**Yes.**
-
-`CompressedKVState.data` can store a `DynamicCache` (or a dict wrapping one).
-Fields:
-
-- `logical_seq_len = full_state.seq_len` (logical alignment invariant)
-- `data` = pruned `DynamicCache` (physical `kv_seq_len` may be smaller)
-- `metadata["next_token_id"]` = draft prediction from compressed path (requires
-  `_get_next_token_id` override: materialize + one forward, or replay capture)
-
-Cache alignment in traces compares `full_state.seq_len` vs `compressed.logical_seq_len`,
-not physical `kv_seq_len`. Token-dropping compressors are compatible with this
-invariant.
-
----
-
-## 14. Workspace-memory implications
-
-For token-dropping kvpress presses (e.g. KnormPress, SnapKV):
-
-| Field | Expected value |
+| `KVCompressor` method | kvpress fit |
 |---|---|
-| `stored_kv_bytes` | `kv_total_bytes(pruned_cache)` < `full_bytes` |
-| `materialized_working_kv_bytes` | == `stored_kv_bytes` (no dequant; pruned cache used directly) |
+| `compress(full_state)` | Needs **replay forward** with `with press(model):` + `input_ids`; cannot use tensor-only `_backend_compress` |
+| `materialize_for_draft(compressed)` | Return stored `DynamicCache` directly |
+| `update_after_commit` | Re-replay from new full state |
+| `stats(compressed)` | `kv_total_bytes` on pruned cache |
+| `capabilities` | Map press metadata + `backend_name="kvpress"` |
+| `verification_mode()` | Override to assert zero `_forward_hooks` |
+| `_get_next_token_id` | Override: one forward on materialized cache |
+
+---
+
+## 9. Required BackendAdapter changes
+
+The current `BackendAdapter._backend_compress(k_tensors, v_tensors, cache_format)`
+is **insufficient** for kvpress. Phase C adapter implementation needs:
+
+1. **`ModelRuntime` reference** (or `model` + `device`) on `KVPressKnormAdapter`.
+2. **`input_ids` for replay** — from `full_state.full_sequence_ids` or prompt+gen.
+3. **New compress path** — either:
+   - override sealed `compress()` on a `KVPressBackendAdapter` subclass, or
+   - add protected `_backend_compress_from_full_state(full_state)` hook called from
+     `compress()` when `runtime` is set.
+4. **`verification_mode()` override** — assert `len(layer.self_attn._forward_hooks)==0`
+   for all layers before/after verify.
+5. **Hook handle tracking (optional)** — adapter stores active handles only during
+   `compress()` for defensive checks.
+6. **Do not register** adapter in default `exactkv.compressors` import path until
+   kvpress extra is installed (lazy registration or separate optional module).
+
+**No change needed** to `VerificationEngine` or report schemas for the adapter itself.
+
+---
+
+## 10. Hook-safety risks
+
+| Risk | Severity | Mitigation |
+|---|---|---|
+| Hooks active during `verify_sequential` | **Critical** | Scope hooks to `compress()` only; `verification_mode()` assert |
+| Hooks active during `_commit` | **Critical** | Never register outside `compress()` |
+| Global `patch_attention_functions` | **High** | Run attention-patch gate after `import kvpress`; process-isolated CI job |
+| `rotary_emb` reassignment | Medium | Accept for Phase C; document |
+| `DynamicCache` in-place mutation during draft | Medium | `ExactKVGenerator._draft` already deep-copies materialized cache |
+| Physical/logical seq_len mismatch | Low | Set `logical_seq_len = full_state.seq_len` explicitly |
+| Python 3.13 `fire` import failure | **High** | Document workaround; prefer Python 3.10–3.12 for kvpress CI |
+| transformers version split | **High** | Isolated `[kvpress]` venv; never merge pins into default |
+
+---
+
+## 11. Required Phase C tests
+
+1. **Hook isolation:** zero `_forward_hooks` during `verify_sequential`.
+2. **Full-state immutability:** `full_state.past_key_values` unchanged after verify.
+3. **Compressed-state immutability:** `compressed.data` unchanged after verify.
+4. **Hook register/remove:** count 0 → N → 0 across `with press(model):`.
+5. **Attention-patch gate:** full default pytest suite passes in a subprocess that
+   `import kvpress` first (or kvpress-env job).
+6. **Lazy import gate:** `import exactkv.compressors` does not load kvpress (existing).
+7. **`verification_mode()` gate:** override asserts when hooks leaked (unit test with mock).
+8. **Alignment gate:** `logical_seq_len == full_state.seq_len` after compress.
+9. **Workspace gate:** `stored_kv_bytes < full_bytes`; footprint reconciles.
+10. **Exactness gate:** ExactKV output vs `generate_full_greedy` (may fail for lossy
+    press — valid experimental outcome; adapter correctness ≠ 100% acceptance).
+
+---
+
+## 12. Workspace-memory implications
+
+For token-dropping presses (KnormPress, SnapKV, etc.) — **empirical KnormPress 0.5:**
+
+| Field | Value / rule |
+|---|---|
+| `stored_kv_bytes` | `kv_total_bytes(pruned DynamicCache)` — **< full_bytes** |
+| `materialized_working_kv_bytes` | **== stored_kv_bytes** (pruned cache used directly; no dequant) |
 | `metadata_bytes` | 0 (no scales/zero-points for token-dropping) |
-| `temporary_workspace_bytes` | 0 conservatively; replay forward may use scratch — document honestly |
-| `total_kv_footprint_bytes` | conservative accounting sum; it is NOT a measured peak GPU memory value |
-| `supports_real_bytes_claim` | `True` — fewer tokens at full precision is genuine storage reduction |
+| `temporary_workspace_bytes` | 0 conservatively; replay forward may use scratch — document if measured |
+| `total_kv_footprint_bytes` | accounting sum; **NOT a measured peak GPU memory value** |
+| `supports_real_bytes_claim` | **True** — fewer tokens at full precision is genuine storage reduction |
 | `compression_ratio` | < 1.0 |
-| `is_simulated` | `False` |
-
-For `QuantizedCache` presses: additional `metadata_bytes` for quantizer state;
-requires separate per-press analysis in Phase C.
+| `is_simulated` | False |
 
 **First ExactKV compressor where `materialized_working_kv_bytes < full_kv_bytes`.**
-Reports and Markdown rendering must handle this without implying GPU peak measurement.
+
+`QuantizedCache` presses (opt-in, `optimum-quanto`): separate analysis deferred.
 
 ---
 
-## 15. CPU/GPU requirements
+## 13. CPU/GPU requirements
 
 | Scenario | CPU | GPU |
 |---|---|---|
-| KnormPress correctness gate (0.5B, fp32) | **Works** — press is tensor math only | Optional |
-| ExpectedAttentionPress | Works on CPU; slower | Recommended |
-| flash_attention_2 | Not required | Used in kvpress examples for speed (out of scope for ExactKV claims) |
-| QuantizedCache | Requires `optimum-quanto` | Either |
+| KnormPress gate (0.5B, fp32) | **Verified** | Optional |
+| ExpectedAttentionPress | Works; slower | Recommended in kvpress examples |
 | kvpress evaluation CLI / leaderboard | — | External; not ExactKV |
 
-ExactKV V6 policy unchanged: CPU suffices for exactness gate; GPU for Experiment
-005 if desired, not for peak-memory profiling.
+ExactKV policy: CPU suffices for adapter correctness gate; GPU optional for
+Experiment 005 (not in scope of this research pass).
 
 ---
 
-## 16. Version pinning recommendation
-
-| Package | Pin | Notes |
-|---|---|---|
-| `kvpress` | `==0.5.3` | Current PyPI; record in `backend_version` |
-| `transformers` | `>=4.56.0,<5.3` | **kvpress constraint** |
-| `torch` | `>=2.3.1,<3` | kvpress constraint |
-| `numpy` | `>=2.0.0,<3` | kvpress requires numpy 2.x |
-
-### Transformers version conflict (blocking risk)
-
-| Component | transformers version |
-|---|---|
-| ExactKV dev environment (measured) | **5.8.1** |
-| kvpress 0.5.3 requirement | **>=4.56.0, <5.3** |
-| ExactKV `pyproject.toml` | `>=4.40` (no upper bound) |
-
-**These ranges do not overlap at 5.8.1.** Phase C must either:
-
-1. Run kvpress integration in an **isolated optional extra** with
-   `transformers<5.3` (separate CI job or manual gate), or
-2. Wait for kvpress to lift the `<5.3` cap, or
-3. Vendor/fork kvpress with transformers 5.8 compatibility patches.
-
-Option 1 is the pragmatic Phase C path. Document the pin in Experiment 005;
-do not change ExactKV's default transformers pin for the main test suite until
-compatibility is confirmed.
-
----
-
-## 17. Failure modes that should reject kvpress for V6
+## 14. Failure modes that reject kvpress for V6
 
 | Failure mode | Action |
 |---|---|
-| transformers version incompatibility cannot be isolated | Reject kvpress; fall back to KIVI or design-only stop |
-| Global attention patch breaks verify or pass-through tests | Reject kvpress |
-| Hooks cannot be guaranteed inactive during verify/commit | Reject kvpress |
-| `full_state.past_key_values` mutated after verify (any press) | Reject kvpress |
-| Only viable presses require DecodingPress / AdaKVPress | Defer those presses; if none remain viable, reject |
-| Offline compression impossible and replay forward mutates full state | Reject kvpress |
-| `exactkv_failures > 0` on core suite with all reasonable press configs | Not a rejection of kvpress — valid experimental outcome; adapter still valid if exactness gate is testable |
-| Import kvpress breaks existing 1309 tests | Reject until isolated optional dependency |
+| `import kvpress` breaks default pytest after global patch | Reject or isolate to kvpress CI subprocess |
+| Cannot install `[kvpress]` on supported Python without workarounds | Document; defer adapter |
+| Hooks cannot be guaranteed inactive during verify | Reject; fall back to KIVI |
+| `full_state.past_key_values` mutated after verify | Reject |
+| Only viable presses require DecodingPress/AdaKVPress | Restrict press set; reject if none remain |
+| transformers isolation impossible in CI | Reject |
+
+**Not a rejection:** lossy press yields `acceptance_rate < 1.0` or exactness gate
+failure — valid Experiment 005 outcome.
 
 ---
 
-## 18. Recommendation
+## 15. Recommendation
 
 ### **Proceed with kvpress — only with restrictions**
 
-kvpress remains the **best first backend candidate** for V6 Phase C, but research
-reveals tighter constraints than the Phase A design assumed:
+kvpress remains the **best first backend candidate** after empirical validation:
 
-1. **Transformers version isolation is mandatory** before any integration code.
-2. **Start with `KnormPress` only** — simplest offline/replay path, keys-only scoring.
-3. **No `DecodingPress` / `PrefillDecodingPress` / `AdaKVPress`** in V6.
-4. **Adapter needs model reference** — extend `BackendAdapter` or `KVPressAdapter`
-   with `ModelRuntime` access; `_backend_compress` alone is insufficient.
-5. **Implement `verification_mode()`** and wrap `verify_sequential` in the generator.
-6. **Treat `import kvpress` global attention patch as a test gate**, not optional.
-7. **Do not use kvpress pipeline** for ExactKV integration — use press context
-   manager + ExactKV's own prefill/draft/verify loop.
-8. **Exactness gate may fail** for lossy presses — that is a valid Experiment 005
-   outcome, not an integration failure.
+- `with press(model):` hook lifecycle is **clean** (0 → 24 → 0 hooks on Qwen2.5-0.5B).
+- `dynamic_v5` cache is **compatible** with ExactKV `cache/utils.py`.
+- Physical cache shrinks honestly; workspace fields are meaningful.
+- KnormPress runs on CPU with gate model.
+- Scaffold (`verification_mode()`, optional extra) is in place.
 
-**Do not defer to KIVI yet.** KIVI remains the documented fallback if hook-safety
-or transformers isolation fails. KIVI's advantage (no hooks) does not outweigh
-kvpress's HF-native multi-press surface **unless** the blockers above cannot be
-resolved.
+**Restrictions before `KVPressKnormAdapter` implementation:**
 
-**Do not stop V6 at adapter design.** Phase B pass-through PoC is sound; Phase C
-can proceed after the hook-safety and version-isolation gates are defined (this
-document).
+1. Develop and test only in `.venv-kvpress` (`pip install -e ".[kvpress]"`).
+2. Document Python 3.13 `fire>=0.7.1` workaround or use Python 3.10–3.12.
+3. Implement `KVPressKnormAdapter` with `ModelRuntime` + replay prefill — **not**
+   tensor-only `_backend_compress`.
+4. Override `verification_mode()` to assert zero forward hooks.
+5. Do not register adapter on default import path.
+6. Run attention-patch gate in kvpress CI job.
+7. Start with `KnormPress` only.
+
+**Do not defer to KIVI yet** unless install/hook gates fail in CI.
+
+**Do not stop V6** — scaffold + research support proceeding to adapter implementation.
 
 ---
 
-## Appendix A: kvpress API summary (quick reference)
+## Appendix A: Empirical session log (2026-06-09)
 
 ```
-# Installation
-pip install kvpress  # 0.5.3; pulls transformers>=4.56,<5.3
+Dedicated venv: .venv-kvpress (Python 3.13.3)
+  kvpress==0.5.3, transformers==5.2.0, fire==0.7.1 (workaround)
 
-# Import side effect
-import kvpress  # patches ALL_ATTENTION_FUNCTIONS globally
+Default env: transformers==5.8.1, kvpress not installed
+  import exactkv.compressors → kvpress not in sys.modules
 
-# Press usage
-from kvpress import KnormPress
-press = KnormPress(compression_ratio=0.5)
-with press(model):
-    out = model(input_ids, past_key_values=DynamicCache())
+Hook counts (Qwen2.5-0.5B): before=0, during=24, after=0
+Global attention patch after import kvpress: wrapped=True
 
-# Press hierarchy
-BasePress → ScorerPress → KnormPress, SnapKVPress, ExpectedAttentionPress, ...
-BasePress → ThinKPress, DecodingPress, ComposedPress, ...
+KnormPress(0.5) on 5-token prefill:
+  full_bytes=122880, compressed_bytes=49152, physical_seq=2, logical=5
+  draft forward: OK
+  greedy vs full: diverges (expected)
 
-# Pipeline (NOT for ExactKV integration)
-pipe = pipeline("kv-press-text-generation", model=model, device="cuda:0")
-answer = pipe(context, question=question, press=press)["answer"]
+kvpress scaffold tests in kvpress venv: 8 passed
+kvpress lazy-import test: passed (no longer skipped when kvpress installed)
 ```
 
 ---
 
-## Appendix B: ExactKV constraint checklist
-
-| Constraint | kvpress compliance |
-|---|---|
-| `verify_sequential` not corrupted | Requires hook isolation — testable |
-| Full KV authoritative | Yes, if hooks scoped to compress only |
-| Greedy decoding only | Compatible |
-| No throughput/latency claims | Compatible — do not use kvpress benchmark docs |
-| Evaluate via exactness/acceptance/memory fields | Compatible |
-| No external benchmark as ExactKV result | Compatible with discipline |
-| `BackendAdapter` protocol | Needs model-reference extension |
-| Backward-compatible reports | Compatible — `backend_name`/`backend_version` additive |
-
----
-
-*Research completed 2026-06-09. No kvpress code implemented in ExactKV.*
+*ExactKV does not implement kvpress. This document informs Phase C adapter work only.*

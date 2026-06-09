@@ -84,6 +84,14 @@ class BackendAdapter(abc.ABC):
 
     # ── Public sealed protocol methods ──────────────────────────────────────
 
+    def _compresses_via_full_state(self) -> bool:
+        """True when compression replays from FullKVState (e.g. kvpress hooks).
+
+        Replay backends implement ``_backend_compress_from_full_state`` instead
+        of the tensor-only ``_backend_compress`` path.
+        """
+        return False
+
     def compress(self, state: FullKVState) -> CompressedKVState:
         """Create the backend's compressed representation from full_state.
 
@@ -91,15 +99,20 @@ class BackendAdapter(abc.ABC):
         Invariant: result.logical_seq_len == state.seq_len.
         """
         full_kv_bytes = kv_total_bytes(state.past_key_values)
-        k_tensors, v_tensors, cache_format = extract_kv_tensors(state.past_key_values)
-        num_layers = len(k_tensors)
 
-        # Clone before forwarding so _backend_compress cannot accidentally
-        # mutate the authoritative full-state tensors.
-        k_clones = [t.clone() for t in k_tensors]
-        v_clones = [t.clone() for t in v_tensors]
+        if self._compresses_via_full_state():
+            backend_data = self._backend_compress_from_full_state(state)
+            num_layers = backend_data.get("__num_layers__", 0)
+        else:
+            k_tensors, v_tensors, cache_format = extract_kv_tensors(state.past_key_values)
+            num_layers = len(k_tensors)
 
-        backend_data = self._backend_compress(k_clones, v_clones, cache_format)
+            # Clone before forwarding so _backend_compress cannot accidentally
+            # mutate the authoritative full-state tensors.
+            k_clones = [t.clone() for t in k_tensors]
+            v_clones = [t.clone() for t in v_tensors]
+
+            backend_data = self._backend_compress(k_clones, v_clones, cache_format)
 
         # Inject bookkeeping metadata so stats() can operate without an extra
         # forward pass.  setdefault so subclasses may provide their own values.
@@ -205,6 +218,21 @@ class BackendAdapter(abc.ABC):
         when the compressor provides ``verification_mode``.
         """
         yield
+
+    def _backend_compress_from_full_state(self, state: FullKVState) -> dict:
+        """Replay compression from an authoritative FullKVState.
+
+        Used by hook-based backends (kvpress).  Must NOT mutate ``state`` or
+        ``state.past_key_values``.  Return ``backend_data`` with
+        ``cache_format`` and backend-specific payload.
+
+        Default: not implemented — only called when ``_compresses_via_full_state``
+        is True.
+        """
+        raise NotImplementedError(
+            f"{self.name} declares _compresses_via_full_state but does not "
+            "implement _backend_compress_from_full_state"
+        )
 
     # ── Optional override (lossless adapters use default) ───────────────────
 

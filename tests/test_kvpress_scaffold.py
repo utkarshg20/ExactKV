@@ -1,10 +1,11 @@
-"""V6 Phase C scaffold: kvpress safety gates (no KVPressKnormAdapter yet).
+"""V6 Phase C: kvpress safety gates and restricted KVPressKnormAdapter.
 
 Verifies:
   * Optional ``kvpress`` extra is defined but not loaded on default import paths.
   * ``BackendAdapter.verification_mode()`` default is a no-op.
   * ``ExactKVGenerator`` wraps verification inside ``verification_mode()`` when present.
   * Explicit ``import kvpress`` (when installed) does not break pass-through smoke.
+  * ``KVPressKnormAdapter`` (KnormPress only) when ``[kvpress]`` extra is installed.
 """
 from __future__ import annotations
 
@@ -224,3 +225,218 @@ class TestKvpressLazyImportRegression:
 
         assert compressed.logical_seq_len == full_state.seq_len
         assert kv_seq_len(cache) == full_state.seq_len
+
+
+# ---------------------------------------------------------------------------
+# 5. Restricted KVPressKnormAdapter (skipped when kvpress not installed)
+# ---------------------------------------------------------------------------
+
+MODEL_NAME = "Qwen/Qwen2.5-0.5B"
+DTYPE = "float32"
+_KV_PROMPT = "The capital of France is Paris and the river"
+
+
+@pytest.fixture(scope="module")
+def kvpress_runtime():
+    from exactkv.runtime.model_runtime import ModelRuntime
+
+    return ModelRuntime(model_name=MODEL_NAME, device="auto", dtype=DTYPE)
+
+
+@pytest.mark.skipif(not _KVPRESS_INSTALLED, reason="kvpress optional extra not installed")
+class TestKVPressKnormAdapter:
+    def test_kvpress_knorm_module_import_does_not_load_kvpress(self):
+        """Importing the adapter module must not eagerly import kvpress."""
+        sys.modules.pop("kvpress", None)
+        import exactkv.compressors.kvpress_knorm  # noqa: F401
+
+        assert "kvpress" not in sys.modules
+
+    def test_constructing_adapter_imports_kvpress_lazily(self, kvpress_runtime):
+        sys.modules.pop("kvpress", None)
+        from exactkv.compressors.kvpress_knorm import create_kvpress_knorm_adapter
+
+        create_kvpress_knorm_adapter(kvpress_runtime, compression_ratio=0.5)
+        assert "kvpress" in sys.modules
+
+    def test_verification_mode_passes_when_no_hooks(self, kvpress_runtime):
+        from exactkv.compressors.kvpress_knorm import create_kvpress_knorm_adapter
+
+        adapter = create_kvpress_knorm_adapter(kvpress_runtime)
+        with adapter.verification_mode():
+            pass
+
+    def test_verification_mode_fails_when_hooks_manually_active(self, kvpress_runtime):
+        from exactkv.compressors.kvpress_knorm import (
+            create_kvpress_knorm_adapter,
+            _iter_attention_modules,
+        )
+
+        adapter = create_kvpress_knorm_adapter(kvpress_runtime)
+        attn = next(_iter_attention_modules(kvpress_runtime.model))
+
+        def _noop_hook(module, inp, out):  # noqa: ARG001
+            return out
+
+        handle = attn.register_forward_hook(_noop_hook)
+        try:
+            with pytest.raises(RuntimeError, match="hooks must not be active"):
+                with adapter.verification_mode():
+                    pass
+        finally:
+            handle.remove()
+
+    def test_hook_count_returns_to_original_after_compression_replay(self, kvpress_runtime):
+        from exactkv.compressors.kvpress_knorm import (
+            count_attention_forward_hooks,
+            create_kvpress_knorm_adapter,
+        )
+        from exactkv.runtime.prefill import prefill_to_full_state
+
+        adapter = create_kvpress_knorm_adapter(kvpress_runtime)
+        full_state = prefill_to_full_state(kvpress_runtime, _KV_PROMPT)
+        hooks_before = count_attention_forward_hooks(kvpress_runtime.model)
+
+        compressed = adapter.compress(full_state)
+
+        hooks_after = count_attention_forward_hooks(kvpress_runtime.model)
+        assert hooks_after == hooks_before
+        assert compressed.data["__hook_count_before__"] == hooks_before
+        assert compressed.data["__hook_count_after__"] == hooks_before
+        assert compressed.data["__hook_count_during__"] > hooks_before
+
+    def test_full_authoritative_state_unchanged_after_verify(self, kvpress_runtime):
+        import copy
+
+        from exactkv.cache.utils import extract_kv_tensors, kv_seq_len, kv_total_bytes
+        from exactkv.compressors.kvpress_knorm import create_kvpress_knorm_adapter
+        from exactkv.runtime.prefill import prefill_to_full_state
+        from exactkv.verification.engine import VerificationEngine
+
+        adapter = create_kvpress_knorm_adapter(kvpress_runtime)
+        engine = VerificationEngine(kvpress_runtime)
+        full_state = prefill_to_full_state(kvpress_runtime, _KV_PROMPT)
+
+        full_bytes_before = kv_total_bytes(full_state.past_key_values)
+        seq_before = full_state.seq_len
+        k_before, v_before, _ = extract_kv_tensors(full_state.past_key_values)
+        k_snap = [t.clone() for t in k_before]
+        v_snap = [t.clone() for t in v_before]
+
+        adapter.compress(full_state)
+
+        draft = [full_state.next_token_id]
+        with adapter.verification_mode():
+            engine.verify_sequential(full_state, draft)
+
+        assert kv_total_bytes(full_state.past_key_values) == full_bytes_before
+        assert full_state.seq_len == seq_before
+        assert kv_seq_len(full_state.past_key_values) == seq_before
+        k_after, v_after, _ = extract_kv_tensors(full_state.past_key_values)
+        for orig_k, cur_k in zip(k_snap, k_after):
+            assert torch.equal(orig_k, cur_k)
+        for orig_v, cur_v in zip(v_snap, v_after):
+            assert torch.equal(orig_v, cur_v)
+
+    def test_physical_kv_shorter_than_logical_seq_len(self, kvpress_runtime):
+        from exactkv.cache.utils import kv_seq_len, kv_total_bytes
+        from exactkv.compressors.kvpress_knorm import create_kvpress_knorm_adapter
+        from exactkv.runtime.prefill import prefill_to_full_state
+
+        adapter = create_kvpress_knorm_adapter(kvpress_runtime, compression_ratio=0.5)
+        full_state = prefill_to_full_state(kvpress_runtime, _KV_PROMPT)
+        full_bytes = kv_total_bytes(full_state.past_key_values)
+        logical_len = full_state.seq_len
+
+        compressed = adapter.compress(full_state)
+        cache = adapter.materialize_for_draft(compressed)
+        physical_len = kv_seq_len(cache)
+
+        assert physical_len < logical_len
+        assert compressed.logical_seq_len == logical_len
+        assert compressed.data["__physical_seq_len__"] == physical_len
+        assert kv_total_bytes(cache) < full_bytes
+
+    def test_stored_bytes_match_materialized_working_bytes(self, kvpress_runtime):
+        from exactkv.cache.utils import kv_total_bytes
+        from exactkv.compressors.kvpress_knorm import create_kvpress_knorm_adapter
+        from exactkv.runtime.prefill import prefill_to_full_state
+
+        adapter = create_kvpress_knorm_adapter(kvpress_runtime, compression_ratio=0.5)
+        full_state = prefill_to_full_state(kvpress_runtime, _KV_PROMPT)
+        compressed = adapter.compress(full_state)
+        stats = adapter.stats(compressed)
+        pruned_bytes = kv_total_bytes(compressed.data["dynamic_cache"])
+
+        assert stats.stored_kv_bytes == pruned_bytes
+        assert stats.materialized_working_kv_bytes == pruned_bytes
+        assert stats.materialized_working_kv_bytes == stats.stored_kv_bytes
+        assert stats.metadata_bytes == 0
+        assert adapter.capabilities.supports_real_bytes_claim is True
+
+    def test_draft_next_token_may_differ_from_full_kv_is_allowed(self, kvpress_runtime):
+        """Lossy KnormPress draft prediction may diverge; verification uses full KV."""
+        from exactkv.compressors.kvpress_knorm import create_kvpress_knorm_adapter
+        from exactkv.runtime.prefill import prefill_to_full_state
+
+        adapter = create_kvpress_knorm_adapter(kvpress_runtime, compression_ratio=0.5)
+        full_state = prefill_to_full_state(kvpress_runtime, _KV_PROMPT)
+        compressed = adapter.compress(full_state)
+
+        full_next = full_state.next_token_id
+        draft_next = compressed.metadata["next_token_id"]
+        assert isinstance(full_next, int)
+        assert isinstance(draft_next, int)
+        # Divergence is expected and acceptable for this lossy backend.
+
+    def test_model_mutation_safety_main_model_unchanged_with_isolation(self, kvpress_runtime):
+        from exactkv.compressors.kvpress_knorm import (
+            create_kvpress_knorm_adapter,
+            snapshot_attention_model_state,
+        )
+        from exactkv.runtime.prefill import prefill_to_full_state
+
+        adapter = create_kvpress_knorm_adapter(
+            kvpress_runtime, compression_ratio=0.5, isolate_compression_model=True
+        )
+        full_state = prefill_to_full_state(kvpress_runtime, _KV_PROMPT)
+        before = snapshot_attention_model_state(kvpress_runtime.model)
+
+        adapter.compress(full_state)
+
+        after = snapshot_attention_model_state(kvpress_runtime.model)
+        assert before["hook_counts"] == after["hook_counts"]
+        assert before["attn_module_ids"] == after["attn_module_ids"]
+        assert before["rotary_emb_ids"] == after["rotary_emb_ids"]
+
+    def test_rotary_emb_mutates_without_isolation_documents_known_blocker(self):
+        """Documents that kvpress permanently mutates rotary_emb without isolation.
+
+        Default ``isolate_compression_model=True`` avoids this on the verification
+        model.  Do not run compression on the main model with hooks unless
+        isolation is disabled intentionally.
+        """
+        from exactkv.compressors.kvpress_knorm import (
+            create_kvpress_knorm_adapter,
+            snapshot_attention_model_state,
+        )
+        from exactkv.runtime.model_runtime import ModelRuntime
+        from exactkv.runtime.prefill import prefill_to_full_state
+
+        # Fresh runtime — this test permanently mutates the model under compression.
+        runtime = ModelRuntime(model_name=MODEL_NAME, device="auto", dtype=DTYPE)
+        adapter = create_kvpress_knorm_adapter(
+            runtime, compression_ratio=0.5, isolate_compression_model=False
+        )
+        full_state = prefill_to_full_state(runtime, _KV_PROMPT)
+        before = snapshot_attention_model_state(runtime.model)
+        adapter.compress(full_state)
+        after = snapshot_attention_model_state(runtime.model)
+
+        # Known kvpress behaviour: rotary_emb assignment is not restored on exit.
+        assert before["rotary_emb_ids"] != after["rotary_emb_ids"], (
+            "Expected rotary_emb mutation without isolation; if kvpress fixes this, "
+            "revisit whether isolate_compression_model=True remains necessary."
+        )
+        assert before["hook_counts"] == after["hook_counts"]
+        assert before["attn_module_ids"] == after["attn_module_ids"]
