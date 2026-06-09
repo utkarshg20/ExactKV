@@ -575,10 +575,16 @@ claims.
   `exactkv/serving/cache_lifecycle.py`; local ownership/block-mapping harness;
   exactness smoke gate; no vLLM/LMCache dependency.
 
+## Phase D complete
+
+- [`EXPERIMENT_007_SERVING_CONTEXT.md`](EXPERIMENT_007_SERVING_CONTEXT.md) —
+  Mode B harness evaluation; 238 runs; `exactkv_failures == 0`; all harness
+  gates pass. Artifacts gitignored.
+
 ## Recommended direction
 
-Experiment 007 Mode B harness evaluation (Phase D) → launch package (Phase E).
-vLLM/LMCache PoC remains deferred (Phase C no-go).
+Launch package (Phase E) → tag `v0.8.0`. vLLM/LMCache PoC remains deferred
+(Phase C no-go).
 
 ## Non-goals
 

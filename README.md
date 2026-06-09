@@ -31,7 +31,7 @@ is faster. It does **not** claim throughput, latency, speedup, or production rea
 | Item | Value |
 |---|---|
 | **Latest release** | [`v0.7.0`](docs/RELEASE_NOTES_V0.7.0.md) — layer-aware V experiments |
-| **In progress** | [V8](docs/V8_SCOPE_STATEMENT.md) serving-context evaluation (Phase B harness complete) |
+| **In progress** | [V8](docs/V8_SCOPE_STATEMENT.md) serving-context evaluation (Experiment 007 complete) |
 | **Hard gate** | `exactkv_failures == 0` on every published experiment |
 | **Default model** | `Qwen/Qwen2.5-0.5B` (greedy, single-request, CPU-first) |
 | **Compressors** | 15 built-in (`noop`, `int8`, asymmetric `_sim`, layer-aware boundary, `backend_passthrough`, …) |
@@ -70,7 +70,7 @@ are far more fragile than values** under compression (`k4_v8_sim` ~56% acceptanc
 | V5 | `v0.5.0` | Workspace-aware memory accounting; Experiment 004 | ✅ |
 | V6 | `v0.6.0` | `BackendAdapter`; restricted kvpress KnormPress; Experiment 005 | ✅ |
 | V7 | `v0.7.0` | Layer-aware V policies; Experiments 006 / 006C | ✅ |
-| V8 | — | Serving-context evaluation; local cache-lifecycle harness | Phase B ✅ |
+| V8 | — | Serving-context evaluation; Experiment 007 harness | Phase D ✅ |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
@@ -387,6 +387,7 @@ Full Markdown reports for every published sweep. All report **`exactkv_failures 
 | 005 | v0.6.0 | core (34) | 272 | Restricted kvpress KnormPress | [`EXPERIMENT_005`](docs/EXPERIMENT_005_KVPRESS_KNORM.md) |
 | 006 | v0.7.0 | core (34) | 374 | Layer-aware V sweep | [`EXPERIMENT_006`](docs/EXPERIMENT_006_LAYER_AWARE_V.md) |
 | 006C | v0.7.0 | core (34) | 170 | Boundary depth ablation | [`EXPERIMENT_006C`](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) |
+| 007 | V8 | core (34) | 238 | Serving harness compatibility | [`EXPERIMENT_007`](docs/EXPERIMENT_007_SERVING_CONTEXT.md) |
 
 No throughput, latency, or speedup is claimed in any experiment report.
 
@@ -764,7 +765,8 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | Document | Purpose |
 |---|---|
 | [`docs/RELEASE_NOTES_V0.7.0.md`](docs/RELEASE_NOTES_V0.7.0.md) | Latest release (`v0.7.0`) |
-| [`docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md`](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) | Latest experiment report |
+| [`docs/EXPERIMENT_007_SERVING_CONTEXT.md`](docs/EXPERIMENT_007_SERVING_CONTEXT.md) | Latest experiment — serving harness (238 runs) |
+| [`docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md`](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) | Experiment 006C — boundary-depth ablation |
 | [`docs/SERVING_CACHE_LIFECYCLE_HARNESS.md`](docs/SERVING_CACHE_LIFECYCLE_HARNESS.md) | V8 Phase B — cache-lifecycle harness |
 | [`docs/SERVING_CONTEXT_FEASIBILITY.md`](docs/SERVING_CONTEXT_FEASIBILITY.md) | V8 Phase A — serving feasibility |
 | [`docs/V8_SCOPE_STATEMENT.md`](docs/V8_SCOPE_STATEMENT.md) | V8 scope (in progress) |
@@ -779,6 +781,7 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | 006 | [`EXPERIMENT_006_LAYER_AWARE_V.md`](docs/EXPERIMENT_006_LAYER_AWARE_V.md) |
 | 006A | [`EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md) |
 | 006C | [`EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md`](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) |
+| 007 | [`EXPERIMENT_007_SERVING_CONTEXT.md`](docs/EXPERIMENT_007_SERVING_CONTEXT.md) |
 
 **Release notes:** [`v0.4.0`](docs/RELEASE_NOTES_V0.4.0.md) · [`v0.5.0`](docs/RELEASE_NOTES_V0.5.0.md) · [`v0.6.0`](docs/RELEASE_NOTES_V0.6.0.md) · [`v0.7.0`](docs/RELEASE_NOTES_V0.7.0.md)
 

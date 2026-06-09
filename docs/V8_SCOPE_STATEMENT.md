@@ -1,10 +1,11 @@
 # V8 Scope Statement: Serving-Context Evaluation
 
-**Status:** Phase B complete (restricted local cache-lifecycle harness). Phase A
-complete. Phase 0 complete. See
-[`docs/SERVING_CACHE_LIFECYCLE_HARNESS.md`](SERVING_CACHE_LIFECYCLE_HARNESS.md) and
+**Status:** Phase D complete (Experiment 007 harness evaluation). Phase B complete.
+Phase A complete. Phase 0 complete. See
+[`docs/EXPERIMENT_007_SERVING_CONTEXT.md`](EXPERIMENT_007_SERVING_CONTEXT.md),
+[`docs/SERVING_CACHE_LIFECYCLE_HARNESS.md`](SERVING_CACHE_LIFECYCLE_HARNESS.md), and
 [`docs/SERVING_CONTEXT_FEASIBILITY.md`](SERVING_CONTEXT_FEASIBILITY.md).
-Phase C remains **no-go** for vLLM/LMCache integration.
+Phase C remains **no-go/deferred** for vLLM/LMCache integration.
 **Builds on:** `v0.7.0` — V7 complete; simulated layer-aware V policies
 (`k8_v4_boundary*_v8_sim`); Experiments 006 and 006C (`exactkv_failures == 0`);
 proxy divergence analysis (006A).
@@ -407,8 +408,8 @@ V8 is complete when:
 
 - [ ] Phase A feasibility document exists and is reviewed
 - [x] Phase B harness passes exactness smoke gate (or Phase C PoC passes equivalent gate)
-- [ ] Experiment 007 completes with **`exactkv_failures == 0`**
-- [ ] `docs/EXPERIMENT_007_SERVING_CONTEXT.md` written with required disclaimers
+- [x] Experiment 007 completes with **`exactkv_failures == 0`**
+- [x] `docs/EXPERIMENT_007_SERVING_CONTEXT.md` written with required disclaimers
 - [ ] Final documentation package drafted (release notes, experiment index, project status)
 - [ ] Launch narrative draft reviewed against no-performance-claim policy
 - [ ] No forbidden performance fields in code, tests, or docs
@@ -487,7 +488,7 @@ launch package; `v1.0.0` if Phase E completes the full public launch criteria in
 | **Phase A** | Serving-stack feasibility research | [`docs/SERVING_CONTEXT_FEASIBILITY.md`](SERVING_CONTEXT_FEASIBILITY.md) | ✅ Complete |
 | **Phase B** | Restricted serving-context / cache-lifecycle harness (**primary path**) | [`SERVING_CACHE_LIFECYCLE_HARNESS.md`](SERVING_CACHE_LIFECYCLE_HARNESS.md) + `exactkv/serving/` | ✅ Complete |
 | **Phase C** | Optional vLLM or LMCache PoC | **Deferred (no-go)** per Phase A; re-approval only for metadata-only export study | ❌ No-go default |
-| **Phase D** | Experiment 007 + report | `docs/EXPERIMENT_007_SERVING_CONTEXT.md`; gitignored JSON/CSV | Pending B or C |
+| **Phase D** | Experiment 007 + report (Mode B harness) | [`EXPERIMENT_007_SERVING_CONTEXT.md`](EXPERIMENT_007_SERVING_CONTEXT.md); gitignored JSON/CSV | ✅ Complete |
 | **Phase E** | Release notes, audit, launch package, tag | `RELEASE_NOTES_V0.8.0.md` or `V1.0.0.md` | Pending D |
 
 > Phases A–E require **separate explicit approval** before any code is written.
@@ -505,6 +506,7 @@ launch package; `v1.0.0` if Phase E completes the full public launch criteria in
 | [`BACKEND_ADAPTER_INTERFACE.md`](BACKEND_ADAPTER_INTERFACE.md) | Adapter boundary for stack integration |
 | [`EXPERIMENT_005_KVPRESS_KNORM.md`](EXPERIMENT_005_KVPRESS_KNORM.md) | External stack isolation precedent |
 | [`SERVING_CACHE_LIFECYCLE_HARNESS.md`](SERVING_CACHE_LIFECYCLE_HARNESS.md) | Phase B harness design and API |
+| [`EXPERIMENT_007_SERVING_CONTEXT.md`](EXPERIMENT_007_SERVING_CONTEXT.md) | Phase D harness evaluation report |
 | [`EXPERIMENT_004_WORKSPACE_MEMORY.md`](EXPERIMENT_004_WORKSPACE_MEMORY.md) | V5 accounting reference |
 | [`RESEARCH_BACKLOG.md`](RESEARCH_BACKLOG.md) | B10 serving-stack backlog item |
 | [`RELATED_WORK_KV_CACHE_COMPRESSION.md`](RELATED_WORK_KV_CACHE_COMPRESSION.md) | vLLM, LMCache survey |
