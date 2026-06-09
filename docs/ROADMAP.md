@@ -512,6 +512,11 @@ against ExactKV acceptance using a *real* format, not a simulated one.
 - A real backend can be evaluated through the existing verification loop.
 - Exactness preserved; memory comparisons gated by `supports_real_bytes_claim`.
 
+> See [`V6_SCOPE_STATEMENT.md`](V6_SCOPE_STATEMENT.md) for the detailed, phased V6
+> scope: adapter interface requirements, candidate backend comparison
+> (recommended first backend: kvpress), workspace-memory requirements, test/gate
+> plan, Experiment 005, risks, and exit criteria. Phase 0 (scope) only; no code.
+
 ---
 
 # V7: Attention-aware and V-specific backend ideas

@@ -879,6 +879,7 @@ detailed roadmap (planning document only, no code).
 | [`docs/EXPERIMENT_004_WORKSPACE_MEMORY.md`](docs/EXPERIMENT_004_WORKSPACE_MEMORY.md) | Experiment 004: workspace-aware memory accounting, 340 runs, 10 compressors |
 | [`docs/RELEASE_NOTES_V0.5.0.md`](docs/RELEASE_NOTES_V0.5.0.md) | v0.5.0 release notes (V5 workspace-aware memory accounting) |
 | [`docs/FUTURE_ROADMAP_V6_V8.md`](docs/FUTURE_ROADMAP_V6_V8.md) | V6–V8 detailed roadmap: adapter interface, backends, experiments, risks (planning only) |
+| [`docs/V6_SCOPE_STATEMENT.md`](docs/V6_SCOPE_STATEMENT.md) | V6 scope: real-backend adapter interface, candidate backends (recommended: kvpress), Experiment 005 plan (Phase 0, no code) |
 | `docs/PRIVATE_FUTURE_POST_NOTES_EXPERIMENT_003.md` | 🔒 Private draft announcement notes for later — not for posting |
 
 ---
