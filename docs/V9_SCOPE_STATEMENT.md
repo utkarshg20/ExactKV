@@ -2,7 +2,8 @@
 
 **Status:** Phases 0–C complete for TurboQuant Python track. **TurboQuant not in
 default registry.** Experiment 008 complete (`exactkv_failures == 0`). **Phase D1
-complete** (KIVI/KVQuant feasibility). Phase D2 adapter work requires separate approval.
+complete** (KIVI/KVQuant feasibility). **Phase D2 complete** (KIVI offline adapter
+smoke gate). Phase D3 Experiment 009 requires separate approval.
 **Builds on:** `v0.8.0` — V8 complete; serving harness (Experiment 007);
 `BackendAdapter` + restricted kvpress (V6); simulated layer-aware policies (V7).
 **Not public launch.** V9 is the **real backend credibility phase**.
@@ -420,8 +421,8 @@ requirements.
 | **Phase B** | TurboQuant adapter prototype (if feasible) | Adapter code + smoke exactness tests | ✅ Complete — see [`TURBOQUANT_ADAPTER_PROTOTYPE.md`](TURBOQUANT_ADAPTER_PROTOTYPE.md) |
 | **Phase C** | Experiment 008 + report | `EXPERIMENT_008_TURBOQUANT_PYTHON.md`; gitignored JSON/CSV | ✅ Complete — 272 cells, `exactkv_failures == 0` |
 | **Phase D1** | KIVI / KVQuant feasibility (research only) | [`KIVI_KVQUANT_INTEGRATION_RESEARCH.md`](KIVI_KVQUANT_INTEGRATION_RESEARCH.md); scratch inspect script | ✅ Complete — **KIVI restricted go**; KVQuant deferred pending RunPod |
-| **Phase D2** | KIVI restricted adapter prototype (if approved) | Adapter code + smoke exactness; no registry | Pending D2 approval |
-| **Phase D3** | Experiment 009 + optional KVQuant RunPod validation | Exp 009 report if adapter(s) exist | Pending D2 |
+| **Phase D2** | KIVI restricted offline adapter prototype | [`KIVI_ADAPTER_PROTOTYPE.md`](KIVI_ADAPTER_PROTOTYPE.md); smoke `exactkv_failures == 0` | ✅ Complete |
+| **Phase D3** | Experiment 009 + optional KVQuant RunPod validation | Exp 009 report if approved | Pending D3 approval |
 | **Phase E** | RunPod larger-model validation | ≥1.5B exactness gate report | Pending D or C |
 | **Phase F** | Release notes v0.9.0, index, bundle plan, v1.0.0 readiness decision | `RELEASE_NOTES_V0.9.0.md` | Pending E |
 
@@ -447,6 +448,7 @@ requirements.
 | [`TURBOQUANT_ADAPTER_PROTOTYPE.md`](TURBOQUANT_ADAPTER_PROTOTYPE.md) | Phase B restricted Python adapter |
 | [`EXPERIMENT_008_TURBOQUANT_PYTHON.md`](EXPERIMENT_008_TURBOQUANT_PYTHON.md) | Phase C Experiment 008 results |
 | [`KIVI_KVQUANT_INTEGRATION_RESEARCH.md`](KIVI_KVQUANT_INTEGRATION_RESEARCH.md) | Phase D1 KIVI/KVQuant feasibility + recommendation |
+| [`KIVI_ADAPTER_PROTOTYPE.md`](KIVI_ADAPTER_PROTOTYPE.md) | Phase D2 restricted offline KIVI adapter |
 | [`PROJECT_STATUS_V0.8.0.md`](PROJECT_STATUS_V0.8.0.md) | Pre-V9 status |
 
 ---
