@@ -19,8 +19,8 @@ implemented** unless a linked experiment or release note says otherwise.
 |---|---|---|---|---|
 | D1 | **TurboQuant full integration** | **Evaluated (Phase C)** | D+ / Exp 009 anchor | Exp 008: 272 cells, `exactkv_failures == 0`; accept **0.435** vs `int8` **0.961**; see [`EXPERIMENT_008_TURBOQUANT_PYTHON.md`](EXPERIMENT_008_TURBOQUANT_PYTHON.md) |
 | D2 | **TurboQuant+ full integration** | **Evaluated (Python path only)** | D+ | Production llama.cpp/MLX formats still deferred; Python adapter evaluated in Exp 008 |
-| D3 | **KIVI adapter** | **Planned (V9)** | D / Exp 009 | Real per-channel K / per-token V + residual; acceptance vs `int8` |
-| D4 | **KVQuant-style adapter** | **Planned (V9)** | D / Exp 009 | Pre-RoPE key quant; hook safety; acceptance report |
+| D3 | **KIVI adapter** | **Researched — restricted go (D1)** | D2 / Exp 009 | Phase D1: offline `utils_quant` bridge feasible on post-RoPE HF cache; Qwen2.5 not in upstream repo but tensor path OK — see [`KIVI_KVQUANT_INTEGRATION_RESEARCH.md`](KIVI_KVQUANT_INTEGRATION_RESEARCH.md) §23 |
+| D4 | **KVQuant-style adapter** | **Researched — deferred (D1)** | D3+ / RunPod | Phase D1: pre-RoPE projector quant + calibration pipeline blocks TurboQuant-style tensor adapter; RunPod Qwen Fisher/simquant required before go — see research doc §21–23 |
 | D5 | **KVTC / Palu feasibility** | Planned (V9 optional) | D | Written feasibility + optional thin PoC; V5 metadata honesty |
 | D15 | **Larger-model RunPod validation** | **Planned (V9)** | E | ≥1.5B Qwen2.5; `exactkv_failures == 0`; hardware manifest |
 

@@ -1,7 +1,8 @@
 # V9 Scope Statement: Real Backend Integration Gauntlet
 
 **Status:** Phases 0–C complete for TurboQuant Python track. **TurboQuant not in
-default registry.** Experiment 008 complete (`exactkv_failures == 0`). Phase D next.
+default registry.** Experiment 008 complete (`exactkv_failures == 0`). **Phase D1
+complete** (KIVI/KVQuant feasibility). Phase D2 adapter work requires separate approval.
 **Builds on:** `v0.8.0` — V8 complete; serving harness (Experiment 007);
 `BackendAdapter` + restricted kvpress (V6); simulated layer-aware policies (V7).
 **Not public launch.** V9 is the **real backend credibility phase**.
@@ -400,7 +401,7 @@ requirements.
 - [x] Phase A TurboQuant feasibility doc ([`TURBOQUANT_INTEGRATION_RESEARCH.md`](TURBOQUANT_INTEGRATION_RESEARCH.md))
 - [x] Phase B adapter smoke (`exactkv_failures == 0`) — [`TURBOQUANT_ADAPTER_PROTOTYPE.md`](TURBOQUANT_ADAPTER_PROTOTYPE.md)
 - [x] Experiment 008 complete — [`EXPERIMENT_008_TURBOQUANT_PYTHON.md`](EXPERIMENT_008_TURBOQUANT_PYTHON.md)
-- [ ] Phase D KIVI/KVQuant decision documented
+- [x] Phase D1 KIVI/KVQuant decision documented — [`KIVI_KVQUANT_INTEGRATION_RESEARCH.md`](KIVI_KVQUANT_INTEGRATION_RESEARCH.md)
 - [ ] Phase E RunPod validation (≥1.5B) **or** documented GPU blocker
 - [ ] `RELEASE_NOTES_V0.9.0.md`, updated experiment index
 - [ ] No forbidden performance fields in code/docs/reports
@@ -418,7 +419,9 @@ requirements.
 | **Phase A** | TurboQuant / TurboQuant+ deep feasibility | Install, API/cache-format doc, device/model matrix, go/no-go | ✅ Complete — **restricted go** (Python path; see research doc §23) |
 | **Phase B** | TurboQuant adapter prototype (if feasible) | Adapter code + smoke exactness tests | ✅ Complete — see [`TURBOQUANT_ADAPTER_PROTOTYPE.md`](TURBOQUANT_ADAPTER_PROTOTYPE.md) |
 | **Phase C** | Experiment 008 + report | `EXPERIMENT_008_TURBOQUANT_PYTHON.md`; gitignored JSON/CSV | ✅ Complete — 272 cells, `exactkv_failures == 0` |
-| **Phase D** | KIVI / KVQuant feasibility + optional adapter | Feasibility doc; adapter if go; Exp 009 plan | Pending D approval |
+| **Phase D1** | KIVI / KVQuant feasibility (research only) | [`KIVI_KVQUANT_INTEGRATION_RESEARCH.md`](KIVI_KVQUANT_INTEGRATION_RESEARCH.md); scratch inspect script | ✅ Complete — **KIVI restricted go**; KVQuant deferred pending RunPod |
+| **Phase D2** | KIVI restricted adapter prototype (if approved) | Adapter code + smoke exactness; no registry | Pending D2 approval |
+| **Phase D3** | Experiment 009 + optional KVQuant RunPod validation | Exp 009 report if adapter(s) exist | Pending D2 |
 | **Phase E** | RunPod larger-model validation | ≥1.5B exactness gate report | Pending D or C |
 | **Phase F** | Release notes v0.9.0, index, bundle plan, v1.0.0 readiness decision | `RELEASE_NOTES_V0.9.0.md` | Pending E |
 
@@ -443,6 +446,7 @@ requirements.
 | [`TURBOQUANT_INTEGRATION_RESEARCH.md`](TURBOQUANT_INTEGRATION_RESEARCH.md) | Phase A feasibility + restricted go |
 | [`TURBOQUANT_ADAPTER_PROTOTYPE.md`](TURBOQUANT_ADAPTER_PROTOTYPE.md) | Phase B restricted Python adapter |
 | [`EXPERIMENT_008_TURBOQUANT_PYTHON.md`](EXPERIMENT_008_TURBOQUANT_PYTHON.md) | Phase C Experiment 008 results |
+| [`KIVI_KVQUANT_INTEGRATION_RESEARCH.md`](KIVI_KVQUANT_INTEGRATION_RESEARCH.md) | Phase D1 KIVI/KVQuant feasibility + recommendation |
 | [`PROJECT_STATUS_V0.8.0.md`](PROJECT_STATUS_V0.8.0.md) | Pre-V9 status |
 
 ---
