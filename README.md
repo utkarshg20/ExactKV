@@ -841,20 +841,27 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
   No real backend, no performance claims. See
   [`docs/EXPERIMENT_004_WORKSPACE_MEMORY.md`](docs/EXPERIMENT_004_WORKSPACE_MEMORY.md).
 * **V6 — real backend adapter interface and first backend candidate.** Design a
-  `BackendAdapter` so a real quantisation format (e.g. a KIVI- or
-  TurboQuant-style quantizer) could plug into the `KVCompressor` protocol and be
-  evaluated by acceptance behaviour. Implementation only behind separate approval.
+  `BackendAdapter` so a real quantisation format (e.g. KIVI or kvpress) could
+  plug into the `KVCompressor` protocol and be evaluated by acceptance behaviour.
+  Implementation only behind separate approval.
 * **V7 — attention-aware and V-specific backend ideas.** Sparse V dequantization,
-  layer-aware V compression, and real asymmetric compressor comparisons —
-  evaluated, not just reconstructed.
-* **V8 — serving-stack integration.** Only after correctness/acceptance are well
-  understood; without adopting any serving-stack performance claims as ExactKV's.
+  layer-aware V compression, pre-RoPE key quantization evaluation, and real
+  asymmetric compressor comparisons — evaluated, not just reconstructed.
+* **V8 — serving-stack context and final public launch.** Only after
+  correctness/acceptance are well understood; without adopting any serving-stack
+  performance claims as ExactKV's. Default story: exactness + acceptance + memory
+  honesty + real-backend evaluation.
+* See [`docs/FUTURE_ROADMAP_V6_V8.md`](docs/FUTURE_ROADMAP_V6_V8.md) for the
+  detailed V6–V8 scope, adapter interface design, candidate backends, experiment
+  plans, risks, and exit criteria. No code is implemented there.
 
 See [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md)
 for the asymmetric-K/V writeup,
 [`docs/RELATED_WORK_KV_CACHE_COMPRESSION.md`](docs/RELATED_WORK_KV_CACHE_COMPRESSION.md)
-for the full related-work survey, and
-[`docs/RELEASE_NOTES_V0.4.0.md`](docs/RELEASE_NOTES_V0.4.0.md) for V4 release notes.
+for the full related-work survey,
+[`docs/RELEASE_NOTES_V0.4.0.md`](docs/RELEASE_NOTES_V0.4.0.md) for V4 release notes, and
+[`docs/FUTURE_ROADMAP_V6_V8.md`](docs/FUTURE_ROADMAP_V6_V8.md) for the V6–V8
+detailed roadmap (planning document only, no code).
 
 ---
 
@@ -871,6 +878,7 @@ for the full related-work survey, and
 | [`docs/V5_SCOPE_DRAFT.md`](docs/V5_SCOPE_DRAFT.md) | Draft V5 plan (workspace memory + real backend planning) — superseded by scope statement |
 | [`docs/EXPERIMENT_004_WORKSPACE_MEMORY.md`](docs/EXPERIMENT_004_WORKSPACE_MEMORY.md) | Experiment 004: workspace-aware memory accounting, 340 runs, 10 compressors |
 | [`docs/RELEASE_NOTES_V0.5.0.md`](docs/RELEASE_NOTES_V0.5.0.md) | v0.5.0 release notes (V5 workspace-aware memory accounting) |
+| [`docs/FUTURE_ROADMAP_V6_V8.md`](docs/FUTURE_ROADMAP_V6_V8.md) | V6–V8 detailed roadmap: adapter interface, backends, experiments, risks (planning only) |
 | `docs/PRIVATE_FUTURE_POST_NOTES_EXPERIMENT_003.md` | 🔒 Private draft announcement notes for later — not for posting |
 
 ---

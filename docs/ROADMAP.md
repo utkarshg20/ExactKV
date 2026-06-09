@@ -559,7 +559,13 @@ context** for compressed caches — never as a source of performance claims.
   gated on V5–V7 being stable.
 
 See [`RESEARCH_BACKLOG.md`](RESEARCH_BACKLOG.md) for the concrete experiment
-backlog behind V6–V8.
+backlog behind V6–V8, and
+[**`FUTURE_ROADMAP_V6_V8.md`**](FUTURE_ROADMAP_V6_V8.md) for the detailed
+V6–V8 scope, adapter interface design, candidate backends, experiment plans,
+risks, and exit criteria.
+
+> The V6–V8 stubs in this file are intentionally brief.
+> `FUTURE_ROADMAP_V6_V8.md` is the authoritative document for those versions.
 
 ---
 
