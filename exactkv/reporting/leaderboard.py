@@ -69,6 +69,57 @@ def _fmt_bits(bits: int | None) -> str:
     return "full" if bits is None else str(bits)
 
 
+def render_key_bits(caps: dict[str, Any]) -> str:
+    """Render K bit-width for tables, preferring ``key_bit_width_label`` when set."""
+    label = caps.get("key_bit_width_label")
+    if label:
+        return str(label)
+    return _fmt_bits(caps.get("key_bit_width"))
+
+
+def render_value_bits(caps: dict[str, Any]) -> str:
+    """Render V bit-width for tables, preferring ``value_bit_width_label`` when set."""
+    label = caps.get("value_bit_width_label")
+    if label:
+        return str(label)
+    return _fmt_bits(caps.get("value_bit_width"))
+
+
+def render_avg_eff_bits(caps: dict[str, Any], full_bit_width: int = 32) -> str:
+    """Render average effective bit-width, or ``n/a`` for mixed-precision policies."""
+    if caps.get("value_bit_width_label") or caps.get("key_bit_width_label"):
+        return "n/a"
+    k = caps.get("key_bit_width")
+    v = caps.get("value_bit_width")
+    return f"{average_effective_bit_width(k, v, full_bit_width):.1f}"
+
+
+def enrich_caps_from_registry(
+    compressor_name: str,
+    caps: dict[str, Any],
+) -> dict[str, Any]:
+    """Overlay additive label fields from the live registry onto stored caps.
+
+    Old JSON reports may lack ``key_bit_width_label`` / ``value_bit_width_label``.
+    Merging from the registry lets regenerated Markdown reflect current honesty
+    metadata without rerunning sweeps.
+    """
+    merged = dict(caps)
+    try:
+        import exactkv.compressors  # noqa: F401 — register built-ins
+        from dataclasses import asdict
+
+        from exactkv.compressors import get_compressor
+
+        reg = asdict(get_compressor(compressor_name).capabilities)
+        for key in ("key_bit_width_label", "value_bit_width_label"):
+            if reg.get(key):
+                merged[key] = reg[key]
+    except (KeyError, Exception):
+        pass
+    return merged
+
+
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
@@ -169,12 +220,9 @@ def render_compressor_leaderboard(
             caps = (compressor_caps or {}).get(comp, {})
             cells.append("yes" if caps.get("is_simulated") else "no")
             cells.append("yes" if caps.get("supports_real_bytes_claim") else "no")
-            k_bits = caps.get("key_bit_width")    # None or int
-            v_bits = caps.get("value_bit_width")  # None or int
-            cells.append(_fmt_bits(k_bits))
-            cells.append(_fmt_bits(v_bits))
-            avg = average_effective_bit_width(k_bits, v_bits)
-            cells.append(f"{avg:.1f}")
+            cells.append(render_key_bits(caps))
+            cells.append(render_value_bits(caps))
+            cells.append(render_avg_eff_bits(caps))
         cells += [
             _fmt(row.get("mean_acceptance_rate", 0.0)),
             _fmt(row.get("mean_average_accepted_length", 0.0), decimals=2),
@@ -268,11 +316,9 @@ def render_compressor_x_draft_leaderboard(
         cells = [comp, str(row.get("draft_len", "—"))]
         if use_caps:
             caps = (compressor_caps or {}).get(comp, {})
-            k_bits = caps.get("key_bit_width")
-            v_bits = caps.get("value_bit_width")
-            cells.append(_fmt_bits(k_bits))
-            cells.append(_fmt_bits(v_bits))
-            cells.append(f"{average_effective_bit_width(k_bits, v_bits):.1f}")
+            cells.append(render_key_bits(caps))
+            cells.append(render_value_bits(caps))
+            cells.append(render_avg_eff_bits(caps))
         cells += [
             _fmt(row.get("mean_acceptance_rate", 0.0)),
             _fmt(row.get("mean_average_accepted_length", 0.0), decimals=2),

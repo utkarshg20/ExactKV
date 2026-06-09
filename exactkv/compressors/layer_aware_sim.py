@@ -99,13 +99,12 @@ class LayerAwareVSimCompressor:
 
     def _build_capabilities(self) -> CompressorCapabilities:
         notes = (
-            "Layer-aware simulated V policy (V7 Phase B): K=INT8 on all layers; "
+            "Boundary-depth simulated V policy (V7): K=INT8 on all layers; "
             f"V=INT8 on first/last {self._boundary_layers} layer(s), "
-            f"V=INT4-sim on interior layers. "
-            "This is a simulation — no true attention weights or Sparse V "
-            "dequantization. "
-            "Stored bytes use int8 containers for all quantised sides, not packed "
-            "4-bit storage. supports_real_bytes_claim=False."
+            f"V=INT4-sim on interior layers (int8 containers). "
+            "No true attention weights. No Sparse V dequantization. "
+            "No TurboQuant+, KVQuant, or KIVI implementation. "
+            "supports_real_bytes_claim=False; no packed INT4 memory savings."
         )
         return CompressorCapabilities(
             name=self.name,
@@ -116,6 +115,7 @@ class LayerAwareVSimCompressor:
             supports_quantization=True,
             key_bit_width=self._k_bits,
             value_bit_width=None,  # mixed per-layer: 8 on boundary, 4-sim interior
+            value_bit_width_label="mixed 8/4-sim",
             asymmetric=True,
             notes=notes,
         )
@@ -245,3 +245,17 @@ class K8V4BoundaryV8SimCompressor(LayerAwareVSimCompressor):
 
     def __init__(self) -> None:
         super().__init__(boundary_layers=1, name="k8_v4_boundary_v8_sim")
+
+
+class K8V4Boundary2V8SimCompressor(LayerAwareVSimCompressor):
+    """K=INT8 all layers; V=INT8 on first/last 2 layers; INT4-sim interior."""
+
+    def __init__(self) -> None:
+        super().__init__(boundary_layers=2, name="k8_v4_boundary2_v8_sim")
+
+
+class K8V4Boundary4V8SimCompressor(LayerAwareVSimCompressor):
+    """K=INT8 all layers; V=INT8 on first/last 4 layers; INT4-sim interior."""
+
+    def __init__(self) -> None:
+        super().__init__(boundary_layers=4, name="k8_v4_boundary4_v8_sim")

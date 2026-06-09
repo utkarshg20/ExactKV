@@ -51,6 +51,14 @@ class CompressorCapabilities:
     value_bit_width
         Effective bit-width used for value tensors. Same semantics as
         ``key_bit_width``.
+    key_bit_width_label
+        Optional display label for K bit-width in reports when a single integer
+        is insufficient (e.g. mixed per-layer precision). When set, report
+        renderers prefer this over ``key_bit_width``. Default ``None``.
+    value_bit_width_label
+        Optional display label for V bit-width in reports when ``value_bit_width``
+        is ``None`` but the side is **not** full precision (e.g. layer-aware
+        mixed V8/V4-sim). Default ``None``.
     asymmetric
         ``True`` if ``key_bit_width != value_bit_width`` (or one side is
         ``None`` and the other is not). ``False`` for all symmetric V1–V3
@@ -67,6 +75,8 @@ class CompressorCapabilities:
     supports_quantization: bool
     key_bit_width: int | None = field(default=None)
     value_bit_width: int | None = field(default=None)
+    key_bit_width_label: str | None = field(default=None)
+    value_bit_width_label: str | None = field(default=None)
     asymmetric: bool = field(default=False)
     notes: str = field(default="")
     # V6 backend identity fields — additive; all default to None so existing

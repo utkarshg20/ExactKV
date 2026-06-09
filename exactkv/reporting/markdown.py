@@ -168,11 +168,14 @@ def _collect_compressor_caps(
     report: dict[str, Any],
 ) -> dict[str, dict[str, Any]]:
     """Collect compressor capabilities keyed by compressor name."""
+    from exactkv.reporting.leaderboard import enrich_caps_from_registry
+
     caps: dict[str, dict[str, Any]] = {}
     for r in report.get("results", []):
         name = r.get("compressor_name", "")
         if name and name not in caps:
-            caps[name] = r.get("compressor_capabilities", {})
+            stored = r.get("compressor_capabilities", {})
+            caps[name] = enrich_caps_from_registry(name, stored)
     return caps
 
 
@@ -210,21 +213,25 @@ def _render_kv_metadata_section(
     comp_caps: dict[str, dict[str, Any]],
 ) -> str:
     """Render a 'K/V Compression Metadata' table for all compressors in this report."""
-    from exactkv.reporting.leaderboard import average_effective_bit_width, _fmt_bits
+    from exactkv.reporting.leaderboard import (
+        render_avg_eff_bits,
+        render_key_bits,
+        render_value_bits,
+    )
 
     lines = [
         "| Compressor | K bits | V bits | Avg eff bits | Simulated | Real bytes |",
         "|------------|--------|--------|--------------|-----------|------------|",
     ]
+    has_mixed_v = False
     for comp, caps in sorted(comp_caps.items()):
-        k = caps.get("key_bit_width")
-        v = caps.get("value_bit_width")
-        avg = average_effective_bit_width(k, v)
+        if caps.get("value_bit_width_label"):
+            has_mixed_v = True
         lines.append(
             f"| `{comp}` "
-            f"| {_fmt_bits(k)} "
-            f"| {_fmt_bits(v)} "
-            f"| {avg:.1f} "
+            f"| {render_key_bits(caps)} "
+            f"| {render_value_bits(caps)} "
+            f"| {render_avg_eff_bits(caps)} "
             f"| {'yes ⚠️' if caps.get('is_simulated') else 'no'} "
             f"| {'yes' if caps.get('supports_real_bytes_claim') else 'no'} |"
         )
@@ -233,13 +240,27 @@ def _render_kv_metadata_section(
         "\n"
         "**Notes:**\n"
         "* `full` means full-precision passthrough; that side is not quantised.\n"
+        "* `mixed 8/4-sim` means V uses INT8-range on boundary layers and INT4-range "
+        "simulation on interior layers (int8 containers; not packed-bit storage).\n"
         "* **Average effective bits = (K bits + V bits) / 2**, treating full "
         "precision as 32 bits. This is a metadata comparison aid — not a real "
-        "memory measurement.\n"
+        "memory measurement. `n/a` means mixed per-layer precision.\n"
         "* Compressors marked **simulated** store sub-INT8 values in `int8` "
         "containers. Do not cite their `compressed_kv_bytes` as evidence of real "
         "packed memory savings.\n"
     )
+    if not has_mixed_v:
+        note = (
+            "\n"
+            "**Notes:**\n"
+            "* `full` means full-precision passthrough; that side is not quantised.\n"
+            "* **Average effective bits = (K bits + V bits) / 2**, treating full "
+            "precision as 32 bits. This is a metadata comparison aid — not a real "
+            "memory measurement.\n"
+            "* Compressors marked **simulated** store sub-INT8 values in `int8` "
+            "containers. Do not cite their `compressed_kv_bytes` as evidence of real "
+            "packed memory savings.\n"
+        )
 
     return "\n".join(lines) + note
 

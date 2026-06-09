@@ -1,11 +1,12 @@
-"""V7 Phase B — LayerAwareVSimCompressor tests.
+"""V7 Phase B/C — LayerAwareVSimCompressor tests.
 
 Gate: layer-aware simulated compressor gate + ExactKV correctness gate.
 
 Covers:
-  * Registry resolves k8_v4_boundary_v8_sim
+  * Registry resolves k8_v4_boundary_v8_sim, k8_v4_boundary2_v8_sim,
+    k8_v4_boundary4_v8_sim
   * Honest capabilities (is_simulated, supports_real_bytes_claim=False)
-  * Boundary layer selection (first/last layer V8, interior V4)
+  * Boundary layer selection for N=1, 2, 4 (first/last N layers V8, interior V4)
   * K quantisation INT8 range on all layers
   * V boundary vs interior quantisation ranges
   * compress does not mutate FullKVState
@@ -42,11 +43,19 @@ import exactkv.compressors  # noqa: F401
 
 from exactkv.compressors import get_compressor, list_compressors
 from exactkv.compressors.layer_aware_sim import (
+    K8V4Boundary2V8SimCompressor,
+    K8V4Boundary4V8SimCompressor,
     K8V4BoundaryV8SimCompressor,
     LayerAwareVSimCompressor,
     _boundary_layer_indices,
     _v_bits_for_layer,
 )
+
+_BOUNDARY_VARIANTS = [
+    ("k8_v4_boundary_v8_sim", K8V4BoundaryV8SimCompressor, 1),
+    ("k8_v4_boundary2_v8_sim", K8V4Boundary2V8SimCompressor, 2),
+    ("k8_v4_boundary4_v8_sim", K8V4Boundary4V8SimCompressor, 4),
+]
 
 
 @pytest.fixture(scope="module")
@@ -96,18 +105,19 @@ def _assert_no_forbidden(obj, path="root"):
 # ===========================================================================
 
 class TestRegistry:
-    def test_name_in_list_compressors(self):
-        assert "k8_v4_boundary_v8_sim" in list_compressors()
+    @pytest.mark.parametrize("name,cls,boundary_n", _BOUNDARY_VARIANTS)
+    def test_name_in_list_compressors(self, name, cls, boundary_n):
+        assert name in list_compressors()
 
-    def test_get_compressor_returns_instance(self):
-        comp = get_compressor("k8_v4_boundary_v8_sim")
-        assert isinstance(comp, K8V4BoundaryV8SimCompressor)
-        assert comp.name == "k8_v4_boundary_v8_sim"
+    @pytest.mark.parametrize("name,cls,boundary_n", _BOUNDARY_VARIANTS)
+    def test_get_compressor_returns_instance(self, name, cls, boundary_n):
+        comp = get_compressor(name)
+        assert isinstance(comp, cls)
+        assert comp.name == name
 
-    def test_fresh_instance_each_call(self):
-        assert get_compressor("k8_v4_boundary_v8_sim") is not get_compressor(
-            "k8_v4_boundary_v8_sim"
-        )
+    @pytest.mark.parametrize("name,cls,boundary_n", _BOUNDARY_VARIANTS)
+    def test_fresh_instance_each_call(self, name, cls, boundary_n):
+        assert get_compressor(name) is not get_compressor(name)
 
 
 # ===========================================================================
@@ -115,21 +125,27 @@ class TestRegistry:
 # ===========================================================================
 
 class TestCapabilities:
-    def test_honest_capabilities(self):
-        caps = get_compressor("k8_v4_boundary_v8_sim").capabilities
+    @pytest.mark.parametrize("name,cls,boundary_n", _BOUNDARY_VARIANTS)
+    def test_honest_capabilities(self, name, cls, boundary_n):
+        caps = get_compressor(name).capabilities
         assert caps.is_simulated is True
         assert caps.supports_real_bytes_claim is False
         assert caps.key_bit_width == 8
         assert caps.value_bit_width is None
+        assert caps.value_bit_width_label == "mixed 8/4-sim"
         assert caps.asymmetric is True
         assert caps.supports_quantization is True
         assert caps.supports_token_dropping is False
-        assert "layer-aware" in caps.notes.lower()
+        assert "boundary-depth" in caps.notes.lower()
         assert "int8 containers" in caps.notes.lower()
-        assert "no true attention" in caps.notes.lower() or "no true attention weights" in caps.notes.lower()
+        assert "no true attention weights" in caps.notes.lower()
+        assert "no sparse v" in caps.notes.lower()
+        assert "no turboquant+" in caps.notes.lower()
+        assert "kvquant" in caps.notes.lower()
 
-    def test_no_forbidden_in_capabilities(self):
-        _assert_no_forbidden(asdict(get_compressor("k8_v4_boundary_v8_sim").capabilities))
+    @pytest.mark.parametrize("name,cls,boundary_n", _BOUNDARY_VARIANTS)
+    def test_no_forbidden_in_capabilities(self, name, cls, boundary_n):
+        _assert_no_forbidden(asdict(get_compressor(name).capabilities))
 
 
 # ===========================================================================
@@ -137,16 +153,32 @@ class TestCapabilities:
 # ===========================================================================
 
 class TestBoundarySelection:
-    def test_boundary_indices_default_one(self):
+    def test_boundary_indices_n1(self):
         assert _boundary_layer_indices(24, 1) == {0, 23}
 
-    def test_boundary_indices_two_layers(self):
+    def test_boundary_indices_n2(self):
+        assert _boundary_layer_indices(24, 2) == {0, 1, 22, 23}
+
+    def test_boundary_indices_n4(self):
+        assert _boundary_layer_indices(24, 4) == {0, 1, 2, 3, 20, 21, 22, 23}
+
+    def test_boundary_indices_two_layers_model(self):
         assert _boundary_layer_indices(2, 1) == {0, 1}
 
-    def test_v_bits_boundary_vs_interior(self):
+    def test_v_bits_boundary_vs_interior_n1(self):
         assert _v_bits_for_layer(0, 24, 1, 8, 4) == 8
         assert _v_bits_for_layer(23, 24, 1, 8, 4) == 8
         assert _v_bits_for_layer(12, 24, 1, 8, 4) == 4
+
+    def test_v_bits_boundary_vs_interior_n2(self):
+        for idx in (0, 1, 22, 23):
+            assert _v_bits_for_layer(idx, 24, 2, 8, 4) == 8
+        assert _v_bits_for_layer(12, 24, 2, 8, 4) == 4
+
+    def test_v_bits_boundary_vs_interior_n4(self):
+        for idx in (0, 1, 2, 3, 20, 21, 22, 23):
+            assert _v_bits_for_layer(idx, 24, 4, 8, 4) == 8
+        assert _v_bits_for_layer(12, 24, 4, 8, 4) == 4
 
 
 # ===========================================================================
@@ -154,8 +186,9 @@ class TestBoundarySelection:
 # ===========================================================================
 
 class TestQuantisationRanges:
-    def test_k_int8_range_all_layers(self, full_state):
-        comp = get_compressor("k8_v4_boundary_v8_sim")
+    @pytest.mark.parametrize("name,cls,boundary_n", _BOUNDARY_VARIANTS)
+    def test_k_int8_range_all_layers(self, full_state, name, cls, boundary_n):
+        comp = get_compressor(name)
         compressed = comp.compress(full_state)
         for layer in compressed.data["layers"]:
             q = layer["k_data"]["q"]
@@ -163,12 +196,13 @@ class TestQuantisationRanges:
             assert int(q.min()) >= -128
             assert int(q.max()) <= 127
 
-    def test_v_boundary_int8_interior_int4(self, full_state):
-        comp = get_compressor("k8_v4_boundary_v8_sim")
+    @pytest.mark.parametrize("name,cls,boundary_n", _BOUNDARY_VARIANTS)
+    def test_v_boundary_int8_interior_int4(self, full_state, name, cls, boundary_n):
+        comp = get_compressor(name)
         compressed = comp.compress(full_state)
         layers = compressed.data["layers"]
         num = len(layers)
-        boundary = _boundary_layer_indices(num, 1)
+        boundary = _boundary_layer_indices(num, boundary_n)
 
         for idx, layer in enumerate(layers):
             q = layer["v_data"]["q"]
@@ -264,16 +298,17 @@ class TestStats:
 # ===========================================================================
 
 class TestExactKVGate:
+    @pytest.mark.parametrize("name,cls,boundary_n", _BOUNDARY_VARIANTS)
     @pytest.mark.parametrize("prompt", _PROMPTS)
     @pytest.mark.parametrize("draft_len", _DRAFT_LENS)
     @pytest.mark.parametrize("max_new", _MAX_NEW_TOKENS)
     def test_exactkv_output_matches_full_greedy(
-        self, runtime, prompt, draft_len, max_new,
+        self, runtime, name, cls, boundary_n, prompt, draft_len, max_new,
     ):
         from exactkv.runtime.exactkv_generator import ExactKVGenerator
         from exactkv.runtime.generation import generate_full_greedy
 
-        comp = get_compressor("k8_v4_boundary_v8_sim")
+        comp = get_compressor(name)
         full_res = generate_full_greedy(runtime, prompt, max_new)
         ekv_res = ExactKVGenerator(runtime, comp, draft_len=draft_len).generate(
             prompt, max_new,
@@ -282,13 +317,16 @@ class TestExactKVGate:
         ekv_ids = ekv_res.output_ids.squeeze(0).tolist()
         assert full_ids == ekv_ids
 
+    @pytest.mark.parametrize("name,cls,boundary_n", _BOUNDARY_VARIANTS)
     @pytest.mark.parametrize("prompt", _PROMPTS)
     @pytest.mark.parametrize("max_new", _MAX_NEW_TOKENS)
-    def test_acceptance_bookkeeping_reconciles(self, runtime, prompt, max_new):
+    def test_acceptance_bookkeeping_reconciles(
+        self, runtime, name, cls, boundary_n, prompt, max_new,
+    ):
         from exactkv.metrics.acceptance import summarize_acceptance
         from exactkv.runtime.exactkv_generator import ExactKVGenerator
 
-        comp = get_compressor("k8_v4_boundary_v8_sim")
+        comp = get_compressor(name)
         ekv_res = ExactKVGenerator(runtime, comp, draft_len=4).generate(
             prompt, max_new,
         )
@@ -296,22 +334,24 @@ class TestExactKVGate:
         assert acc.total_drafted == acc.total_accepted + acc.total_rejected
         assert acc.total_corrections >= 0
 
+    @pytest.mark.parametrize("name,cls,boundary_n", _BOUNDARY_VARIANTS)
     @pytest.mark.parametrize("prompt", _PROMPTS)
-    def test_cache_alignment_holds(self, runtime, prompt):
+    def test_cache_alignment_holds(self, runtime, name, cls, boundary_n, prompt):
         from exactkv.runtime.exactkv_generator import ExactKVGenerator
 
-        comp = get_compressor("k8_v4_boundary_v8_sim")
+        comp = get_compressor(name)
         ekv_res = ExactKVGenerator(runtime, comp, draft_len=4).generate(
             prompt, _MAX_NEW_TOKENS[0],
         )
         assert ekv_res.output_ids.shape[1] > 0
 
-    def test_exactkv_failures_zero_via_run_one(self, runtime):
+    @pytest.mark.parametrize("name,cls,boundary_n", _BOUNDARY_VARIANTS)
+    def test_exactkv_failures_zero_via_run_one(self, runtime, name, cls, boundary_n):
         from exactkv.benchmarks.runner import RunConfig, run_one
 
         entry = {"prompt_id": "p0", "category": "test", "prompt": _PROMPTS[0]}
         cfg = RunConfig(
-            compressor_name="k8_v4_boundary_v8_sim",
+            compressor_name=name,
             draft_len=4,
             max_new_tokens=_MAX_NEW_TOKENS[0],
         )

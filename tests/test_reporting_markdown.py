@@ -285,3 +285,70 @@ def test_exactkv_failure_zero_on_real_sweep(real_sweep):
     from exactkv.reporting.markdown import render_markdown_report
     md = render_markdown_report(real_sweep)
     assert "PASS" in md or "pass" in md.lower()
+
+
+class TestMixedPrecisionKvMetadataMarkdown:
+    """K/V Compression Metadata must not label boundary compressors as full-V."""
+
+    def _boundary_report(self):
+        import exactkv.compressors  # noqa: F401
+        from dataclasses import asdict
+
+        from exactkv.compressors import get_compressor
+
+        def _caps(name: str) -> dict:
+            # Simulate old stored JSON without value_bit_width_label
+            c = asdict(get_compressor(name).capabilities)
+            c.pop("value_bit_width_label", None)
+            c.pop("key_bit_width_label", None)
+            return c
+
+        def _row(name: str) -> dict:
+            r = make_result(
+                compressor_name=name,
+                draft_len=4,
+                is_simulated=True,
+                supports_real_bytes_claim=False,
+            )
+            r["compressor_capabilities"] = _caps(name)
+            return r
+
+        return make_report(
+            _row("k8_v4_boundary_v8_sim"),
+            _row("k8_v4_sim"),
+            _row("k_full_v4_sim"),
+        )
+
+    def test_kv_metadata_shows_mixed_v_for_boundary(self):
+        from exactkv.reporting.markdown import render_markdown_report
+        md = render_markdown_report(self._boundary_report())
+        assert "K/V Compression Metadata" in md
+        assert "mixed 8/4-sim" in md
+        for line in md.splitlines():
+            if "`k8_v4_boundary_v8_sim`" in line and "K/V Compression" not in line:
+                assert "| full |" not in line
+                assert "20.0" not in line
+                break
+        else:
+            raise AssertionError("boundary row in K/V metadata table not found")
+
+    def test_kv_metadata_k8_v4_sim_unchanged(self):
+        from exactkv.reporting.markdown import render_markdown_report
+        md = render_markdown_report(self._boundary_report())
+        in_kv_section = False
+        for line in md.splitlines():
+            if "K/V Compression Metadata" in line:
+                in_kv_section = True
+                continue
+            if in_kv_section and line.startswith("## "):
+                break
+            if in_kv_section and "`k8_v4_sim`" in line:
+                assert "| 4 |" in line or "| 4 " in line
+                assert "6.0" in line
+                break
+        else:
+            raise AssertionError("k8_v4_sim row in K/V metadata table not found")
+
+    def test_no_forbidden_fields(self):
+        from exactkv.reporting.markdown import render_markdown_report
+        _no_forbidden_fields_in_md(render_markdown_report(self._boundary_report()))

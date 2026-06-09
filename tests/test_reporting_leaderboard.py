@@ -203,6 +203,102 @@ def test_real_sweep_compressor_leaderboard(real_sweep):
     _no_forbidden(md)
 
 
+class TestMixedPrecisionKvMetadata:
+    """Layer-aware boundary compressors must not render as full-V / 20.0 avg bits."""
+
+    _BOUNDARY_CAPS = {
+        "k8_v4_boundary_v8_sim": {
+            "is_simulated": True,
+            "supports_real_bytes_claim": False,
+            "key_bit_width": 8,
+            "value_bit_width": None,
+            "value_bit_width_label": "mixed 8/4-sim",
+            "asymmetric": True,
+        },
+        "k8_v4_sim": {
+            "is_simulated": True,
+            "key_bit_width": 8,
+            "value_bit_width": 4,
+            "asymmetric": True,
+        },
+        "k_full_v4_sim": {
+            "is_simulated": True,
+            "key_bit_width": None,
+            "value_bit_width": 4,
+            "asymmetric": True,
+        },
+    }
+
+    def _table(self):
+        from exactkv.analysis.acceptance_tables import group_acceptance_by_compressor
+        report = make_report(
+            make_result(compressor_name="k8_v4_boundary_v8_sim", draft_len=4),
+            make_result(compressor_name="k8_v4_sim", draft_len=4),
+            make_result(compressor_name="k_full_v4_sim", draft_len=4),
+        )
+        return group_acceptance_by_compressor(report)
+
+    def test_boundary_renders_mixed_v_not_full(self):
+        from exactkv.reporting.leaderboard import render_compressor_leaderboard
+        md = render_compressor_leaderboard(
+            self._table(), compressor_caps=self._BOUNDARY_CAPS,
+        )
+        assert "mixed 8/4-sim" in md
+        assert "k8_v4_boundary_v8_sim" in md
+        # boundary row must not pair with V bits = full in the metadata columns
+        for line in md.splitlines():
+            if "k8_v4_boundary_v8_sim" in line:
+                assert "| full |" not in line.replace("k_full_v4_sim", "")
+                assert "20.0" not in line
+                break
+        else:
+            raise AssertionError("boundary compressor row not found")
+
+    def test_k8_v4_sim_still_renders_k8_v4(self):
+        from exactkv.reporting.leaderboard import render_compressor_leaderboard
+        md = render_compressor_leaderboard(
+            self._table(), compressor_caps=self._BOUNDARY_CAPS,
+        )
+        for line in md.splitlines():
+            if "k8_v4_sim" in line and "boundary" not in line:
+                assert "| 8 |" in line or "| 8 " in line
+                assert "| 4 |" in line or "| 4 " in line
+                assert "6.0" in line
+                break
+
+    def test_k_full_v4_sim_still_renders_full_k_v4(self):
+        from exactkv.reporting.leaderboard import render_compressor_leaderboard
+        md = render_compressor_leaderboard(
+            self._table(), compressor_caps=self._BOUNDARY_CAPS,
+        )
+        for line in md.splitlines():
+            if "k_full_v4_sim" in line:
+                assert "full" in line
+                assert "| 4 " in line or "| 4 |" in line
+                assert "18.0" in line
+                break
+
+    def test_registry_enrichment_for_old_stored_caps(self):
+        from exactkv.reporting.leaderboard import enrich_caps_from_registry
+        import exactkv.compressors  # noqa: F401
+
+        old_caps = {
+            "is_simulated": True,
+            "key_bit_width": 8,
+            "value_bit_width": None,
+            "asymmetric": True,
+        }
+        enriched = enrich_caps_from_registry("k8_v4_boundary4_v8_sim", old_caps)
+        assert enriched.get("value_bit_width_label") == "mixed 8/4-sim"
+
+    def test_no_forbidden_fields(self):
+        from exactkv.reporting.leaderboard import render_compressor_leaderboard
+        md = render_compressor_leaderboard(
+            self._table(), compressor_caps=self._BOUNDARY_CAPS,
+        )
+        _no_forbidden(md)
+
+
 def test_real_sweep_x_draft_leaderboard(real_sweep):
     from exactkv.reporting.leaderboard import render_compressor_x_draft_leaderboard
     from exactkv.analysis.acceptance_tables import build_acceptance_table
