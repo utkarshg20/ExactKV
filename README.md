@@ -853,10 +853,10 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
   `exactkv_failures == 0`. No true attention weights; no performance claims. See
   [`docs/RELEASE_NOTES_V0.7.0.md`](docs/RELEASE_NOTES_V0.7.0.md),
   [`docs/V7_SCOPE_STATEMENT.md`](docs/V7_SCOPE_STATEMENT.md).
-* **V8 — serving-stack context and final public launch.** Only after
-  correctness/acceptance are well understood; without adopting any serving-stack
-  performance claims as ExactKV's. Default story: exactness + acceptance + memory
-  honesty + real-backend evaluation.
+* **V8 — serving-context evaluation (Phase 0 scope).** Feasibility-first study of
+  serving/cache compatibility (vLLM, LMCache, PagedAttention context, local harness);
+  not production-serving; no performance claims. See
+  [`docs/V8_SCOPE_STATEMENT.md`](docs/V8_SCOPE_STATEMENT.md).
 * See [`docs/FUTURE_ROADMAP_V6_V8.md`](docs/FUTURE_ROADMAP_V6_V8.md) for the
   detailed V6–V8 scope, adapter interface design, candidate backends, experiment
   plans, risks, and exit criteria. No code is implemented there.
@@ -894,6 +894,7 @@ detailed roadmap (planning document only, no code).
 | [`docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md) | Experiment 006A: proxy divergence analysis (V7 Phase A) |
 | [`docs/EXPERIMENT_006_LAYER_AWARE_V.md`](docs/EXPERIMENT_006_LAYER_AWARE_V.md) | Experiment 006: layer-aware V sweep, 374 runs (V7 Phase D) |
 | [`docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md`](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) | Experiment 006C: boundary-depth ablation, 170 runs (V7 Phase C) |
+| [`docs/V8_SCOPE_STATEMENT.md`](docs/V8_SCOPE_STATEMENT.md) | V8 scope: serving-context evaluation (Phase 0 — planning only) |
 | `docs/PRIVATE_FUTURE_POST_NOTES_EXPERIMENT_003.md` | 🔒 Private draft announcement notes for later — not for posting |
 
 ---

@@ -551,32 +551,35 @@ verification, acceptance, divergence, and workspace-memory framework.
 
 ---
 
-# V8: Serving-stack integration (evaluation context only)
+# V8: Serving-context evaluation (Phase 0 — scope only)
 
 ## Goal
 
-Use a serving stack (vLLM/PagedAttention, LMCache) only as an **evaluation
-context** for compressed caches — never as a source of performance claims.
+Evaluate ExactKV in a realistic serving/cache context — compatibility, cache
+lifecycle, memory honesty, and verification correctness — without production-serving
+claims.
+
+## Phase 0 deliverable
+
+- [`V8_SCOPE_STATEMENT.md`](V8_SCOPE_STATEMENT.md) — full phased scope, Experiment
+  007 plan, serving-context questions, feasibility-first direction, restrictions,
+  exit criteria.
+
+## Recommended direction
+
+Feasibility study (Phase A) → restricted local harness (Phase B) → optional
+vLLM/LMCache PoC only if feasible (Phase C) → Experiment 007 (Phase D) → launch
+package (Phase E).
 
 ## Non-goals
 
-- No throughput/latency benchmarks, no speedup claims, no production-serving
-  claims, no multi-tenant reliability guarantees.
+- No vLLM, LMCache, or PagedAttention implementation in Phase 0.
+- No throughput/latency/speedup/runtime/production claims as ExactKV results.
 
-## Success criteria
+See [`RESEARCH_BACKLOG.md`](RESEARCH_BACKLOG.md) and
+[`FUTURE_ROADMAP_V6_V8.md`](FUTURE_ROADMAP_V6_V8.md) for planning context.
 
-- ExactKV's acceptance evaluation can run against caches managed by a serving
-  stack, with exactness preserved. This is the most speculative version and is
-  gated on V5–V7 being stable.
-
-See [`RESEARCH_BACKLOG.md`](RESEARCH_BACKLOG.md) for the concrete experiment
-backlog behind V6–V8, and
-[**`FUTURE_ROADMAP_V6_V8.md`**](FUTURE_ROADMAP_V6_V8.md) for the detailed
-V6–V8 scope, adapter interface design, candidate backends, experiment plans,
-risks, and exit criteria.
-
-> The V6–V8 stubs in this file are intentionally brief.
-> `FUTURE_ROADMAP_V6_V8.md` is the authoritative document for those versions.
+> Phases A–E require separate explicit approval before any code is written.
 
 ---
 
