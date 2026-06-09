@@ -510,29 +510,30 @@ Design a `BackendAdapter` so a real quantisation format could plug into the
 
 ---
 
-# V7: Attention-aware and V-specific backend ideas
+# V7: Attention-aware and V-specific experiments (Phase 0 — scope only)
 
 ## Goal
 
-Evaluate attention-aware and value-specific compression policies by acceptance
-behaviour.
+Evaluate attention-aware and V-specific compression ideas through ExactKV's
+verification, acceptance, divergence, and workspace-memory framework.
 
-## Possible directions
+## Phase 0 deliverable
 
-- Sparse V dequantization (attention-gated decode) — *evaluated*, not for speed.
-- Layer-aware ("boundary") V precision policies.
-- Real asymmetric compressor comparisons (simulated vs real).
-- Attention-aware divergence analysis (first-divergence vs attention entropy).
-- Token-eviction policy evaluation (PyramidKV, SnapKV, H2O, StreamingLLM).
+- [`V7_SCOPE_STATEMENT.md`](V7_SCOPE_STATEMENT.md) — full phased scope,
+  Experiment 006 plan, analysis-first recommendation, restrictions, exit criteria.
+
+## Phase A complete
+
+- [`EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md) —
+  proxy divergence analysis on Experiments 003–005; `exactkv/analysis/attention_weighted.py`.
 
 ## Non-goals
 
-- No speedup/throughput/latency claims.
+- No speedup/throughput/latency/runtime/production claims.
+- No implementation of Sparse V, KVQuant, TurboQuant+, KIVI, LMCache, vLLM, or
+  serving integrations in Phase 0.
 
-## Success criteria
-
-- At least one V-specific or attention-aware policy is characterised by
-  acceptance behaviour under full-KV verification, with exactness preserved.
+> Phases A–E require separate explicit approval before any code is written.
 
 ---
 

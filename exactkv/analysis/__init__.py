@@ -14,6 +14,8 @@ histograms          Compute accepted-length, first-divergence, and rejection-cou
                     histograms from existing reports.  (V3)
 examples            Extract concrete lossy-divergence, ExactKV-failure, and
                     rejection examples from existing reports.  (V3)
+attention_weighted  Proxy divergence analysis for V7 Phase A; uses report fields
+                    only unless attention weights are logged.  (V7)
 
 Key distinction
 ---------------
@@ -51,6 +53,15 @@ from exactkv.analysis.histograms import (
     first_divergence_histogram,
     rejection_count_histogram,
 )
+from exactkv.analysis.attention_weighted import (
+    acceptance_vs_divergence_summary,
+    compare_reports_for_divergence,
+    divergence_by_compressor,
+    divergence_position_table,
+    has_attention_weights,
+    proxy_analysis_metadata,
+    rejection_by_compressor,
+)
 from exactkv.analysis.mismatch import (
     first_lossy_divergences,
     mismatch_position_summary,
@@ -84,4 +95,12 @@ __all__ = [
     "extract_lossy_divergence_examples",
     "extract_exactkv_failure_examples",
     "extract_rejection_examples",
+    # attention_weighted (V7)
+    "has_attention_weights",
+    "proxy_analysis_metadata",
+    "divergence_by_compressor",
+    "rejection_by_compressor",
+    "divergence_position_table",
+    "acceptance_vs_divergence_summary",
+    "compare_reports_for_divergence",
 ]

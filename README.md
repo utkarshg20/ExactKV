@@ -847,9 +847,10 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
   [`docs/RELEASE_NOTES_V0.6.0.md`](docs/RELEASE_NOTES_V0.6.0.md),
   [`docs/EXPERIMENT_005_KVPRESS_KNORM.md`](docs/EXPERIMENT_005_KVPRESS_KNORM.md),
   [`docs/KVPRESS_KNORM_VALIDATION.md`](docs/KVPRESS_KNORM_VALIDATION.md).
-* **V7 — attention-aware and V-specific backend ideas.** Sparse V dequantization,
-  layer-aware V compression, pre-RoPE key quantization evaluation, and real
-  asymmetric compressor comparisons — evaluated, not just reconstructed.
+* **V7 — attention-aware and V-specific experiments (Phase A complete).**
+  Proxy divergence analysis on Experiments 003–005; Phase B conditional.
+  See [`docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md),
+  [`docs/V7_SCOPE_STATEMENT.md`](docs/V7_SCOPE_STATEMENT.md).
 * **V8 — serving-stack context and final public launch.** Only after
   correctness/acceptance are well understood; without adopting any serving-stack
   performance claims as ExactKV's. Default story: exactness + acceptance + memory
@@ -886,6 +887,8 @@ detailed roadmap (planning document only, no code).
 | [`docs/RELEASE_NOTES_V0.6.0.md`](docs/RELEASE_NOTES_V0.6.0.md) | v0.6.0 release notes (BackendAdapter, restricted kvpress KnormPress, Experiment 005) |
 | [`docs/KVPRESS_KNORM_VALIDATION.md`](docs/KVPRESS_KNORM_VALIDATION.md) | Phase C validation: restricted KVPressKnormAdapter, 34 core prompts, `exactkv_failures == 0` |
 | [`docs/EXPERIMENT_005_KVPRESS_KNORM.md`](docs/EXPERIMENT_005_KVPRESS_KNORM.md) | Experiment 005: restricted KVPress KnormPress vs baselines, 272 runs, `exactkv_failures == 0` |
+| [`docs/V7_SCOPE_STATEMENT.md`](docs/V7_SCOPE_STATEMENT.md) | V7 scope: attention-aware and V-specific experiments |
+| [`docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md`](docs/EXPERIMENT_006A_DIVERGENCE_ANALYSIS.md) | Experiment 006A: proxy divergence analysis on Experiments 003–005 (V7 Phase A) |
 | `docs/PRIVATE_FUTURE_POST_NOTES_EXPERIMENT_003.md` | 🔒 Private draft announcement notes for later — not for posting |
 
 ---
