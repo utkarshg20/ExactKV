@@ -468,17 +468,18 @@ for the external-systems survey and attribution.
 
 ## V6 phases
 
-| Phase | Scope | Deliverable |
-|---|---|---|
-| **Phase 0** (this document) | Scope statement only; no code | `docs/V6_SCOPE_STATEMENT.md` committed and reviewed |
-| **Phase A** | `BackendAdapter` interface design document; capability/workspace field plan | Adapter design doc; no backend yet |
-| **Phase B** | Minimal proof-of-concept adapter (trivial real/pass-through) exercising the boundary; exactness gate on smoke | PoC adapter + tests |
-| **Phase C** | First real backend candidate behind the adapter (recommended: kvpress); hook-safety + exactness gates | Real adapter passing core-suite exactness |
-| **Phase D** | Experiment 005 (acceptance + workspace memory comparison); report rendering | `docs/EXPERIMENT_005_*.md` |
-| **Phase E** | V6 release notes; README/ROADMAP updates; audit; tag | `docs/RELEASE_NOTES_V0.6.0.md` |
+| Phase | Scope | Deliverable | Status |
+|---|---|---|---|
+| **Phase 0** (this document) | Scope statement only; no code | `docs/V6_SCOPE_STATEMENT.md` committed and reviewed | ✅ Complete |
+| **Phase A** | `BackendAdapter` interface design document; capability/workspace field plan | `docs/BACKEND_ADAPTER_INTERFACE.md`; no backend yet | ✅ Complete |
+| **Phase B** | Minimal proof-of-concept adapter (trivial real/pass-through) exercising the boundary; exactness gate on smoke | PoC adapter + tests | Pending approval |
+| **Phase C** | First real backend candidate behind the adapter (recommended: kvpress); hook-safety + exactness gates | Real adapter passing core-suite exactness | Pending B |
+| **Phase D** | Experiment 005 (acceptance + workspace memory comparison); report rendering | `docs/EXPERIMENT_005_*.md` | Pending C |
+| **Phase E** | V6 release notes; README/ROADMAP updates; audit; tag | `docs/RELEASE_NOTES_V0.6.0.md` | Pending D |
 
-> Phases A–E require **separate explicit approval** before any code is written.
-> Phase 0 (this document) introduces no code and changes no behaviour.
+> Phases B–E require **separate explicit approval** before any code is written.
+> Phases 0 and A (this document and `BACKEND_ADAPTER_INTERFACE.md`) are
+> design-only and introduce no code and no behaviour change.
 
 ---
 
