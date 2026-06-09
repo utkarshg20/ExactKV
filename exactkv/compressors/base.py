@@ -69,6 +69,12 @@ class CompressorCapabilities:
     value_bit_width: int | None = field(default=None)
     asymmetric: bool = field(default=False)
     notes: str = field(default="")
+    # V6 backend identity fields — additive; all default to None so existing
+    # compressors need no changes and old reports still deserialise correctly.
+    backend_name: str | None = field(default=None)
+    backend_version: str | None = field(default=None)
+    adapter_name: str | None = field(default=None)
+    adapter_version: str | None = field(default=None)
 
 
 @dataclass

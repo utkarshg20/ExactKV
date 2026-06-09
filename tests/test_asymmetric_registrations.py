@@ -100,9 +100,9 @@ class TestRegistryPresence:
             f"Forbidden name {bad_name!r} must not appear in the registry"
         )
 
-    def test_total_count_is_eleven(self):
-        """4 V1–V3 + 7 V4 = 11 registered compressors."""
-        assert len(list_compressors()) == 11
+    def test_total_count_is_twelve(self):
+        """4 V1–V3 + 7 V4 + 1 V6 backend_passthrough = 12 registered compressors."""
+        assert len(list_compressors()) == 12
 
 
 # ===========================================================================

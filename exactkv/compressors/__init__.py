@@ -20,6 +20,11 @@ V4 asymmetric compressors (all simulated or real-only; no real bit-packing)::
         K8VFullCompressor,    # k8_v_full  (no _sim: real storage only)
         KFullV8Compressor,    # k_full_v8  (no _sim: real storage only)
     )
+
+V6 backend adapter (PoC — no external dependencies)::
+
+    from exactkv.compressors import BackendAdapter, PassThroughBackendAdapter
+    compressor = get_compressor("backend_passthrough")
 """
 from exactkv.compressors.asymmetric_sim import (
     AsymmetricQuantSimCompressor,
@@ -31,6 +36,7 @@ from exactkv.compressors.asymmetric_sim import (
     KFullV4SimCompressor,
     KFullV8Compressor,
 )
+from exactkv.compressors.backend_adapter import BackendAdapter, PassThroughBackendAdapter
 from exactkv.compressors.debug_noise import DebugNoiseCompressor
 from exactkv.compressors.int4_sim import Int4SimCompressor
 from exactkv.compressors.int8 import Int8Compressor
@@ -58,6 +64,9 @@ register_compressor("k4_v_full_sim", K4VFullSimCompressor)
 register_compressor("k8_v_full", K8VFullCompressor)
 register_compressor("k_full_v8", KFullV8Compressor)
 
+# V6 backend adapter PoC
+register_compressor("backend_passthrough", PassThroughBackendAdapter)
+
 __all__ = [
     # V1–V3
     "NoOpCompressor",
@@ -73,6 +82,9 @@ __all__ = [
     "K4VFullSimCompressor",
     "K8VFullCompressor",
     "KFullV8Compressor",
+    # V6 backend adapter
+    "BackendAdapter",
+    "PassThroughBackendAdapter",
     # registry
     "register_compressor",
     "get_compressor",

@@ -472,7 +472,7 @@ for the external-systems survey and attribution.
 |---|---|---|---|
 | **Phase 0** (this document) | Scope statement only; no code | `docs/V6_SCOPE_STATEMENT.md` committed and reviewed | ✅ Complete |
 | **Phase A** | `BackendAdapter` interface design document; capability/workspace field plan | `docs/BACKEND_ADAPTER_INTERFACE.md`; no backend yet | ✅ Complete |
-| **Phase B** | Minimal proof-of-concept adapter (trivial real/pass-through) exercising the boundary; exactness gate on smoke | PoC adapter + tests | Pending approval |
+| **Phase B** | Minimal proof-of-concept adapter (trivial real/pass-through) exercising the boundary; exactness gate on smoke | PoC adapter + tests | ✅ Complete |
 | **Phase C** | First real backend candidate behind the adapter (recommended: kvpress); hook-safety + exactness gates | Real adapter passing core-suite exactness | Pending B |
 | **Phase D** | Experiment 005 (acceptance + workspace memory comparison); report rendering | `docs/EXPERIMENT_005_*.md` | Pending C |
 | **Phase E** | V6 release notes; README/ROADMAP updates; audit; tag | `docs/RELEASE_NOTES_V0.6.0.md` | Pending D |
