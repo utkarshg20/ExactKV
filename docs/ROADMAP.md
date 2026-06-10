@@ -690,28 +690,36 @@ real backends on harder categories. **Not** a performance benchmark.
 
 ---
 
-# V11: Scale, serving, and launch hardening (next)
+# V11: Final launch hardening (Phase 0 active)
 
 ## Goal
 
-1.5B+ validation on **expanded V10 suites**, active GPU memory profiling methodology,
-vLLM/LMCache **sidecar probes** (direct integration remains deferred per V8 Phase A),
-optional attention logging, and preparation for v1.0.0 documentation package.
+Close scale, serving-context, profiling, and launch-documentation gaps before v1.0.0.
+**Not public launch.**
+
+Formal scope: [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) (Phases 0–6; Experiments 015–018).
+
+| Phase | Focus |
+|---|---|
+| 0 | Scope statement |
+| 1 | 1.5B on V10 suites (Exp 015) |
+| 2 | Optional 3B / 1.5B real-backend (Exp 016) |
+| 3 | Serving sidecar/probe refresh (Exp 017) |
+| 4 | Active GPU memory methodology (Exp 018) |
+| 5 | Optional attention logging |
+| 6 | Raw report bundle + launch package readiness |
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V11.
 
 ---
 
-# V12 / v1.0.0: Final public launch package
+# v1.0.0: Public launch (after V11)
 
-## Goal
+Git tag `v1.0.0`, `PROJECT_STATUS` / `RELEASE_NOTES` v1.0.0, curated report bundle (D17),
+and reviewed launch narrative (D18) — only after V11 exit criteria in
+[`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) §16.
 
-Curated raw report bundle, reviewed public launch narrative, `PROJECT_STATUS_v1.0.0`,
-and git tag `v1.0.0` — only after V9–V11 bars are met or honestly scoped.
-
-**Public posting is delayed until deferred work is addressed.**
-
-See [`PROJECT_STATUS_V0.8.0.md`](PROJECT_STATUS_V0.8.0.md) §11.
+**Public posting is delayed until V11 gates are met or honestly deferred.**
 
 ---
 

@@ -12,6 +12,7 @@ implemented** unless a linked experiment or release note says otherwise.
 **V9 scope:** [`V9_SCOPE_STATEMENT.md`](V9_SCOPE_STATEMENT.md) — **complete** (`v0.9.0`).
 **V10 scope:** [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — **complete** (`v0.10.0`).
 **V10 readiness:** [`V10_READINESS_ASSESSMENT.md`](V10_READINESS_ASSESSMENT.md).
+**V11 scope:** [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) — **Phase 0 active**.
 **Experiment 014:** [`EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md`](EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md).
 **V10 suites:** [`V10_PROMPT_SUITES.md`](V10_PROMPT_SUITES.md).
 **Experiment 012:** [`EXPERIMENT_012_EVAL_SUITE_EXPANSION.md`](EXPERIMENT_012_EVAL_SUITE_EXPANSION.md).
@@ -54,32 +55,37 @@ implemented** unless a linked experiment or release note says otherwise.
 
 ---
 
-## V11 — Scale, serving, and launch hardening (active)
+## V11 — Final launch hardening (active)
 
-| ID | Item | Status | Success criteria |
-|---|---|---|---|
-| — | **1.5B+ on V10 expanded suites** | **Next** | `exactkv_failures == 0`; per-category tables |
-| D6 | **Sparse V dequantization** | Deferred | Acceptance-only evaluation |
-| D7 | **True attention logging** | Deferred | Small subset; no fabricated weights |
-| D8 | **Per-layer/head divergence forensics** | Deferred | Where weights exist |
-| D11 | **Direct vLLM integration** | No-go (Phase A) | Re-approval only if safe full-KV export path demonstrated |
-| D12 | **LMCache integration** | No-go (Phase A) | Re-approval only if ownership + verify isolation proven |
-| D13 | **vLLM / LMCache sidecar probe** | **Blocker for v1.0.0** | Metadata-only or isolated sidecar evaluation |
-| D14 | **Active GPU memory profiling** | **Blocker for v1.0.0** | Approved methodology; distinct from `total_kv_footprint_bytes` |
-| D16 | **PagedAttention kernel integration** | Deferred | Local harness remains default |
+| ID | Item | Status | V11 phase | Success criteria |
+|---|---|---|---|---|
+| — | **V11 scope statement** | **Active** | Phase 0 | [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) |
+| — | **1.5B on V10 expanded suites** | Planned | Phase 1 / Exp 015 | `exactkv_failures == 0`; per-category tables |
+| — | **Optional 3B or 1.5B real-backend panel** | Planned | Phase 2 / Exp 016 | Document omit if infeasible |
+| D13 | **vLLM / LMCache sidecar probe** | Planned | Phase 3 / Exp 017 | Probe, sketch, or **no-go refresh** — not forced integration |
+| D14 | **Active GPU memory profiling** | Planned | Phase 4 / Exp 018 | Methodology + pilot **or honest deferral** |
+| D7 | **True attention logging** | Planned (optional) | Phase 5 | Tiny subset; no fabricated weights |
+| D8 | **Per-layer/head divergence forensics** | Planned (optional) | Phase 5 | Where weights exist |
+| D17 | **Raw report bundle** | Planned | Phase 6 | Curated zip + checksum manifest |
+| D18 | **Launch narrative** | Planned | Phase 6 | Deferred draft until v1.0.0 gates |
+| D6 | **Sparse V dequantization** | Deferred (out of V11 scope) | — | Not in V11 unless explicitly approved |
+| D11 | **Direct vLLM integration** | No-go (Phase A) | — | Out of V11 scope |
+| D12 | **LMCache integration** | No-go (Phase A) | — | Out of V11 scope |
+| D16 | **PagedAttention kernel integration** | Deferred | — | Out of V11 scope |
+| D1–D4 | **Production TurboQuant / KIVI CUDA / KVQuant CUDA** | Evaluated (V9) | — | **Not** in V11 unless factory-only re-panel in Exp 016 |
 
-V11 covers multi-model validation, serving/profiling probes, and optional forensics depth — **not** a performance benchmark release.
+V11 covers multi-model validation, serving/profiling probes, and launch package prep — **not** a performance benchmark or production integration release.
 
 ---
 
-## v1.0.0 — Final public launch package (after V11)
+## v1.0.0 — Public launch tag (after V11 exit)
 
 | ID | Item | Status | Success criteria |
 |---|---|---|---|
-| D17 | **Raw report bundle** | **Blocker** | Curated archive for experiments 001–014+ with manifests |
-| D18 | **Final public launch narrative** | **Blocker** | Reviewed post/docs; explicit negation of performance claims; draft only until gates met |
-| D19 | **Project status v1.0.0** | Deferred | Supersedes [`PROJECT_STATUS_V0.10.0.md`](PROJECT_STATUS_V0.10.0.md) |
-| D20 | **Git tag `v1.0.0`** | Deferred | V11 exit criteria met |
+| D19 | **Project status v1.0.0** | Deferred | Supersedes [`PROJECT_STATUS_V0.10.0.md`](PROJECT_STATUS_V0.10.0.md); after V11 Phase 6 |
+| D20 | **Git tag `v1.0.0`** | Deferred | [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) §16 gates met |
+
+_D17 and D18 are prepared in V11 Phase 6; published at v1.0.0 tag._
 
 ---
 
@@ -105,6 +111,7 @@ remain **deferred, not forgotten**.
 
 ## Related
 
+- [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) — V11 formal scope (Phase 0 active)
 - [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — V10 formal scope (complete)
 - [`V10_READINESS_ASSESSMENT.md`](V10_READINESS_ASSESSMENT.md) — Phase 5 readiness
 - [`RELEASE_NOTES_V0.10.0.md`](RELEASE_NOTES_V0.10.0.md) — v0.10.0 changelog

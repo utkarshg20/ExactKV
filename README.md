@@ -31,7 +31,7 @@ is faster. It does **not** claim throughput, latency, speedup, or production rea
 | Item | Value |
 |---|---|
 | **Latest release** | [`v0.10.0`](docs/RELEASE_NOTES_V0.10.0.md) — V10 evaluation-suite hardening (Experiments 012–014) |
-| **Next** | [**V11**](docs/ROADMAP.md#v11-scale-serving-and-launch-hardening-next) — scale, serving probes, launch hardening (not public launch) |
+| **Next** | [**V11**](docs/V11_SCOPE_STATEMENT.md) — final launch hardening before v1.0.0 (not public launch) |
 | **Status** | Research milestone; [not public-launch final](docs/PROJECT_STATUS_V0.10.0.md) |
 | **Hard gate** | `exactkv_failures == 0` on every published experiment |
 | **Default model** | `Qwen/Qwen2.5-0.5B` (greedy, single-request, CPU-first) |
@@ -67,7 +67,7 @@ V10 suites are **not universal benchmarks**. Restricted adapters remain **factor
 | V8 | `v0.8.0` | Serving harness; Experiment 007 | ✅ |
 | V9 | `v0.9.0` | Real backend gauntlet; Exp 008–011; 1.5B validation | ✅ |
 | V10 | `v0.10.0` | Suite hardening; Exp 012–014; [readiness](docs/V10_READINESS_ASSESSMENT.md) | ✅ |
-| V11 | — | Scale, serving probes, launch hardening → v1.0.0 | **Next** |
+| V11 | — | Final launch hardening ([scope](docs/V11_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 0 |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
@@ -750,6 +750,7 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | v0.8.0 docs | [`RELEASE_NOTES_V0.8.0.md`](docs/RELEASE_NOTES_V0.8.0.md) · [`EXPERIMENT_INDEX.md`](docs/EXPERIMENT_INDEX.md) · [`PROJECT_STATUS_V0.8.0.md`](docs/PROJECT_STATUS_V0.8.0.md) · [`DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) |
 | V9 scope | [`V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) |
 | V10 scope (complete) | [`V10_SCOPE_STATEMENT.md`](docs/V10_SCOPE_STATEMENT.md) |
+| V11 scope (active) | [`V11_SCOPE_STATEMENT.md`](docs/V11_SCOPE_STATEMENT.md) |
 | V10 readiness | [`V10_READINESS_ASSESSMENT.md`](docs/V10_READINESS_ASSESSMENT.md) |
 | Project status | [`PROJECT_STATUS_V0.10.0.md`](docs/PROJECT_STATUS_V0.10.0.md) |
 | Planning | [`ROADMAP.md`](docs/ROADMAP.md) · [`DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) |
