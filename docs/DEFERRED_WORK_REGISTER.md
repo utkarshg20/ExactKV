@@ -10,7 +10,8 @@ implemented** unless a linked experiment or release note says otherwise.
 **Version path:** V9 ✅ → **V10 (active, Phase 3 complete)** → V11 → V12/v1.0.0 (public launch).
 
 **V9 scope:** [`V9_SCOPE_STATEMENT.md`](V9_SCOPE_STATEMENT.md) — **complete** (`v0.9.0`).
-**V10 scope:** [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — **Phase 3 complete**.
+**V10 scope:** [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — **Phase 4 complete**.
+**Experiment 014:** [`EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md`](EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md).
 **V10 suites:** [`V10_PROMPT_SUITES.md`](V10_PROMPT_SUITES.md).
 **Experiment 012:** [`EXPERIMENT_012_EVAL_SUITE_EXPANSION.md`](EXPERIMENT_012_EVAL_SUITE_EXPANSION.md).
 **Experiment 013:** [`EXPERIMENT_013_SENSITIVITY_FORENSICS.md`](EXPERIMENT_013_SENSITIVITY_FORENSICS.md).
@@ -48,7 +49,9 @@ implemented** unless a linked experiment or release note says otherwise.
 **Phase 1 (complete):** suites + validator — [`V10_PROMPT_SUITES.md`](V10_PROMPT_SUITES.md).
 **Phase 2 (complete):** Experiment 012 — [`EXPERIMENT_012_EVAL_SUITE_EXPANSION.md`](EXPERIMENT_012_EVAL_SUITE_EXPANSION.md).
 **Phase 3 (complete):** Experiment 013 — [`EXPERIMENT_013_SENSITIVITY_FORENSICS.md`](EXPERIMENT_013_SENSITIVITY_FORENSICS.md).
-**Phase 4 (next):** optional real-backend spot-checks or Phase 5 readiness.
+| — | **Optional real-backend category spot-checks** | **Complete** | Phase 4 ✅ | Exp 014: 280 cells, `exactkv_failures == 0` — [`EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md`](EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md) |
+
+**Phase 5 (next):** v1.0.0 readiness assessment (not launch).
 
 ---
 

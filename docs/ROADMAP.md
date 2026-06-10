@@ -673,11 +673,16 @@ sweeps, upgrade divergence forensics beyond 006A proxies. **Not** a performance 
   60 prompts × 4 compressors × 3×3 grid (2,160 cells); `exactkv_failures == 0`;
   draft/generation sensitivity + divergence forensics (RunPod A5000 fp16).
 
-## Planned phases (4–5)
+## Phase 4 deliverable
+
+- [`EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md`](EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md) —
+  40 harder-category prompts × 7 compressors (280 cells, cross-panel merge);
+  `exactkv_failures == 0`; factory-only KVQuant / TurboQuant / KIVI spot-check.
+
+## Planned phase (5)
 
 | Phase | Focus |
 |---|---|
-| 4 | Optional real-backend category spot-checks (factory-only) |
 | 5 | v1.0.0 readiness assessment (not launch) |
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V10 (D26–D29).
