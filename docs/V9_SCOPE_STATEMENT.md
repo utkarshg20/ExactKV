@@ -9,7 +9,9 @@ complete** — restricted KVQuant simquant adapter prototype
 not in default registry; RunPod smoke gate `exactkv_failures == 0`. **Phase D6
 complete** — Experiment 010 KVQuant simquant evaluation
 ([`EXPERIMENT_010_KVQUANT_SIM.md`](EXPERIMENT_010_KVQUANT_SIM.md)); 272 cells,
-`exactkv_failures == 0`.
+`exactkv_failures == 0`. **Phase E complete** — larger-model RunPod validation
+([`EXPERIMENT_011_LARGER_MODEL_VALIDATION.md`](EXPERIMENT_011_LARGER_MODEL_VALIDATION.md));
+Qwen2.5-1.5B, 238 cells, `exactkv_failures == 0`.
 **Builds on:** `v0.8.0` — V8 complete; serving harness (Experiment 007);
 `BackendAdapter` + restricted kvpress (V6); simulated layer-aware policies (V7).
 **Not public launch.** V9 is the **real backend credibility phase**.
@@ -414,7 +416,8 @@ requirements.
 - [x] Phase D4 KVQuant RunPod validation — [`KVQUANT_RUNPOD_VALIDATION.md`](KVQUANT_RUNPOD_VALIDATION.md)
 - [x] Phase D5 KVQuant simquant adapter prototype — [`KVQUANT_ADAPTER_PROTOTYPE.md`](KVQUANT_ADAPTER_PROTOTYPE.md)
 - [x] Phase D6 Experiment 010 — [`EXPERIMENT_010_KVQUANT_SIM.md`](EXPERIMENT_010_KVQUANT_SIM.md)
-- [ ] Phase E RunPod validation (≥1.5B) **or** documented GPU blocker
+- [x] Phase E Experiment 011 — [`EXPERIMENT_011_LARGER_MODEL_VALIDATION.md`](EXPERIMENT_011_LARGER_MODEL_VALIDATION.md)
+- [ ] Phase F release notes v0.9.0 **or** documented blocker
 - [ ] `RELEASE_NOTES_V0.9.0.md`, updated experiment index
 - [ ] No forbidden performance fields in code/docs/reports
 
@@ -437,8 +440,8 @@ requirements.
 | **Phase D4** | KVQuant RunPod validation + adapter decision | [`KVQUANT_RUNPOD_VALIDATION.md`](KVQUANT_RUNPOD_VALIDATION.md); D4b L40S GPU | ✅ Complete (D4a static + D4b GPU) |
 | **Phase D5** | KVQuant simquant adapter prototype (if approved) | [`KVQUANT_ADAPTER_PROTOTYPE.md`](KVQUANT_ADAPTER_PROTOTYPE.md); smoke `exactkv_failures == 0` | ✅ Complete — factory-only; not in default registry |
 | **Phase D6** | Experiment 010 — KVQuant simquant evaluation | [`EXPERIMENT_010_KVQUANT_SIM.md`](EXPERIMENT_010_KVQUANT_SIM.md); 272 cells, `exactkv_failures == 0` | ✅ Complete |
-| **Phase E** | RunPod larger-model validation | ≥1.5B exactness gate report | Pending D6 |
-| **Phase F** | Release notes v0.9.0, index, bundle plan, v1.0.0 readiness decision | `RELEASE_NOTES_V0.9.0.md` | Pending E |
+| **Phase E** | RunPod larger-model validation | [`EXPERIMENT_011_LARGER_MODEL_VALIDATION.md`](EXPERIMENT_011_LARGER_MODEL_VALIDATION.md); 1.5B, 238 cells | ✅ Complete |
+| **Phase F** | Release notes v0.9.0, index, bundle plan, v1.0.0 readiness decision | `RELEASE_NOTES_V0.9.0.md` | Pending F |
 
 > Phases A–F require **separate explicit approval** before code or experiments.
 > Phase 0 introduces no code and no behaviour change.
@@ -467,6 +470,7 @@ requirements.
 | [`KVQUANT_RUNPOD_VALIDATION.md`](KVQUANT_RUNPOD_VALIDATION.md) | Phase D4 KVQuant RunPod validation + D5 adapter decision |
 | [`KVQUANT_ADAPTER_PROTOTYPE.md`](KVQUANT_ADAPTER_PROTOTYPE.md) | Phase D5 restricted KVQuant simquant adapter prototype |
 | [`EXPERIMENT_010_KVQUANT_SIM.md`](EXPERIMENT_010_KVQUANT_SIM.md) | Phase D6 Experiment 010 KVQuant simquant evaluation |
+| [`EXPERIMENT_011_LARGER_MODEL_VALIDATION.md`](EXPERIMENT_011_LARGER_MODEL_VALIDATION.md) | Phase E larger-model RunPod validation (Qwen2.5-1.5B) |
 | [`PROJECT_STATUS_V0.8.0.md`](PROJECT_STATUS_V0.8.0.md) | Pre-V9 status |
 
 ---

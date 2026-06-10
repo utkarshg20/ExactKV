@@ -22,7 +22,7 @@ implemented** unless a linked experiment or release note says otherwise.
 | D3 | **KIVI adapter** | **Evaluated (Phase D3)** | D+ / Phase E | Exp 009: 272 cells, `exactkv_failures == 0`; accept **0.012** vs `int8` **0.961**; offline simulate only — see [`EXPERIMENT_009_KIVI_OFFLINE.md`](EXPERIMENT_009_KIVI_OFFLINE.md) |
 | D4 | **KVQuant-style adapter** | **Evaluated (Phase D6)** | Phase E | Exp 010: 272 cells, `exactkv_failures == 0`; `kvquant_sim_qwen05b` accept **0.792** vs `int8` **0.966**; simquant only, not deployment CUDA — see [`EXPERIMENT_010_KVQUANT_SIM.md`](EXPERIMENT_010_KVQUANT_SIM.md) |
 | D5 | **KVTC / Palu feasibility** | Planned (V9 optional) | D | Written feasibility + optional thin PoC; V5 metadata honesty |
-| D15 | **Larger-model RunPod validation** | **Planned (V9)** | E | ≥1.5B Qwen2.5; `exactkv_failures == 0`; hardware manifest |
+| D15 | **Larger-model RunPod validation** | **Complete (Phase E)** | F | Exp 011: Qwen2.5-1.5B, 238 cells, `exactkv_failures == 0`; layer-aware V transfers — see [`EXPERIMENT_011_LARGER_MODEL_VALIDATION.md`](EXPERIMENT_011_LARGER_MODEL_VALIDATION.md) |
 
 ---
 
