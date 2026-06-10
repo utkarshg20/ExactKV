@@ -2,8 +2,8 @@
 
 **Status:** Phases 0–C complete for TurboQuant Python track. **TurboQuant not in
 default registry.** Experiment 008 complete (`exactkv_failures == 0`). **Phase D
-complete** (KIVI offline track D1–D3). **Phase D4 complete** (KVQuant RunPod
-validation doc + static/Qwen walk; live GPU pipeline scripted). Phase D5 KVQuant
+complete** (KIVI offline track D1–D3). **Phase D4 complete** (D4a static + **D4b
+RunPod GPU validation** on L40S; Option A faithful adapter go). Phase D5 KVQuant
 adapter pending RunPod GPU confirmation + approval.
 **Builds on:** `v0.8.0` — V8 complete; serving harness (Experiment 007);
 `BackendAdapter` + restricted kvpress (V6); simulated layer-aware policies (V7).
@@ -427,8 +427,8 @@ requirements.
 | **Phase D1** | KIVI / KVQuant feasibility (research only) | [`KIVI_KVQUANT_INTEGRATION_RESEARCH.md`](KIVI_KVQUANT_INTEGRATION_RESEARCH.md); scratch inspect script | ✅ Complete — **KIVI restricted go**; KVQuant deferred pending RunPod |
 | **Phase D2** | KIVI restricted offline adapter prototype | [`KIVI_ADAPTER_PROTOTYPE.md`](KIVI_ADAPTER_PROTOTYPE.md); smoke `exactkv_failures == 0` | ✅ Complete |
 | **Phase D3** | Experiment 009 — KIVI offline evaluation | [`EXPERIMENT_009_KIVI_OFFLINE.md`](EXPERIMENT_009_KIVI_OFFLINE.md); 272 cells, `exactkv_failures == 0` | ✅ Complete |
-| **Phase D4** | KVQuant RunPod validation + adapter decision | [`KVQUANT_RUNPOD_VALIDATION.md`](KVQUANT_RUNPOD_VALIDATION.md); Option A provisional | ✅ Complete (static); GPU script for operator |
-| **Phase D5** | KVQuant simquant adapter prototype (if approved) | Faithful draft-clone replay; not Experiment 010 | Pending D4 GPU confirm + approval |
+| **Phase D4** | KVQuant RunPod validation + adapter decision | [`KVQUANT_RUNPOD_VALIDATION.md`](KVQUANT_RUNPOD_VALIDATION.md); D4b L40S GPU | ✅ Complete (D4a static + D4b GPU) |
+| **Phase D5** | KVQuant simquant adapter prototype (if approved) | Faithful draft-clone replay; bias/transformers patches | Pending approval (D4b gates passed) |
 | **Phase E** | RunPod larger-model validation | ≥1.5B exactness gate report | Pending D5 or parallel |
 | **Phase F** | Release notes v0.9.0, index, bundle plan, v1.0.0 readiness decision | `RELEASE_NOTES_V0.9.0.md` | Pending E |
 

@@ -1,13 +1,11 @@
 # KVQuant RunPod Validation (V9 Phase D4)
 
-**Status:** Phase D4 complete — **static validation + Qwen2.5 module walk + RunPod playbook**.
-**Live RunPod GPU pipeline not executed** in the development environment (no CUDA GPU,
-no RunPod CLI). GPU confirmation steps are documented in
-[`scripts/research/kvquant_runpod_commands.sh`](../scripts/research/kvquant_runpod_commands.sh).
+**Status:** Phase D4 complete — **D4a static research + D4b live RunPod GPU validation**.
+**D4b executed 2026-06-10** on RunPod L40S (46 GB) via proxy SSH.
 
-**Date:** 2026-06-09  
-**Recommendation:** **Option A — faithful adapter feasible (provisional)** → Phase D5
-draft-model-clone replay adapter. **Not** tensor-only post-RoPE bridge.
+**Date:** 2026-06-10
+**Recommendation:** **Option A — faithful adapter go** (with documented D5 patches) →
+Phase D5 `KVQuantSimAdapter` draft-clone replay. **Not** tensor-only post-RoPE bridge.
 
 > This phase does **not** implement a KVQuant adapter. This phase does **not** run
 > ExactKV Experiment 010. ExactKV does **not** claim KVQuant results yet. External
@@ -34,33 +32,37 @@ document the exact adapter shape — without implementing adapter code or Experi
 
 ## 2. RunPod environment
 
-### Target pod (illustrative)
-
-| Parameter | Preferred | Acceptable first attempt |
-|---|---|---|
-| Provider | RunPod | Any CUDA Linux host |
-| GPU | A100 40GB | L40S 48GB, **A40** |
-| Image | `pytorch/pytorch:2.4.1-cuda12.1-cudnn9-runtime` | RunPod PyTorch 2.4+ template |
-| Python | 3.10 | 3.9–3.11 |
-| Disk | ≥ 30 GB | Model + clone + scratch artifacts |
-
-### Dev environment (this validation session)
+### D4b live pod (2026-06-10)
 
 | Item | Value |
 |---|---|
-| Host | macOS, **no `nvidia-smi`** |
-| RunPod CLI | **Not installed** |
-| GPU pipeline | **Not executed** |
-| Static / CPU checks | Executed locally |
+| Provider | RunPod proxy SSH (`ssh.runpod.io`) |
+| Pod hostname | `116ee198b217` |
+| GPU | **NVIDIA L40S**, 46068 MiB |
+| Driver / CUDA (nvidia-smi) | 550.127.05 / **12.4** |
+| Python | 3.12.3 (`/usr/local/bin/python`) |
+| torch | 2.8.0+cu128 (system; venv uses `--system-site-packages`) |
+| transformers | **4.44.2** (pinned; 5.x breaks calibration) |
+| ExactKV SHA (reference) | `b19c2107f6a640cf995d71b13865deab62809422` |
+| Scratch workdir | `/workspace/kvquant_d4` |
 
-### Reproduce GPU validation on RunPod
+### D4a dev environment (static only)
+
+| Item | Value |
+|---|---|
+| Host | macOS, no local CUDA |
+| Checks | Import walk, Qwen module naming, adapter-shape research |
+
+### Reproduce D4b on RunPod
 
 ```bash
-# On pod after cloning ExactKV + KVQuant
-bash scripts/research/kvquant_runpod_commands.sh 2>&1 | tee /tmp/kvquant_d4_run.log
+# Proxy SSH (no SCP); pipe scripts via stdin — see scripts/research/
+bash scripts/research/kvquant_runpod_d4b_execute.sh   # or stepwise SSH commands
+python scripts/research/kvquant_runpod_synthetic_calib.py  # if wikitext2 fails
+python scripts/research/kvquant_runpod_forward_check.py
 ```
 
-Scratch output (gitignored): `/tmp/kvquant_d4/quantizers_qwen05b.pickle`
+Artifact path (outside git): `/workspace/kvquant_d4/quantizers_qwen05b.pickle` (151745 bytes, 48 keys)
 
 ---
 
@@ -77,25 +79,24 @@ Scratch output (gitignored): `/tmp/kvquant_d4/quantizers_qwen05b.pickle`
 
 ## 4. Install result
 
-### Local (CPU macOS, 2026-06-09)
+### D4a local (CPU macOS)
 
 | Step | Result |
 |---|---|
 | `git clone` KVQuant | ✅ (from D1) |
-| `pip install -e quant/` | ✅ (`/tmp/kvquant_venv_test`, Python 3.13) |
-| `import kvquant` | ✅ (requires `scikit-learn` in venv) |
-| `pip install flash-attn` | ⏸ Not on macOS CPU |
-| `deployment/setup_cuda.py` | ⏸ Not attempted (CUDA required) |
-| `gradients/` pip install | ⏸ Not required for first-pass calibration (`fisher=None`) |
+| `pip install -e quant/` | ✅ |
+| `import kvquant` | ✅ (requires `scikit-learn`) |
 
-### RunPod (documented, not executed here)
+### D4b RunPod (2026-06-10)
 
-See [`kvquant_runpod_commands.sh`](../scripts/research/kvquant_runpod_commands.sh):
-
-1. Clone KVQuant
-2. `python -m venv .venv-kvquant && pip install -e quant/`
-3. Optional `pip install flash-attn` (patch `llama_simquant.py` if build fails)
-4. Record `torch`, `transformers`, CUDA via `nvidia-smi`
+| Step | Result |
+|---|---|
+| Clone KVQuant | ✅ `/workspace/kvquant_d4/KVQuant` |
+| venv `--system-site-packages` | ✅ **Required** — plain venv reinstalled torch cu130 → `cuda=False` |
+| `pip install -e quant/ --no-deps` | ✅ + explicit deps |
+| `pip install flash-attn` | ❌ failed (not needed; upstream uses `sdpa`) |
+| `deployment/setup_cuda.py` | ⏸ Not used (simquant only) |
+| `gradients/` | ⏸ Not used (`fisher=None`) |
 
 ---
 
@@ -147,51 +148,47 @@ flash-attn patch.
 
 ## 7. Fisher / calibration result
 
-| Task | Dev environment | RunPod (documented) |
+| Task | D4a static | D4b RunPod |
 |---|---|---|
-| Fisher on Qwen2.5 | **Not attempted** — Llama-patched `run-fisher.py` | Optional Phase D5+; not blocking |
-| `llama_simquant.py --quantize` without Fisher | **Not attempted** (no CUDA) | **Primary D4 GPU gate** |
-| Dataset | — | `wikitext2` (built-in `datautils.get_loaders`) |
-| Tiny config | — | `--nsamples 4 --seqlen 128` |
+| Fisher on Qwen2.5 | Skipped (Llama hooks) | Skipped (same) |
+| `llama_simquant.py --dataset wikitext2` | Not run | **FAILED** — `HfUriError` (datasets/huggingface_hub URI) |
+| Synthetic calibration (`synthetic_calib.py`) | N/A | **OK** — 4 samples, seqlen 128 |
+| transformers pin | N/A | **Required** `transformers==4.44.2` (5.x → `position_embeddings` None) |
 
-**Expected calibration command (RunPod):**
+**D4b calibration command (workaround used):**
 
 ```bash
-cd KVQuant/quant
-CUDA_VISIBLE_DEVICES=0 python llama_simquant.py Qwen/Qwen2.5-0.5B \
-  --abits 4 --nsamples 4 --seqlen 128 --maxseqlen 128 \
-  --dataset wikitext2 --quantize \
-  --quantizer-path /tmp/kvquant_d4/quantizers_qwen05b.pickle
+cd /workspace/kvquant_d4/KVQuant/quant
+CUDA_VISIBLE_DEVICES=0 PYTHONPATH=. python /workspace/kvquant_d4/synthetic_calib.py
 ```
 
-**Feasibility assessment (static):** Calibration hooks `k_proj`/`v_proj` via
-`register_forward_hook` + `SimQuant.add_batch` on layer outputs — **pre-RoPE**
-projector outputs. Structure matches Qwen2 attention. **High confidence** pending
-GPU confirmation.
+Calibration hooks `k_proj`/`v_proj` projector outputs (pre-RoPE). **Confirmed on GPU.**
 
 ---
 
 ## 8. Quantizer artifact result
 
-| Item | Dev | RunPod (expected) |
+| Item | D4a | D4b RunPod |
 |---|---|---|
-| `quantizers.pickle` produced | ❌ (no GPU run) | ✅ if calibration succeeds |
+| `quantizers_qwen05b.pickle` produced | ❌ | ✅ |
+| Path | — | `/workspace/kvquant_d4/quantizers_qwen05b.pickle` |
+| Size | — | **151745 bytes** |
+| Key count | — | **48** (24×k_proj + 24×v_proj) |
 | Key format | — | `model.layers.{i}.self_attn.{k,v}_proj` |
-| Value per key | — | Tuple of thresholds / centroids / optional NUQ LUT |
-| Adapter loadable later | — | ✅ via `pickle.load` + `make_quant_sim` |
+| Adapter loadable | — | ✅ `pickle.load` + patched `make_quant_sim` |
 
-Artifact path (gitignored): `/tmp/kvquant_d4/quantizers_qwen05b.pickle`
+Keep outside git; document path for D5 prototype calibration.
 
 ---
 
 ## 9. QuantLinearSim / forward-pass result
 
-| Step | Dev | RunPod (documented) |
+| Step | D4a | D4b RunPod |
 |---|---|---|
-| `make_quant_sim` replaces `k_proj`/`v_proj` | Static code review ✅ | Execute on pod |
-| `QuantLinearSim.forward` | Requires CUDA (`.cuda()` hardcoded) | GPU pod |
-| One forward with `use_cache=True` | Not run | Script step 5 in `kvquant_runpod_commands.sh` |
-| `past_key_values` returned | Expected post-RoPE HF cache | Feasibility check only |
+| `make_quant_sim` on k_proj/v_proj | Code review ✅ | ✅ after **bias patch** |
+| `QuantLinearSim.forward` | CUDA required | ✅ on L40S |
+| One forward `use_cache=True` | Not run | ✅ logits `(1, 5, 151936)`, `past_key_values` (24 layers) |
+| Qwen bias handling | Noted statically | **Patch required:** pass `tmp.bias` not `tmp.bias is not None`; `if bias is not None:` in `QuantLinearSim` |
 
 **Pre-RoPE semantics:** Quantization applies to **linear projector outputs** before
 rotary embedding inside attention. ExactKV's `extract_kv_tensors` sees **post-RoPE**
@@ -274,37 +271,42 @@ baseline simquant path works.
 
 ## 14. Failure modes observed
 
-| Failure mode | Observed in D4? | Severity |
+| Failure mode | Observed | Severity / fix |
 |---|---|---|
-| Qwen not in upstream scripts | Static only | **Mitigated** — llama path works |
-| `use_flash_attention_2=True` load failure | Static | **Patch** to sdpa |
-| Fisher incompatible with Qwen | Static | **Bypass** — `fisher=None` |
-| No CUDA for calibration/forward | Dev env | **RunPod required** |
-| In-place `make_quant_sim` pollutes verify model | Static | **Mitigated** — draft clone |
-| Post-RoPE tensor bridge | D1 + D4 | **Blocker** for non-faithful shortcut |
-| `gradients/` `set_devices()` on Qwen | Static | **Blocker** for Fisher only |
-| Deployment fork replaces transformers | Static | **Avoid** in D5; simquant only |
+| venv reinstalls torch → CUDA broken | D4b | **Fix:** `--system-site-packages` venv |
+| wikitext2 `HfUriError` | D4b | **Workaround:** synthetic calibration |
+| transformers 5.x breaks Qwen2 calib | D4b | **Fix:** pin `transformers==4.44.2` |
+| Qwen k_proj/v_proj have bias | D4b | **Patch:** `make_quant_sim` bias args |
+| Fisher incompatible with Qwen | D4a/b | Bypass — `fisher=None` |
+| In-place `make_quant_sim` | D4b | Mitigated — `deepcopy` draft |
+| Post-RoPE tensor bridge | D1 | Blocker for non-faithful shortcut |
+| deployment/ CUDA fork | D4b | Not used; avoid in D5 |
 
 ---
 
 ## 15. Go / no-go recommendation
 
-### Classification: **A — Faithful adapter feasible (provisional)**
+### Classification: **A — Faithful adapter go** (D4b GPU confirmed)
 
 | Option | Verdict |
 |---|---|
-| **A. Faithful adapter** (draft clone + `_compresses_via_full_state` + simquant replay) | ✅ **Recommend Phase D5** after RunPod GPU script succeeds |
-| **B. Restricted non-faithful** (post-RoPE tensor quant) | ❌ **Do not** label as KVQuant; not recommended |
-| **C. No-go** | ❌ Qwen mechanical compatibility is sufficient to reject C |
+| **A. Faithful adapter** (draft clone + `_compresses_via_full_state` + simquant replay) | ✅ **Proceed to Phase D5** |
+| **B. Restricted non-faithful** (post-RoPE tensor quant) | ❌ Do not label as KVQuant |
+| **C. No-go** | ❌ Rejected — GPU pipeline succeeded with documented patches |
 
-### Decision gates before D5 adapter code
+### D4b gates passed
 
-1. **Operator runs** `kvquant_runpod_commands.sh` on A100/L40S/A40 and confirms:
-   - `quantizers_qwen05b.pickle` created
-   - draft forward + `use_cache=True` succeeds
-   - verify model has no `QuantLinearSim` modules
-2. If GPU calibration fails after sdpa patch → downgrade to **C** and document blocker.
-3. Experiment 010 remains **separate approval** after D5 prototype smoke gate.
+1. ✅ `quantizers_qwen05b.pickle` created (48 keys)
+2. ✅ draft forward + `use_cache=True` succeeds
+3. ✅ verify model has no `QuantLinearSim` modules (`verify_model_clean=True`)
+4. ✅ `deepcopy` draft isolation confirmed
+
+### D5 prerequisites from D4b
+
+1. Pin `transformers~=4.44` in isolated KVQuant venv
+2. Ship Qwen **bias patch** for `make_quant_sim` / `QuantLinearSim`
+3. Calibration: per-model pickle; synthetic or fixed dataset loader acceptable for prototype
+4. Experiment 010 remains **separate approval** after D5 smoke gate
 
 ### Phase D5 should **not** use:
 

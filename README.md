@@ -31,7 +31,7 @@ is faster. It does **not** claim throughput, latency, speedup, or production rea
 | Item | Value |
 |---|---|
 | **Latest release** | [`v0.8.0`](docs/RELEASE_NOTES_V0.8.0.md) — serving-context harness (Experiment 007) |
-| **Next** | [**V9**](docs/V9_SCOPE_STATEMENT.md) — [D4 KVQuant validation](docs/KVQUANT_RUNPOD_VALIDATION.md); Phase D5 adapter pending GPU confirm |
+| **Next** | [**V9**](docs/V9_SCOPE_STATEMENT.md) — [D4b KVQuant GPU validation](docs/KVQUANT_RUNPOD_VALIDATION.md) done; Phase D5 adapter pending approval |
 | **Status** | Research milestone; [not public-launch final](docs/PROJECT_STATUS_V0.8.0.md) |
 | **Hard gate** | `exactkv_failures == 0` on every published experiment |
 | **Default model** | `Qwen/Qwen2.5-0.5B` (greedy, single-request, CPU-first) |

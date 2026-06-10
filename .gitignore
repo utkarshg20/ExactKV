@@ -48,6 +48,9 @@ htmlcov/
 *.bin
 *.safetensors
 *.gguf
+# KVQuant calibration artifacts (store on RunPod / outside repo)
+quantizers*.pickle
+**/quantizers_qwen*.pickle
 
 # Benchmark outputs (keep .gitkeep, ignore generated files)
 outputs/

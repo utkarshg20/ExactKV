@@ -12,7 +12,7 @@
 #   MODEL          — HF model id (default: Qwen/Qwen2.5-0.5B)
 #   NSAMPLES       — calibration samples (default: 4)
 #   SEQLEN         — calibration sequence length (default: 128)
-#   WORKDIR        — scratch output dir (default: /tmp/kvquant_d4)
+#   WORKDIR        — scratch output dir (default: /workspace/kvquant_d4 on RunPod)
 
 set -euo pipefail
 
@@ -20,7 +20,7 @@ KVQUANT_REPO="${KVQUANT_REPO:-$HOME/KVQuant}"
 MODEL="${MODEL:-Qwen/Qwen2.5-0.5B}"
 NSAMPLES="${NSAMPLES:-4}"
 SEQLEN="${SEQLEN:-128}"
-WORKDIR="${WORKDIR:-/tmp/kvquant_d4}"
+WORKDIR="${WORKDIR:-/workspace/kvquant_d4}"
 PYTHON="${PYTHON:-python3}"
 
 echo "=== KVQuant Phase D4 RunPod validation ==="
@@ -102,7 +102,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from kvquant.simquant_module_quantizer import make_quant_sim
 
 model_id = "Qwen/Qwen2.5-0.5B"
-pickle_path = "/tmp/kvquant_d4/quantizers_qwen05b.pickle"
+pickle_path = "/workspace/kvquant_d4/quantizers_qwen05b.pickle"
 
 with open(pickle_path, "rb") as f:
     quantizers = pickle.load(f)
