@@ -43,6 +43,6 @@ under `reports/`.
 
 ## Related
 
-- [`RELEASE_NOTES_V0.8.0.md`](RELEASE_NOTES_V0.8.0.md) — V8 changelog
-- [`PROJECT_STATUS_V0.8.0.md`](PROJECT_STATUS_V0.8.0.md) — current project status
-- [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) — what comes next
+- [`RELEASE_NOTES_V0.9.0.md`](RELEASE_NOTES_V0.9.0.md) — V9 changelog (latest)
+- [`PROJECT_STATUS_V0.9.0.md`](PROJECT_STATUS_V0.9.0.md) — current project status
+- [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) — V10+ tracker

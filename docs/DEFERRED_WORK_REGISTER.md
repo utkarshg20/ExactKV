@@ -7,34 +7,39 @@ implemented** unless a linked experiment or release note says otherwise.
 > latency, speedup, runtime, or production-serving claims; `_sim` ≠ packed-bit storage;
 > external paper results are **not** ExactKV results.
 
-**Version path:** V9 (active) → V10 → V11 → V12/v1.0.0 (public launch).
+**Version path:** V9 ✅ → **V10 (active)** → V11 → V12/v1.0.0 (public launch).
 
-**V9 scope:** [`V9_SCOPE_STATEMENT.md`](V9_SCOPE_STATEMENT.md) — Phase 0 complete.
+**V9 scope:** [`V9_SCOPE_STATEMENT.md`](V9_SCOPE_STATEMENT.md) — **complete** (`v0.9.0`).
+**V10 draft:** [`V10_SCOPE_DRAFT.md`](V10_SCOPE_DRAFT.md).
 
 ---
 
-## V9 — Real backend integration gauntlet (active / planned)
+## V9 — Real backend integration gauntlet (complete)
 
 | ID | Item | Status | V9 phase | Success criteria |
 |---|---|---|---|---|
-| D1 | **TurboQuant full integration** | **Evaluated (Phase C)** | D+ / Exp 009 anchor | Exp 008: 272 cells, `exactkv_failures == 0`; accept **0.435** vs `int8` **0.961**; see [`EXPERIMENT_008_TURBOQUANT_PYTHON.md`](EXPERIMENT_008_TURBOQUANT_PYTHON.md) |
-| D2 | **TurboQuant+ full integration** | **Evaluated (Python path only)** | D+ | Production llama.cpp/MLX formats still deferred; Python adapter evaluated in Exp 008 |
-| D3 | **KIVI adapter** | **Evaluated (Phase D3)** | D+ / Phase E | Exp 009: 272 cells, `exactkv_failures == 0`; accept **0.012** vs `int8` **0.961**; offline simulate only — see [`EXPERIMENT_009_KIVI_OFFLINE.md`](EXPERIMENT_009_KIVI_OFFLINE.md) |
-| D4 | **KVQuant-style adapter** | **Evaluated (Phase D6)** | Phase E | Exp 010: 272 cells, `exactkv_failures == 0`; `kvquant_sim_qwen05b` accept **0.792** vs `int8` **0.966**; simquant only, not deployment CUDA — see [`EXPERIMENT_010_KVQUANT_SIM.md`](EXPERIMENT_010_KVQUANT_SIM.md) |
-| D5 | **KVTC / Palu feasibility** | Planned (V9 optional) | D | Written feasibility + optional thin PoC; V5 metadata honesty |
-| D15 | **Larger-model RunPod validation** | **Complete (Phase E)** | F | Exp 011: Qwen2.5-1.5B, 238 cells, `exactkv_failures == 0`; layer-aware V transfers — see [`EXPERIMENT_011_LARGER_MODEL_VALIDATION.md`](EXPERIMENT_011_LARGER_MODEL_VALIDATION.md) |
+| D1 | **TurboQuant full integration** | **Evaluated (Phase C)** | ✅ | Exp 008: 272 cells, `exactkv_failures == 0`; accept **0.435** — [`EXPERIMENT_008_TURBOQUANT_PYTHON.md`](EXPERIMENT_008_TURBOQUANT_PYTHON.md) |
+| D2 | **TurboQuant+ full integration** | **Evaluated (Python path only)** | ✅ | Production llama.cpp/MLX deferred — [`RELEASE_NOTES_V0.9.0.md`](RELEASE_NOTES_V0.9.0.md) |
+| D3 | **KIVI adapter** | **Evaluated (Phase D3)** | ✅ | Exp 009: accept **0.012** — [`EXPERIMENT_009_KIVI_OFFLINE.md`](EXPERIMENT_009_KIVI_OFFLINE.md) |
+| D4 | **KVQuant-style adapter** | **Evaluated (Phase D6)** | ✅ | Exp 010: accept **0.792** — [`EXPERIMENT_010_KVQUANT_SIM.md`](EXPERIMENT_010_KVQUANT_SIM.md) |
+| D5 | **KVTC / Palu feasibility** | Deferred (optional) | — | Not in V9 scope |
+| D15 | **Larger-model RunPod validation** | **Complete (Phase E)** | ✅ | Exp 011: 1.5B, 238 cells — [`EXPERIMENT_011_LARGER_MODEL_VALIDATION.md`](EXPERIMENT_011_LARGER_MODEL_VALIDATION.md) |
 
 ---
 
-## V10 — Compression research gauntlet
+## V10 — Evaluation suite hardening and divergence forensics (active / planned)
 
 | ID | Item | Status | Success criteria |
 |---|---|---|---|
-| D6 | **Sparse V dequantization** | Deferred | Attention-gated or policy-gated sparse V materialization evaluated by acceptance only |
-| D7 | **True attention logging** | Deferred | Log real attention weights during prefill/decode; no fabricated weights in reports |
-| D8 | **Per-layer/head/token divergence forensics** | Deferred | Upgrade 006A proxy analysis to weight-aware forensics where weights exist |
-| D9 | **Pre-RoPE key quantization experiments** | Deferred | Compare acceptance vs post-RoPE `int8` / `_sim` baselines |
-| D10 | **Boundary / layer-policy extensions** | Deferred | Optional N&gt;4 or attention-informed boundaries — only with explicit scope approval |
+| D26 | **`core_v2` + category benchmark suites** | **Planned (V10)** | Versioned prompts; per-category leaderboards; Exp 012 |
+| D27 | **Draft length sensitivity (2/4/8)** | **Planned (V10)** | Documented acceptance/divergence vs `draft_len`; Exp 013 |
+| D28 | **Generation length sensitivity (16/32/64)** | **Planned (V10)** | Phased sweeps; no performance claims |
+| D29 | **Category-stratified divergence forensics** | **Planned (V10)** | Supersede 006A proxy where feasible |
+| D6 | **Sparse V dequantization** | Deferred (V10 research) | Acceptance-only evaluation |
+| D7 | **True attention logging** | Deferred (V10 optional) | Small subset; no fabricated weights |
+| D8 | **Per-layer/head/token divergence forensics** | **Planned (V10)** | Layer/head where weights exist |
+| D9 | **Pre-RoPE key quantization experiments** | Deferred | Compare vs post-RoPE baselines |
+| D10 | **Boundary / layer-policy extensions** | Deferred | N>4 only with explicit approval |
 
 ---
 
@@ -42,13 +47,11 @@ implemented** unless a linked experiment or release note says otherwise.
 
 | ID | Item | Status | Success criteria |
 |---|---|---|---|
-| D11 | **Direct vLLM integration** | No-go (Phase A) | Re-approval only if safe full-KV export path demonstrated; else remain deferred |
-| D12 | **LMCache integration** | No-go (Phase A) | Re-approval only if ownership + verify isolation proven; else remain deferred |
-| D13 | **vLLM / LMCache sidecar probe** | Deferred | Metadata-only or isolated sidecar evaluation without breaking exactness gate |
-| D14 | **Active GPU memory profiling** | Deferred | Approved methodology; distinct from `total_kv_footprint_bytes`; optional field only |
-| D16 | **PagedAttention kernel integration** | Deferred | Not planned; local harness remains default unless V8 Phase C re-approved |
-
-_Larger-model RunPod validation (formerly D15) is **active in V9 Phase E** — see V9 table above._
+| D11 | **Direct vLLM integration** | No-go (Phase A) | Re-approval only if safe full-KV export path demonstrated |
+| D12 | **LMCache integration** | No-go (Phase A) | Re-approval only if ownership + verify isolation proven |
+| D13 | **vLLM / LMCache sidecar probe** | Deferred | Metadata-only or isolated sidecar evaluation |
+| D14 | **Active GPU memory profiling** | Deferred | Approved methodology; distinct from `total_kv_footprint_bytes` |
+| D16 | **PagedAttention kernel integration** | Deferred | Local harness remains default |
 
 ---
 
@@ -56,10 +59,10 @@ _Larger-model RunPod validation (formerly D15) is **active in V9 Phase E** — s
 
 | ID | Item | Status | Success criteria |
 |---|---|---|---|
-| D17 | **Raw report bundle** | Deferred | Curated, reproducible JSON/CSV archive for experiments 001–007+ with manifests |
-| D18 | **Final public launch narrative** | Deferred | Reviewed post/docs; explicit negation of performance and serving claims |
-| D19 | **Project status v1.0.0** | Deferred | Supersedes [`PROJECT_STATUS_V0.8.0.md`](PROJECT_STATUS_V0.8.0.md) |
-| D20 | **Git tag `v1.0.0`** | Deferred | All V9–V11 exit criteria met or explicitly scoped down with documented honesty |
+| D17 | **Raw report bundle** | Deferred | Curated archive for experiments 001–011+ with manifests |
+| D18 | **Final public launch narrative** | Deferred | Reviewed post/docs; explicit negation of performance claims |
+| D19 | **Project status v1.0.0** | Deferred | Supersedes [`PROJECT_STATUS_V0.9.0.md`](PROJECT_STATUS_V0.9.0.md) |
+| D20 | **Git tag `v1.0.0`** | Deferred | V10–V11 exit criteria met |
 
 ---
 
@@ -68,9 +71,9 @@ _Larger-model RunPod validation (formerly D15) is **active in V9 Phase E** — s
 | ID | Item | Status | Notes |
 |---|---|---|---|
 | D21 | **Sampling / parallel verify / bonus tokens** | Deferred | Out of scope until explicit future version |
-| D22 | **Multi-request batching** | Deferred | Serving-scale feature; not v0.8.0 |
+| D22 | **Multi-request batching** | Deferred | Serving-scale feature |
 | D23 | **CPU offload / CUDA kernels** | Deferred | No custom kernels in ExactKV today |
-| D24 | **Broader kvpress** | Deferred | KnormPress only (V6); no expansion without approval |
+| D24 | **Broader kvpress** | Deferred | KnormPress only (V6) |
 | D25 | **RESEARCH_BACKLOG sync** | Ongoing | Keep aligned with this register |
 
 ---
@@ -79,14 +82,13 @@ _Larger-model RunPod validation (formerly D15) is **active in V9 Phase E** — s
 
 vLLM and LMCache **direct integration** were judged **no-go** in
 [`SERVING_CONTEXT_FEASIBILITY.md`](SERVING_CONTEXT_FEASIBILITY.md). Items D11–D12
-remain **deferred, not forgotten** — sidecar probes (D13) are the approved
-re-entry path if stack integration is revisited.
+remain **deferred, not forgotten**.
 
 ---
 
 ## Related
 
-- [`V9_SCOPE_STATEMENT.md`](V9_SCOPE_STATEMENT.md) — active V9 scope (Phase 0 complete)
+- [`V10_SCOPE_DRAFT.md`](V10_SCOPE_DRAFT.md) — active V10 draft scope
+- [`RELEASE_NOTES_V0.9.0.md`](RELEASE_NOTES_V0.9.0.md) — what shipped in v0.9.0
 - [`ROADMAP.md`](ROADMAP.md) — version planning
 - [`RESEARCH_BACKLOG.md`](RESEARCH_BACKLOG.md) — experiment ideas
-- [`RELEASE_NOTES_V0.8.0.md`](RELEASE_NOTES_V0.8.0.md) — what shipped in v0.8.0

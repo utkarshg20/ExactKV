@@ -621,27 +621,36 @@ TurboQuant / TurboQuant+ first, then KIVI and KVQuant if feasible. V9 is the
 | C | Experiment 008 — restricted Python adapter vs baselines ✅ ([`EXPERIMENT_008_TURBOQUANT_PYTHON.md`](EXPERIMENT_008_TURBOQUANT_PYTHON.md)) |
 | D | KIVI offline D1–D3 ✅ ([`EXPERIMENT_009_KIVI_OFFLINE.md`](EXPERIMENT_009_KIVI_OFFLINE.md)); KVQuant D4–D6 ✅ ([`EXPERIMENT_010_KVQUANT_SIM.md`](EXPERIMENT_010_KVQUANT_SIM.md)) |
 | E | RunPod larger-model validation (≥1.5B) ✅ ([`EXPERIMENT_011_LARGER_MODEL_VALIDATION.md`](EXPERIMENT_011_LARGER_MODEL_VALIDATION.md)) |
-| F | `v0.9.0` release notes; v1.0.0 readiness decision |
+| F | `v0.9.0` release notes; V10 draft; v1.0.0 readiness decision ✅ |
+
+## Phase F complete — V9 / v0.9.0
+
+- [`RELEASE_NOTES_V0.9.0.md`](RELEASE_NOTES_V0.9.0.md) — V9 changelog
+- [`PROJECT_STATUS_V0.9.0.md`](PROJECT_STATUS_V0.9.0.md) — status at v0.9.0
+- [`V10_SCOPE_DRAFT.md`](V10_SCOPE_DRAFT.md) — next version draft
+- [`EXPERIMENT_INDEX.md`](EXPERIMENT_INDEX.md) — experiments 001–011
+
+**V9 is complete.** Tag `v0.9.0` ready. **Public launch deferred** — V10 required first.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) and
 [`V9_SCOPE_STATEMENT.md`](V9_SCOPE_STATEMENT.md).
 
 ## Positioning
 
-- **v0.8.0 is not final public launch** — V9 makes the project more impressive first.
-- ExactKV does **not** claim TurboQuant, KIVI, or KVQuant results until integrated.
-- Valid outcome: documented **no-go** with blocker write-up.
+- **v0.9.0 is not final public launch** — V10 hardens evaluation before v1.0.0.
+- ExactKV evaluated restricted TurboQuant, KIVI, and KVQuant adapters honestly.
+- **v1.0.0** follows V10 (and V11 substance), not immediately after v0.9.0.
 
 ---
 
-# V10: Compression research gauntlet
+# V10: Evaluation suite hardening and divergence forensics (next)
 
 ## Goal
 
-Sparse V dequantization, true attention logging, per-layer/head/token divergence
-forensics, pre-RoPE key quantization experiments.
+Expand benchmark suites (`core_v2`, category panels), run draft/generation sensitivity
+sweeps, upgrade divergence forensics beyond 006A proxies. **Not** a performance benchmark.
 
-See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V10.
+See [`V10_SCOPE_DRAFT.md`](V10_SCOPE_DRAFT.md) and [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V10.
 
 ---
 

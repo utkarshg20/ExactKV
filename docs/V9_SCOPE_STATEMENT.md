@@ -14,7 +14,10 @@ complete** — Experiment 010 KVQuant simquant evaluation
 Qwen2.5-1.5B, 238 cells, `exactkv_failures == 0`.
 **Builds on:** `v0.8.0` — V8 complete; serving harness (Experiment 007);
 `BackendAdapter` + restricted kvpress (V6); simulated layer-aware policies (V7).
-**Not public launch.** V9 is the **real backend credibility phase**.
+**Phase F complete** — v0.9.0 release package
+([`RELEASE_NOTES_V0.9.0.md`](RELEASE_NOTES_V0.9.0.md), [`PROJECT_STATUS_V0.9.0.md`](PROJECT_STATUS_V0.9.0.md)).
+**V9 complete as `v0.9.0`.** **Not public launch.** v1.0.0 deferred pending V10.
+V9 is the **real backend credibility phase**.
 
 > ExactKV does **not** implement TurboQuant, TurboQuant+, KIVI, KVQuant, KVTC,
 > Palu, Sparse V, vLLM, LMCache, or PagedAttention in Phase 0 or by default in V9.
@@ -417,9 +420,9 @@ requirements.
 - [x] Phase D5 KVQuant simquant adapter prototype — [`KVQUANT_ADAPTER_PROTOTYPE.md`](KVQUANT_ADAPTER_PROTOTYPE.md)
 - [x] Phase D6 Experiment 010 — [`EXPERIMENT_010_KVQUANT_SIM.md`](EXPERIMENT_010_KVQUANT_SIM.md)
 - [x] Phase E Experiment 011 — [`EXPERIMENT_011_LARGER_MODEL_VALIDATION.md`](EXPERIMENT_011_LARGER_MODEL_VALIDATION.md)
-- [ ] Phase F release notes v0.9.0 **or** documented blocker
-- [ ] `RELEASE_NOTES_V0.9.0.md`, updated experiment index
-- [ ] No forbidden performance fields in code/docs/reports
+- [x] Phase F release notes v0.9.0 — [`RELEASE_NOTES_V0.9.0.md`](RELEASE_NOTES_V0.9.0.md)
+- [x] `PROJECT_STATUS_V0.9.0.md`, [`V10_SCOPE_DRAFT.md`](V10_SCOPE_DRAFT.md), updated experiment index
+- [x] No forbidden performance fields in code/docs/reports (Phase F audit)
 
 **v1.0.0** requires V9–V11 substance plus launch package — see
 [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md).
@@ -441,7 +444,7 @@ requirements.
 | **Phase D5** | KVQuant simquant adapter prototype (if approved) | [`KVQUANT_ADAPTER_PROTOTYPE.md`](KVQUANT_ADAPTER_PROTOTYPE.md); smoke `exactkv_failures == 0` | ✅ Complete — factory-only; not in default registry |
 | **Phase D6** | Experiment 010 — KVQuant simquant evaluation | [`EXPERIMENT_010_KVQUANT_SIM.md`](EXPERIMENT_010_KVQUANT_SIM.md); 272 cells, `exactkv_failures == 0` | ✅ Complete |
 | **Phase E** | RunPod larger-model validation | [`EXPERIMENT_011_LARGER_MODEL_VALIDATION.md`](EXPERIMENT_011_LARGER_MODEL_VALIDATION.md); 1.5B, 238 cells | ✅ Complete |
-| **Phase F** | Release notes v0.9.0, index, bundle plan, v1.0.0 readiness decision | `RELEASE_NOTES_V0.9.0.md` | Pending F |
+| **Phase F** | Release notes v0.9.0, index, V10 draft, v1.0.0 readiness decision | [`RELEASE_NOTES_V0.9.0.md`](RELEASE_NOTES_V0.9.0.md) | ✅ Complete — **ready to tag v0.9.0**; v1.0.0 deferred pending V10 |
 
 > Phases A–F require **separate explicit approval** before code or experiments.
 > Phase 0 introduces no code and no behaviour change.
@@ -471,6 +474,9 @@ requirements.
 | [`KVQUANT_ADAPTER_PROTOTYPE.md`](KVQUANT_ADAPTER_PROTOTYPE.md) | Phase D5 restricted KVQuant simquant adapter prototype |
 | [`EXPERIMENT_010_KVQUANT_SIM.md`](EXPERIMENT_010_KVQUANT_SIM.md) | Phase D6 Experiment 010 KVQuant simquant evaluation |
 | [`EXPERIMENT_011_LARGER_MODEL_VALIDATION.md`](EXPERIMENT_011_LARGER_MODEL_VALIDATION.md) | Phase E larger-model RunPod validation (Qwen2.5-1.5B) |
+| [`RELEASE_NOTES_V0.9.0.md`](RELEASE_NOTES_V0.9.0.md) | V9 / v0.9.0 release notes |
+| [`PROJECT_STATUS_V0.9.0.md`](PROJECT_STATUS_V0.9.0.md) | Project status at v0.9.0 |
+| [`V10_SCOPE_DRAFT.md`](V10_SCOPE_DRAFT.md) | V10 evaluation-suite hardening draft |
 | [`PROJECT_STATUS_V0.8.0.md`](PROJECT_STATUS_V0.8.0.md) | Pre-V9 status |
 
 ---

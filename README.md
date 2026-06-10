@@ -30,32 +30,31 @@ is faster. It does **not** claim throughput, latency, speedup, or production rea
 
 | Item | Value |
 |---|---|
-| **Latest release** | [`v0.8.0`](docs/RELEASE_NOTES_V0.8.0.md) — serving-context harness (Experiment 007) |
-| **Next** | [**V9**](docs/V9_SCOPE_STATEMENT.md) — [Experiment 011 larger-model validation](docs/EXPERIMENT_011_LARGER_MODEL_VALIDATION.md) complete; Phase F release notes pending |
-| **Status** | Research milestone; [not public-launch final](docs/PROJECT_STATUS_V0.8.0.md) |
+| **Latest release** | [`v0.9.0`](docs/RELEASE_NOTES_V0.9.0.md) — real-backend gauntlet (Experiments 008–011) |
+| **Next** | [**V10**](docs/V10_SCOPE_DRAFT.md) — harden evaluation suite and divergence forensics before public launch |
+| **Status** | Research milestone; [not public-launch final](docs/PROJECT_STATUS_V0.9.0.md) |
 | **Hard gate** | `exactkv_failures == 0` on every published experiment |
 | **Default model** | `Qwen/Qwen2.5-0.5B` (greedy, single-request, CPU-first) |
 | **Compressors** | 15 built-in (`noop`, `int8`, asymmetric `_sim`, layer-aware boundary, `backend_passthrough`, …) |
 
 ---
 
-## Latest results (v0.8.0)
+## Latest results (v0.9.0)
 
-**Experiment 007 — serving harness (Mode B).** 238 cells on the core suite;
-`exactkv_failures == 0`; all harness invariants pass. Not vLLM/LMCache integration.
+**V9 real-backend gauntlet** — Experiments 008–011; `exactkv_failures == 0` on all cells.
+Restricted adapters are **factory-only** (not default registry).
 
-| Compressor | Accept rate |
+| Track | Headline (0.5B core, accept) |
 |---|---:|
-| `k_full_v8` | 0.990 |
-| `k8_v4_boundary4_v8_sim` | 0.954 |
-| `k8_v4_sim` | 0.891 |
+| `int8` / `k8_v4_boundary4_v8_sim` | ~0.97 / ~0.95 |
+| KVQuant simquant (Exp 010) | **0.792** |
+| TurboQuant Python (Exp 008) | **0.435** |
+| KIVI offline (Exp 009) | **0.012** |
+| Qwen2.5-1.5B (Exp 011) | exactness preserved; boundary4 **0.954** > k8_v4_sim **0.945** |
 
-Prior highlight ([Experiment 006C](docs/EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md)):
-boundary V depth N=4 → **0.954** accept (+0.063 vs uniform `k8_v4_sim`).
-
-> ⚠️ Harness is local compatibility evaluation only. `_sim` compressors use **int8
-> containers**. No throughput, latency, or production-serving claims. See
-> [v0.8.0 release notes](docs/RELEASE_NOTES_V0.8.0.md).
+> ⚠️ Not production backends (no llama.cpp, KIVI CUDA, KVQuant deployment CUDA).
+> `_sim` = int8 containers. No throughput, latency, or production-serving claims.
+> See [v0.9.0 release notes](docs/RELEASE_NOTES_V0.9.0.md).
 
 ---
 
@@ -69,8 +68,9 @@ boundary V depth N=4 → **0.954** accept (+0.063 vs uniform `k8_v4_sim`).
 | V6 | `v0.6.0` | `BackendAdapter`; restricted kvpress KnormPress; Experiment 005 | ✅ |
 | V7 | `v0.7.0` | Layer-aware V policies; Experiments 006 / 006C | ✅ |
 | V8 | `v0.8.0` | Serving harness; Experiment 007 | ✅ |
-| V9 | — | Real backend gauntlet (TurboQuant+, KIVI, KVQuant) | Phase 0 ✅ |
-| V10–V12 | — | Research, scale, launch → v1.0.0 | Planned |
+| V9 | `v0.9.0` | Real backend gauntlet; Exp 008–011; 1.5B validation | ✅ |
+| V10 | — | Evaluation suite hardening; divergence forensics | Next |
+| V11–V12 | — | Scale, serving probes → v1.0.0 | Planned |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
