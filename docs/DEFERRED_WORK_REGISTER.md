@@ -7,10 +7,10 @@ implemented** unless a linked experiment or release note says otherwise.
 > latency, speedup, runtime, or production-serving claims; `_sim` ≠ packed-bit storage;
 > external paper results are **not** ExactKV results.
 
-**Version path:** V9 ✅ → **V10 (active)** → V11 → V12/v1.0.0 (public launch).
+**Version path:** V9 ✅ → **V10 (active, Phase 0)** → V11 → V12/v1.0.0 (public launch).
 
 **V9 scope:** [`V9_SCOPE_STATEMENT.md`](V9_SCOPE_STATEMENT.md) — **complete** (`v0.9.0`).
-**V10 draft:** [`V10_SCOPE_DRAFT.md`](V10_SCOPE_DRAFT.md).
+**V10 scope:** [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — **Phase 0 active**.
 
 ---
 
@@ -27,19 +27,22 @@ implemented** unless a linked experiment or release note says otherwise.
 
 ---
 
-## V10 — Evaluation suite hardening and divergence forensics (active / planned)
+## V10 — Evaluation suite hardening and divergence forensics (active)
 
-| ID | Item | Status | Success criteria |
-|---|---|---|---|
-| D26 | **`core_v2` + category benchmark suites** | **Planned (V10)** | Versioned prompts; per-category leaderboards; Exp 012 |
-| D27 | **Draft length sensitivity (2/4/8)** | **Planned (V10)** | Documented acceptance/divergence vs `draft_len`; Exp 013 |
-| D28 | **Generation length sensitivity (16/32/64)** | **Planned (V10)** | Phased sweeps; no performance claims |
-| D29 | **Category-stratified divergence forensics** | **Planned (V10)** | Supersede 006A proxy where feasible |
-| D6 | **Sparse V dequantization** | Deferred (V10 research) | Acceptance-only evaluation |
-| D7 | **True attention logging** | Deferred (V10 optional) | Small subset; no fabricated weights |
-| D8 | **Per-layer/head/token divergence forensics** | **Planned (V10)** | Layer/head where weights exist |
-| D9 | **Pre-RoPE key quantization experiments** | Deferred | Compare vs post-RoPE baselines |
-| D10 | **Boundary / layer-policy extensions** | Deferred | N>4 only with explicit approval |
+| ID | Item | Status | V10 phase | Success criteria |
+|---|---|---|---|---|
+| D26 | **`core_v2` + category benchmark suites** | **Planned** | Phase 1 | Versioned prompts; metadata schema; suite validation tests |
+| D27 | **Draft length sensitivity (2/4/8)** | **Planned** | Phase 3 (Exp 013) | Documented acceptance/divergence vs `draft_len` |
+| D28 | **Generation length sensitivity (16/32/64)** | **Planned** | Phase 3 (Exp 013) | Phased sweeps; no performance claims |
+| D29 | **Category-stratified divergence forensics** | **Planned** | Phase 3 (Exp 013) | Supersede 006A proxy where feasible |
+| — | **Per-category leaderboards + prompt win/loss** | **Planned** | Phase 2 (Exp 012) | Category tables; regression ID tracking |
+| D6 | **Sparse V dequantization** | Deferred (V10 research) | Phase 3+ | Acceptance-only evaluation |
+| D7 | **True attention logging** | Deferred (V10 optional) | Phase 3+ | Small subset; no fabricated weights |
+| D8 | **Per-layer/head/token divergence forensics** | **Planned** | Phase 3 | Layer/head where weights exist |
+| D9 | **Pre-RoPE key quantization experiments** | Deferred | — | Compare vs post-RoPE baselines |
+| D10 | **Boundary / layer-policy extensions** | Deferred | — | N>4 only with explicit approval |
+
+**Phase 0 (active):** formal scope — [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md).
 
 ---
 
@@ -52,6 +55,8 @@ implemented** unless a linked experiment or release note says otherwise.
 | D13 | **vLLM / LMCache sidecar probe** | Deferred | Metadata-only or isolated sidecar evaluation |
 | D14 | **Active GPU memory profiling** | Deferred | Approved methodology; distinct from `total_kv_footprint_bytes` |
 | D16 | **PagedAttention kernel integration** | Deferred | Local harness remains default |
+
+V11 covers serving/profiling/optional production-path work — **not** V10 evaluation-suite scope.
 
 ---
 
@@ -88,7 +93,8 @@ remain **deferred, not forgotten**.
 
 ## Related
 
-- [`V10_SCOPE_DRAFT.md`](V10_SCOPE_DRAFT.md) — active V10 draft scope
+- [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — active V10 formal scope
+- [`V10_SCOPE_DRAFT.md`](V10_SCOPE_DRAFT.md) — superseded draft
 - [`RELEASE_NOTES_V0.9.0.md`](RELEASE_NOTES_V0.9.0.md) — what shipped in v0.9.0
 - [`ROADMAP.md`](ROADMAP.md) — version planning
 - [`RESEARCH_BACKLOG.md`](RESEARCH_BACKLOG.md) — experiment ideas

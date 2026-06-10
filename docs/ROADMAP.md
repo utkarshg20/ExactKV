@@ -627,7 +627,8 @@ TurboQuant / TurboQuant+ first, then KIVI and KVQuant if feasible. V9 is the
 
 - [`RELEASE_NOTES_V0.9.0.md`](RELEASE_NOTES_V0.9.0.md) — V9 changelog
 - [`PROJECT_STATUS_V0.9.0.md`](PROJECT_STATUS_V0.9.0.md) — status at v0.9.0
-- [`V10_SCOPE_DRAFT.md`](V10_SCOPE_DRAFT.md) — next version draft
+- [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — V10 formal scope (Phase 0)
+- [`V10_SCOPE_DRAFT.md`](V10_SCOPE_DRAFT.md) — superseded draft
 - [`EXPERIMENT_INDEX.md`](EXPERIMENT_INDEX.md) — experiments 001–011
 
 **V9 is complete.** Tag `v0.9.0` ready. **Public launch deferred** — V10 required first.
@@ -643,14 +644,30 @@ See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) and
 
 ---
 
-# V10: Evaluation suite hardening and divergence forensics (next)
+# V10: Evaluation suite hardening and divergence forensics (Phase 0 active)
 
 ## Goal
 
 Expand benchmark suites (`core_v2`, category panels), run draft/generation sensitivity
 sweeps, upgrade divergence forensics beyond 006A proxies. **Not** a performance benchmark.
+**Not public launch** — v1.0.0 deferred until V10 exits (and V11 substance).
 
-See [`V10_SCOPE_DRAFT.md`](V10_SCOPE_DRAFT.md) and [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V10.
+## Phase 0 deliverable
+
+- [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — formal phased scope, Experiments
+  012–013 plan, suite taxonomy, exit criteria.
+
+## Planned phases (1–5)
+
+| Phase | Focus |
+|---|---|
+| 1 | Suite authoring (`core_v2` + category suites) |
+| 2 | Experiment 012 — suite expansion + per-category leaderboards |
+| 3 | Experiment 013 — sensitivity + divergence forensics |
+| 4 | Optional real-backend category spot-checks (factory-only) |
+| 5 | v1.0.0 readiness assessment (not launch) |
+
+See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V10 (D26–D29).
 
 ---
 

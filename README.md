@@ -31,7 +31,7 @@ is faster. It does **not** claim throughput, latency, speedup, or production rea
 | Item | Value |
 |---|---|
 | **Latest release** | [`v0.9.0`](docs/RELEASE_NOTES_V0.9.0.md) — real-backend gauntlet (Experiments 008–011) |
-| **Next** | [**V10**](docs/V10_SCOPE_DRAFT.md) — harden evaluation suite and divergence forensics before public launch |
+| **Next** | [**V10**](docs/V10_SCOPE_STATEMENT.md) — evaluation-suite hardening and divergence forensics before public launch |
 | **Status** | Research milestone; [not public-launch final](docs/PROJECT_STATUS_V0.9.0.md) |
 | **Hard gate** | `exactkv_failures == 0` on every published experiment |
 | **Default model** | `Qwen/Qwen2.5-0.5B` (greedy, single-request, CPU-first) |
@@ -69,7 +69,7 @@ Restricted adapters are **factory-only** (not default registry).
 | V7 | `v0.7.0` | Layer-aware V policies; Experiments 006 / 006C | ✅ |
 | V8 | `v0.8.0` | Serving harness; Experiment 007 | ✅ |
 | V9 | `v0.9.0` | Real backend gauntlet; Exp 008–011; 1.5B validation | ✅ |
-| V10 | — | Evaluation suite hardening; divergence forensics | Next |
+| V10 | — | Evaluation suite hardening; divergence forensics ([scope](docs/V10_SCOPE_STATEMENT.md)) | Phase 0 |
 | V11–V12 | — | Scale, serving probes → v1.0.0 | Planned |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
@@ -751,8 +751,9 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | Topic | Document |
 |---|---|
 | v0.8.0 docs | [`RELEASE_NOTES_V0.8.0.md`](docs/RELEASE_NOTES_V0.8.0.md) · [`EXPERIMENT_INDEX.md`](docs/EXPERIMENT_INDEX.md) · [`PROJECT_STATUS_V0.8.0.md`](docs/PROJECT_STATUS_V0.8.0.md) · [`DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) |
-| V9 scope (current) | [`V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) |
-| V9+ planning | [`ROADMAP.md`](docs/ROADMAP.md) · [`DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) |
+| V9 scope | [`V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) |
+| V10 scope (active) | [`V10_SCOPE_STATEMENT.md`](docs/V10_SCOPE_STATEMENT.md) |
+| Planning | [`ROADMAP.md`](docs/ROADMAP.md) · [`DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) |
 | V6–V8 planning detail | [`docs/FUTURE_ROADMAP_V6_V8.md`](docs/FUTURE_ROADMAP_V6_V8.md) |
 | Asymmetric K/V research | [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md) |
 | Related work survey | [`docs/RELATED_WORK_KV_CACHE_COMPRESSION.md`](docs/RELATED_WORK_KV_CACHE_COMPRESSION.md) |
