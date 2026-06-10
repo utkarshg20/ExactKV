@@ -177,10 +177,10 @@ pytest tests/test_kvquant_adapter.py tests/test_backend_adapter_poc.py -q
 |---|---|
 | D4b GPU validation | ✅ |
 | D5 adapter + smoke gate | ✅ RunPod pytest 65 passed |
-| Experiment 010 approval | **Separate** — not started in D5 |
+| Experiment 010 (Phase D6) | ✅ [`EXPERIMENT_010_KVQUANT_SIM.md`](EXPERIMENT_010_KVQUANT_SIM.md) — 272 cells, `exactkv_failures == 0` |
 | Registry / default deps | **No** |
 
-Experiment 010 remains a distinct milestone after D5 smoke passes.
+Experiment 010 (Phase D6) is complete — see [`EXPERIMENT_010_KVQUANT_SIM.md`](EXPERIMENT_010_KVQUANT_SIM.md).
 
 ---
 

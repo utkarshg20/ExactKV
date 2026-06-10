@@ -20,7 +20,7 @@ implemented** unless a linked experiment or release note says otherwise.
 | D1 | **TurboQuant full integration** | **Evaluated (Phase C)** | D+ / Exp 009 anchor | Exp 008: 272 cells, `exactkv_failures == 0`; accept **0.435** vs `int8` **0.961**; see [`EXPERIMENT_008_TURBOQUANT_PYTHON.md`](EXPERIMENT_008_TURBOQUANT_PYTHON.md) |
 | D2 | **TurboQuant+ full integration** | **Evaluated (Python path only)** | D+ | Production llama.cpp/MLX formats still deferred; Python adapter evaluated in Exp 008 |
 | D3 | **KIVI adapter** | **Evaluated (Phase D3)** | D+ / Phase E | Exp 009: 272 cells, `exactkv_failures == 0`; accept **0.012** vs `int8` **0.961**; offline simulate only — see [`EXPERIMENT_009_KIVI_OFFLINE.md`](EXPERIMENT_009_KIVI_OFFLINE.md) |
-| D4 | **KVQuant-style adapter** | **Prototype complete (Phase D5)** | Exp 010 | D5 `KVQuantSimAdapter` factory-only; RunPod L40S smoke gate `exactkv_failures == 0` (2 prompts × 2 draft lengths × 8 tokens); not in default registry — see [`KVQUANT_ADAPTER_PROTOTYPE.md`](KVQUANT_ADAPTER_PROTOTYPE.md) |
+| D4 | **KVQuant-style adapter** | **Evaluated (Phase D6)** | Phase E | Exp 010: 272 cells, `exactkv_failures == 0`; `kvquant_sim_qwen05b` accept **0.792** vs `int8` **0.966**; simquant only, not deployment CUDA — see [`EXPERIMENT_010_KVQUANT_SIM.md`](EXPERIMENT_010_KVQUANT_SIM.md) |
 | D5 | **KVTC / Palu feasibility** | Planned (V9 optional) | D | Written feasibility + optional thin PoC; V5 metadata honesty |
 | D15 | **Larger-model RunPod validation** | **Planned (V9)** | E | ≥1.5B Qwen2.5; `exactkv_failures == 0`; hardware manifest |
 
