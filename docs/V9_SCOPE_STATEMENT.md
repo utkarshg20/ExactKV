@@ -3,8 +3,10 @@
 **Status:** Phases 0–C complete for TurboQuant Python track. **TurboQuant not in
 default registry.** Experiment 008 complete (`exactkv_failures == 0`). **Phase D
 complete** (KIVI offline track D1–D3). **Phase D4 complete** (D4a static + **D4b
-RunPod GPU validation** on L40S; Option A faithful adapter go). Phase D5 KVQuant
-adapter pending RunPod GPU confirmation + approval.
+RunPod GPU validation** on L40S; Option A faithful adapter go). **Phase D5
+complete** — restricted KVQuant simquant adapter prototype
+([`KVQUANT_ADAPTER_PROTOTYPE.md`](KVQUANT_ADAPTER_PROTOTYPE.md)); factory-only,
+not in default registry; RunPod smoke gate `exactkv_failures == 0`.
 **Builds on:** `v0.8.0` — V8 complete; serving harness (Experiment 007);
 `BackendAdapter` + restricted kvpress (V6); simulated layer-aware policies (V7).
 **Not public launch.** V9 is the **real backend credibility phase**.
@@ -407,6 +409,7 @@ requirements.
 - [x] Phase D2 KIVI offline adapter — [`KIVI_ADAPTER_PROTOTYPE.md`](KIVI_ADAPTER_PROTOTYPE.md)
 - [x] Experiment 009 complete — [`EXPERIMENT_009_KIVI_OFFLINE.md`](EXPERIMENT_009_KIVI_OFFLINE.md)
 - [x] Phase D4 KVQuant RunPod validation — [`KVQUANT_RUNPOD_VALIDATION.md`](KVQUANT_RUNPOD_VALIDATION.md)
+- [x] Phase D5 KVQuant simquant adapter prototype — [`KVQUANT_ADAPTER_PROTOTYPE.md`](KVQUANT_ADAPTER_PROTOTYPE.md)
 - [ ] Phase E RunPod validation (≥1.5B) **or** documented GPU blocker
 - [ ] `RELEASE_NOTES_V0.9.0.md`, updated experiment index
 - [ ] No forbidden performance fields in code/docs/reports
@@ -428,7 +431,7 @@ requirements.
 | **Phase D2** | KIVI restricted offline adapter prototype | [`KIVI_ADAPTER_PROTOTYPE.md`](KIVI_ADAPTER_PROTOTYPE.md); smoke `exactkv_failures == 0` | ✅ Complete |
 | **Phase D3** | Experiment 009 — KIVI offline evaluation | [`EXPERIMENT_009_KIVI_OFFLINE.md`](EXPERIMENT_009_KIVI_OFFLINE.md); 272 cells, `exactkv_failures == 0` | ✅ Complete |
 | **Phase D4** | KVQuant RunPod validation + adapter decision | [`KVQUANT_RUNPOD_VALIDATION.md`](KVQUANT_RUNPOD_VALIDATION.md); D4b L40S GPU | ✅ Complete (D4a static + D4b GPU) |
-| **Phase D5** | KVQuant simquant adapter prototype (if approved) | Faithful draft-clone replay; bias/transformers patches | Pending approval (D4b gates passed) |
+| **Phase D5** | KVQuant simquant adapter prototype (if approved) | [`KVQUANT_ADAPTER_PROTOTYPE.md`](KVQUANT_ADAPTER_PROTOTYPE.md); smoke `exactkv_failures == 0` | ✅ Complete — factory-only; not in default registry |
 | **Phase E** | RunPod larger-model validation | ≥1.5B exactness gate report | Pending D5 or parallel |
 | **Phase F** | Release notes v0.9.0, index, bundle plan, v1.0.0 readiness decision | `RELEASE_NOTES_V0.9.0.md` | Pending E |
 
@@ -457,6 +460,7 @@ requirements.
 | [`KIVI_ADAPTER_PROTOTYPE.md`](KIVI_ADAPTER_PROTOTYPE.md) | Phase D2 restricted offline KIVI adapter |
 | [`EXPERIMENT_009_KIVI_OFFLINE.md`](EXPERIMENT_009_KIVI_OFFLINE.md) | Phase D3 Experiment 009 results |
 | [`KVQUANT_RUNPOD_VALIDATION.md`](KVQUANT_RUNPOD_VALIDATION.md) | Phase D4 KVQuant RunPod validation + D5 adapter decision |
+| [`KVQUANT_ADAPTER_PROTOTYPE.md`](KVQUANT_ADAPTER_PROTOTYPE.md) | Phase D5 restricted KVQuant simquant adapter prototype |
 | [`PROJECT_STATUS_V0.8.0.md`](PROJECT_STATUS_V0.8.0.md) | Pre-V9 status |
 
 ---

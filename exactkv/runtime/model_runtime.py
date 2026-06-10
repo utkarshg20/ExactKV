@@ -3,7 +3,18 @@ from __future__ import annotations
 from typing import Any
 
 import torch
+import transformers
 from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedModel, PreTrainedTokenizerBase
+
+
+def _hf_dtype_kwarg(torch_dtype: torch.dtype | None) -> dict[str, Any]:
+    """Return the HF ``from_pretrained`` dtype kwarg for the installed transformers."""
+    if torch_dtype is None:
+        return {}
+    major = int(transformers.__version__.split(".", maxsplit=1)[0])
+    if major >= 5:
+        return {"dtype": torch_dtype}
+    return {"torch_dtype": torch_dtype}
 
 
 _DTYPE_MAP: dict[str, torch.dtype] = {
@@ -47,8 +58,7 @@ class ModelRuntime:
         explicit_device: str | None = None if device == "auto" else device
 
         load_kwargs: dict[str, Any] = {"device_map": device_map}
-        if torch_dtype is not None:
-            load_kwargs["dtype"] = torch_dtype
+        load_kwargs.update(_hf_dtype_kwarg(torch_dtype))
 
         self.tokenizer: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
             model_name, trust_remote_code=True
