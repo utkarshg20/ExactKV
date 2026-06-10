@@ -619,7 +619,7 @@ TurboQuant / TurboQuant+ first, then KIVI and KVQuant if feasible. V9 is the
 | A | TurboQuant / TurboQuant+ deep feasibility ✅ |
 | B | TurboQuant adapter prototype + smoke exactness gate ✅ |
 | C | Experiment 008 — restricted Python adapter vs baselines ✅ ([`EXPERIMENT_008_TURBOQUANT_PYTHON.md`](EXPERIMENT_008_TURBOQUANT_PYTHON.md)) |
-| D | KIVI / KVQuant feasibility + Experiment 009 |
+| D | KIVI offline track: D1 feasibility ✅, D2 adapter ✅, D3 Exp 009 ✅ ([`EXPERIMENT_009_KIVI_OFFLINE.md`](EXPERIMENT_009_KIVI_OFFLINE.md)); KVQuant deferred RunPod |
 | E | RunPod larger-model validation (≥1.5B) |
 | F | `v0.9.0` release notes; v1.0.0 readiness decision |
 

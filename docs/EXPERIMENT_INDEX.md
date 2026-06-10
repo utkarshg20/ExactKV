@@ -1,6 +1,6 @@
 # ExactKV Experiment Index
 
-One-line reference for published experiments **001–008**. All report
+One-line reference for published experiments **001–009**. All report
 `exactkv_failures == 0` unless noted. JSON/CSV artifacts are **gitignored**
 under `reports/`.
 
@@ -21,6 +21,7 @@ under `reports/`.
 | 006C | Boundary depth | [`EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md`](EXPERIMENT_006C_BOUNDARY_DEPTH_ABLATION.md) | Boundary depth N=1/2/4 ablation | 170 | `k8_v4_boundary4_v8_sim` accept **0.954** | 0 | Not real packed-bit; not attention-gated |
 | 007 | Serving harness | [`EXPERIMENT_007_SERVING_CONTEXT.md`](EXPERIMENT_007_SERVING_CONTEXT.md) | Serving-context compatibility (Mode B) | 238 | All harness invariants pass; 907 commit rounds | 0 | **Not** vLLM/LMCache; identity phys/logical panel |
 | 008 | TurboQuant Python | [`EXPERIMENT_008_TURBOQUANT_PYTHON.md`](EXPERIMENT_008_TURBOQUANT_PYTHON.md) | Restricted TurboQuant adapter vs baselines | 272 | `turboquant_python_k3_v3` accept **0.435**; exactness preserved | 0 | Python path only; not llama.cpp/MLX; `supports_real_bytes_claim=False` |
+| 009 | KIVI offline | [`EXPERIMENT_009_KIVI_OFFLINE.md`](EXPERIMENT_009_KIVI_OFFLINE.md) | Restricted KIVI offline adapter vs baselines | 272 | `kivi_offline_k2_v2` accept **0.012**; exactness preserved | 0 | Offline simulate only; not CUDA/Triton; `supports_real_bytes_claim=False` |
 
 ---
 
@@ -32,6 +33,7 @@ under `reports/`.
 | 005 | `.venv-kvpress/bin/python scripts/run_experiment_005_kvpress_knorm.py` |
 | 007 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_007_serving_context.py` |
 | 008 | `PYTHONPATH=vendor/turboquant_plus .venv-turboquant/bin/python scripts/run_experiment_008_turboquant_python.py` |
+| 009 | `PYTHONPATH=/tmp/kivi_research .venv-turboquant/bin/python scripts/run_experiment_009_kivi_offline.py` |
 
 ---
 

@@ -1,9 +1,9 @@
 # V9 Scope Statement: Real Backend Integration Gauntlet
 
 **Status:** Phases 0–C complete for TurboQuant Python track. **TurboQuant not in
-default registry.** Experiment 008 complete (`exactkv_failures == 0`). **Phase D1
-complete** (KIVI/KVQuant feasibility). **Phase D2 complete** (KIVI offline adapter
-smoke gate). Phase D3 Experiment 009 requires separate approval.
+default registry.** Experiment 008 complete (`exactkv_failures == 0`). **Phase D
+complete** (KIVI offline track): D1 feasibility, D2 adapter prototype, D3
+Experiment 009 (`exactkv_failures == 0`). Phase E RunPod validation next.
 **Builds on:** `v0.8.0` — V8 complete; serving harness (Experiment 007);
 `BackendAdapter` + restricted kvpress (V6); simulated layer-aware policies (V7).
 **Not public launch.** V9 is the **real backend credibility phase**.
@@ -403,6 +403,8 @@ requirements.
 - [x] Phase B adapter smoke (`exactkv_failures == 0`) — [`TURBOQUANT_ADAPTER_PROTOTYPE.md`](TURBOQUANT_ADAPTER_PROTOTYPE.md)
 - [x] Experiment 008 complete — [`EXPERIMENT_008_TURBOQUANT_PYTHON.md`](EXPERIMENT_008_TURBOQUANT_PYTHON.md)
 - [x] Phase D1 KIVI/KVQuant decision documented — [`KIVI_KVQUANT_INTEGRATION_RESEARCH.md`](KIVI_KVQUANT_INTEGRATION_RESEARCH.md)
+- [x] Phase D2 KIVI offline adapter — [`KIVI_ADAPTER_PROTOTYPE.md`](KIVI_ADAPTER_PROTOTYPE.md)
+- [x] Experiment 009 complete — [`EXPERIMENT_009_KIVI_OFFLINE.md`](EXPERIMENT_009_KIVI_OFFLINE.md)
 - [ ] Phase E RunPod validation (≥1.5B) **or** documented GPU blocker
 - [ ] `RELEASE_NOTES_V0.9.0.md`, updated experiment index
 - [ ] No forbidden performance fields in code/docs/reports
@@ -422,7 +424,7 @@ requirements.
 | **Phase C** | Experiment 008 + report | `EXPERIMENT_008_TURBOQUANT_PYTHON.md`; gitignored JSON/CSV | ✅ Complete — 272 cells, `exactkv_failures == 0` |
 | **Phase D1** | KIVI / KVQuant feasibility (research only) | [`KIVI_KVQUANT_INTEGRATION_RESEARCH.md`](KIVI_KVQUANT_INTEGRATION_RESEARCH.md); scratch inspect script | ✅ Complete — **KIVI restricted go**; KVQuant deferred pending RunPod |
 | **Phase D2** | KIVI restricted offline adapter prototype | [`KIVI_ADAPTER_PROTOTYPE.md`](KIVI_ADAPTER_PROTOTYPE.md); smoke `exactkv_failures == 0` | ✅ Complete |
-| **Phase D3** | Experiment 009 + optional KVQuant RunPod validation | Exp 009 report if approved | Pending D3 approval |
+| **Phase D3** | Experiment 009 — KIVI offline evaluation | [`EXPERIMENT_009_KIVI_OFFLINE.md`](EXPERIMENT_009_KIVI_OFFLINE.md); 272 cells, `exactkv_failures == 0` | ✅ Complete |
 | **Phase E** | RunPod larger-model validation | ≥1.5B exactness gate report | Pending D or C |
 | **Phase F** | Release notes v0.9.0, index, bundle plan, v1.0.0 readiness decision | `RELEASE_NOTES_V0.9.0.md` | Pending E |
 
@@ -449,6 +451,7 @@ requirements.
 | [`EXPERIMENT_008_TURBOQUANT_PYTHON.md`](EXPERIMENT_008_TURBOQUANT_PYTHON.md) | Phase C Experiment 008 results |
 | [`KIVI_KVQUANT_INTEGRATION_RESEARCH.md`](KIVI_KVQUANT_INTEGRATION_RESEARCH.md) | Phase D1 KIVI/KVQuant feasibility + recommendation |
 | [`KIVI_ADAPTER_PROTOTYPE.md`](KIVI_ADAPTER_PROTOTYPE.md) | Phase D2 restricted offline KIVI adapter |
+| [`EXPERIMENT_009_KIVI_OFFLINE.md`](EXPERIMENT_009_KIVI_OFFLINE.md) | Phase D3 Experiment 009 results |
 | [`PROJECT_STATUS_V0.8.0.md`](PROJECT_STATUS_V0.8.0.md) | Pre-V9 status |
 
 ---

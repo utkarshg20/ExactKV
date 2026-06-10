@@ -31,7 +31,7 @@ is faster. It does **not** claim throughput, latency, speedup, or production rea
 | Item | Value |
 |---|---|
 | **Latest release** | [`v0.8.0`](docs/RELEASE_NOTES_V0.8.0.md) — serving-context harness (Experiment 007) |
-| **Next** | [**V9**](docs/V9_SCOPE_STATEMENT.md) — [D2 KIVI offline adapter](docs/KIVI_ADAPTER_PROTOTYPE.md) done; Phase D3 Experiment 009 (pending approval) |
+| **Next** | [**V9**](docs/V9_SCOPE_STATEMENT.md) — [Exp 009 KIVI offline](docs/EXPERIMENT_009_KIVI_OFFLINE.md) done; Phase E RunPod validation |
 | **Status** | Research milestone; [not public-launch final](docs/PROJECT_STATUS_V0.8.0.md) |
 | **Hard gate** | `exactkv_failures == 0` on every published experiment |
 | **Default model** | `Qwen/Qwen2.5-0.5B` (greedy, single-request, CPU-first) |
