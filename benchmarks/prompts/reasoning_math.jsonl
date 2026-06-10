@@ -1,0 +1,15 @@
+{"id": "rm_001", "prompt": "If 3x - 7 = 11, then x =", "primary_category": "reasoning_math", "suite_version": "reasoning_math_v1", "secondary_tags": ["short_prefill", "numeric_heavy"]}
+{"id": "rm_002", "prompt": "What is 15% of 200?", "primary_category": "reasoning_math", "suite_version": "reasoning_math_v1", "secondary_tags": ["short_prefill", "numeric_heavy"]}
+{"id": "rm_003", "prompt": "A train travels 120 km in 2 hours. Its average speed is", "primary_category": "reasoning_math", "suite_version": "reasoning_math_v1", "secondary_tags": ["medium_prefill", "numeric_heavy"]}
+{"id": "rm_004", "prompt": "Solve: 2^5 =", "primary_category": "reasoning_math", "suite_version": "reasoning_math_v1", "secondary_tags": ["short_prefill", "numeric_heavy", "symbol_heavy"]}
+{"id": "rm_005", "prompt": "The sum of angles in a triangle is", "primary_category": "reasoning_math", "suite_version": "reasoning_math_v1", "secondary_tags": ["short_prefill", "numeric_heavy"]}
+{"id": "rm_006", "prompt": "If a = 4 and b = 9, then sqrt(a) + sqrt(b) =", "primary_category": "reasoning_math", "suite_version": "reasoning_math_v1", "secondary_tags": ["short_prefill", "numeric_heavy", "symbol_heavy"]}
+{"id": "rm_007", "prompt": "Convert 0.75 to a fraction in lowest terms:", "primary_category": "reasoning_math", "suite_version": "reasoning_math_v1", "secondary_tags": ["short_prefill", "numeric_heavy"]}
+{"id": "rm_008", "prompt": "A store offers 20% off a $50 item. The sale price is $", "primary_category": "reasoning_math", "suite_version": "reasoning_math_v1", "secondary_tags": ["medium_prefill", "numeric_heavy"]}
+{"id": "rm_009", "prompt": "Step 1: 8 + 5 = 13. Step 2: 13 * 2 = 26. Step 3: 26 - 6 =", "primary_category": "reasoning_math", "suite_version": "reasoning_math_v1", "secondary_tags": ["medium_prefill", "numeric_heavy"]}
+{"id": "rm_010", "prompt": "The next number in the sequence 2, 4, 8, 16 is", "primary_category": "reasoning_math", "suite_version": "reasoning_math_v1", "secondary_tags": ["short_prefill", "numeric_heavy"]}
+{"id": "rm_011", "prompt": "If P implies Q and P is true, then", "primary_category": "reasoning_math", "suite_version": "reasoning_math_v1", "secondary_tags": ["medium_prefill", "symbol_heavy"]}
+{"id": "rm_012", "prompt": "Compute: (-3) * (-4) + (-2) =", "primary_category": "reasoning_math", "suite_version": "reasoning_math_v1", "secondary_tags": ["short_prefill", "numeric_heavy", "symbol_heavy"]}
+{"id": "rm_013", "prompt": "A circle has radius 5. Its circumference is approximately", "primary_category": "reasoning_math", "suite_version": "reasoning_math_v1", "secondary_tags": ["medium_prefill", "numeric_heavy", "symbol_heavy"]}
+{"id": "rm_014", "prompt": "Alice has 3 apples. She buys 5 more and gives away 2. She now has", "primary_category": "reasoning_math", "suite_version": "reasoning_math_v1", "secondary_tags": ["medium_prefill", "numeric_heavy"]}
+{"id": "rm_015", "prompt": "Express 1001 in binary:", "primary_category": "reasoning_math", "suite_version": "reasoning_math_v1", "secondary_tags": ["short_prefill", "numeric_heavy"]}

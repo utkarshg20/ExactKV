@@ -1,0 +1,15 @@
+{"id": "ml_fr_001", "prompt": "Traduisez en anglais : Bonjour, comment allez-vous ?", "primary_category": "multilingual", "suite_version": "multilingual_v1", "secondary_tags": ["short_prefill"]}
+{"id": "ml_fr_002", "prompt": "Traduisez en anglais : La bibliothèque ferme à vingt heures.", "primary_category": "multilingual", "suite_version": "multilingual_v1", "secondary_tags": ["medium_prefill"]}
+{"id": "ml_fr_003", "prompt": "Complétez en français : Le chat est sur le", "primary_category": "multilingual", "suite_version": "multilingual_v1", "secondary_tags": ["short_prefill"]}
+{"id": "ml_es_001", "prompt": "Traduce al inglés: Buenos días, ¿cómo estás?", "primary_category": "multilingual", "suite_version": "multilingual_v1", "secondary_tags": ["short_prefill"]}
+{"id": "ml_es_002", "prompt": "Traduce al inglés: El tren sale a las ocho de la mañana.", "primary_category": "multilingual", "suite_version": "multilingual_v1", "secondary_tags": ["medium_prefill"]}
+{"id": "ml_es_003", "prompt": "Completa en español: Mi color favorito es el", "primary_category": "multilingual", "suite_version": "multilingual_v1", "secondary_tags": ["short_prefill"]}
+{"id": "ml_de_001", "prompt": "Übersetze ins Englische: Guten Morgen, wie geht es Ihnen?", "primary_category": "multilingual", "suite_version": "multilingual_v1", "secondary_tags": ["short_prefill"]}
+{"id": "ml_de_002", "prompt": "Übersetze ins Englische: Das Museum ist am Montag geschlossen.", "primary_category": "multilingual", "suite_version": "multilingual_v1", "secondary_tags": ["medium_prefill"]}
+{"id": "ml_de_003", "prompt": "Ergänze auf Deutsch: Der Himmel ist heute sehr", "primary_category": "multilingual", "suite_version": "multilingual_v1", "secondary_tags": ["short_prefill"]}
+{"id": "ml_ja_001", "prompt": "日本語を英語に訳してください：こんにちは、元気ですか。", "primary_category": "multilingual", "suite_version": "multilingual_v1", "secondary_tags": ["short_prefill"]}
+{"id": "ml_ja_002", "prompt": "日本語を英語に訳してください：駅はどこですか。", "primary_category": "multilingual", "suite_version": "multilingual_v1", "secondary_tags": ["short_prefill"]}
+{"id": "ml_zh_001", "prompt": "将下面中文翻译成英文：今天天气很好。", "primary_category": "multilingual", "suite_version": "multilingual_v1", "secondary_tags": ["short_prefill"]}
+{"id": "ml_zh_002", "prompt": "将下面中文翻译成英文：图书馆晚上九点关门。", "primary_category": "multilingual", "suite_version": "multilingual_v1", "secondary_tags": ["medium_prefill"]}
+{"id": "ml_pt_001", "prompt": "Traduza para o inglês: Obrigado pela sua ajuda.", "primary_category": "multilingual", "suite_version": "multilingual_v1", "secondary_tags": ["short_prefill"]}
+{"id": "ml_it_001", "prompt": "Traduci in inglese: Buonasera, piacere di conoscerti.", "primary_category": "multilingual", "suite_version": "multilingual_v1", "secondary_tags": ["short_prefill"]}

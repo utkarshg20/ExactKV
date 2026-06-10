@@ -1,7 +1,7 @@
 # V10 Scope Statement: Evaluation Suite Hardening and Divergence Forensics
 
-**Status:** **Phase 0 active** — formal scope finalized; **no code, no experiments**
-until explicit approval per phase.
+**Status:** **Phase 1 complete** — V10 prompt suites, validator, and tests committed.
+**No experiments** until explicit phase approval. Phase 2 (Experiment 012) is next.
 **Builds on:** `v0.9.0` — V9 complete (Experiments 008–011; real-backend gauntlet).
 **Not public launch.** v1.0.0 deferred until V10 (and V11 substance) exit criteria are met.
 
@@ -22,15 +22,16 @@ until explicit approval per phase.
 
 | Phase | Focus | Status |
 |---|---|---|
-| **0** | Formal scope statement (this document) | **Active** |
-| **1** | Suite authoring (`core_v2` + category suites); loader/metadata | Planned |
-| **2** | Experiment 012 — suite expansion + per-category leaderboards | Planned |
+| **0** | Formal scope statement (this document) | **Complete** |
+| **1** | Suite authoring (`core_v2` + category suites); validator + tests | **Complete** |
+| **2** | Experiment 012 — suite expansion + per-category leaderboards | **Next** |
 | **3** | Experiment 013 — draft/generation sensitivity + divergence forensics | Planned |
 | **4** | Optional real-backend category spot-checks (factory-only) | Planned |
 | **5** | v1.0.0 readiness assessment (not launch) | Planned |
 
-**Latest release:** `v0.9.0`. **V10 implementation** begins after Phase 0 commit and
-explicit phase approval.
+**Latest release:** `v0.9.0`. **Phase 1 deliverables:**
+[`V10_PROMPT_SUITES.md`](V10_PROMPT_SUITES.md),
+`scripts/validate_v10_prompt_suites.py`, seven suite files under `benchmarks/prompts/`.
 
 ---
 

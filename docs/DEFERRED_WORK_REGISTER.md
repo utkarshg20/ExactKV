@@ -7,10 +7,11 @@ implemented** unless a linked experiment or release note says otherwise.
 > latency, speedup, runtime, or production-serving claims; `_sim` ≠ packed-bit storage;
 > external paper results are **not** ExactKV results.
 
-**Version path:** V9 ✅ → **V10 (active, Phase 0)** → V11 → V12/v1.0.0 (public launch).
+**Version path:** V9 ✅ → **V10 (active, Phase 1 complete)** → V11 → V12/v1.0.0 (public launch).
 
 **V9 scope:** [`V9_SCOPE_STATEMENT.md`](V9_SCOPE_STATEMENT.md) — **complete** (`v0.9.0`).
-**V10 scope:** [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — **Phase 0 active**.
+**V10 scope:** [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — **Phase 1 complete**.
+**V10 suites:** [`V10_PROMPT_SUITES.md`](V10_PROMPT_SUITES.md).
 
 ---
 
@@ -31,7 +32,7 @@ implemented** unless a linked experiment or release note says otherwise.
 
 | ID | Item | Status | V10 phase | Success criteria |
 |---|---|---|---|---|
-| D26 | **`core_v2` + category benchmark suites** | **Planned** | Phase 1 | Versioned prompts; metadata schema; suite validation tests |
+| D26 | **`core_v2` + category benchmark suites** | **Complete** | Phase 1 ✅ | 128 prompts; [`V10_PROMPT_SUITES.md`](V10_PROMPT_SUITES.md); validator + tests |
 | D27 | **Draft length sensitivity (2/4/8)** | **Planned** | Phase 3 (Exp 013) | Documented acceptance/divergence vs `draft_len` |
 | D28 | **Generation length sensitivity (16/32/64)** | **Planned** | Phase 3 (Exp 013) | Phased sweeps; no performance claims |
 | D29 | **Category-stratified divergence forensics** | **Planned** | Phase 3 (Exp 013) | Supersede 006A proxy where feasible |
@@ -42,7 +43,8 @@ implemented** unless a linked experiment or release note says otherwise.
 | D9 | **Pre-RoPE key quantization experiments** | Deferred | — | Compare vs post-RoPE baselines |
 | D10 | **Boundary / layer-policy extensions** | Deferred | — | N>4 only with explicit approval |
 
-**Phase 0 (active):** formal scope — [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md).
+**Phase 1 (complete):** suites + validator — [`V10_PROMPT_SUITES.md`](V10_PROMPT_SUITES.md).
+**Phase 2 (next):** Experiment 012.
 
 ---
 

@@ -644,7 +644,7 @@ See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) and
 
 ---
 
-# V10: Evaluation suite hardening and divergence forensics (Phase 0 active)
+# V10: Evaluation suite hardening and divergence forensics (Phase 1 complete)
 
 ## Goal
 
@@ -657,11 +657,15 @@ sweeps, upgrade divergence forensics beyond 006A proxies. **Not** a performance 
 - [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — formal phased scope, Experiments
   012–013 plan, suite taxonomy, exit criteria.
 
-## Planned phases (1–5)
+## Phase 1 deliverable
+
+- [`V10_PROMPT_SUITES.md`](V10_PROMPT_SUITES.md) — seven versioned suite files (128 prompts);
+  `scripts/validate_v10_prompt_suites.py`; `tests/test_v10_prompt_suites.py`.
+
+## Planned phases (2–5)
 
 | Phase | Focus |
 |---|---|
-| 1 | Suite authoring (`core_v2` + category suites) |
 | 2 | Experiment 012 — suite expansion + per-category leaderboards |
 | 3 | Experiment 013 — sensitivity + divergence forensics |
 | 4 | Optional real-backend category spot-checks (factory-only) |
