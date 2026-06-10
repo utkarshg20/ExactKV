@@ -49,6 +49,7 @@ under `reports/`.
 
 ## Related
 
-- [`RELEASE_NOTES_V0.9.0.md`](RELEASE_NOTES_V0.9.0.md) — V9 changelog (latest)
-- [`PROJECT_STATUS_V0.9.0.md`](PROJECT_STATUS_V0.9.0.md) — current project status
+- [`RELEASE_NOTES_V0.10.0.md`](RELEASE_NOTES_V0.10.0.md) — V10 changelog (latest)
+- [`PROJECT_STATUS_V0.10.0.md`](PROJECT_STATUS_V0.10.0.md) — current project status
+- [`V10_READINESS_ASSESSMENT.md`](V10_READINESS_ASSESSMENT.md) — v1.0.0 launch-gate decision
 - [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) — V10+ tracker

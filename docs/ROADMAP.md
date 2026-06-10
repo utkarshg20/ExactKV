@@ -644,13 +644,14 @@ See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) and
 
 ---
 
-# V10: Evaluation suite hardening and divergence forensics (Phase 3 complete)
+# V10: Evaluation suite hardening and divergence forensics (complete — v0.10.0)
 
 ## Goal
 
 Expand benchmark suites (`core_v2`, category panels), run draft/generation sensitivity
-sweeps, upgrade divergence forensics beyond 006A proxies. **Not** a performance benchmark.
-**Not public launch** — v1.0.0 deferred until V10 exits (and V11 substance).
+sweeps, upgrade divergence forensics beyond 006A proxies, and spot-check restricted
+real backends on harder categories. **Not** a performance benchmark.
+**Not public launch** — v1.0.0 deferred until V11 substance and launch package (D17–D20).
 
 ## Phase 0 deliverable
 
@@ -679,22 +680,23 @@ sweeps, upgrade divergence forensics beyond 006A proxies. **Not** a performance 
   40 harder-category prompts × 7 compressors (280 cells, cross-panel merge);
   `exactkv_failures == 0`; factory-only KVQuant / TurboQuant / KIVI spot-check.
 
-## Planned phase (5)
+## Phase 5 deliverable
 
-| Phase | Focus |
-|---|---|
-| 5 | v1.0.0 readiness assessment (not launch) |
+- [`V10_READINESS_ASSESSMENT.md`](V10_READINESS_ASSESSMENT.md) — v1.0.0 launch-gate decision
+  (deferred); v0.10.0 tag readiness.
+- [`PROJECT_STATUS_V0.10.0.md`](PROJECT_STATUS_V0.10.0.md), [`RELEASE_NOTES_V0.10.0.md`](RELEASE_NOTES_V0.10.0.md).
 
-See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V10 (D26–D29).
+**V10 exit:** tag **`v0.10.0`**. See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V10 (D26–D29 complete).
 
 ---
 
-# V11: Scale and serving gauntlet
+# V11: Scale, serving, and launch hardening (next)
 
 ## Goal
 
-Larger-model RunPod validation, active GPU memory profiling methodology, vLLM/LMCache
-**sidecar probes** (direct integration remains deferred per V8 Phase A).
+1.5B+ validation on **expanded V10 suites**, active GPU memory profiling methodology,
+vLLM/LMCache **sidecar probes** (direct integration remains deferred per V8 Phase A),
+optional attention logging, and preparation for v1.0.0 documentation package.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V11.
 

@@ -30,31 +30,28 @@ is faster. It does **not** claim throughput, latency, speedup, or production rea
 
 | Item | Value |
 |---|---|
-| **Latest release** | [`v0.9.0`](docs/RELEASE_NOTES_V0.9.0.md) — real-backend gauntlet (Experiments 008–011) |
-| **Next** | [**V10**](docs/V10_SCOPE_STATEMENT.md) — evaluation-suite hardening and divergence forensics before public launch |
-| **Status** | Research milestone; [not public-launch final](docs/PROJECT_STATUS_V0.9.0.md) |
+| **Latest release** | [`v0.10.0`](docs/RELEASE_NOTES_V0.10.0.md) — V10 evaluation-suite hardening (Experiments 012–014) |
+| **Next** | [**V11**](docs/ROADMAP.md#v11-scale-serving-and-launch-hardening-next) — scale, serving probes, launch hardening (not public launch) |
+| **Status** | Research milestone; [not public-launch final](docs/PROJECT_STATUS_V0.10.0.md) |
 | **Hard gate** | `exactkv_failures == 0` on every published experiment |
 | **Default model** | `Qwen/Qwen2.5-0.5B` (greedy, single-request, CPU-first) |
 | **Compressors** | 15 built-in (`noop`, `int8`, asymmetric `_sim`, layer-aware boundary, `backend_passthrough`, …) |
 
 ---
 
-## Latest results (v0.9.0)
+## Latest results (v0.10.0)
 
-**V9 real-backend gauntlet** — Experiments 008–011; `exactkv_failures == 0` on all cells.
-Restricted adapters are **factory-only** (not default registry).
+**V10 evaluation hardening** — Experiments 012–014; `exactkv_failures == 0` on **3,336** new cells.
+V10 suites are **not universal benchmarks**. Restricted adapters remain **factory-only**.
 
-| Track | Headline (0.5B core, accept) |
+| Track | Headline (0.5B, accept) |
 |---|---:|
-| `int8` / `k8_v4_boundary4_v8_sim` | ~0.97 / ~0.95 |
-| KVQuant simquant (Exp 010) | **0.792** |
-| TurboQuant Python (Exp 008) | **0.435** |
-| KIVI offline (Exp 009) | **0.012** |
-| Qwen2.5-1.5B (Exp 011) | exactness preserved; boundary4 **0.954** > k8_v4_sim **0.945** |
+| V10 full suites (Exp 012) | `int8` **0.957**; boundary4 **0.923** > k8_v4_sim **0.914**; `long_context` hardest |
+| Sensitivity grid (Exp 013) | boundary4 **0.932** > k8_v4_sim **0.923**; accept falls at `draft_len=8` |
+| Hard-category spot-check (Exp 014) | KVQuant **0.634** > TurboQuant **0.309** > KIVI **0.019** |
 
-> ⚠️ Not production backends (no llama.cpp, KIVI CUDA, KVQuant deployment CUDA).
-> `_sim` = int8 containers. No throughput, latency, or production-serving claims.
-> See [v0.9.0 release notes](docs/RELEASE_NOTES_V0.9.0.md).
+> ⚠️ Not production backends. `_sim` = int8 containers. No throughput, latency, or production-serving claims.
+> v1.0.0 deferred — see [V10 readiness assessment](docs/V10_READINESS_ASSESSMENT.md).
 
 ---
 
@@ -69,8 +66,8 @@ Restricted adapters are **factory-only** (not default registry).
 | V7 | `v0.7.0` | Layer-aware V policies; Experiments 006 / 006C | ✅ |
 | V8 | `v0.8.0` | Serving harness; Experiment 007 | ✅ |
 | V9 | `v0.9.0` | Real backend gauntlet; Exp 008–011; 1.5B validation | ✅ |
-| V10 | — | Evaluation suite hardening ([scope](docs/V10_SCOPE_STATEMENT.md); [Exp 012](docs/EXPERIMENT_012_EVAL_SUITE_EXPANSION.md); [Exp 013](docs/EXPERIMENT_013_SENSITIVITY_FORENSICS.md); [Exp 014](docs/EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md)) | Phase 4 ✅ |
-| V11–V12 | — | Scale, serving probes → v1.0.0 | Planned |
+| V10 | `v0.10.0` | Suite hardening; Exp 012–014; [readiness](docs/V10_READINESS_ASSESSMENT.md) | ✅ |
+| V11 | — | Scale, serving probes, launch hardening → v1.0.0 | **Next** |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
@@ -752,7 +749,9 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 |---|---|
 | v0.8.0 docs | [`RELEASE_NOTES_V0.8.0.md`](docs/RELEASE_NOTES_V0.8.0.md) · [`EXPERIMENT_INDEX.md`](docs/EXPERIMENT_INDEX.md) · [`PROJECT_STATUS_V0.8.0.md`](docs/PROJECT_STATUS_V0.8.0.md) · [`DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) |
 | V9 scope | [`V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) |
-| V10 scope (active) | [`V10_SCOPE_STATEMENT.md`](docs/V10_SCOPE_STATEMENT.md) |
+| V10 scope (complete) | [`V10_SCOPE_STATEMENT.md`](docs/V10_SCOPE_STATEMENT.md) |
+| V10 readiness | [`V10_READINESS_ASSESSMENT.md`](docs/V10_READINESS_ASSESSMENT.md) |
+| Project status | [`PROJECT_STATUS_V0.10.0.md`](docs/PROJECT_STATUS_V0.10.0.md) |
 | Planning | [`ROADMAP.md`](docs/ROADMAP.md) · [`DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) |
 | V6–V8 planning detail | [`docs/FUTURE_ROADMAP_V6_V8.md`](docs/FUTURE_ROADMAP_V6_V8.md) |
 | Asymmetric K/V research | [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md) |

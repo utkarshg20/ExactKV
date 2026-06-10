@@ -7,10 +7,11 @@ implemented** unless a linked experiment or release note says otherwise.
 > latency, speedup, runtime, or production-serving claims; `_sim` ≠ packed-bit storage;
 > external paper results are **not** ExactKV results.
 
-**Version path:** V9 ✅ → **V10 (active, Phase 3 complete)** → V11 → V12/v1.0.0 (public launch).
+**Version path:** V9 ✅ → **V10 ✅ (`v0.10.0`)** → **V11 (active)** → v1.0.0 (public launch).
 
 **V9 scope:** [`V9_SCOPE_STATEMENT.md`](V9_SCOPE_STATEMENT.md) — **complete** (`v0.9.0`).
-**V10 scope:** [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — **Phase 4 complete**.
+**V10 scope:** [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — **complete** (`v0.10.0`).
+**V10 readiness:** [`V10_READINESS_ASSESSMENT.md`](V10_READINESS_ASSESSMENT.md).
 **Experiment 014:** [`EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md`](EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md).
 **V10 suites:** [`V10_PROMPT_SUITES.md`](V10_PROMPT_SUITES.md).
 **Experiment 012:** [`EXPERIMENT_012_EVAL_SUITE_EXPANSION.md`](EXPERIMENT_012_EVAL_SUITE_EXPANSION.md).
@@ -31,7 +32,7 @@ implemented** unless a linked experiment or release note says otherwise.
 
 ---
 
-## V10 — Evaluation suite hardening and divergence forensics (active)
+## V10 — Evaluation suite hardening and divergence forensics (complete)
 
 | ID | Item | Status | V10 phase | Success criteria |
 |---|---|---|---|---|
@@ -40,43 +41,45 @@ implemented** unless a linked experiment or release note says otherwise.
 | D28 | **Generation length sensitivity (16/32/64)** | **Complete** | Phase 3 ✅ | Exp 013 full 3×3 grid |
 | D29 | **Category-stratified divergence forensics** | **Complete** | Phase 3 ✅ | Token-type + structured-output heuristics; no attention weights |
 | — | **Per-category leaderboards + prompt win/loss** | **Complete** | Phase 2 ✅ | Exp 012: 896 cells, `exactkv_failures == 0` |
-| D6 | **Sparse V dequantization** | Deferred (V10 research) | Phase 3+ | Acceptance-only evaluation |
-| D7 | **True attention logging** | Deferred (V10 optional) | Phase 3+ | Small subset; no fabricated weights |
-| D8 | **Per-layer/head/token divergence forensics** | **Planned** | Phase 3 | Layer/head where weights exist |
+| — | **Real-backend category spot-checks** | **Complete** | Phase 4 ✅ | Exp 014: 280 cells — [`EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md`](EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md) |
+| — | **V10 readiness assessment** | **Complete** | Phase 5 ✅ | [`V10_READINESS_ASSESSMENT.md`](V10_READINESS_ASSESSMENT.md) |
+| D6 | **Sparse V dequantization** | **Moved to V11 / research** | — | Acceptance-only evaluation |
+| D7 | **True attention logging** | **Moved to V11** | — | Small subset; no fabricated weights |
+| D8 | **Per-layer/head/token divergence forensics** | **Moved to V11** | — | Requires attention weights or documented blocker |
 | D9 | **Pre-RoPE key quantization experiments** | Deferred | — | Compare vs post-RoPE baselines |
 | D10 | **Boundary / layer-policy extensions** | Deferred | — | N>4 only with explicit approval |
+| — | **1.5B on expanded V10 suites** | **Moved to V11** | — | Exp 011 is legacy `core` only |
 
-**Phase 1 (complete):** suites + validator — [`V10_PROMPT_SUITES.md`](V10_PROMPT_SUITES.md).
-**Phase 2 (complete):** Experiment 012 — [`EXPERIMENT_012_EVAL_SUITE_EXPANSION.md`](EXPERIMENT_012_EVAL_SUITE_EXPANSION.md).
-**Phase 3 (complete):** Experiment 013 — [`EXPERIMENT_013_SENSITIVITY_FORENSICS.md`](EXPERIMENT_013_SENSITIVITY_FORENSICS.md).
-| — | **Optional real-backend category spot-checks** | **Complete** | Phase 4 ✅ | Exp 014: 280 cells, `exactkv_failures == 0` — [`EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md`](EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md) |
-
-**Phase 5 (next):** v1.0.0 readiness assessment (not launch).
+**V10 exit:** tag **`v0.10.0`** — not v1.0.0. See [`RELEASE_NOTES_V0.10.0.md`](RELEASE_NOTES_V0.10.0.md).
 
 ---
 
-## V11 — Scale and serving gauntlet
+## V11 — Scale, serving, and launch hardening (active)
 
 | ID | Item | Status | Success criteria |
 |---|---|---|---|
+| — | **1.5B+ on V10 expanded suites** | **Next** | `exactkv_failures == 0`; per-category tables |
+| D6 | **Sparse V dequantization** | Deferred | Acceptance-only evaluation |
+| D7 | **True attention logging** | Deferred | Small subset; no fabricated weights |
+| D8 | **Per-layer/head divergence forensics** | Deferred | Where weights exist |
 | D11 | **Direct vLLM integration** | No-go (Phase A) | Re-approval only if safe full-KV export path demonstrated |
 | D12 | **LMCache integration** | No-go (Phase A) | Re-approval only if ownership + verify isolation proven |
-| D13 | **vLLM / LMCache sidecar probe** | Deferred | Metadata-only or isolated sidecar evaluation |
-| D14 | **Active GPU memory profiling** | Deferred | Approved methodology; distinct from `total_kv_footprint_bytes` |
+| D13 | **vLLM / LMCache sidecar probe** | **Blocker for v1.0.0** | Metadata-only or isolated sidecar evaluation |
+| D14 | **Active GPU memory profiling** | **Blocker for v1.0.0** | Approved methodology; distinct from `total_kv_footprint_bytes` |
 | D16 | **PagedAttention kernel integration** | Deferred | Local harness remains default |
 
-V11 covers serving/profiling/optional production-path work — **not** V10 evaluation-suite scope.
+V11 covers multi-model validation, serving/profiling probes, and optional forensics depth — **not** a performance benchmark release.
 
 ---
 
-## V12 / v1.0.0 — Final public launch package
+## v1.0.0 — Final public launch package (after V11)
 
 | ID | Item | Status | Success criteria |
 |---|---|---|---|
-| D17 | **Raw report bundle** | Deferred | Curated archive for experiments 001–011+ with manifests |
-| D18 | **Final public launch narrative** | Deferred | Reviewed post/docs; explicit negation of performance claims |
-| D19 | **Project status v1.0.0** | Deferred | Supersedes [`PROJECT_STATUS_V0.9.0.md`](PROJECT_STATUS_V0.9.0.md) |
-| D20 | **Git tag `v1.0.0`** | Deferred | V10–V11 exit criteria met |
+| D17 | **Raw report bundle** | **Blocker** | Curated archive for experiments 001–014+ with manifests |
+| D18 | **Final public launch narrative** | **Blocker** | Reviewed post/docs; explicit negation of performance claims; draft only until gates met |
+| D19 | **Project status v1.0.0** | Deferred | Supersedes [`PROJECT_STATUS_V0.10.0.md`](PROJECT_STATUS_V0.10.0.md) |
+| D20 | **Git tag `v1.0.0`** | Deferred | V11 exit criteria met |
 
 ---
 
@@ -102,7 +105,9 @@ remain **deferred, not forgotten**.
 
 ## Related
 
-- [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — active V10 formal scope
+- [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — V10 formal scope (complete)
+- [`V10_READINESS_ASSESSMENT.md`](V10_READINESS_ASSESSMENT.md) — Phase 5 readiness
+- [`RELEASE_NOTES_V0.10.0.md`](RELEASE_NOTES_V0.10.0.md) — v0.10.0 changelog
 - [`V10_SCOPE_DRAFT.md`](V10_SCOPE_DRAFT.md) — superseded draft
 - [`RELEASE_NOTES_V0.9.0.md`](RELEASE_NOTES_V0.9.0.md) — what shipped in v0.9.0
 - [`ROADMAP.md`](ROADMAP.md) — version planning

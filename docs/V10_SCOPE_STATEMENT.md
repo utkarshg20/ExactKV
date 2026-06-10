@@ -1,9 +1,9 @@
 # V10 Scope Statement: Evaluation Suite Hardening and Divergence Forensics
 
-**Status:** **Phase 4 complete** — Experiment 014 published (`exactkv_failures == 0`).
-Phase 5 (v1.0.0 readiness assessment, not launch) is next.
+**Status:** **V10 complete (v0.10.0)** — Phases 0–5 done; Experiments 012–014 published
+(`exactkv_failures == 0`); [`V10_READINESS_ASSESSMENT.md`](V10_READINESS_ASSESSMENT.md) published.
 **Builds on:** `v0.9.0` — V9 complete (Experiments 008–011; real-backend gauntlet).
-**Not public launch.** v1.0.0 deferred until V10 (and V11 substance) exit criteria are met.
+**Not public launch.** v1.0.0 deferred until **V11 substance** and v1.0.0 package (D17–D20) are met.
 
 > The current **core** suite (34 prompts) is **valid for controlled engineering evaluation**.
 > It is **not comprehensive enough** for broad public claims. V10 hardens the
@@ -27,9 +27,12 @@ Phase 5 (v1.0.0 readiness assessment, not launch) is next.
 | **2** | Experiment 012 — suite expansion + per-category leaderboards | **Complete** |
 | **3** | Experiment 013 — draft/generation sensitivity + divergence forensics | **Complete** |
 | **4** | Optional real-backend category spot-checks (factory-only) | **Complete** |
-| **5** | v1.0.0 readiness assessment (not launch) | **Next** |
+| **5** | v1.0.0 readiness assessment (not launch) | **Complete** |
 
-**Latest release:** `v0.9.0`. **Phase 1 deliverables:**
+**Latest release:** `v0.10.0` (tag when published). **Readiness:**
+[`V10_READINESS_ASSESSMENT.md`](V10_READINESS_ASSESSMENT.md),
+[`PROJECT_STATUS_V0.10.0.md`](PROJECT_STATUS_V0.10.0.md),
+[`RELEASE_NOTES_V0.10.0.md`](RELEASE_NOTES_V0.10.0.md). **Phase 1 deliverables:**
 [`V10_PROMPT_SUITES.md`](V10_PROMPT_SUITES.md),
 `scripts/validate_v10_prompt_suites.py`, seven suite files under `benchmarks/prompts/`.
 
