@@ -644,7 +644,7 @@ See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) and
 
 ---
 
-# V10: Evaluation suite hardening and divergence forensics (Phase 2 complete)
+# V10: Evaluation suite hardening and divergence forensics (Phase 3 complete)
 
 ## Goal
 
@@ -667,11 +667,16 @@ sweeps, upgrade divergence forensics beyond 006A proxies. **Not** a performance 
 - [`EXPERIMENT_012_EVAL_SUITE_EXPANSION.md`](EXPERIMENT_012_EVAL_SUITE_EXPANSION.md) —
   128 V10 prompts × 7 compressors; `exactkv_failures == 0`; per-category leaderboards.
 
-## Planned phases (3–5)
+## Phase 3 deliverable
+
+- [`EXPERIMENT_013_SENSITIVITY_FORENSICS.md`](EXPERIMENT_013_SENSITIVITY_FORENSICS.md) —
+  60 prompts × 4 compressors × 3×3 grid (2,160 cells); `exactkv_failures == 0`;
+  draft/generation sensitivity + divergence forensics (RunPod A5000 fp16).
+
+## Planned phases (4–5)
 
 | Phase | Focus |
 |---|---|
-| 3 | Experiment 013 — sensitivity + divergence forensics |
 | 4 | Optional real-backend category spot-checks (factory-only) |
 | 5 | v1.0.0 readiness assessment (not launch) |
 
