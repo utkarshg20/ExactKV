@@ -7,11 +7,12 @@ implemented** unless a linked experiment or release note says otherwise.
 > latency, speedup, runtime, or production-serving claims; `_sim` ≠ packed-bit storage;
 > external paper results are **not** ExactKV results.
 
-**Version path:** V9 ✅ → **V10 (active, Phase 1 complete)** → V11 → V12/v1.0.0 (public launch).
+**Version path:** V9 ✅ → **V10 (active, Phase 2 complete)** → V11 → V12/v1.0.0 (public launch).
 
 **V9 scope:** [`V9_SCOPE_STATEMENT.md`](V9_SCOPE_STATEMENT.md) — **complete** (`v0.9.0`).
-**V10 scope:** [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — **Phase 1 complete**.
+**V10 scope:** [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — **Phase 2 complete**.
 **V10 suites:** [`V10_PROMPT_SUITES.md`](V10_PROMPT_SUITES.md).
+**Experiment 012:** [`EXPERIMENT_012_EVAL_SUITE_EXPANSION.md`](EXPERIMENT_012_EVAL_SUITE_EXPANSION.md).
 
 ---
 
@@ -36,7 +37,7 @@ implemented** unless a linked experiment or release note says otherwise.
 | D27 | **Draft length sensitivity (2/4/8)** | **Planned** | Phase 3 (Exp 013) | Documented acceptance/divergence vs `draft_len` |
 | D28 | **Generation length sensitivity (16/32/64)** | **Planned** | Phase 3 (Exp 013) | Phased sweeps; no performance claims |
 | D29 | **Category-stratified divergence forensics** | **Planned** | Phase 3 (Exp 013) | Supersede 006A proxy where feasible |
-| — | **Per-category leaderboards + prompt win/loss** | **Planned** | Phase 2 (Exp 012) | Category tables; regression ID tracking |
+| — | **Per-category leaderboards + prompt win/loss** | **Complete** | Phase 2 ✅ | Exp 012: 896 cells, `exactkv_failures == 0` |
 | D6 | **Sparse V dequantization** | Deferred (V10 research) | Phase 3+ | Acceptance-only evaluation |
 | D7 | **True attention logging** | Deferred (V10 optional) | Phase 3+ | Small subset; no fabricated weights |
 | D8 | **Per-layer/head/token divergence forensics** | **Planned** | Phase 3 | Layer/head where weights exist |
@@ -44,7 +45,8 @@ implemented** unless a linked experiment or release note says otherwise.
 | D10 | **Boundary / layer-policy extensions** | Deferred | — | N>4 only with explicit approval |
 
 **Phase 1 (complete):** suites + validator — [`V10_PROMPT_SUITES.md`](V10_PROMPT_SUITES.md).
-**Phase 2 (next):** Experiment 012.
+**Phase 2 (complete):** Experiment 012 — [`EXPERIMENT_012_EVAL_SUITE_EXPANSION.md`](EXPERIMENT_012_EVAL_SUITE_EXPANSION.md).
+**Phase 3 (next):** Experiment 013.
 
 ---
 

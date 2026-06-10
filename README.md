@@ -69,7 +69,7 @@ Restricted adapters are **factory-only** (not default registry).
 | V7 | `v0.7.0` | Layer-aware V policies; Experiments 006 / 006C | ✅ |
 | V8 | `v0.8.0` | Serving harness; Experiment 007 | ✅ |
 | V9 | `v0.9.0` | Real backend gauntlet; Exp 008–011; 1.5B validation | ✅ |
-| V10 | — | Evaluation suite hardening; divergence forensics ([scope](docs/V10_SCOPE_STATEMENT.md), [suites](docs/V10_PROMPT_SUITES.md)) | Phase 1 ✅ |
+| V10 | — | Evaluation suite hardening ([scope](docs/V10_SCOPE_STATEMENT.md); [Exp 012](docs/EXPERIMENT_012_EVAL_SUITE_EXPANSION.md)) | Phase 2 ✅ |
 | V11–V12 | — | Scale, serving probes → v1.0.0 | Planned |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and

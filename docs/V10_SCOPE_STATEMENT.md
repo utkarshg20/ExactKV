@@ -1,7 +1,7 @@
 # V10 Scope Statement: Evaluation Suite Hardening and Divergence Forensics
 
-**Status:** **Phase 1 complete** — V10 prompt suites, validator, and tests committed.
-**No experiments** until explicit phase approval. Phase 2 (Experiment 012) is next.
+**Status:** **Phase 2 complete** — Experiment 012 published (`exactkv_failures == 0`).
+Phase 3 (Experiment 013) is next.
 **Builds on:** `v0.9.0` — V9 complete (Experiments 008–011; real-backend gauntlet).
 **Not public launch.** v1.0.0 deferred until V10 (and V11 substance) exit criteria are met.
 
@@ -24,8 +24,8 @@
 |---|---|---|
 | **0** | Formal scope statement (this document) | **Complete** |
 | **1** | Suite authoring (`core_v2` + category suites); validator + tests | **Complete** |
-| **2** | Experiment 012 — suite expansion + per-category leaderboards | **Next** |
-| **3** | Experiment 013 — draft/generation sensitivity + divergence forensics | Planned |
+| **2** | Experiment 012 — suite expansion + per-category leaderboards | **Complete** |
+| **3** | Experiment 013 — draft/generation sensitivity + divergence forensics | **Next** |
 | **4** | Optional real-backend category spot-checks (factory-only) | Planned |
 | **5** | v1.0.0 readiness assessment (not launch) | Planned |
 
