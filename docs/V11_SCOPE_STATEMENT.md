@@ -1,6 +1,6 @@
 # V11 Scope Statement: Final Launch Hardening
 
-**Status:** **Phase 0 active** — formal scope statement (this document).
+**Status:** **Phase 1 complete** — Experiment 015 succeeded (`exactkv_failures == 0`). Phase 2 next.
 **Builds on:** `v0.10.0` — V10 complete (Experiments 012–014; evaluation-suite hardening).
 **Not public launch.** v1.0.0 deferred until V11 substance and launch package (D17–D20) exit criteria are met.
 
@@ -19,8 +19,8 @@
 
 | Phase | Focus | Status |
 |---|---|---|
-| **0** | Formal scope statement (this document) | **Active** |
-| **1** | 1.5B expanded-suite validation (Experiment 015) | Planned |
+| **0** | Formal scope statement (this document) | **Complete** |
+| **1** | 1.5B expanded-suite validation (Experiment 015) | **Complete** |
 | **2** | Optional 3B stretch or 1.5B real-backend panel (Experiment 016) | Planned |
 | **3** | Serving sidecar/probe feasibility refresh (Experiment 017) | Planned |
 | **4** | Active GPU memory methodology (Experiment 018) | Planned |
@@ -161,9 +161,9 @@ Deliverable: `V11_SCOPE_STATEMENT.md`; README/ROADMAP/deferred-register updates.
 | `draft_len` | 4 (anchor; match Exp 012) |
 | `max_new_tokens` | 16 |
 | Environment | RunPod GPU, float16 CUDA |
-| Experiment class | `v11_larger_model_v10_suites` |
-| Deliverables | `EXPERIMENT_015_15B_V10_SUITES.md`; gitignored JSON/CSV |
-| Script | `scripts/run_experiment_015_15b_v10_suites.py` (Phase 1) |
+| Experiment class | `v11_qwen15b_v10_suites` |
+| Deliverables | [`EXPERIMENT_015_QWEN15B_V10_SUITES.md`](EXPERIMENT_015_QWEN15B_V10_SUITES.md); gitignored JSON/CSV |
+| Script | `scripts/run_experiment_015_qwen15b_v10_suites.py` (Phase 1) |
 
 **Estimated cells (full panel):** 128 prompts × 7 compressors ≈ **896** (same shape as Exp 012).
 

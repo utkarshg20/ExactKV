@@ -690,7 +690,7 @@ real backends on harder categories. **Not** a performance benchmark.
 
 ---
 
-# V11: Final launch hardening (Phase 0 active)
+# V11: Final launch hardening (Phase 1 complete)
 
 ## Goal
 
@@ -699,15 +699,15 @@ Close scale, serving-context, profiling, and launch-documentation gaps before v1
 
 Formal scope: [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) (Phases 0–6; Experiments 015–018).
 
-| Phase | Focus |
-|---|---|
-| 0 | Scope statement |
-| 1 | 1.5B on V10 suites (Exp 015) |
-| 2 | Optional 3B / 1.5B real-backend (Exp 016) |
-| 3 | Serving sidecar/probe refresh (Exp 017) |
-| 4 | Active GPU memory methodology (Exp 018) |
-| 5 | Optional attention logging |
-| 6 | Raw report bundle + launch package readiness |
+| Phase | Focus | Status |
+|---|---|---|
+| 0 | Scope statement | ✅ |
+| 1 | 1.5B on V10 suites (Exp 015) | ✅ [`EXPERIMENT_015_QWEN15B_V10_SUITES.md`](EXPERIMENT_015_QWEN15B_V10_SUITES.md) |
+| 2 | Optional 3B / 1.5B real-backend (Exp 016) | Planned |
+| 3 | Serving sidecar/probe refresh (Exp 017) | Planned |
+| 4 | Active GPU memory methodology (Exp 018) | Planned |
+| 5 | Optional attention logging | Planned |
+| 6 | Raw report bundle + launch package readiness | Planned |
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V11.
 

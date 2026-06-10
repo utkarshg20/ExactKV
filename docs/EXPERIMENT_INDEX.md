@@ -1,6 +1,6 @@
 # ExactKV Experiment Index
 
-One-line reference for published experiments **001–014**. All report
+One-line reference for published experiments **001–015**. All report
 `exactkv_failures == 0` unless noted. JSON/CSV artifacts are **gitignored**
 under `reports/`.
 
@@ -27,6 +27,7 @@ under `reports/`.
 | 012 | V10 suite expansion | [`EXPERIMENT_012_EVAL_SUITE_EXPANSION.md`](EXPERIMENT_012_EVAL_SUITE_EXPANSION.md) | V10 eval suites + per-category leaderboards | 896 | boundary4 **0.923** > k8_v4_sim **0.914**; `int8` **0.957** | 0 | 128 prompts × 7 suites; not a universal benchmark; cpu float32 |
 | 013 | Sensitivity forensics | [`EXPERIMENT_013_SENSITIVITY_FORENSICS.md`](EXPERIMENT_013_SENSITIVITY_FORENSICS.md) | draft_len × max_new_tokens grid + divergence forensics | 2160 | boundary4 **0.932** > k8_v4_sim **0.923**; `int8` **0.970** | 0 | core_v2 + stress subset; 3×3 grid; RunPod A5000 fp16 |
 | 014 | Real-backend spot-checks | [`EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md`](EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md) | V10 harder-category subset + factory-only real backends | 280 | KVQuant **0.634** > TurboQuant **0.309** > KIVI **0.019**; boundary4 **0.876** > k8_v4_sim **0.864** | 0 | 40 prompts × 7 compressors; cross-panel merge; not comprehensive |
+| 015 | 1.5B V10 suite validation | [`EXPERIMENT_015_QWEN15B_V10_SUITES.md`](EXPERIMENT_015_QWEN15B_V10_SUITES.md) | Qwen2.5-1.5B transfer check on full V10 suites | 896 | `int8` **0.978**; boundary4 **0.951** > k8_v4_sim **0.942**; margin **+0.009** (matches Exp 012) | 0 | Larger-model validation; RunPod A5000 fp16; not a performance benchmark |
 
 ---
 
@@ -44,6 +45,7 @@ under `reports/`.
 | 012 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_012_eval_suite_expansion.py` |
 | 013 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_013_sensitivity_forensics.py --device cuda --dtype float16 --include-stress-subset` |
 | 014 | `python3 scripts/run_experiment_014_real_backend_spotchecks.py --merge-only --merge-from reports/exp014_panel_*.json` (after per-panel runs; see report) |
+| 015 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_015_qwen15b_v10_suites.py --device cuda --dtype float16` (RunPod GPU) |
 
 ---
 
