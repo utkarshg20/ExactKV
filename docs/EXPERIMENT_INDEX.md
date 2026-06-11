@@ -1,6 +1,6 @@
 # ExactKV Experiment Index
 
-One-line reference for published experiments **001–016**. All report
+One-line reference for published experiments **001–017**. All report
 `exactkv_failures == 0` unless noted. JSON/CSV artifacts are **gitignored**
 under `reports/`.
 
@@ -29,6 +29,7 @@ under `reports/`.
 | 014 | Real-backend spot-checks | [`EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md`](EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md) | V10 harder-category subset + factory-only real backends | 280 | KVQuant **0.634** > TurboQuant **0.309** > KIVI **0.019**; boundary4 **0.876** > k8_v4_sim **0.864** | 0 | 40 prompts × 7 compressors; cross-panel merge; not comprehensive |
 | 015 | 1.5B V10 suite validation | [`EXPERIMENT_015_QWEN15B_V10_SUITES.md`](EXPERIMENT_015_QWEN15B_V10_SUITES.md) | Qwen2.5-1.5B transfer check on full V10 suites | 896 | `int8` **0.978**; boundary4 **0.951** > k8_v4_sim **0.942**; margin **+0.009** (matches Exp 012) | 0 | Larger-model validation; RunPod A5000 fp16; not a performance benchmark |
 | 016 | 3B V10 suite validation | [`EXPERIMENT_016_QWEN3B_V10_SUITES.md`](EXPERIMENT_016_QWEN3B_V10_SUITES.md) | Qwen2.5-3B built-in stretch on full V10 suites | 896 | `int8` **0.991**; boundary4 **0.952** > k8_v4_sim **0.951**; margin **+0.001** | 0 | 3B scale validation; RunPod A5000 fp16; not a performance benchmark |
+| 017 | Serving sidecar/probe refresh | [`EXPERIMENT_017_SERVING_SIDECAR_PROBE.md`](EXPERIMENT_017_SERVING_SIDECAR_PROBE.md) | V11 serving feasibility refresh + metadata-only sidecar probe | 32 | Sidecar probe **pass**; direct vLLM/LMCache **no-go reaffirmed**; `exactkv_failures == 0` | 0 | Not production serving; harness/sidecar only |
 
 ---
 
@@ -48,6 +49,7 @@ under `reports/`.
 | 014 | `python3 scripts/run_experiment_014_real_backend_spotchecks.py --merge-only --merge-from reports/exp014_panel_*.json` (after per-panel runs; see report) |
 | 015 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_015_qwen15b_v10_suites.py --device cuda --dtype float16` (RunPod GPU) |
 | 016 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_016_qwen3b_v10_suites.py --device cuda --dtype float16` (RunPod GPU) |
+| 017 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_017_serving_sidecar_probe.py` |
 
 ---
 

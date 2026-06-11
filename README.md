@@ -67,7 +67,7 @@ V10 suites are **not universal benchmarks**. Restricted adapters remain **factor
 | V8 | `v0.8.0` | Serving harness; Experiment 007 | ✅ |
 | V9 | `v0.9.0` | Real backend gauntlet; Exp 008–011; 1.5B validation | ✅ |
 | V10 | `v0.10.0` | Suite hardening; Exp 012–014; [readiness](docs/V10_READINESS_ASSESSMENT.md) | ✅ |
-| V11 | — | Final launch hardening ([scope](docs/V11_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 2 ✅ |
+| V11 | — | Final launch hardening ([scope](docs/V11_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 3 ✅ |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
@@ -753,6 +753,7 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | V11 scope (active) | [`V11_SCOPE_STATEMENT.md`](docs/V11_SCOPE_STATEMENT.md) |
 | V11 Phase 1 (Exp 015) | [`EXPERIMENT_015_QWEN15B_V10_SUITES.md`](docs/EXPERIMENT_015_QWEN15B_V10_SUITES.md) — 1.5B on V10 suites; `exactkv_failures == 0` |
 | V11 Phase 2 (Exp 016) | [`EXPERIMENT_016_QWEN3B_V10_SUITES.md`](docs/EXPERIMENT_016_QWEN3B_V10_SUITES.md) — 3B built-in stretch; `exactkv_failures == 0` |
+| V11 Phase 3 (Exp 017) | [`EXPERIMENT_017_SERVING_SIDECAR_PROBE.md`](docs/EXPERIMENT_017_SERVING_SIDECAR_PROBE.md) — sidecar probe pass; vLLM/LMCache no-go reaffirmed |
 | V10 readiness | [`V10_READINESS_ASSESSMENT.md`](docs/V10_READINESS_ASSESSMENT.md) |
 | Project status | [`PROJECT_STATUS_V0.10.0.md`](docs/PROJECT_STATUS_V0.10.0.md) |
 | Planning | [`ROADMAP.md`](docs/ROADMAP.md) · [`DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) |

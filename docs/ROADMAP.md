@@ -690,7 +690,7 @@ real backends on harder categories. **Not** a performance benchmark.
 
 ---
 
-# V11: Final launch hardening (Phase 2 complete)
+# V11: Final launch hardening (Phase 3 complete)
 
 ## Goal
 
@@ -704,7 +704,7 @@ Formal scope: [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) (Phases 0–6; 
 | 0 | Scope statement | ✅ |
 | 1 | 1.5B on V10 suites (Exp 015) | ✅ [`EXPERIMENT_015_QWEN15B_V10_SUITES.md`](EXPERIMENT_015_QWEN15B_V10_SUITES.md) |
 | 2 | 3B built-in stretch (Exp 016) | ✅ [`EXPERIMENT_016_QWEN3B_V10_SUITES.md`](EXPERIMENT_016_QWEN3B_V10_SUITES.md) |
-| 3 | Serving sidecar/probe refresh (Exp 017) | Planned |
+| 3 | Serving sidecar/probe refresh (Exp 017) | ✅ [`EXPERIMENT_017_SERVING_SIDECAR_PROBE.md`](EXPERIMENT_017_SERVING_SIDECAR_PROBE.md) |
 | 4 | Active GPU memory methodology (Exp 018) | Planned |
 | 5 | Optional attention logging | Planned |
 | 6 | Raw report bundle + launch package readiness | Planned |

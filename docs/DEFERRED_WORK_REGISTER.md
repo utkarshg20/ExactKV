@@ -63,7 +63,7 @@ implemented** unless a linked experiment or release note says otherwise.
 | — | **1.5B on V10 expanded suites** | **Complete** | Phase 1 / Exp 015 | [`EXPERIMENT_015_QWEN15B_V10_SUITES.md`](EXPERIMENT_015_QWEN15B_V10_SUITES.md); `exactkv_failures == 0` |
 | — | **Optional 3B built-in stretch** | **Complete** | Phase 2 / Exp 016 | [`EXPERIMENT_016_QWEN3B_V10_SUITES.md`](EXPERIMENT_016_QWEN3B_V10_SUITES.md); `exactkv_failures == 0` |
 | — | **Optional 1.5B real-backend panel** | Deferred | — | Not run in Phase 2; may revisit post-Exp 017 |
-| D13 | **vLLM / LMCache sidecar probe** | Planned | Phase 3 / Exp 017 | Probe, sketch, or **no-go refresh** — not forced integration |
+| D13 | **vLLM / LMCache sidecar probe** | **Complete** | Phase 3 / Exp 017 | [`EXPERIMENT_017_SERVING_SIDECAR_PROBE.md`](EXPERIMENT_017_SERVING_SIDECAR_PROBE.md); sidecar pass; direct integration **no-go reaffirmed** |
 | D14 | **Active GPU memory profiling** | Planned | Phase 4 / Exp 018 | Methodology + pilot **or honest deferral** |
 | D7 | **True attention logging** | Planned (optional) | Phase 5 | Tiny subset; no fabricated weights |
 | D8 | **Per-layer/head divergence forensics** | Planned (optional) | Phase 5 | Where weights exist |

@@ -19,6 +19,12 @@ from exactkv.serving.cache_lifecycle import (
     infer_physical_seq_len,
     validate_retained_logical_positions,
 )
+from exactkv.serving.sidecar_probe import (
+    PROBE_INVARIANTS,
+    ProbeRoundObservation,
+    ServingSidecarProbe,
+    run_exactkv_with_sidecar_probe,
+)
 
 __all__ = [
     "AUTHORITATIVE_FULL",
@@ -26,9 +32,13 @@ __all__ = [
     "SERVING_HARNESS",
     "CacheBlock",
     "CacheOwner",
+    "PROBE_INVARIANTS",
+    "ProbeRoundObservation",
     "ServingCacheEntry",
     "ServingCacheLifecycleHarness",
+    "ServingSidecarProbe",
     "build_blocks",
     "infer_physical_seq_len",
+    "run_exactkv_with_sidecar_probe",
     "validate_retained_logical_positions",
 ]

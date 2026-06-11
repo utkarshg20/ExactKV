@@ -1,6 +1,6 @@
 # V11 Scope Statement: Final Launch Hardening
 
-**Status:** **Phase 2 complete** — Experiment 016 succeeded (`exactkv_failures == 0`). Phase 3 next.
+**Status:** **Phase 3 complete** — Experiment 017 succeeded (sidecar probe pass; direct vLLM/LMCache no-go reaffirmed). Phase 4 next.
 **Builds on:** `v0.10.0` — V10 complete (Experiments 012–014; evaluation-suite hardening).
 **Not public launch.** v1.0.0 deferred until V11 substance and launch package (D17–D20) exit criteria are met.
 
@@ -22,7 +22,7 @@
 | **0** | Formal scope statement (this document) | **Complete** |
 | **1** | 1.5B expanded-suite validation (Experiment 015) | **Complete** |
 | **2** | Optional 3B stretch or 1.5B real-backend panel (Experiment 016) | **Complete** (3B built-in) |
-| **3** | Serving sidecar/probe feasibility refresh (Experiment 017) | Planned |
+| **3** | Serving sidecar/probe feasibility refresh (Experiment 017) | **Complete** |
 | **4** | Active GPU memory methodology (Experiment 018) | Planned |
 | **5** | Optional attention logging / divergence deep dive | Planned |
 | **6** | Raw report bundle + launch package readiness | Planned |
@@ -208,7 +208,8 @@ Deliverable: `V11_SCOPE_STATEMENT.md`; README/ROADMAP/deferred-register updates.
 | Scope | vLLM and/or LMCache **sidecar** or metadata-only probe — **not** direct integration |
 | Baseline | [`SERVING_CONTEXT_FEASIBILITY.md`](SERVING_CONTEXT_FEASIBILITY.md), [`EXPERIMENT_007_SERVING_CONTEXT.md`](EXPERIMENT_007_SERVING_CONTEXT.md), [`SERVING_CACHE_LIFECYCLE_HARNESS.md`](SERVING_CACHE_LIFECYCLE_HARNESS.md) |
 | Experiment class | `v11_serving_probe` |
-| Deliverables | `EXPERIMENT_017_SERVING_PROBE.md` or updated feasibility memo |
+| Deliverables | [`EXPERIMENT_017_SERVING_SIDECAR_PROBE.md`](EXPERIMENT_017_SERVING_SIDECAR_PROBE.md); [`SERVING_SIDECAR_PROBE_REFRESH.md`](SERVING_SIDECAR_PROBE_REFRESH.md) |
+| Script | `scripts/run_experiment_017_serving_sidecar_probe.py` |
 
 **Valid outcomes:**
 
