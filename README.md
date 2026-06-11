@@ -30,28 +30,28 @@ is faster. It does **not** claim throughput, latency, speedup, or production rea
 
 | Item | Value |
 |---|---|
-| **Latest release** | [`v0.10.0`](docs/RELEASE_NOTES_V0.10.0.md) — V10 evaluation-suite hardening (Experiments 012–014) |
-| **Next** | [**V11**](docs/V11_SCOPE_STATEMENT.md) — final launch hardening before v1.0.0 (not public launch) |
-| **Status** | Research milestone; [not public-launch final](docs/PROJECT_STATUS_V0.10.0.md) |
+| **Latest release** | [`v0.11.0`](docs/RELEASE_NOTES_V0.11.0.md) — V11 launch hardening (Experiments 015–020) |
+| **Next** | [**v1.0.0**](docs/V11_LAUNCH_READINESS.md) — launch polish only if readiness gate clears; **blocker:** v1.0.0 status/release notes, narrative review, optional artifact bundle |
+| **Status** | Research milestone; [not public-launch final](docs/PROJECT_STATUS_V0.11.0.md) |
 | **Hard gate** | `exactkv_failures == 0` on every published experiment |
 | **Default model** | `Qwen/Qwen2.5-0.5B` (greedy, single-request, CPU-first) |
 | **Compressors** | 15 built-in (`noop`, `int8`, asymmetric `_sim`, layer-aware boundary, `backend_passthrough`, …) |
 
 ---
 
-## Latest results (v0.10.0)
+## Latest results (v0.11.0)
 
-**V10 evaluation hardening** — Experiments 012–014; `exactkv_failures == 0` on **3,336** new cells.
-V10 suites are **not universal benchmarks**. Restricted adapters remain **factory-only**.
+**V11 launch hardening** — Experiments 015–020; `exactkv_failures == 0` on **2,624** new cells.
+V10/V11 suites are **not universal benchmarks**. Restricted adapters remain **factory-only**.
 
-| Track | Headline (0.5B, accept) |
+| Track | Headline |
 |---|---:|
-| V10 full suites (Exp 012) | `int8` **0.957**; boundary4 **0.923** > k8_v4_sim **0.914**; `long_context` hardest |
-| Sensitivity grid (Exp 013) | boundary4 **0.932** > k8_v4_sim **0.923**; accept falls at `draft_len=8` |
-| Hard-category spot-check (Exp 014) | KVQuant **0.634** > TurboQuant **0.309** > KIVI **0.019** |
+| 1.5B V10 suites (Exp 015) | `int8` **0.978**; V10 findings transfer |
+| 3B V10 suites (Exp 016) | `int8` **0.991**; exactness at 3B |
+| Repair-policy pilot (Exp 020) | `fallback_int8` **0.979**; `category_adaptive` **0.973** |
 
-> ⚠️ Not production backends. `_sim` = int8 containers. No throughput, latency, or production-serving claims.
-> v1.0.0 deferred — see [V10 readiness assessment](docs/V10_READINESS_ASSESSMENT.md).
+> ⚠️ Not production backends. `_sim` = int8 containers. No throughput, latency, active GPU memory savings, or production-serving claims.
+> Public v1.0.0 deferred — see [V11 launch readiness](docs/V11_LAUNCH_READINESS.md).
 
 ---
 
@@ -67,7 +67,7 @@ V10 suites are **not universal benchmarks**. Restricted adapters remain **factor
 | V8 | `v0.8.0` | Serving harness; Experiment 007 | ✅ |
 | V9 | `v0.9.0` | Real backend gauntlet; Exp 008–011; 1.5B validation | ✅ |
 | V10 | `v0.10.0` | Suite hardening; Exp 012–014; [readiness](docs/V10_READINESS_ASSESSMENT.md) | ✅ |
-| V11 | — | Final launch hardening ([scope](docs/V11_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 5b ✅ |
+| V11 | `v0.11.0` | Launch hardening; Exp 015–020; [readiness](docs/V11_LAUNCH_READINESS.md) | ✅ |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
@@ -750,15 +750,11 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | v0.8.0 docs | [`RELEASE_NOTES_V0.8.0.md`](docs/RELEASE_NOTES_V0.8.0.md) · [`EXPERIMENT_INDEX.md`](docs/EXPERIMENT_INDEX.md) · [`PROJECT_STATUS_V0.8.0.md`](docs/PROJECT_STATUS_V0.8.0.md) · [`DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) |
 | V9 scope | [`V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) |
 | V10 scope (complete) | [`V10_SCOPE_STATEMENT.md`](docs/V10_SCOPE_STATEMENT.md) |
-| V11 scope (active) | [`V11_SCOPE_STATEMENT.md`](docs/V11_SCOPE_STATEMENT.md) |
-| V11 Phase 1 (Exp 015) | [`EXPERIMENT_015_QWEN15B_V10_SUITES.md`](docs/EXPERIMENT_015_QWEN15B_V10_SUITES.md) — 1.5B on V10 suites; `exactkv_failures == 0` |
-| V11 Phase 2 (Exp 016) | [`EXPERIMENT_016_QWEN3B_V10_SUITES.md`](docs/EXPERIMENT_016_QWEN3B_V10_SUITES.md) — 3B built-in stretch; `exactkv_failures == 0` |
-| V11 Phase 3 (Exp 017) | [`EXPERIMENT_017_SERVING_SIDECAR_PROBE.md`](docs/EXPERIMENT_017_SERVING_SIDECAR_PROBE.md) — sidecar probe pass; vLLM/LMCache no-go reaffirmed |
-| V11 Phase 4 (Exp 018) | [`EXPERIMENT_018_GPU_MEMORY_PILOT.md`](docs/EXPERIMENT_018_GPU_MEMORY_PILOT.md) — GPU memory methodology pilot; V5 accounting unchanged |
-| V11 Phase 5 (Exp 019) | [`EXPERIMENT_019_DIVERGENCE_AUTOPSY.md`](docs/EXPERIMENT_019_DIVERGENCE_AUTOPSY.md) — divergence autopsy + repair hypotheses; attention deferred |
-| V11 Phase 5b (Exp 020) | [`EXPERIMENT_020_REPAIR_POLICY_PILOT.md`](docs/EXPERIMENT_020_REPAIR_POLICY_PILOT.md) — repair-policy pilot; policies not in core ExactKV |
+| V11 scope (complete) | [`V11_SCOPE_STATEMENT.md`](docs/V11_SCOPE_STATEMENT.md) |
+| V11 launch readiness | [`V11_LAUNCH_READINESS.md`](docs/V11_LAUNCH_READINESS.md) |
+| V11 Phase 6 | [`RAW_ARTIFACT_POLICY.md`](docs/RAW_ARTIFACT_POLICY.md) · [`LAUNCH_NARRATIVE_DRAFT.md`](docs/LAUNCH_NARRATIVE_DRAFT.md) |
 | V10 readiness | [`V10_READINESS_ASSESSMENT.md`](docs/V10_READINESS_ASSESSMENT.md) |
-| Project status | [`PROJECT_STATUS_V0.10.0.md`](docs/PROJECT_STATUS_V0.10.0.md) |
+| Project status | [`PROJECT_STATUS_V0.11.0.md`](docs/PROJECT_STATUS_V0.11.0.md) |
 | Planning | [`ROADMAP.md`](docs/ROADMAP.md) · [`DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) |
 | V6–V8 planning detail | [`docs/FUTURE_ROADMAP_V6_V8.md`](docs/FUTURE_ROADMAP_V6_V8.md) |
 | Asymmetric K/V research | [`docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md`](docs/FUTURE_RESEARCH_ASYMMETRIC_KV.md) |

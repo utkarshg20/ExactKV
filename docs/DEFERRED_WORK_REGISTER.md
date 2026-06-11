@@ -7,12 +7,13 @@ implemented** unless a linked experiment or release note says otherwise.
 > latency, speedup, runtime, or production-serving claims; `_sim` ≠ packed-bit storage;
 > external paper results are **not** ExactKV results.
 
-**Version path:** V9 ✅ → **V10 ✅ (`v0.10.0`)** → **V11 (active)** → v1.0.0 (public launch).
+**Version path:** V9 ✅ → **V10 ✅ (`v0.10.0`)** → **V11 ✅ (`v0.11.0`)** → v1.0.0 (public launch).
 
 **V9 scope:** [`V9_SCOPE_STATEMENT.md`](V9_SCOPE_STATEMENT.md) — **complete** (`v0.9.0`).
 **V10 scope:** [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — **complete** (`v0.10.0`).
 **V10 readiness:** [`V10_READINESS_ASSESSMENT.md`](V10_READINESS_ASSESSMENT.md).
-**V11 scope:** [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) — **Phase 0 active**.
+**V11 scope:** [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) — **complete** (`v0.11.0`).
+**V11 readiness:** [`V11_LAUNCH_READINESS.md`](V11_LAUNCH_READINESS.md).
 **Experiment 014:** [`EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md`](EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md).
 **V10 suites:** [`V10_PROMPT_SUITES.md`](V10_PROMPT_SUITES.md).
 **Experiment 012:** [`EXPERIMENT_012_EVAL_SUITE_EXPANSION.md`](EXPERIMENT_012_EVAL_SUITE_EXPANSION.md).
@@ -55,7 +56,7 @@ implemented** unless a linked experiment or release note says otherwise.
 
 ---
 
-## V11 — Final launch hardening (active)
+## V11 — Final launch hardening (complete — `v0.11.0`)
 
 | ID | Item | Status | V11 phase | Success criteria |
 |---|---|---|---|---|
@@ -68,8 +69,8 @@ implemented** unless a linked experiment or release note says otherwise.
 | D7 | **True attention logging** | **Deferred (partial)** | Phase 5 / Exp 019 | sdpa backend lacks `output_attentions`; no fabricated weights — [`EXPERIMENT_019_DIVERGENCE_AUTOPSY.md`](EXPERIMENT_019_DIVERGENCE_AUTOPSY.md) |
 | D8 | **Per-layer/head divergence forensics** | **Partial complete** | Phase 5 / Exp 019 | Per-layer KV error in Exp 019; per-head deferred without attention weights |
 | — | **Repair-policy pilot (Exp 019 hypotheses)** | **Complete** | Phase 5b / Exp 020 | [`EXPERIMENT_020_REPAIR_POLICY_PILOT.md`](EXPERIMENT_020_REPAIR_POLICY_PILOT.md); policies **not** in core ExactKV |
-| D17 | **Raw report bundle** | Planned | Phase 6 | Curated zip + checksum manifest |
-| D18 | **Launch narrative** | Planned | Phase 6 | Deferred draft until v1.0.0 gates |
+| D17 | **Raw report bundle** | **Policy complete** | Phase 6 | [`RAW_ARTIFACT_POLICY.md`](RAW_ARTIFACT_POLICY.md); physical zip optional until v1.0.0 |
+| D18 | **Launch narrative** | **Draft complete** | Phase 6 | [`LAUNCH_NARRATIVE_DRAFT.md`](LAUNCH_NARRATIVE_DRAFT.md); not for public posting until v1.0.0 review |
 | D6 | **Sparse V dequantization** | Deferred (out of V11 scope) | — | Not in V11 unless explicitly approved |
 | D11 | **Direct vLLM integration** | No-go (Phase A) | — | Out of V11 scope |
 | D12 | **LMCache integration** | No-go (Phase A) | — | Out of V11 scope |
@@ -84,7 +85,7 @@ V11 covers multi-model validation, serving/profiling probes, and launch package 
 
 | ID | Item | Status | Success criteria |
 |---|---|---|---|
-| D19 | **Project status v1.0.0** | Deferred | Supersedes [`PROJECT_STATUS_V0.10.0.md`](PROJECT_STATUS_V0.10.0.md); after V11 Phase 6 |
+| D19 | **Project status v1.0.0** | Deferred | Supersedes [`PROJECT_STATUS_V0.11.0.md`](PROJECT_STATUS_V0.11.0.md); after v1.0.0 gate review |
 | D20 | **Git tag `v1.0.0`** | Deferred | [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) §16 gates met |
 
 _D17 and D18 are prepared in V11 Phase 6; published at v1.0.0 tag._
@@ -113,7 +114,8 @@ remain **deferred, not forgotten**.
 
 ## Related
 
-- [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) — V11 formal scope (Phase 0 active)
+- [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) — V11 formal scope (complete)
+- [`V11_LAUNCH_READINESS.md`](V11_LAUNCH_READINESS.md) — v0.11.0 / v1.0.0 gate decision
 - [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — V10 formal scope (complete)
 - [`V10_READINESS_ASSESSMENT.md`](V10_READINESS_ASSESSMENT.md) — Phase 5 readiness
 - [`RELEASE_NOTES_V0.10.0.md`](RELEASE_NOTES_V0.10.0.md) — v0.10.0 changelog

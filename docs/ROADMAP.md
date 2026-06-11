@@ -690,7 +690,7 @@ real backends on harder categories. **Not** a performance benchmark.
 
 ---
 
-# V11: Final launch hardening (Phase 5b complete)
+# V11: Final launch hardening (complete — `v0.11.0`)
 
 ## Goal
 
@@ -708,19 +708,20 @@ Formal scope: [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) (Phases 0–6; 
 | 4 | Active GPU memory methodology (Exp 018) | ✅ [`EXPERIMENT_018_GPU_MEMORY_PILOT.md`](EXPERIMENT_018_GPU_MEMORY_PILOT.md) |
 | 5 | Divergence autopsy + repair hypotheses (Exp 019) | ✅ [`EXPERIMENT_019_DIVERGENCE_AUTOPSY.md`](EXPERIMENT_019_DIVERGENCE_AUTOPSY.md) |
 | 5b | Repair policy pilot (Exp 020) | ✅ [`EXPERIMENT_020_REPAIR_POLICY_PILOT.md`](EXPERIMENT_020_REPAIR_POLICY_PILOT.md) |
-| 6 | Raw report bundle + launch package readiness | Planned |
+| 6 | Launch package readiness | ✅ [`V11_LAUNCH_READINESS.md`](V11_LAUNCH_READINESS.md) |
 
+**V11 exit:** tag **`v0.11.0`**. Readiness decision: **not v1.0.0 public launch yet**.
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V11.
 
 ---
 
-# v1.0.0: Public launch (after V11)
+# v1.0.0: Public launch polish (after `v0.11.0`)
 
-Git tag `v1.0.0`, `PROJECT_STATUS` / `RELEASE_NOTES` v1.0.0, curated report bundle (D17),
-and reviewed launch narrative (D18) — only after V11 exit criteria in
-[`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) §16.
+Git tag `v1.0.0`, `PROJECT_STATUS` / `RELEASE_NOTES` v1.0.0, optional curated report
+bundle (D17), and reviewed launch narrative (D18) — only after gates in
+[`V11_LAUNCH_READINESS.md`](V11_LAUNCH_READINESS.md) §20.
 
-**Public posting is delayed until V11 gates are met or honestly deferred.**
+**`v0.11.0` is a research milestone, not public launch.** Public posting remains deferred.
 
 ---
 

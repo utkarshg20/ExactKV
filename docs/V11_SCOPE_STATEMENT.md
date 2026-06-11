@@ -1,6 +1,6 @@
 # V11 Scope Statement: Final Launch Hardening
 
-**Status:** **Phase 5b complete** — Experiment 020 succeeded (repair-policy pilot; `exactkv_failures == 0`). Phase 6 next.
+**Status:** **Phase 6 complete** — launch package readiness prepared; **`v0.11.0` tag-ready**; public v1.0.0 deferred.
 **Builds on:** `v0.10.0` — V10 complete (Experiments 012–014; evaluation-suite hardening).
 **Not public launch.** v1.0.0 deferred until V11 substance and launch package (D17–D20) exit criteria are met.
 
@@ -26,7 +26,7 @@
 | **4** | Active GPU memory methodology (Experiment 018) | **Complete** |
 | **5** | Optional attention logging / divergence deep dive (Experiment 019) | **Complete** |
 | **5b** | Autopsy-guided repair policy pilot (Experiment 020) | **Complete** |
-| **6** | Raw report bundle + launch package readiness | Planned |
+| **6** | Launch package readiness | **Complete** — [`V11_LAUNCH_READINESS.md`](V11_LAUNCH_READINESS.md) |
 
 **Latest release:** `v0.10.0`. **V10 exit docs:**
 [`V10_READINESS_ASSESSMENT.md`](V10_READINESS_ASSESSMENT.md),
