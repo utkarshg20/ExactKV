@@ -67,6 +67,7 @@ implemented** unless a linked experiment or release note says otherwise.
 | D14 | **Active GPU memory methodology** | **Complete** | Phase 4 / Exp 018 | [`GPU_MEMORY_METHODOLOGY.md`](GPU_MEMORY_METHODOLOGY.md); pilot **success** — not added to standard schema |
 | D7 | **True attention logging** | **Deferred (partial)** | Phase 5 / Exp 019 | sdpa backend lacks `output_attentions`; no fabricated weights — [`EXPERIMENT_019_DIVERGENCE_AUTOPSY.md`](EXPERIMENT_019_DIVERGENCE_AUTOPSY.md) |
 | D8 | **Per-layer/head divergence forensics** | **Partial complete** | Phase 5 / Exp 019 | Per-layer KV error in Exp 019; per-head deferred without attention weights |
+| — | **Repair-policy pilot (Exp 019 hypotheses)** | **Complete** | Phase 5b / Exp 020 | [`EXPERIMENT_020_REPAIR_POLICY_PILOT.md`](EXPERIMENT_020_REPAIR_POLICY_PILOT.md); policies **not** in core ExactKV |
 | D17 | **Raw report bundle** | Planned | Phase 6 | Curated zip + checksum manifest |
 | D18 | **Launch narrative** | Planned | Phase 6 | Deferred draft until v1.0.0 gates |
 | D6 | **Sparse V dequantization** | Deferred (out of V11 scope) | — | Not in V11 unless explicitly approved |

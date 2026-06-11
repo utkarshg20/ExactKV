@@ -67,7 +67,7 @@ V10 suites are **not universal benchmarks**. Restricted adapters remain **factor
 | V8 | `v0.8.0` | Serving harness; Experiment 007 | ✅ |
 | V9 | `v0.9.0` | Real backend gauntlet; Exp 008–011; 1.5B validation | ✅ |
 | V10 | `v0.10.0` | Suite hardening; Exp 012–014; [readiness](docs/V10_READINESS_ASSESSMENT.md) | ✅ |
-| V11 | — | Final launch hardening ([scope](docs/V11_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 5 ✅ |
+| V11 | — | Final launch hardening ([scope](docs/V11_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 5b ✅ |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
@@ -756,6 +756,7 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | V11 Phase 3 (Exp 017) | [`EXPERIMENT_017_SERVING_SIDECAR_PROBE.md`](docs/EXPERIMENT_017_SERVING_SIDECAR_PROBE.md) — sidecar probe pass; vLLM/LMCache no-go reaffirmed |
 | V11 Phase 4 (Exp 018) | [`EXPERIMENT_018_GPU_MEMORY_PILOT.md`](docs/EXPERIMENT_018_GPU_MEMORY_PILOT.md) — GPU memory methodology pilot; V5 accounting unchanged |
 | V11 Phase 5 (Exp 019) | [`EXPERIMENT_019_DIVERGENCE_AUTOPSY.md`](docs/EXPERIMENT_019_DIVERGENCE_AUTOPSY.md) — divergence autopsy + repair hypotheses; attention deferred |
+| V11 Phase 5b (Exp 020) | [`EXPERIMENT_020_REPAIR_POLICY_PILOT.md`](docs/EXPERIMENT_020_REPAIR_POLICY_PILOT.md) — repair-policy pilot; policies not in core ExactKV |
 | V10 readiness | [`V10_READINESS_ASSESSMENT.md`](docs/V10_READINESS_ASSESSMENT.md) |
 | Project status | [`PROJECT_STATUS_V0.10.0.md`](docs/PROJECT_STATUS_V0.10.0.md) |
 | Planning | [`ROADMAP.md`](docs/ROADMAP.md) · [`DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) |

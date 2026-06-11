@@ -1,6 +1,6 @@
 # ExactKV Experiment Index
 
-One-line reference for published experiments **001–019**. All report
+One-line reference for published experiments **001–020**. All report
 `exactkv_failures == 0` unless noted. JSON/CSV artifacts are **gitignored**
 under `reports/`.
 
@@ -32,6 +32,7 @@ under `reports/`.
 | 017 | Serving sidecar/probe refresh | [`EXPERIMENT_017_SERVING_SIDECAR_PROBE.md`](EXPERIMENT_017_SERVING_SIDECAR_PROBE.md) | V11 serving feasibility refresh + metadata-only sidecar probe | 32 | Sidecar probe **pass**; direct vLLM/LMCache **no-go reaffirmed**; `exactkv_failures == 0` | 0 | Not production serving; harness/sidecar only |
 | 018 | GPU memory methodology pilot | [`EXPERIMENT_018_GPU_MEMORY_PILOT.md`](EXPERIMENT_018_GPU_MEMORY_PILOT.md) | PyTorch CUDA allocation pilot vs V5 accounting | 100 | `pilot_success`; 0.5B+1.5B × 10 prompts × 5 compressors; `exactkv_failures == 0` | 0 | Isolated pilot artifact; not a performance benchmark; no `active_gpu_kv_bytes` |
 | 019 | Divergence autopsy | [`EXPERIMENT_019_DIVERGENCE_AUTOPSY.md`](EXPERIMENT_019_DIVERGENCE_AUTOPSY.md) | Mechanistic divergence forensics + repair hypotheses | 400 | 0.5B+1.5B × 25 prompts × 4 compressors × draft_len {4,8}; `int8` accept **0.967**; attention **deferred** | 0 | Forensics only; repair policies hypothesis-only; RunPod A5000 fp16 |
+| 020 | Repair policy pilot | [`EXPERIMENT_020_REPAIR_POLICY_PILOT.md`](EXPERIMENT_020_REPAIR_POLICY_PILOT.md) | Autopsy-guided policy selection pilot vs baselines | 300 | `fallback_int8` accept **0.979**; `category_adaptive` **0.973**; `exactkv_failures == 0` | 0 | Experiment-layer only; not production policy; RunPod A5000 fp16 |
 
 ---
 
@@ -54,6 +55,7 @@ under `reports/`.
 | 017 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_017_serving_sidecar_probe.py` |
 | 018 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_018_gpu_memory_pilot.py --device cuda --dtype float16 --include-15b` (RunPod GPU) |
 | 019 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_019_divergence_autopsy.py --device cuda --dtype float16 --include-15b` (RunPod GPU) |
+| 020 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_020_repair_policy_pilot.py --device cuda --dtype float16 --include-15b` (RunPod GPU) |
 
 ---
 

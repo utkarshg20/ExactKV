@@ -1,6 +1,6 @@
 # V11 Scope Statement: Final Launch Hardening
 
-**Status:** **Phase 5 complete** — Experiment 019 succeeded (divergence autopsy + repair hypotheses; attention logging deferred). Phase 6 next.
+**Status:** **Phase 5b complete** — Experiment 020 succeeded (repair-policy pilot; `exactkv_failures == 0`). Phase 6 next.
 **Builds on:** `v0.10.0` — V10 complete (Experiments 012–014; evaluation-suite hardening).
 **Not public launch.** v1.0.0 deferred until V11 substance and launch package (D17–D20) exit criteria are met.
 
@@ -25,6 +25,7 @@
 | **3** | Serving sidecar/probe feasibility refresh (Experiment 017) | **Complete** |
 | **4** | Active GPU memory methodology (Experiment 018) | **Complete** |
 | **5** | Optional attention logging / divergence deep dive (Experiment 019) | **Complete** |
+| **5b** | Autopsy-guided repair policy pilot (Experiment 020) | **Complete** |
 | **6** | Raw report bundle + launch package readiness | Planned |
 
 **Latest release:** `v0.10.0`. **V10 exit docs:**
@@ -138,6 +139,13 @@ Deliverable: `V11_SCOPE_STATEMENT.md`; README/ROADMAP/deferred-register updates.
 - Tiny subset only (e.g. ≤5 prompts × ≤2 compressors).
 - Supports D7/D8 if weights are obtainable without fabrication.
 - If infeasible, extend Experiment 013 deferral note — no fake attention maps.
+
+### Phase 5b — Autopsy-guided repair policy pilot
+
+- Run Experiment **020** on the Exp 019 prompt panel (25 prompts × 6 policies).
+- Policy selection in experiment/analysis layer only — core generator unchanged.
+- Compare category-adaptive and fallback-int8 pilots vs `baseline_k8_v4` / `baseline_boundary4`.
+- Deliverables: [`EXPERIMENT_020_REPAIR_POLICY_PILOT.md`](EXPERIMENT_020_REPAIR_POLICY_PILOT.md); `scripts/run_experiment_020_repair_policy_pilot.py`.
 
 ### Phase 6 — Raw report bundle + launch package readiness
 
