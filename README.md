@@ -31,7 +31,7 @@ is faster. It does **not** claim throughput, latency, speedup, or production rea
 | Item | Value |
 |---|---|
 | **Latest release** | [`v0.11.0`](docs/RELEASE_NOTES_V0.11.0.md) — V11 launch hardening (Experiments 015–020) |
-| **Next** | [**v1.0.0**](docs/V11_LAUNCH_READINESS.md) — launch polish only if readiness gate clears; **blocker:** v1.0.0 status/release notes, narrative review, optional artifact bundle |
+| **Next** | [**V12**](docs/V12_SCOPE_STATEMENT.md) — Deferred Work Completion Gauntlet (not public launch) |
 | **Status** | Research milestone; [not public-launch final](docs/PROJECT_STATUS_V0.11.0.md) |
 | **Hard gate** | `exactkv_failures == 0` on every published experiment |
 | **Default model** | `Qwen/Qwen2.5-0.5B` (greedy, single-request, CPU-first) |
@@ -51,7 +51,7 @@ V10/V11 suites are **not universal benchmarks**. Restricted adapters remain **fa
 | Repair-policy pilot (Exp 020) | `fallback_int8` **0.979**; `category_adaptive` **0.973** |
 
 > ⚠️ Not production backends. `_sim` = int8 containers. No throughput, latency, active GPU memory savings, or production-serving claims.
-> Public v1.0.0 deferred — see [V11 launch readiness](docs/V11_LAUNCH_READINESS.md).
+> Public v1.0.0 deferred — see [V11 launch readiness](docs/V11_LAUNCH_READINESS.md); V12 scope: [Deferred Work Completion Gauntlet](docs/V12_SCOPE_STATEMENT.md).
 
 ---
 
@@ -68,6 +68,7 @@ V10/V11 suites are **not universal benchmarks**. Restricted adapters remain **fa
 | V9 | `v0.9.0` | Real backend gauntlet; Exp 008–011; 1.5B validation | ✅ |
 | V10 | `v0.10.0` | Suite hardening; Exp 012–014; [readiness](docs/V10_READINESS_ASSESSMENT.md) | ✅ |
 | V11 | `v0.11.0` | Launch hardening; Exp 015–020; [readiness](docs/V11_LAUNCH_READINESS.md) | ✅ |
+| V12 | — | Deferred Work Completion Gauntlet ([scope](docs/V12_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 0 |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
@@ -750,6 +751,7 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | v0.8.0 docs | [`RELEASE_NOTES_V0.8.0.md`](docs/RELEASE_NOTES_V0.8.0.md) · [`EXPERIMENT_INDEX.md`](docs/EXPERIMENT_INDEX.md) · [`PROJECT_STATUS_V0.8.0.md`](docs/PROJECT_STATUS_V0.8.0.md) · [`DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) |
 | V9 scope | [`V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) |
 | V10 scope (complete) | [`V10_SCOPE_STATEMENT.md`](docs/V10_SCOPE_STATEMENT.md) |
+| V12 scope (active) | [`V12_SCOPE_STATEMENT.md`](docs/V12_SCOPE_STATEMENT.md) |
 | V11 scope (complete) | [`V11_SCOPE_STATEMENT.md`](docs/V11_SCOPE_STATEMENT.md) |
 | V11 launch readiness | [`V11_LAUNCH_READINESS.md`](docs/V11_LAUNCH_READINESS.md) |
 | V11 Phase 6 | [`RAW_ARTIFACT_POLICY.md`](docs/RAW_ARTIFACT_POLICY.md) · [`LAUNCH_NARRATIVE_DRAFT.md`](docs/LAUNCH_NARRATIVE_DRAFT.md) |

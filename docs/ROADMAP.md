@@ -715,13 +715,40 @@ See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V11.
 
 ---
 
-# v1.0.0: Public launch polish (after `v0.11.0`)
+# V12: Deferred Work Completion Gauntlet (Phase 0 active)
+
+## Goal
+
+Finish or conclusively close major deferred technical tracks before public launch —
+especially production-fidelity backend checks, larger-model real-backend validation,
+full repair-policy validation, and performance/memory truth boundaries.
+**Not public launch.**
+
+Formal scope: [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) (Phases 0–8; Experiments 021–027).
+
+| Phase | Focus | Status |
+|---|---|---|
+| 0 | Scope statement | Active |
+| 1 | TurboQuant production-fidelity feasibility (Exp 021) | Planned |
+| 2 | TurboQuant llama.cpp / GGUF probe or no-go (Exp 022) | Planned |
+| 3 | KVQuant larger-model validation (Exp 023) | Planned |
+| 4 | KIVI CUDA/Triton feasibility or no-go (Exp 024) | Planned |
+| 5 | Full-suite repair-policy validation (Exp 025) | Planned |
+| 6 | True attention logging feasibility or no-go (Exp 026) | Planned |
+| 7 | Performance/memory truth boundary (Exp 027) | Planned |
+| 8 | V12 release package + public-launch decision | Planned |
+
+See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V12.
+
+---
+
+# v1.0.0: Public launch (after V12)
 
 Git tag `v1.0.0`, `PROJECT_STATUS` / `RELEASE_NOTES` v1.0.0, optional curated report
-bundle (D17), and reviewed launch narrative (D18) — only after gates in
-[`V11_LAUNCH_READINESS.md`](V11_LAUNCH_READINESS.md) §20.
+bundle (D17), and reviewed launch narrative (D18) — only after V12 exit criteria in
+[`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) §19.
 
-**`v0.11.0` is a research milestone, not public launch.** Public posting remains deferred.
+**`v0.11.0` is a research milestone, not public launch.** Public posting remains deferred until V12 gates pass or are honestly closed.
 
 ---
 
