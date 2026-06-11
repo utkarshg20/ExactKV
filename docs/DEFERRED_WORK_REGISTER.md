@@ -64,7 +64,7 @@ implemented** unless a linked experiment or release note says otherwise.
 | — | **Optional 3B built-in stretch** | **Complete** | Phase 2 / Exp 016 | [`EXPERIMENT_016_QWEN3B_V10_SUITES.md`](EXPERIMENT_016_QWEN3B_V10_SUITES.md); `exactkv_failures == 0` |
 | — | **Optional 1.5B real-backend panel** | Deferred | — | Not run in Phase 2; may revisit post-Exp 017 |
 | D13 | **vLLM / LMCache sidecar probe** | **Complete** | Phase 3 / Exp 017 | [`EXPERIMENT_017_SERVING_SIDECAR_PROBE.md`](EXPERIMENT_017_SERVING_SIDECAR_PROBE.md); sidecar pass; direct integration **no-go reaffirmed** |
-| D14 | **Active GPU memory profiling** | Planned | Phase 4 / Exp 018 | Methodology + pilot **or honest deferral** |
+| D14 | **Active GPU memory methodology** | **Complete** | Phase 4 / Exp 018 | [`GPU_MEMORY_METHODOLOGY.md`](GPU_MEMORY_METHODOLOGY.md); pilot **success** — not added to standard schema |
 | D7 | **True attention logging** | Planned (optional) | Phase 5 | Tiny subset; no fabricated weights |
 | D8 | **Per-layer/head divergence forensics** | Planned (optional) | Phase 5 | Where weights exist |
 | D17 | **Raw report bundle** | Planned | Phase 6 | Curated zip + checksum manifest |

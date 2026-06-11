@@ -1,6 +1,6 @@
 # V11 Scope Statement: Final Launch Hardening
 
-**Status:** **Phase 3 complete** — Experiment 017 succeeded (sidecar probe pass; direct vLLM/LMCache no-go reaffirmed). Phase 4 next.
+**Status:** **Phase 4 complete** — Experiment 018 succeeded (GPU memory methodology + pilot; `pilot_success`). Phase 5 next.
 **Builds on:** `v0.10.0` — V10 complete (Experiments 012–014; evaluation-suite hardening).
 **Not public launch.** v1.0.0 deferred until V11 substance and launch package (D17–D20) exit criteria are met.
 
@@ -23,7 +23,7 @@
 | **1** | 1.5B expanded-suite validation (Experiment 015) | **Complete** |
 | **2** | Optional 3B stretch or 1.5B real-backend panel (Experiment 016) | **Complete** (3B built-in) |
 | **3** | Serving sidecar/probe feasibility refresh (Experiment 017) | **Complete** |
-| **4** | Active GPU memory methodology (Experiment 018) | Planned |
+| **4** | Active GPU memory methodology (Experiment 018) | **Complete** |
 | **5** | Optional attention logging / divergence deep dive | Planned |
 | **6** | Raw report bundle + launch package readiness | Planned |
 
@@ -59,7 +59,7 @@ sufficient for public v1.0.0:
 |---|---|
 | **Multi-model on V10 suites** | Experiment 011 validated 1.5B on legacy `core` (34 prompts) only; Experiments 012–014 are 0.5B |
 | **Serving integration status stale** | V8 Phase A no-go for direct vLLM/LMCache; no post-V10 refresh |
-| **Active GPU memory** | `total_kv_footprint_bytes` is accounting only; D14 unresolved |
+| **Active GPU memory** | Methodology + pilot complete (Exp 018); not a standard schema metric |
 | **Attention forensics depth** | Experiment 013 used heuristics only; D7/D8 deferred |
 | **Launch package** | No curated raw report bundle (D17) or final public narrative (D18) |
 | **3B scale unknown** | No published ExactKV cells at 3B |
@@ -235,7 +235,8 @@ Deliverable: `V11_SCOPE_STATEMENT.md`; README/ROADMAP/deferred-register updates.
 | Models | 0.5B and/or 1.5B on small stratified subset |
 | Tools | Document chosen approach (e.g. `torch.cuda.max_memory_allocated` snapshots at defined lifecycle points — **not** peak serving memory claims) |
 | Experiment class | `v11_active_gpu_memory` |
-| Deliverables | `EXPERIMENT_018_ACTIVE_GPU_MEMORY.md`; methodology section even if pilot deferred |
+| Deliverables | [`GPU_MEMORY_METHODOLOGY.md`](GPU_MEMORY_METHODOLOGY.md); [`EXPERIMENT_018_GPU_MEMORY_PILOT.md`](EXPERIMENT_018_GPU_MEMORY_PILOT.md) |
+| Script | `scripts/run_experiment_018_gpu_memory_pilot.py` |
 
 **Success criteria:**
 

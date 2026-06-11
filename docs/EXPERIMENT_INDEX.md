@@ -1,6 +1,6 @@
 # ExactKV Experiment Index
 
-One-line reference for published experiments **001–017**. All report
+One-line reference for published experiments **001–018**. All report
 `exactkv_failures == 0` unless noted. JSON/CSV artifacts are **gitignored**
 under `reports/`.
 
@@ -30,6 +30,7 @@ under `reports/`.
 | 015 | 1.5B V10 suite validation | [`EXPERIMENT_015_QWEN15B_V10_SUITES.md`](EXPERIMENT_015_QWEN15B_V10_SUITES.md) | Qwen2.5-1.5B transfer check on full V10 suites | 896 | `int8` **0.978**; boundary4 **0.951** > k8_v4_sim **0.942**; margin **+0.009** (matches Exp 012) | 0 | Larger-model validation; RunPod A5000 fp16; not a performance benchmark |
 | 016 | 3B V10 suite validation | [`EXPERIMENT_016_QWEN3B_V10_SUITES.md`](EXPERIMENT_016_QWEN3B_V10_SUITES.md) | Qwen2.5-3B built-in stretch on full V10 suites | 896 | `int8` **0.991**; boundary4 **0.952** > k8_v4_sim **0.951**; margin **+0.001** | 0 | 3B scale validation; RunPod A5000 fp16; not a performance benchmark |
 | 017 | Serving sidecar/probe refresh | [`EXPERIMENT_017_SERVING_SIDECAR_PROBE.md`](EXPERIMENT_017_SERVING_SIDECAR_PROBE.md) | V11 serving feasibility refresh + metadata-only sidecar probe | 32 | Sidecar probe **pass**; direct vLLM/LMCache **no-go reaffirmed**; `exactkv_failures == 0` | 0 | Not production serving; harness/sidecar only |
+| 018 | GPU memory methodology pilot | [`EXPERIMENT_018_GPU_MEMORY_PILOT.md`](EXPERIMENT_018_GPU_MEMORY_PILOT.md) | PyTorch CUDA allocation pilot vs V5 accounting | 100 | `pilot_success`; 0.5B+1.5B × 10 prompts × 5 compressors; `exactkv_failures == 0` | 0 | Isolated pilot artifact; not a performance benchmark; no `active_gpu_kv_bytes` |
 
 ---
 
@@ -50,6 +51,7 @@ under `reports/`.
 | 015 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_015_qwen15b_v10_suites.py --device cuda --dtype float16` (RunPod GPU) |
 | 016 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_016_qwen3b_v10_suites.py --device cuda --dtype float16` (RunPod GPU) |
 | 017 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_017_serving_sidecar_probe.py` |
+| 018 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_018_gpu_memory_pilot.py --device cuda --dtype float16 --include-15b` (RunPod GPU) |
 
 ---
 
