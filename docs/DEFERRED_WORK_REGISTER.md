@@ -61,7 +61,8 @@ implemented** unless a linked experiment or release note says otherwise.
 |---|---|---|---|---|
 | — | **V11 scope statement** | **Complete** | Phase 0 | [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) |
 | — | **1.5B on V10 expanded suites** | **Complete** | Phase 1 / Exp 015 | [`EXPERIMENT_015_QWEN15B_V10_SUITES.md`](EXPERIMENT_015_QWEN15B_V10_SUITES.md); `exactkv_failures == 0` |
-| — | **Optional 3B or 1.5B real-backend panel** | Planned | Phase 2 / Exp 016 | Document omit if infeasible |
+| — | **Optional 3B built-in stretch** | **Complete** | Phase 2 / Exp 016 | [`EXPERIMENT_016_QWEN3B_V10_SUITES.md`](EXPERIMENT_016_QWEN3B_V10_SUITES.md); `exactkv_failures == 0` |
+| — | **Optional 1.5B real-backend panel** | Deferred | — | Not run in Phase 2; may revisit post-Exp 017 |
 | D13 | **vLLM / LMCache sidecar probe** | Planned | Phase 3 / Exp 017 | Probe, sketch, or **no-go refresh** — not forced integration |
 | D14 | **Active GPU memory profiling** | Planned | Phase 4 / Exp 018 | Methodology + pilot **or honest deferral** |
 | D7 | **True attention logging** | Planned (optional) | Phase 5 | Tiny subset; no fabricated weights |

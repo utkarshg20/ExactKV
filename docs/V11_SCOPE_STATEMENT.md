@@ -1,6 +1,6 @@
 # V11 Scope Statement: Final Launch Hardening
 
-**Status:** **Phase 1 complete** — Experiment 015 succeeded (`exactkv_failures == 0`). Phase 2 next.
+**Status:** **Phase 2 complete** — Experiment 016 succeeded (`exactkv_failures == 0`). Phase 3 next.
 **Builds on:** `v0.10.0` — V10 complete (Experiments 012–014; evaluation-suite hardening).
 **Not public launch.** v1.0.0 deferred until V11 substance and launch package (D17–D20) exit criteria are met.
 
@@ -21,7 +21,7 @@
 |---|---|---|
 | **0** | Formal scope statement (this document) | **Complete** |
 | **1** | 1.5B expanded-suite validation (Experiment 015) | **Complete** |
-| **2** | Optional 3B stretch or 1.5B real-backend panel (Experiment 016) | Planned |
+| **2** | Optional 3B stretch or 1.5B real-backend panel (Experiment 016) | **Complete** (3B built-in) |
 | **3** | Serving sidecar/probe feasibility refresh (Experiment 017) | Planned |
 | **4** | Active GPU memory methodology (Experiment 018) | Planned |
 | **5** | Optional attention logging / divergence deep dive | Planned |
@@ -178,17 +178,18 @@ Deliverable: `V11_SCOPE_STATEMENT.md`; README/ROADMAP/deferred-register updates.
 
 ## 8. Experiment 016 plan
 
-**Name:** Optional 3B Stretch or 1.5B Real-Backend Panel.
+**Name:** 3B V10 Suite Validation (built-in stretch).
 
 | Parameter | Value |
 |---|---|
-| Model | `Qwen/Qwen2.5-3B` **or** `Qwen/Qwen2.5-1.5B` |
-| Prompts | Stratified V10 subset (document ids; prefer harder categories from Exp 014) |
-| Compressors | Built-ins + **selected** factory-only real backends if env permits |
+| Model | `Qwen/Qwen2.5-3B` |
+| Prompts | Full V10 seven suites (128 prompts) |
+| Compressors | Built-in panel (§13) |
 | `draft_len` / `max_new_tokens` | 4 / 16 |
-| Environment | RunPod; isolated venvs per backend |
-| Experiment class | `v11_optional_scale_or_backend` |
-| Deliverables | `EXPERIMENT_016_OPTIONAL_SCALE_BACKEND.md`; gitignored JSON/CSV |
+| Environment | RunPod GPU, float16 CUDA |
+| Experiment class | `v11_qwen3b_v10_suites` |
+| Deliverables | [`EXPERIMENT_016_QWEN3B_V10_SUITES.md`](EXPERIMENT_016_QWEN3B_V10_SUITES.md); gitignored JSON/CSV |
+| Script | `scripts/run_experiment_016_qwen3b_v10_suites.py` |
 
 **Success criteria:**
 
