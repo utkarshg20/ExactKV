@@ -1,6 +1,6 @@
 # V11 Scope Statement: Final Launch Hardening
 
-**Status:** **Phase 4 complete** — Experiment 018 succeeded (GPU memory methodology + pilot; `pilot_success`). Phase 5 next.
+**Status:** **Phase 5 complete** — Experiment 019 succeeded (divergence autopsy + repair hypotheses; attention logging deferred). Phase 6 next.
 **Builds on:** `v0.10.0` — V10 complete (Experiments 012–014; evaluation-suite hardening).
 **Not public launch.** v1.0.0 deferred until V11 substance and launch package (D17–D20) exit criteria are met.
 
@@ -24,7 +24,7 @@
 | **2** | Optional 3B stretch or 1.5B real-backend panel (Experiment 016) | **Complete** (3B built-in) |
 | **3** | Serving sidecar/probe feasibility refresh (Experiment 017) | **Complete** |
 | **4** | Active GPU memory methodology (Experiment 018) | **Complete** |
-| **5** | Optional attention logging / divergence deep dive | Planned |
+| **5** | Optional attention logging / divergence deep dive (Experiment 019) | **Complete** |
 | **6** | Raw report bundle + launch package readiness | Planned |
 
 **Latest release:** `v0.10.0`. **V10 exit docs:**
@@ -60,7 +60,7 @@ sufficient for public v1.0.0:
 | **Multi-model on V10 suites** | Experiment 011 validated 1.5B on legacy `core` (34 prompts) only; Experiments 012–014 are 0.5B |
 | **Serving integration status stale** | V8 Phase A no-go for direct vLLM/LMCache; no post-V10 refresh |
 | **Active GPU memory** | Methodology + pilot complete (Exp 018); not a standard schema metric |
-| **Attention forensics depth** | Experiment 013 used heuristics only; D7/D8 deferred |
+| **Attention forensics depth** | Experiment 019 added logit/KV-layer autopsy; D7 attention deferred (sdpa); D8 partial |
 | **Launch package** | No curated raw report bundle (D17) or final public narrative (D18) |
 | **3B scale unknown** | No published ExactKV cells at 3B |
 

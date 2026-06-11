@@ -690,14 +690,14 @@ real backends on harder categories. **Not** a performance benchmark.
 
 ---
 
-# V11: Final launch hardening (Phase 4 complete)
+# V11: Final launch hardening (Phase 5 complete)
 
 ## Goal
 
 Close scale, serving-context, profiling, and launch-documentation gaps before v1.0.0.
 **Not public launch.**
 
-Formal scope: [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) (Phases 0–6; Experiments 015–018).
+Formal scope: [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) (Phases 0–6; Experiments 015–019).
 
 | Phase | Focus | Status |
 |---|---|---|
@@ -706,7 +706,7 @@ Formal scope: [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) (Phases 0–6; 
 | 2 | 3B built-in stretch (Exp 016) | ✅ [`EXPERIMENT_016_QWEN3B_V10_SUITES.md`](EXPERIMENT_016_QWEN3B_V10_SUITES.md) |
 | 3 | Serving sidecar/probe refresh (Exp 017) | ✅ [`EXPERIMENT_017_SERVING_SIDECAR_PROBE.md`](EXPERIMENT_017_SERVING_SIDECAR_PROBE.md) |
 | 4 | Active GPU memory methodology (Exp 018) | ✅ [`EXPERIMENT_018_GPU_MEMORY_PILOT.md`](EXPERIMENT_018_GPU_MEMORY_PILOT.md) |
-| 5 | Optional attention logging | Planned |
+| 5 | Divergence autopsy + repair hypotheses (Exp 019) | ✅ [`EXPERIMENT_019_DIVERGENCE_AUTOPSY.md`](EXPERIMENT_019_DIVERGENCE_AUTOPSY.md) |
 | 6 | Raw report bundle + launch package readiness | Planned |
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V11.
