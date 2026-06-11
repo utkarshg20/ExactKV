@@ -752,7 +752,8 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | V9 scope | [`V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) |
 | V10 scope (complete) | [`V10_SCOPE_STATEMENT.md`](docs/V10_SCOPE_STATEMENT.md) |
 | V12 scope (active) | [`V12_SCOPE_STATEMENT.md`](docs/V12_SCOPE_STATEMENT.md) |
-| V12 Phase 1b | [`TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md`](docs/TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md) — RunPod binaries + GGUF smoke; Exp 022 ready |
+| V12 Phase 2 (Exp 022) | [`EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md`](docs/EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md) — external llama.cpp drafter probe; Mode B go with restrictions |
+| V12 Phase 1b | [`TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md`](docs/TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md) |
 | V12 Phase 1 (Exp 021) | [`TURBOQUANT_PRODUCTION_FIDELITY_FEASIBILITY.md`](docs/TURBOQUANT_PRODUCTION_FIDELITY_FEASIBILITY.md) |
 | V11 scope (complete) | [`V11_SCOPE_STATEMENT.md`](docs/V11_SCOPE_STATEMENT.md) |
 | V11 launch readiness | [`V11_LAUNCH_READINESS.md`](docs/V11_LAUNCH_READINESS.md) |

@@ -1,6 +1,6 @@
 # V12 Scope Statement — Deferred Work Completion Gauntlet
 
-**Status:** **Phase 1b complete** — TurboQuant toolchain prep on RunPod; Phase 2 (Exp 022) next.
+**Status:** **Phase 2 complete** — Experiment 022 external-drafter probe documented; Phase 3 (Exp 023) next.
 **Builds on:** `v0.11.0` — V11 complete (Experiments 015–020; launch package prepared).
 **Not public launch.** v1.0.0 deferred until V12 substance and exit criteria are met or honestly closed.
 
@@ -22,7 +22,7 @@
 | **0** | Formal scope statement (this document) | **Complete** |
 | **1** | TurboQuant production-fidelity feasibility (Exp 021) | **Complete** — [`TURBOQUANT_PRODUCTION_FIDELITY_FEASIBILITY.md`](TURBOQUANT_PRODUCTION_FIDELITY_FEASIBILITY.md) |
 | **1b** | TurboQuant toolchain prep (build, GGUF, smoke) | **Complete** — [`TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md`](TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md) |
-| **2** | TurboQuant llama.cpp / GGUF probe or documented no-go (Exp 022) | Planned |
+| **2** | TurboQuant llama.cpp / GGUF probe or documented no-go (Exp 022) | **Complete** — [`EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md`](EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md) |
 | **3** | KVQuant larger-model real-backend validation (Exp 023) | Planned |
 | **4** | KIVI CUDA/Triton packed-path feasibility or documented no-go (Exp 024) | Planned |
 | **5** | Full-suite repair-policy validation (Exp 025) | Planned |

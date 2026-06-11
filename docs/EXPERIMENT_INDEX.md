@@ -33,6 +33,7 @@ under `reports/`.
 | 018 | GPU memory methodology pilot | [`EXPERIMENT_018_GPU_MEMORY_PILOT.md`](EXPERIMENT_018_GPU_MEMORY_PILOT.md) | PyTorch CUDA allocation pilot vs V5 accounting | 100 | `pilot_success`; 0.5B+1.5B × 10 prompts × 5 compressors; `exactkv_failures == 0` | 0 | Isolated pilot artifact; not a performance benchmark; no `active_gpu_kv_bytes` |
 | 019 | Divergence autopsy | [`EXPERIMENT_019_DIVERGENCE_AUTOPSY.md`](EXPERIMENT_019_DIVERGENCE_AUTOPSY.md) | Mechanistic divergence forensics + repair hypotheses | 400 | 0.5B+1.5B × 25 prompts × 4 compressors × draft_len {4,8}; `int8` accept **0.967**; attention **deferred** | 0 | Forensics only; repair policies hypothesis-only; RunPod A5000 fp16 |
 | 020 | Repair policy pilot | [`EXPERIMENT_020_REPAIR_POLICY_PILOT.md`](EXPERIMENT_020_REPAIR_POLICY_PILOT.md) | Autopsy-guided policy selection pilot vs baselines | 300 | `fallback_int8` accept **0.979**; `category_adaptive` **0.973**; `exactkv_failures == 0` | 0 | Experiment-layer only; not production policy; RunPod A5000 fp16 |
+| 022 | TurboQuant llama.cpp probe | [`EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md`](EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md) | External llama.cpp/GGUF drafter vs HF verifier (Mode B) | 10 | External-probe accept **0.486**; token-safe **6/10**; Mode B **go with restrictions** | 0 | Not BackendAdapter; not llama.cpp integration; RunPod CPU |
 
 ---
 
@@ -56,6 +57,7 @@ under `reports/`.
 | 018 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_018_gpu_memory_pilot.py --device cuda --dtype float16 --include-15b` (RunPod GPU) |
 | 019 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_019_divergence_autopsy.py --device cuda --dtype float16 --include-15b` (RunPod GPU) |
 | 020 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_020_repair_policy_pilot.py --device cuda --dtype float16 --include-15b` (RunPod GPU) |
+| 022 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_022_turboquant_llamacpp_probe.py` (RunPod; `LLAMA_CPP_BIN_DIR` + GGUF) |
 
 ---
 
