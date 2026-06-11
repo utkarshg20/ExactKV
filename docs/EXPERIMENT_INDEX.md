@@ -34,6 +34,7 @@ under `reports/`.
 | 019 | Divergence autopsy | [`EXPERIMENT_019_DIVERGENCE_AUTOPSY.md`](EXPERIMENT_019_DIVERGENCE_AUTOPSY.md) | Mechanistic divergence forensics + repair hypotheses | 400 | 0.5B+1.5B × 25 prompts × 4 compressors × draft_len {4,8}; `int8` accept **0.967**; attention **deferred** | 0 | Forensics only; repair policies hypothesis-only; RunPod A5000 fp16 |
 | 020 | Repair policy pilot | [`EXPERIMENT_020_REPAIR_POLICY_PILOT.md`](EXPERIMENT_020_REPAIR_POLICY_PILOT.md) | Autopsy-guided policy selection pilot vs baselines | 300 | `fallback_int8` accept **0.979**; `category_adaptive` **0.973**; `exactkv_failures == 0` | 0 | Experiment-layer only; not production policy; RunPod A5000 fp16 |
 | 022 | TurboQuant llama.cpp probe | [`EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md`](EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md) | External llama.cpp/GGUF drafter vs HF verifier (Mode B) | 10 | External-probe accept **0.486**; token-safe **6/10**; Mode B **go with restrictions** | 0 | Not BackendAdapter; not llama.cpp integration; RunPod CPU |
+| 023 | KVQuant 1.5B validation | [`EXPERIMENT_023_KVQUANT_LARGER_MODEL.md`](EXPERIMENT_023_KVQUANT_LARGER_MODEL.md) | KVQuant simquant on Qwen2.5-1.5B hard V10 panel | 200 | `kvquant_sim_qwen15b` accept **0.609**; `int8` **0.962**; `exactkv_failures == 0` | 0 | Simquant only; not deployment CUDA; RunPod A5000 fp16 |
 
 ---
 
@@ -58,6 +59,7 @@ under `reports/`.
 | 019 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_019_divergence_autopsy.py --device cuda --dtype float16 --include-15b` (RunPod GPU) |
 | 020 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_020_repair_policy_pilot.py --device cuda --dtype float16 --include-15b` (RunPod GPU) |
 | 022 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_022_turboquant_llamacpp_probe.py` (RunPod; `LLAMA_CPP_BIN_DIR` + GGUF) |
+| 023 | `EXACTKV_KVQUANT_QUANTIZERS=/workspace/kvquant_d4/quantizers_qwen15b.pickle python scripts/run_experiment_023_kvquant_larger_model.py` (KVQuant venv, RunPod CUDA) |
 
 ---
 

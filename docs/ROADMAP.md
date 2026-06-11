@@ -715,7 +715,7 @@ See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V11.
 
 ---
 
-# V12: Deferred Work Completion Gauntlet (Phase 2 complete)
+# V12: Deferred Work Completion Gauntlet (Phase 3 complete)
 
 ## Goal
 
@@ -732,7 +732,7 @@ Formal scope: [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) (Phases 0–8; 
 | 1 | TurboQuant production-fidelity feasibility (Exp 021) | ✅ [`TURBOQUANT_PRODUCTION_FIDELITY_FEASIBILITY.md`](TURBOQUANT_PRODUCTION_FIDELITY_FEASIBILITY.md) |
 | 1b | TurboQuant toolchain prep | ✅ [`TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md`](TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md) |
 | 2 | TurboQuant llama.cpp / GGUF probe or no-go (Exp 022) | ✅ [`EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md`](EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md) |
-| 3 | KVQuant larger-model validation (Exp 023) | Planned |
+| 3 | KVQuant larger-model validation (Exp 023) | ✅ [`EXPERIMENT_023_KVQUANT_LARGER_MODEL.md`](EXPERIMENT_023_KVQUANT_LARGER_MODEL.md) |
 | 4 | KIVI CUDA/Triton feasibility or no-go (Exp 024) | Planned |
 | 5 | Full-suite repair-policy validation (Exp 025) | Planned |
 | 6 | True attention logging feasibility or no-go (Exp 026) | Planned |
