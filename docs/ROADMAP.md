@@ -733,7 +733,7 @@ Formal scope: [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) (Phases 0–8; 
 | 1b | TurboQuant toolchain prep | ✅ [`TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md`](TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md) |
 | 2 | TurboQuant llama.cpp / GGUF probe or no-go (Exp 022) | ✅ [`EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md`](EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md) |
 | 3 | KVQuant larger-model validation (Exp 023) | ✅ [`EXPERIMENT_023_KVQUANT_LARGER_MODEL.md`](EXPERIMENT_023_KVQUANT_LARGER_MODEL.md) |
-| 4 | KIVI CUDA/Triton feasibility or no-go (Exp 024) | Planned |
+| 4 | KIVI CUDA/Triton feasibility or no-go (Exp 024) | ✅ [`EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md`](EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md) |
 | 5 | Full-suite repair-policy validation (Exp 025) | Planned |
 | 6 | True attention logging feasibility or no-go (Exp 026) | Planned |
 | 7 | Performance/memory truth boundary (Exp 027) | Planned |

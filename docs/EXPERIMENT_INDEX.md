@@ -35,6 +35,7 @@ under `reports/`.
 | 020 | Repair policy pilot | [`EXPERIMENT_020_REPAIR_POLICY_PILOT.md`](EXPERIMENT_020_REPAIR_POLICY_PILOT.md) | Autopsy-guided policy selection pilot vs baselines | 300 | `fallback_int8` accept **0.979**; `category_adaptive` **0.973**; `exactkv_failures == 0` | 0 | Experiment-layer only; not production policy; RunPod A5000 fp16 |
 | 022 | TurboQuant llama.cpp probe | [`EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md`](EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md) | External llama.cpp/GGUF drafter vs HF verifier (Mode B) | 10 | External-probe accept **0.486**; token-safe **6/10**; Mode B **go with restrictions** | 0 | Not BackendAdapter; not llama.cpp integration; RunPod CPU |
 | 023 | KVQuant 1.5B validation | [`EXPERIMENT_023_KVQUANT_LARGER_MODEL.md`](EXPERIMENT_023_KVQUANT_LARGER_MODEL.md) | KVQuant simquant on Qwen2.5-1.5B hard V10 panel | 200 | `kvquant_sim_qwen15b` accept **0.609**; `int8` **0.962**; `exactkv_failures == 0` | 0 | Simquant only; not deployment CUDA; RunPod A5000 fp16 |
+| 024 | KIVI CUDA/Triton feasibility | [`EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md`](EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md) | Packed-path CUDA/Triton audit vs Exp 009 offline simulate | — (feasibility) | **`B_restricted_go`**; Triton pack OK; `dequant_cuda` missing; no Qwen KIVI model | N/A | Feasibility only; not acceptance panel; not production serving; RunPod A5000 |
 
 ---
 
@@ -60,6 +61,7 @@ under `reports/`.
 | 020 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_020_repair_policy_pilot.py --device cuda --dtype float16 --include-15b` (RunPod GPU) |
 | 022 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_022_turboquant_llamacpp_probe.py` (RunPod; `LLAMA_CPP_BIN_DIR` + GGUF) |
 | 023 | `EXACTKV_KVQUANT_QUANTIZERS=/workspace/kvquant_d4/quantizers_qwen15b.pickle python scripts/run_experiment_023_kvquant_larger_model.py` (KVQuant venv, RunPod CUDA) |
+| 024 | `bash scripts/research/kivi_cuda_triton_exp024_runpod_execute.sh` (RunPod CUDA; isolated KIVI venv at `/workspace/kivi_exp024`) |
 
 ---
 

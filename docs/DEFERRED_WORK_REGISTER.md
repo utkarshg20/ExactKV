@@ -89,7 +89,7 @@ V11 covers multi-model validation, serving/profiling probes, and launch package 
 | — | **V12 scope statement** | **Active** | Phase 0 | [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) |
 | D2 | **TurboQuant llama.cpp / GGUF / production-fidelity** | **External probe complete (Mode B)** | Phase 1–2 ✅ | [`EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md`](EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md); BackendAdapter **no-go**; Mode B **go with restrictions** |
 | D4 | **KVQuant 1.5B/3B real-backend validation** | **1.5B complete** | Phase 3 ✅ / Exp 023 | [`EXPERIMENT_023_KVQUANT_LARGER_MODEL.md`](EXPERIMENT_023_KVQUANT_LARGER_MODEL.md); 1.5B accept **0.609**; 3B stretch not run |
-| D3 | **KIVI CUDA/Triton packed path** | Planned | Phase 4 / Exp 024 | Probe or documented environment/API blocker |
+| D3 | **KIVI CUDA/Triton packed path** | **Feasibility complete (`B_restricted_go`)** | Phase 4 ✅ / Exp 024 | [`EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md`](EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md); Triton pack OK; `dequant_cuda` missing; no Qwen model; BackendAdapter **restricted_future_only** |
 | — | **Full-suite repair-policy validation** | Planned | Phase 5 / Exp 025 | Full 128-prompt V10; 0.5B + 1.5B |
 | D7 | **True attention logging** | Planned | Phase 6 / Exp 026 | Tiny subset; no fabricated weights; or no-go |
 | D8 | **Per-head divergence forensics** | Planned | Phase 6 / Exp 026 | Depends on D7; per-layer done in Exp 019 |

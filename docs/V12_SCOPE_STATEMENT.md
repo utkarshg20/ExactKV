@@ -1,6 +1,6 @@
 # V12 Scope Statement — Deferred Work Completion Gauntlet
 
-**Status:** **Phase 3 complete** — Experiment 023 KVQuant 1.5B validation documented; Phase 4 (Exp 024) next.
+**Status:** **Phase 4 complete** — Experiment 024 KIVI CUDA/Triton feasibility documented; Phase 5 (Exp 025) next.
 **Builds on:** `v0.11.0` — V11 complete (Experiments 015–020; launch package prepared).
 **Not public launch.** v1.0.0 deferred until V12 substance and exit criteria are met or honestly closed.
 
@@ -24,7 +24,7 @@
 | **1b** | TurboQuant toolchain prep (build, GGUF, smoke) | **Complete** — [`TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md`](TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md) |
 | **2** | TurboQuant llama.cpp / GGUF probe or documented no-go (Exp 022) | **Complete** — [`EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md`](EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md) |
 | **3** | KVQuant larger-model real-backend validation (Exp 023) | **Complete** — [`EXPERIMENT_023_KVQUANT_LARGER_MODEL.md`](EXPERIMENT_023_KVQUANT_LARGER_MODEL.md) |
-| **4** | KIVI CUDA/Triton packed-path feasibility or documented no-go (Exp 024) | Planned |
+| **4** | KIVI CUDA/Triton packed-path feasibility or documented no-go (Exp 024) | **Complete** — [`EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md`](EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md) |
 | **5** | Full-suite repair-policy validation (Exp 025) | Planned |
 | **6** | True attention logging feasibility or documented no-go (Exp 026) | Planned |
 | **7** | Performance/memory truth boundary review (Exp 027) | Planned |
@@ -52,7 +52,7 @@ launch** because major deferred tracks remain unfinished or only partially close
 | **No active GPU memory savings claim** | Exp 018 pilot documented methodology; `active_gpu_kv_bytes` not in standard schema |
 | **No production serving claim** | Exp 017 sidecar pass; direct vLLM/LMCache **no-go** reaffirmed |
 | **TurboQuant Python ≠ production TurboQuant** | Exp 008 evaluated restricted Python adapter only; llama.cpp / GGUF / MLX deferred (D2) |
-| **KIVI offline ≠ KIVI CUDA/Triton** | Exp 009 evaluated offline simulate path only; packed CUDA/Triton path untested |
+| **KIVI offline ≠ KIVI CUDA/Triton** | Exp 009 offline simulate only; Exp 024 **`B_restricted_go`** — Triton pack OK, no full packed roundtrip, no Qwen model |
 | **KVQuant at 0.5B only** | Exp 010 on 0.5B; larger-model real-backend validation unfinished (1.5B/3B) |
 | **Repair policies pilot-scale only** | Exp 020 on 25-prompt panel; not validated on full 128-prompt V10 suites |
 | **True attention logging deferred** | Exp 019 blocked by sdpa `output_attentions`; D7 partial only |
@@ -99,7 +99,7 @@ without overclaiming.
 | ID / track | Status after V11 | V12 target |
 |---|---|---|
 | D2 | TurboQuant llama.cpp / MLX / production-fidelity | Phases 1–2 / Exp 021–022 |
-| D3 (CUDA path) | KIVI offline only (Exp 009) | Phase 4 / Exp 024 |
+| D3 (CUDA path) | **Feasibility complete (Exp 024 `B_restricted_go`)** | Phase 4 ✅ / Exp 024 |
 | D4 (larger model) | KVQuant simquant 0.5B only (Exp 010) | Phase 3 / Exp 023 |
 | D7 | True attention logging — sdpa blocker | Phase 6 / Exp 026 |
 | D8 | Per-head forensics — partial (per-layer KV only) | Phase 6 / Exp 026 |
