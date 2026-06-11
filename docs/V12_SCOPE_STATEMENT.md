@@ -1,6 +1,6 @@
 # V12 Scope Statement — Deferred Work Completion Gauntlet
 
-**Status:** **Phase 0 active** — formal scope statement (this document). **No implementation yet.**
+**Status:** **Phase 1b complete** — TurboQuant toolchain prep on RunPod; Phase 2 (Exp 022) next.
 **Builds on:** `v0.11.0` — V11 complete (Experiments 015–020; launch package prepared).
 **Not public launch.** v1.0.0 deferred until V12 substance and exit criteria are met or honestly closed.
 
@@ -19,8 +19,9 @@
 
 | Phase | Focus | Status |
 |---|---|---|
-| **0** | Formal scope statement (this document) | **Active** |
-| **1** | TurboQuant production-fidelity feasibility (Exp 021) | Planned |
+| **0** | Formal scope statement (this document) | **Complete** |
+| **1** | TurboQuant production-fidelity feasibility (Exp 021) | **Complete** — [`TURBOQUANT_PRODUCTION_FIDELITY_FEASIBILITY.md`](TURBOQUANT_PRODUCTION_FIDELITY_FEASIBILITY.md) |
+| **1b** | TurboQuant toolchain prep (build, GGUF, smoke) | **Complete** — [`TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md`](TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md) |
 | **2** | TurboQuant llama.cpp / GGUF probe or documented no-go (Exp 022) | Planned |
 | **3** | KVQuant larger-model real-backend validation (Exp 023) | Planned |
 | **4** | KIVI CUDA/Triton packed-path feasibility or documented no-go (Exp 024) | Planned |

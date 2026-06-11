@@ -68,7 +68,7 @@ V10/V11 suites are **not universal benchmarks**. Restricted adapters remain **fa
 | V9 | `v0.9.0` | Real backend gauntlet; Exp 008–011; 1.5B validation | ✅ |
 | V10 | `v0.10.0` | Suite hardening; Exp 012–014; [readiness](docs/V10_READINESS_ASSESSMENT.md) | ✅ |
 | V11 | `v0.11.0` | Launch hardening; Exp 015–020; [readiness](docs/V11_LAUNCH_READINESS.md) | ✅ |
-| V12 | — | Deferred Work Completion Gauntlet ([scope](docs/V12_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 0 |
+| V12 | — | Deferred Work Completion Gauntlet ([scope](docs/V12_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 1 ✅ |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
@@ -752,6 +752,8 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | V9 scope | [`V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) |
 | V10 scope (complete) | [`V10_SCOPE_STATEMENT.md`](docs/V10_SCOPE_STATEMENT.md) |
 | V12 scope (active) | [`V12_SCOPE_STATEMENT.md`](docs/V12_SCOPE_STATEMENT.md) |
+| V12 Phase 1b | [`TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md`](docs/TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md) — RunPod binaries + GGUF smoke; Exp 022 ready |
+| V12 Phase 1 (Exp 021) | [`TURBOQUANT_PRODUCTION_FIDELITY_FEASIBILITY.md`](docs/TURBOQUANT_PRODUCTION_FIDELITY_FEASIBILITY.md) |
 | V11 scope (complete) | [`V11_SCOPE_STATEMENT.md`](docs/V11_SCOPE_STATEMENT.md) |
 | V11 launch readiness | [`V11_LAUNCH_READINESS.md`](docs/V11_LAUNCH_READINESS.md) |
 | V11 Phase 6 | [`RAW_ARTIFACT_POLICY.md`](docs/RAW_ARTIFACT_POLICY.md) · [`LAUNCH_NARRATIVE_DRAFT.md`](docs/LAUNCH_NARRATIVE_DRAFT.md) |

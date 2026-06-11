@@ -87,7 +87,7 @@ V11 covers multi-model validation, serving/profiling probes, and launch package 
 | ID | Item | Status | V12 phase | Success criteria |
 |---|---|---|---|---|
 | — | **V12 scope statement** | **Active** | Phase 0 | [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) |
-| D2 | **TurboQuant llama.cpp / GGUF / production-fidelity** | Planned | Phases 1–2 / Exp 021–022 | Feasibility + probe or documented no-go |
+| D2 | **TurboQuant llama.cpp / GGUF / production-fidelity** | **Toolchain prep complete** | Phase 1 ✅ / 1b ✅ / Phase 2 planned | [`TURBOQUANT_PRODUCTION_FIDELITY_FEASIBILITY.md`](TURBOQUANT_PRODUCTION_FIDELITY_FEASIBILITY.md); [`TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md`](TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md); Exp 022 **go (Mode B)** |
 | D4 | **KVQuant 1.5B/3B real-backend validation** | Planned | Phase 3 / Exp 023 | `exactkv_failures == 0`; hard subset first |
 | D3 | **KIVI CUDA/Triton packed path** | Planned | Phase 4 / Exp 024 | Probe or documented environment/API blocker |
 | — | **Full-suite repair-policy validation** | Planned | Phase 5 / Exp 025 | Full 128-prompt V10; 0.5B + 1.5B |

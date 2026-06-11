@@ -715,7 +715,7 @@ See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V11.
 
 ---
 
-# V12: Deferred Work Completion Gauntlet (Phase 0 active)
+# V12: Deferred Work Completion Gauntlet (Phase 1b complete)
 
 ## Goal
 
@@ -728,8 +728,9 @@ Formal scope: [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) (Phases 0–8; 
 
 | Phase | Focus | Status |
 |---|---|---|
-| 0 | Scope statement | Active |
-| 1 | TurboQuant production-fidelity feasibility (Exp 021) | Planned |
+| 0 | Scope statement | ✅ |
+| 1 | TurboQuant production-fidelity feasibility (Exp 021) | ✅ [`TURBOQUANT_PRODUCTION_FIDELITY_FEASIBILITY.md`](TURBOQUANT_PRODUCTION_FIDELITY_FEASIBILITY.md) |
+| 1b | TurboQuant toolchain prep | ✅ [`TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md`](TURBOQUANT_PRODUCTION_TOOLCHAIN_PREP.md) |
 | 2 | TurboQuant llama.cpp / GGUF probe or no-go (Exp 022) | Planned |
 | 3 | KVQuant larger-model validation (Exp 023) | Planned |
 | 4 | KIVI CUDA/Triton feasibility or no-go (Exp 024) | Planned |
