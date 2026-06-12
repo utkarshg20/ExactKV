@@ -1,6 +1,6 @@
 # V13 Scope Statement — Practicality Proof
 
-**Status:** **Phase 3b complete** — Experiment 030b span GPU/fp16 parity fixed; Phase 4 (Exp 031 GPU memory) next. Full Exp 030 timing rerun recommended before span speed claims.
+**Status:** **Phase 4 complete** — Exp 031 GPU memory isolation on RunPod A5000 fp16: exactness gate pass; peak allocated **indistinguishable** from full greedy within allocator noise (~1.14 GiB model baseline + ~53 MiB generation delta); **no active GPU memory savings claim**. Phase 5 (Exp 032 SnapKV/ShardKV) next. Span throughput remains **unsolved**.
 **Builds on:** V12 Phases 0–7 complete (Experiments 021–027); V12 Phase 8 release package may proceed in parallel but **does not authorize public launch**.
 **Not public launch.** v1.0.0 deferred until V13 produces evidence-backed practicality answers or honestly closes remaining gaps.
 
@@ -14,7 +14,7 @@
 > Until V13 Phase 9 explicitly approves a claim under documented methodology,
 > **forbidden claims remain forbidden** (see §22).
 
-**Phase 4 (Exp 031) may proceed** — Experiment 030 exactness gate passed on RunPod fp16 (`phase4_memory_allowed=True`).
+**Phase 5 (Exp 032) may proceed** — Experiment 031 exactness gate passed on RunPod fp16 (`phase5_feasibility_allowed=True`). Active GPU memory savings remain **forbidden**.
 
 ---
 
@@ -27,7 +27,7 @@
 | **2** | Span/parallel verification implementation (Exp 028–029) | **Complete** — [`EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md`](EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md), [`EXPERIMENT_029_SPAN_VERIFICATION_GRID.md`](EXPERIMENT_029_SPAN_VERIFICATION_GRID.md) |
 | **3** | Diagnostic timing harness (Exp 030) | **Complete** — [`EXPERIMENT_030_DIAGNOSTIC_TIMING.md`](EXPERIMENT_030_DIAGNOSTIC_TIMING.md) |
 | **3b** | Batched span GPU/fp16 parity (Exp 030b) | **Complete** — [`EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md`](EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md) |
-| **4** | Active GPU memory isolation (Exp 031) | Planned |
+| **4** | Active GPU memory isolation (Exp 031) | **Complete** — [`EXPERIMENT_031_GPU_MEMORY_ISOLATION.md`](EXPERIMENT_031_GPU_MEMORY_ISOLATION.md) |
 | **5** | Hot adapter feasibility — SnapKV / ShardKV (Exp 032) | Planned |
 | **6** | Llama-3.1-8B small-suite validation (Exp 033) | Planned |
 | **7** | Killer correction demo (Exp 034) | Planned |
@@ -97,10 +97,10 @@ V13 must answer:
 
 | Question | V13 phase |
 |---|---|
-| Does ExactKV slow things down today? | **Yes in Exp 030 diagnostic setup** (~2.66× vs full greedy, fp16 A5000); not a general speed claim |
-| Can span verification reduce verifier overhead? | 1–2 (Exp 028–029) |
+| Does ExactKV slow things down today? | **Yes in Exp 030 diagnostic setup** (~2.67× vs full greedy, fp16 A5000); not a general speed claim |
+| Can span verification reduce verifier overhead? | **Forward count yes (~4× fewer est. forwards); wall-clock no** — span ~10% slower than sequential post–030b (Exp 030) |
 | Can ExactKV ever claim speed, latency, throughput, or tokens/sec? | 3, 9 — only if methodology + exactness pass |
-| Can ExactKV show active GPU memory savings? | 4 (Exp 031) — or document full materialization as blocker |
+| Can ExactKV show active GPU memory savings? | **No in Exp 031** — peak allocated indistinguishable from full greedy on 0.5B A5000; V5 accounting ~1.3 MiB vs ~1.2 GiB CUDA peak; savings claim **forbidden** |
 | Can ExactKV run on Llama-3.1-8B? | 6 (Exp 033) |
 | Can ExactKV show a killer correction demo on JSON/tool/code? | 7 (Exp 034) |
 | Can ExactKV produce launch-quality visual plots? | 8 (Exp 035) |

@@ -93,7 +93,7 @@ End-to-end span ≡ full greedy on fp16 GPU lc_003: **True** (pytest `test_span_
 
 ## 14. Whether full Exp 030 timing should be rerun
 
-**Yes** — only after batched parity is restored and enabled in `verify_span`.
+**Done (2026-06-12).** Post–030b Exp 030 rerun on RunPod A5000: exactness gate **pass** (0 seq/span failures, 0 parity failures); batched span active. Span mean **18.4** tok/s vs sequential **20.4** tok/s — **span speed still unsolved** despite fewer estimated verifier forwards. See [`EXPERIMENT_030_DIAGNOSTIC_TIMING.md`](EXPERIMENT_030_DIAGNOSTIC_TIMING.md).
 
 ## 15. What this proves
 

@@ -41,8 +41,9 @@ under `reports/`.
 | 027 | Performance/memory truth boundary | [`EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md`](EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md) | Claim-boundary review after V1–V12; not a benchmark | — (review) | Speed and active GPU memory savings **forbidden**; V13 Practicality Proof recommended | N/A | No new timing/GPU measurements; see [`PRACTICALITY_GAP_ANALYSIS.md`](PRACTICALITY_GAP_ANALYSIS.md) |
 | 028 | Span verification smoke | [`EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md`](EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md) | Opt-in span verify vs sequential; 32-cell smoke | 32 | Sequential **0** / span **0** failures; span ≡ sequential outputs | 0 | Smoke only; not speed benchmark; span **not** default; CPU float32 0.5B |
 | 029 | Span verification exactness grid | [`EXPERIMENT_029_SPAN_VERIFICATION_GRID.md`](EXPERIMENT_029_SPAN_VERIFICATION_GRID.md) | Stratified 40-prompt × 5 compressors × draft_len {2,4,8} parity grid | 600 | Sequential **0** / span **0**; span ≡ sequential; `phase3_timing_allowed` | 0 | Exactness grid only; not timing; CPU float32 0.5B |
-| 030 | Diagnostic timing harness | [`EXPERIMENT_030_DIAGNOSTIC_TIMING.md`](EXPERIMENT_030_DIAGNOSTIC_TIMING.md) | Four-arm timing on 20-prompt V10 panel (fp16 GPU) | 420+80 | Exactness gate **pass**; full greedy **56.4** tok/s vs ExactKV **~21.2** tok/s; span ≈ sequential (pre-030b fallback) | 0 | Diagnostic only; superseded for span verify by Exp 030b; rerun timing recommended |
-| 030b | Span GPU/fp16 parity | [`EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md`](EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md) | Batched vs sequential verifier parity on lc_003 draft_len=8 | — (investigation) | **Parity restored** (SDPA tie-break root cause); engine fix applied | N/A | Not a timing benchmark; rerun Exp 030 before span speed claims; RunPod A5000 |
+| 030 | Diagnostic timing harness | [`EXPERIMENT_030_DIAGNOSTIC_TIMING.md`](EXPERIMENT_030_DIAGNOSTIC_TIMING.md) | Four-arm timing on 20-prompt V10 panel (fp16 GPU, post–030b) | 420+80 | Exactness gate **pass**; full greedy **54.4** tok/s vs ExactKV seq **20.4** tok/s; span **18.4** tok/s (~10% slower than seq despite fewer forwards) | 0 | Diagnostic only; batched span active; span speed **unsolved** |
+| 030b | Span GPU/fp16 parity | [`EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md`](EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md) | Batched vs sequential verifier parity on lc_003 draft_len=8 | — (investigation) | **Parity restored** (SDPA tie-break root cause); engine fix applied; Exp 030 rerun confirms exactness | N/A | Not a timing benchmark; span wall-clock still slower than sequential; RunPod A5000 |
+| 031 | Active GPU memory isolation | [`EXPERIMENT_031_GPU_MEMORY_ISOLATION.md`](EXPERIMENT_031_GPU_MEMORY_ISOLATION.md) | Five-arm CUDA memory isolation on 12-prompt V10 panel (fp16 GPU) | 253 | Exactness gate **pass**; peak allocated **indistinguishable** from full greedy (~1195 MiB); V5 footprint ~1.3 MiB; **no savings claim** | 0 | Diagnostic only; model weights dominate; RunPod A5000 |
 
 ---
 
@@ -75,6 +76,7 @@ under `reports/`.
 | 029 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_029_span_verification_grid.py` |
 | 030 | `bash scripts/research/exp030_diagnostic_timing_runpod.sh` (RunPod CUDA fp16; see report) |
 | 030b | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_030b_span_parity_investigation.py --device cuda` |
+| 031 | `bash scripts/research/exp031_gpu_memory_isolation_runpod.sh` (RunPod CUDA fp16; see report) |
 | 027 | Review only — [`EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md`](EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md); optional inspect: `python3 scripts/research/performance_memory_boundary_inspect.py` |
 
 ---

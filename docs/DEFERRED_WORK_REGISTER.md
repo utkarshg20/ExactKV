@@ -114,13 +114,13 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **V13 scope statement** | **Complete** | Phase 0 ✅ | [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) |
 | D21 | **Parallel / span verification** | **Exactness grid complete** | Phases 2 ✅ / Exp 028–029 | Smoke + [`EXPERIMENT_029_SPAN_VERIFICATION_GRID.md`](EXPERIMENT_029_SPAN_VERIFICATION_GRID.md); 600 cells, 0 failures; default sequential |
 | — | **Performance proof (diagnostic timing)** | **Complete (diagnostic only)** | Phase 3 ✅ / Exp 030 | [`EXPERIMENT_030_DIAGNOSTIC_TIMING.md`](EXPERIMENT_030_DIAGNOSTIC_TIMING.md); ExactKV ~2.66× slower than full greedy on A5000 fp16; span ≡ sequential wall-clock; no general speed claim |
-| — | **Active GPU memory isolation** | Planned | Phase 4 / Exp 031 | Extend Exp 018; weight/KV/temp separation; no savings claim unless robust |
+| — | **Active GPU memory isolation** | **Complete (diagnostic)** | Phase 4 ✅ / Exp 031 | [`EXPERIMENT_031_GPU_MEMORY_ISOLATION.md`](EXPERIMENT_031_GPU_MEMORY_ISOLATION.md); exactness gate pass; peak indistinguishable from full greedy; **no savings claim** |
 | — | **Hot adapter (SnapKV / ShardKV)** | Planned | Phase 5 / Exp 032 | Feasibility first; factory-only; SnapKV preferred |
 | — | **Llama-3.1-8B small suite** | Planned | Phase 6 / Exp 033 | 10–20 prompts; RunPod GPU; `exactkv_failures == 0` |
 | — | **Killer correction demo** | Planned | Phase 7 / Exp 034 | Reproducible JSON/tool/code trace; exact match to full greedy |
 | — | **Visual plot package** | Planned | Phase 8 / Exp 035 | PNG/SVG from reports; no misleading axes |
 | — | **Headline number audit** | Planned | Phase 9 / Exp 035 | Allowed headlines only; speed/VRAM forbidden unless evidence-backed |
-| — | **Compressed-active-KV memory path** | Investigate in Phase 4 | Phase 4 | Document blocker if full materialization prevents savings |
+| — | **Compressed-active-KV memory path** | **Blocker documented (Exp 031)** | Phase 4 ✅ | Model weights dominate CUDA peak; V5 KV accounting does not translate to active VRAM savings at 0.5B scale |
 | D11/D12 | **Production serving / vLLM / LMCache** | No-go | — | Remain deferred unless later V13 phase explicitly scopes serving |
 | D22 | **Multi-request batching** | Deferred | — | Serving-scale; out of V13 Phase 0–8 |
 
