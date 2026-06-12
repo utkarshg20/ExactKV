@@ -4,7 +4,7 @@ V1 constraints (hard)
 ---------------------
 * Greedy decoding only.
 * Single request, single device.
-* Sequential verification only.
+* Sequential verification only (default); span verification opt-in (V13).
 * Bonus-token acceptance disabled.
 * NoOpCompressor only (INT8 in later steps).
 * Recompress from authoritative full KV after every commit round.
@@ -36,7 +36,7 @@ immediately captured in the new FullKVState that replaces the old one.
 from __future__ import annotations
 
 import copy
-from typing import Any
+from typing import Any, Literal
 
 import torch
 
@@ -54,6 +54,9 @@ from exactkv.verification.acceptance import (
 )
 from exactkv.verification.engine import VerificationEngine
 
+VerificationMethod = Literal["sequential", "span"]
+_VALID_VERIFICATION_METHODS = frozenset({"sequential", "span"})
+
 
 class ExactKVGenerator:
     """Runs the ExactKV draft-verify-commit loop.
@@ -62,6 +65,7 @@ class ExactKVGenerator:
         runtime:    Loaded ModelRuntime (Hugging Face model + tokenizer).
         compressor: A KVCompressor instance (NoOpCompressor for V1).
         draft_len:  Maximum number of tokens to draft per round.
+        verification_method: ``"sequential"`` (default) or ``"span"`` (V13 opt-in).
     """
 
     def __init__(
@@ -69,10 +73,17 @@ class ExactKVGenerator:
         runtime: ModelRuntime,
         compressor: KVCompressor,
         draft_len: int = 8,
+        verification_method: VerificationMethod = "sequential",
     ) -> None:
+        if verification_method not in _VALID_VERIFICATION_METHODS:
+            raise ValueError(
+                f"Invalid verification_method {verification_method!r}; "
+                f"expected one of {sorted(_VALID_VERIFICATION_METHODS)}"
+            )
         self.runtime = runtime
         self.compressor = compressor
         self.draft_len = draft_len
+        self.verification_method: VerificationMethod = verification_method
         self.engine = VerificationEngine(runtime)
 
     # ------------------------------------------------------------------
@@ -195,8 +206,11 @@ class ExactKVGenerator:
         full_state: FullKVState,
         draft_tokens: list[int],
     ) -> AcceptanceResult:
-        """Run sequential verification, inside ``verification_mode`` when available."""
-        verify = self.engine.verify_sequential
+        """Run verification (sequential or span), inside ``verification_mode`` when available."""
+        if self.verification_method == "span":
+            verify = self.engine.verify_span
+        else:
+            verify = self.engine.verify_sequential
         mode = getattr(self.compressor, "verification_mode", None)
         if callable(mode):
             with mode():

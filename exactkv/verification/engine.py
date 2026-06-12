@@ -2,8 +2,9 @@
 
 Design notes
 ------------
-* ``verify_sequential`` is the only verification method in V1.
-* It verifies draft tokens one position at a time using the full KV state.
+* ``verify_sequential`` verifies draft tokens one position at a time.
+* ``verify_span`` (V13 opt-in) verifies an entire draft span in one teacher-forced
+  full-KV forward; see ``SPAN_VERIFICATION_DESIGN.md``.
 * The authoritative FullKVState is NEVER mutated.  In transformers >= 4.36 the
   default cache is a ``DynamicCache`` that IS mutated in-place when passed to a
   forward call.  To guard against this, ``verify_sequential`` deep-copies the
@@ -99,6 +100,60 @@ class VerificationEngine:
         # Post-condition: authoritative full_state must be identical to before.
         assert kv_seq_len(full_state.past_key_values) == kv_len_before, (
             "VerificationEngine mutated full_state.past_key_values — this is a bug."
+        )
+
+        return compute_acceptance(draft_tokens, verifier_tokens)
+
+    @torch.no_grad()
+    def verify_span(
+        self,
+        full_state: FullKVState,
+        draft_tokens: list[int],
+    ) -> AcceptanceResult:
+        """Verify ``draft_tokens`` in one teacher-forced full-KV forward.
+
+        HF causal LM logits shift (see ``SPAN_VERIFICATION_DESIGN.md``):
+
+        * ``v_0 = full_state.next_token_id`` (cached; not from span-forward logits).
+        * For ``i >= 1``: ``v_i = argmax(out.logits[:, i - 1, :])``.
+        * ``out.logits[:, k - 1, :]`` is the bonus prediction after the span — ignored.
+
+        The authoritative ``full_state`` is read but never modified.
+        """
+        if not draft_tokens:
+            return compute_acceptance([], [])
+
+        kv_len_before = kv_seq_len(full_state.past_key_values)
+        assert kv_len_before == full_state.seq_len, (
+            f"KV seq_len ({kv_len_before}) != full_state.seq_len ({full_state.seq_len})"
+        )
+
+        next_before = full_state.next_token_id
+        k = len(draft_tokens)
+
+        verifier_tokens: list[int] = [full_state.next_token_id]
+
+        if k >= 2:
+            temp_kv = copy.deepcopy(full_state.past_key_values)
+            input_ids = torch.tensor(
+                [draft_tokens], dtype=torch.long, device=self.runtime.device
+            )
+            out = self.runtime.forward(input_ids, past_key_values=temp_kv)
+            for i in range(1, k):
+                v_i = int(out.logits[:, i - 1, :].argmax(dim=-1).item())
+                verifier_tokens.append(v_i)
+            # out.logits[:, k - 1, :] — bonus token; bonus acceptance disabled (V1).
+
+        for i, d_i in enumerate(draft_tokens):
+            if d_i != verifier_tokens[i]:
+                verifier_tokens = verifier_tokens[: i + 1]
+                break
+
+        assert kv_seq_len(full_state.past_key_values) == kv_len_before, (
+            "VerificationEngine mutated full_state.past_key_values — this is a bug."
+        )
+        assert full_state.next_token_id == next_before, (
+            "VerificationEngine mutated full_state.next_token_id — this is a bug."
         )
 
         return compute_acceptance(draft_tokens, verifier_tokens)

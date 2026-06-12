@@ -69,7 +69,7 @@ V10/V11 suites are **not universal benchmarks**. Restricted adapters remain **fa
 | V10 | `v0.10.0` | Suite hardening; Exp 012–014; [readiness](docs/V10_READINESS_ASSESSMENT.md) | ✅ |
 | V11 | `v0.11.0` | Launch hardening; Exp 015–020; [readiness](docs/V11_LAUNCH_READINESS.md) | ✅ |
 | V12 | — | Deferred Work Completion Gauntlet ([scope](docs/V12_SCOPE_STATEMENT.md)); Exp 021–027 | Phase 7 ✅ |
-| V13 | — | Practicality Proof ([scope](docs/V13_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 1 ✅ |
+| V13 | — | Practicality Proof ([scope](docs/V13_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 2 smoke ✅ |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
@@ -753,7 +753,8 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | V9 scope | [`V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) |
 | V10 scope (complete) | [`V10_SCOPE_STATEMENT.md`](docs/V10_SCOPE_STATEMENT.md) |
 | V13 scope | [`V13_SCOPE_STATEMENT.md`](docs/V13_SCOPE_STATEMENT.md) |
-| V13 Phase 1 (Exp 028 design) | [`SPAN_VERIFICATION_DESIGN.md`](docs/SPAN_VERIFICATION_DESIGN.md) — span verification **design only**; no implementation |
+| V13 Phase 2 (Exp 028 smoke) | [`EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md`](docs/EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md) — span verify opt-in; **32 cells, 0 failures**; span ≡ sequential |
+| V13 Phase 1 (Exp 028 design) | [`SPAN_VERIFICATION_DESIGN.md`](docs/SPAN_VERIFICATION_DESIGN.md) — span verification design; HF logits shift |
 | V12 scope | [`V12_SCOPE_STATEMENT.md`](docs/V12_SCOPE_STATEMENT.md) |
 | V12 Phase 7 (Exp 027) | [`EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md`](docs/EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md) — speed/VRAM savings **forbidden**; [`PRACTICALITY_GAP_ANALYSIS.md`](docs/PRACTICALITY_GAP_ANALYSIS.md) |
 | V12 Phase 6 (Exp 026) | [`EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md`](docs/EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md) — eager prefill attention logging **`restricted_go`**; sdpa blocked |

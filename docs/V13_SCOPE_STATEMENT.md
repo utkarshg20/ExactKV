@@ -1,6 +1,6 @@
 # V13 Scope Statement — Practicality Proof
 
-**Status:** **Phase 1 complete** — span verification design documented; Phase 2 (implementation) next.
+**Status:** **Phase 2 complete** — span verification implemented; Experiment 028 smoke passed; Phase 3 (timing) next.
 **Builds on:** V12 Phases 0–7 complete (Experiments 021–027); V12 Phase 8 release package may proceed in parallel but **does not authorize public launch**.
 **Not public launch.** v1.0.0 deferred until V13 produces evidence-backed practicality answers or honestly closes remaining gaps.
 
@@ -14,7 +14,7 @@
 > Until V13 Phase 9 explicitly approves a claim under documented methodology,
 > **forbidden claims remain forbidden** (see §22).
 
-**Do not start Phase 2 until Phase 1 is reviewed and committed.**
+**Do not start Phase 3 until Experiment 029 exactness grid is planned or Exp 028 smoke is committed.**
 
 ---
 
@@ -24,7 +24,7 @@
 |---|---|---|
 | **0** | Formal scope statement (this document) | **Complete** |
 | **1** | Span/parallel verification design (Exp 028 design) | **Complete** — [`SPAN_VERIFICATION_DESIGN.md`](SPAN_VERIFICATION_DESIGN.md) |
-| **2** | Span/parallel verification implementation (Exp 028–029) | Planned |
+| **2** | Span/parallel verification implementation (Exp 028–029) | **Smoke complete** — [`EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md`](EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md); Exp 029 grid planned |
 | **3** | Diagnostic timing harness (Exp 030) | Planned |
 | **4** | Active GPU memory isolation (Exp 031) | Planned |
 | **5** | Hot adapter feasibility — SnapKV / ShardKV (Exp 032) | Planned |

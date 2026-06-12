@@ -743,7 +743,7 @@ See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V12.
 
 ---
 
-# V13: Practicality Proof (Phase 1 complete)
+# V13: Practicality Proof (Phase 2 smoke complete)
 
 ## Goal
 
@@ -757,7 +757,7 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 |---|---|---|
 | 0 | Scope statement | ✅ |
 | 1 | Span verification design (Exp 028) | ✅ [`SPAN_VERIFICATION_DESIGN.md`](SPAN_VERIFICATION_DESIGN.md) |
-| 2 | Span verification implementation | Planned |
+| 2 | Span verification implementation (Exp 028 smoke) | ✅ [`EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md`](EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md) |
 | 3 | Diagnostic timing harness (Exp 030) | Planned |
 | 4 | Active GPU memory isolation (Exp 031) | Planned |
 | 5 | SnapKV / ShardKV feasibility (Exp 032) | Planned |
