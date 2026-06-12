@@ -119,7 +119,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **SnapKV experimental adapter** | **Complete (smoke)** | Phase 5b ✅ / Exp 032b | [`EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md`](EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md); factory-only; 8 cells, 0 failures; not in default registry |
 | — | **Shard Llama external-drafter probe** | Planned | Phase 5b/6 adjunct | krish1905/shard; not KVCompressor; pairs with Exp 033 Llama panel |
 | — | **SpectralQuant experimental adapter** | Planned | Phase 5c (optional) | Offline calibration + tensor BackendAdapter; turboquant baseline |
-| — | **Llama-3.1-8B small suite** | Planned | Phase 6 / Exp 033 | 10–20 prompts; RunPod GPU; `exactkv_failures == 0` |
+| — | **Llama-3.1-8B small suite** | **Blocked (gated access)** | Phase 6 / Exp 033 | [`EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md`](EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md); HF token required; 12-prompt panel ready |
 | — | **Killer correction demo** | Planned | Phase 7 / Exp 034 | Reproducible JSON/tool/code trace; exact match to full greedy |
 | — | **Visual plot package** | Planned | Phase 8 / Exp 035 | PNG/SVG from reports; no misleading axes |
 | — | **Headline number audit** | Planned | Phase 9 / Exp 035 | Allowed headlines only; speed/VRAM forbidden unless evidence-backed |
