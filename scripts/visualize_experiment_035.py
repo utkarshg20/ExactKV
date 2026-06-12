@@ -22,6 +22,8 @@ import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.figure import Figure
 
 _ROOT = Path(__file__).resolve().parents[1]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
 _REPORTS = _ROOT / "reports"
 _ASSETS = _ROOT / "docs" / "assets"
 _DOCS = _ROOT / "docs"
@@ -72,14 +74,30 @@ class ExperimentExactness:
 
 
 @dataclass
-class LeaderboardRow:
-    rank: int
-    compressor: str
-    model_suite: str
+class LeaderboardEntry:
+    tier: str
+    method: str
+    experiment: str
+    model_panel: str
     mean_acceptance: float | None
-    exactkv_failures: int
-    divergence_note: str
-    notes: str
+    exactkv_failures: int | None
+    integration_status: str
+    caveat: str
+    rank: int | None = None
+
+
+# Tier badges for docs and public visuals (Phase 8d).
+TIER_FULL_PANEL = "FULL PANEL"
+TIER_RESTRICTED = "RESTRICTED BACKEND"
+TIER_SMOKE = "SMOKE ONLY"
+TIER_FUTURE = "FUTURE CANDIDATE"
+TIER_REPAIR = "REPAIR POLICY"
+
+PUBLIC_LEADERBOARD_COPY = (
+    "ExactKV Leaderboard ranks integrated compressors by token-level acceptance and exactness. "
+    "Restricted backends, smoke-only adapters, and future candidates are separated to avoid "
+    "apples-to-oranges claims."
+)
 
 
 @dataclass
@@ -93,7 +111,7 @@ class PlotData:
     timing_by_arm: dict[str, float] = field(default_factory=dict)
     memory_by_arm_mib: dict[str, float] = field(default_factory=dict)
     killer_demo: dict[str, Any] = field(default_factory=dict)
-    leaderboard: list[LeaderboardRow] = field(default_factory=list)
+    leaderboard: list[LeaderboardEntry] = field(default_factory=list)
     inputs_used: list[str] = field(default_factory=list)
     missing: list[str] = field(default_factory=list)
 
@@ -325,67 +343,178 @@ def load_plot_data() -> PlotData:
         if vals:
             data.memory_by_arm_mib[arm] = _mean(vals)  # type: ignore[assignment]
 
-    data.leaderboard = build_leaderboard(data)
+    data.leaderboard = build_tiered_leaderboard(data)
     return data
 
 
-def build_leaderboard(data: PlotData) -> list[LeaderboardRow]:
-    rows: list[LeaderboardRow] = []
+def _csv_panel_entry(
+    tier: str,
+    method: str,
+    experiment: str,
+    rel: str,
+    compressor: str,
+    model_panel: str,
+    integration_status: str,
+    caveat: str,
+) -> LeaderboardEntry | None:
+    rows = _read_csv(_ROOT / rel)
+    sub = [r for r in rows if r.get("compressor_name") == compressor]
+    if not sub:
+        return None
+    acc_vals = [v for r in sub if (v := _acceptance_from_row(r)) is not None]
+    return LeaderboardEntry(
+        tier=tier,
+        method=method,
+        experiment=experiment,
+        model_panel=model_panel,
+        mean_acceptance=_mean(acc_vals),
+        exactkv_failures=_count_failures(sub),
+        integration_status=integration_status,
+        caveat=caveat,
+    )
 
-    specs = [
-        ("noop", "Qwen2.5-0.5B · Exp 012", "reports/experiment_012_eval_suite_expansion.csv", "identity baseline"),
-        ("int8", "Qwen2.5-0.5B · Exp 012", "reports/experiment_012_eval_suite_expansion.csv", "strong accept; simulated asymmetric"),
-        ("k8_v4_sim", "Qwen2.5-0.5B · Exp 012", "reports/experiment_012_eval_suite_expansion.csv", "K8/V4 sim"),
-        ("k8_v4_boundary4_v8_sim", "Qwen2.5-0.5B · Exp 012", "reports/experiment_012_eval_suite_expansion.csv", "boundary4/V8 sim"),
-        ("int8", "Qwen2.5-1.5B · Exp 015", "reports/experiment_015_qwen15b_v10_suites.csv", "1.5B panel"),
-        ("k8_v4_sim", "Qwen2.5-1.5B · Exp 015", "reports/experiment_015_qwen15b_v10_suites.csv", "1.5B panel"),
-        ("int8", "Qwen2.5-3B · Exp 016", "reports/experiment_016_qwen3b_v10_suites.csv", "3B panel"),
-        ("k8_v4_sim", "Qwen2.5-3B · Exp 016", "reports/experiment_016_qwen3b_v10_suites.csv", "3B panel"),
-        ("int8", "Llama-3.1-8B · Exp 033", "reports/experiment_033_llama31_8b_small_suite.csv", "12-prompt small suite"),
-        ("k8_v4_sim", "Llama-3.1-8B · Exp 033", "reports/experiment_033_llama31_8b_small_suite.csv", "12-prompt small suite"),
-        (
-            "snapkv_experimental",
-            "Qwen2.5-0.5B · Exp 032b smoke",
-            "",
-            "smoke-only; 8 cells; factory-only; not in default registry",
+
+def build_tiered_leaderboard(data: PlotData) -> list[LeaderboardEntry]:
+    """Tiered crash-test lab leaderboard — no apples-to-oranges ranking across tiers."""
+    entries: list[LeaderboardEntry] = []
+
+    full_specs = [
+        ("noop", "Exp 012", "reports/experiment_012_eval_suite_expansion.csv", "Qwen2.5-0.5B · 128-prompt V10", "built-in identity"),
+        ("backend_passthrough", "Exp 012", "reports/experiment_012_eval_suite_expansion.csv", "Qwen2.5-0.5B · 128-prompt V10", "built-in passthrough"),
+        ("int8", "Exp 012", "reports/experiment_012_eval_suite_expansion.csv", "Qwen2.5-0.5B · 128-prompt V10", "built-in symmetric INT8"),
+        ("k8_v4_boundary4_v8_sim", "Exp 012", "reports/experiment_012_eval_suite_expansion.csv", "Qwen2.5-0.5B · 128-prompt V10", "built-in sim asymmetric"),
+        ("k8_v4_sim", "Exp 012", "reports/experiment_012_eval_suite_expansion.csv", "Qwen2.5-0.5B · 128-prompt V10", "built-in sim asymmetric"),
+        ("int8", "Exp 015", "reports/experiment_015_qwen15b_v10_suites.csv", "Qwen2.5-1.5B · 128-prompt V10", "built-in symmetric INT8"),
+        ("k8_v4_sim", "Exp 015", "reports/experiment_015_qwen15b_v10_suites.csv", "Qwen2.5-1.5B · 128-prompt V10", "built-in sim asymmetric"),
+        ("int8", "Exp 016", "reports/experiment_016_qwen3b_v10_suites.csv", "Qwen2.5-3B · 128-prompt V10", "built-in symmetric INT8"),
+        ("k8_v4_sim", "Exp 016", "reports/experiment_016_qwen3b_v10_suites.csv", "Qwen2.5-3B · 128-prompt V10", "built-in sim asymmetric"),
+        ("int8", "Exp 033", "reports/experiment_033_llama31_8b_small_suite.csv", "Llama-3.1-8B · 12-prompt small suite", "built-in symmetric INT8"),
+        ("k8_v4_sim", "Exp 033", "reports/experiment_033_llama31_8b_small_suite.csv", "Llama-3.1-8B · 12-prompt small suite", "built-in sim asymmetric"),
+    ]
+    labels = {
+        "noop": "No compression",
+        "backend_passthrough": "Passthrough",
+        "int8": "INT8",
+        "k8_v4_sim": "K8/V4",
+        "k8_v4_boundary4_v8_sim": "Boundary V",
+    }
+    full_panel: list[LeaderboardEntry] = []
+    for comp, exp, rel, panel, status in full_specs:
+        e = _csv_panel_entry(TIER_FULL_PANEL, labels.get(comp, comp), exp, rel, comp, panel, status, "full/large panel")
+        if e:
+            full_panel.append(e)
+    full_panel.sort(key=lambda e: (-(e.mean_acceptance or 0), e.method))
+    for i, e in enumerate(full_panel, 1):
+        e.rank = i
+        entries.append(e)
+
+    # Repair policies — separate from compressors (Exp 025 docs).
+    repair_rows = _read_csv(_ROOT / "reports/experiment_025_full_suite_repair_policy.csv")
+    if repair_rows:
+        from collections import defaultdict
+
+        by_policy: dict[str, list[float]] = defaultdict(list)
+        fail_by: dict[str, int] = defaultdict(int)
+        for r in repair_rows:
+            pol = r.get("policy_name", "")
+            acc = _acceptance_from_row(r)
+            if acc is not None:
+                by_policy[pol].append(acc)
+            if _is_exactkv_failure(r):
+                fail_by[pol] += 1
+        policy_labels = {
+            "int8_all": "INT8 all suites",
+            "category_adaptive_policy": "Category adaptive",
+            "fallback_int8_for_hard_categories": "Fallback INT8 hard cats",
+            "baseline_boundary4": "Boundary V baseline",
+            "baseline_k8_v4": "K8/V4 baseline",
+            "draft_len_adaptive_policy": "Draft-len adaptive",
+        }
+        for pol, accs in sorted(by_policy.items(), key=lambda x: -_mean(x[1])):
+            entries.append(
+                LeaderboardEntry(
+                    tier=TIER_REPAIR,
+                    method=policy_labels.get(pol, pol),
+                    experiment="Exp 025",
+                    model_panel="Qwen2.5-0.5B · 128-prompt V10",
+                    mean_acceptance=_mean(accs),
+                    exactkv_failures=fail_by.get(pol, 0),
+                    integration_status="repair policy (not a compressor)",
+                    caveat="selects compressor+draft_len; not default",
+                )
+            )
+
+    # Restricted backends — values from published experiment reports (not fabricated).
+    restricted_static = [
+        LeaderboardEntry(
+            TIER_RESTRICTED, "KVQuant sim", "Exp 010", "Qwen2.5-0.5B · V9 core (272 cells)",
+            0.792, 0, "factory-only restricted adapter",
+            "simquant; not deployment CUDA; supports_real_bytes_claim=False",
+        ),
+        LeaderboardEntry(
+            TIER_RESTRICTED, "KVQuant sim", "Exp 014", "Qwen2.5-0.5B · harder-category spotcheck",
+            0.634, 0, "factory-only restricted adapter",
+            "subset panel; compare to Exp 010 anchor 0.792",
+        ),
+        LeaderboardEntry(
+            TIER_RESTRICTED, "KVQuant sim", "Exp 023", "Qwen2.5-1.5B · hard panel (200 cells)",
+            0.609, 0, "factory-only restricted adapter",
+            "1.5B quantizer artifact; not universal",
+        ),
+        LeaderboardEntry(
+            TIER_RESTRICTED, "TurboQuant Python", "Exp 008", "Qwen2.5-0.5B · V9 core (272 cells)",
+            0.435, 0, "factory-only restricted adapter",
+            "not production llama.cpp/MLX; supports_real_bytes_claim=False",
+        ),
+        LeaderboardEntry(
+            TIER_RESTRICTED, "TurboQuant Python", "Exp 014", "Qwen2.5-0.5B · harder-category spotcheck",
+            0.309, 0, "factory-only restricted adapter",
+            "subset panel; compare to Exp 008 anchor 0.435",
+        ),
+        LeaderboardEntry(
+            TIER_RESTRICTED, "TurboQuant llama.cpp probe", "Exp 022", "Qwen2.5-0.5B · 10-prompt external probe",
+            0.486, None, "external drafter probe only",
+            "HF verifier probe accept; not standard ExactKV compressor panel; no_go integration",
+        ),
+        LeaderboardEntry(
+            TIER_RESTRICTED, "KIVI offline", "Exp 009", "Qwen2.5-0.5B · V9 core (272 cells)",
+            0.012, 0, "factory-only restricted adapter",
+            "offline adapter; not KIVI CUDA/Triton production path",
+        ),
+        LeaderboardEntry(
+            TIER_RESTRICTED, "KIVI offline", "Exp 014", "Qwen2.5-0.5B · harder-category spotcheck",
+            0.019, 0, "factory-only restricted adapter",
+            "subset panel; compare to Exp 009 anchor 0.012",
         ),
     ]
+    entries.extend(restricted_static)
 
-    pending: list[tuple[str, str, float | None, int, str, str]] = []
-    for comp, model_suite, rel, notes in specs:
-        if comp == "snapkv_experimental":
-            pending.append((comp, model_suite, 1.0, 0, "smoke panel", notes))
-            continue
-        csv_rows = _read_csv(_ROOT / rel) if rel else []
-        sub = [r for r in csv_rows if r.get("compressor_name") == comp]
-        acc_vals = [_acceptance_from_row(r) for r in sub if _acceptance_from_row(r) is not None]
-        mean_acc = _mean([v for v in acc_vals if v is not None])
-        failures = _count_failures(sub)
-        div_vals = [
-            int(r["lossy_first_divergence_idx"])
-            for r in sub
-            if r.get("lossy_first_divergence_idx")
-        ]
-        div_note = f"mean idx {_mean([float(d) for d in div_vals]):.1f}" if div_vals else "—"
-        pending.append((comp, model_suite, mean_acc, failures, div_note, notes))
-
-    integrated = [p for p in pending if p[0] != "snapkv_experimental"]
-    smoke = [p for p in pending if p[0] == "snapkv_experimental"]
-    integrated.sort(key=lambda x: (x[2] is None, -(x[2] or 0)))
-    ordered = integrated + smoke
-    for i, (comp, model_suite, mean_acc, failures, div_note, notes) in enumerate(ordered, 1):
-        rows.append(
-            LeaderboardRow(
-                rank=i,
-                compressor=comp,
-                model_suite=model_suite,
-                mean_acceptance=mean_acc,
-                exactkv_failures=failures,
-                divergence_note=div_note,
-                notes=notes,
-            )
+    entries.append(
+        LeaderboardEntry(
+            TIER_SMOKE,
+            "SnapKV experimental",
+            "Exp 032b",
+            "Qwen2.5-0.5B · 4-prompt smoke (8 cells)",
+            None,
+            0,
+            "factory-only smoke adapter",
+            "smoke-only; not full-suite ranked; restricted experimental SnapKV via kvpress",
         )
-    return rows
+    )
+
+    entries.extend([
+        LeaderboardEntry(
+            TIER_FUTURE, "Shard", "Exp 032 addendum", "Llama external-drafter candidate",
+            None, None, "not integrated",
+            "krish1905/shard; external results not ExactKV; B external drafter path",
+        ),
+        LeaderboardEntry(
+            TIER_FUTURE, "SpectralQuant", "Exp 032 addendum", "Calibrated tensor-adapter candidate",
+            None, None, "not integrated",
+            "Dynamis-Labs/spectralquant; no ExactKV adapter yet; external results not ExactKV",
+        ),
+    ])
+    return entries
 
 
 def _save(fig: Figure, path: Path) -> None:
@@ -571,35 +700,25 @@ def plot_killer_demo_card(data: PlotData, path: Path) -> None:
     _save(fig, path)
 
 
+def _entries_by_tier(entries: list[LeaderboardEntry]) -> dict[str, list[LeaderboardEntry]]:
+    out: dict[str, list[LeaderboardEntry]] = {}
+    for e in entries:
+        out.setdefault(e.tier, []).append(e)
+    return out
+
+
+def _fmt_acc(val: float | None) -> str:
+    return f"{val:.3f}" if val is not None else "—"
+
+
+def _fmt_fail(val: int | None) -> str:
+    return str(val) if val is not None else "—"
+
+
 def write_leaderboard_md(data: PlotData, path: Path) -> None:
-    lines = [
-        "# ExactKV Mini Leaderboard",
-        "",
-        "_Generated by `scripts/visualize_experiment_035.py`. Rankings use available ExactKV metrics only._",
-        "",
-        "> " + PUBLIC_TAGLINE.replace("\n", "\n> "),
-        "",
-        "| Rank | Compressor | Model / suite | Mean acceptance | exactkv_failures | Divergence | Notes |",
-        "| ---: | --- | --- | ---: | ---: | --- | --- |",
-    ]
-    for row in data.leaderboard:
-        acc = f"{row.mean_acceptance:.3f}" if row.mean_acceptance is not None else "—"
-        lines.append(
-            f"| {row.rank} | `{row.compressor}` | {row.model_suite} | {acc} | "
-            f"{row.exactkv_failures} | {row.divergence_note} | {row.notes} |"
-        )
-    lines.extend([
-        "",
-        "## Future leaderboard candidates (not ExactKV results yet)",
-        "",
-        "- **Shard** (krish1905/shard) — external Llama drafter; feasibility only (Exp 032 addendum).",
-        "- **SpectralQuant** — deferred experimental adapter (Exp 032 addendum).",
-        "- **SnapKV paper / kvpress** — external; `snapkv_experimental` smoke is factory-only.",
-        "",
-        "External Shard, SpectralQuant, or SnapKV paper results are **not** ExactKV results.",
-        "",
-    ])
-    path.write_text("\n".join(lines), encoding="utf-8")
+    from scripts.exactkv_leaderboard import write_leaderboard_md as _write_lb_md
+
+    _write_lb_md(data.leaderboard, path)
 
 
 def write_report_md(data: PlotData, path: Path) -> None:
@@ -670,9 +789,12 @@ def write_report_md(data: PlotData, path: Path) -> None:
         "V13 highlights: Exp 029 (600), 030 ExactKV arms (320), 031 (192 ExactKV), 033 (48), 034 search (348). "
         "Do not overgeneralize beyond tested cells.",
         "",
-        "## 5. Mini leaderboard",
+        "## 5. Mini leaderboard (tiered)",
         "",
-        "See [`leaderboard.md`](leaderboard.md).",
+        PUBLIC_LEADERBOARD_COPY,
+        "",
+        "See [`leaderboard.md`](leaderboard.md) — **FULL PANEL**, **RESTRICTED BACKEND**, "
+        "**SMOKE ONLY**, **FUTURE CANDIDATE**, and **REPAIR POLICY** sections.",
         "",
         "## 6. Acceptance visuals",
         "",
@@ -752,6 +874,9 @@ def generate_all(output_assets: Path | None = None) -> PlotData:
     plot_killer_demo_card(data, assets / "exp035_killer_demo_card.png")
 
     write_leaderboard_md(data, _DOCS / "leaderboard.md")
+    from scripts.exactkv_leaderboard import write_leaderboard_html
+
+    write_leaderboard_html(data.leaderboard, _DOCS / "leaderboard.html")
     write_report_md(data, _DOCS / "EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md")
     return data
 

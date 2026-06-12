@@ -65,9 +65,11 @@ Turn existing V10–V13 ExactKV results into a polished visual package and mini 
 
 V13 highlights: Exp 029 (600), 030 ExactKV arms (320), 031 (192 ExactKV), 033 (48), 034 search (348). Do not overgeneralize beyond tested cells.
 
-## 5. Mini leaderboard
+## 5. Mini leaderboard (tiered)
 
-See [`leaderboard.md`](leaderboard.md).
+ExactKV Leaderboard ranks integrated compressors by token-level acceptance and exactness. Restricted backends, smoke-only adapters, and future candidates are separated to avoid apples-to-oranges claims.
+
+See [`leaderboard.md`](leaderboard.md) — **FULL PANEL**, **RESTRICTED BACKEND**, **SMOKE ONLY**, **FUTURE CANDIDATE**, and **REPAIR POLICY** sections.
 
 ## 6. Acceptance visuals
 

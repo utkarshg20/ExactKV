@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>KV Compression Crash-Test Leaderboard</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --green: #3fb950;
+      --border: #30363d;
+      --amber: #d29922;
+      --red: #f85149;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+    h1 { font-size: 1.75rem; margin: 0 0 0.35rem; letter-spacing: -0.02em; }
+    .subtitle { color: var(--muted); font-size: 1.05rem; max-width: 52rem; }
+    .tagline {
+      margin: 1.25rem 0;
+      padding: 0.85rem 1rem;
+      border-left: 3px solid var(--accent);
+      background: var(--card);
+      border-radius: 0 8px 8px 0;
+      font-size: 0.95rem;
+    }
+    .disclaimer { color: var(--muted); font-size: 0.85rem; margin-top: 1.5rem; }
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      margin: 1.5rem 0 0;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+    .tab {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .tab:hover { border-color: var(--accent); color: var(--text); }
+    .tab.active {
+      background: var(--card);
+      color: var(--text);
+      border-color: var(--accent);
+    }
+    .panel { display: none; margin-top: 1rem; }
+    .panel.active { display: block; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      background: var(--card);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+    th, td { padding: 0.65rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: #1c2128; color: var(--muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(88, 166, 255, 0.06); }
+    .num { font-variant-numeric: tabular-nums; }
+    .caveat { color: var(--muted); font-size: 0.82rem; max-width: 22rem; }
+    .badges { white-space: normal; }
+    .badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      margin: 0.1rem 0.15rem 0.1rem 0;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .tier-full { background: rgba(63, 185, 80, 0.15); color: var(--green); border: 1px solid rgba(63,185,80,0.35); }
+    .tier-repair { background: rgba(88, 166, 255, 0.12); color: var(--accent); border: 1px solid rgba(88,166,255,0.3); }
+    .tier-restricted { background: rgba(210, 153, 34, 0.12); color: var(--amber); border: 1px solid rgba(210,153,34,0.35); }
+    .tier-smoke { background: rgba(139, 148, 158, 0.15); color: var(--muted); border: 1px solid var(--border); }
+    .tier-future { background: rgba(248, 81, 73, 0.1); color: #ff7b72; border: 1px solid rgba(248,81,73,0.3); }
+    .sim { background: rgba(139, 148, 158, 0.12); color: var(--muted); border: 1px solid var(--border); }
+    .nobytes { background: rgba(210, 153, 34, 0.1); color: var(--amber); border: 1px solid rgba(210,153,34,0.25); }
+    .empty { color: var(--muted); padding: 1rem; }
+    footer { margin-top: 2rem; font-size: 0.8rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>KV Compression Crash-Test Leaderboard</h1>
+    <p class="subtitle">Compressors ranked by token-level acceptance, first divergence, and exactness under full-KV verification.</p>
+    <div class="tagline">Everyone is racing to shrink KV caches.
+ExactKV tells you when they start lying.</div>
+    <p class="disclaimer">Not a speed leaderboard. ExactKV measures when lossy KV drafts start lying — not throughput, latency, or production readiness.</p>
+
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-tab="full-suite" type="button">Full-suite integrated</button><button class="tab" data-tab="repair" type="button">Repair policies</button><button class="tab" data-tab="restricted" type="button">Restricted backends</button><button class="tab" data-tab="smoke" type="button">Smoke-only adapters</button><button class="tab" data-tab="future" type="button">Future candidates</button>
+    </nav>
+    <section class="panel active" id="tab-full-suite" role="tabpanel"><table><thead><tr><th>Rank</th><th>Compressor</th><th>Model</th><th>Acceptance</th><th>Failures</th><th>Scope</th><th>Badges</th></tr></thead><tbody><tr><td>1</td><td>No compression</td><td>Qwen 0.5B</td><td class='num'>1.000</td><td class='num'>0</td><td>full</td><td class='badges'><span class="badge tier-full">FULL PANEL</span></td></tr><tr><td>2</td><td>Passthrough</td><td>Qwen 0.5B</td><td class='num'>1.000</td><td class='num'>0</td><td>full</td><td class='badges'><span class="badge tier-full">FULL PANEL</span></td></tr><tr><td>3</td><td>INT8</td><td>Qwen 3B</td><td class='num'>0.991</td><td class='num'>0</td><td>full</td><td class='badges'><span class="badge tier-full">FULL PANEL</span></td></tr><tr><td>4</td><td>INT8</td><td>Llama 8B</td><td class='num'>0.980</td><td class='num'>0</td><td>small</td><td class='badges'><span class="badge tier-full">FULL PANEL</span></td></tr><tr><td>5</td><td>INT8</td><td>Qwen 1.5B</td><td class='num'>0.978</td><td class='num'>0</td><td>full</td><td class='badges'><span class="badge tier-full">FULL PANEL</span></td></tr><tr><td>6</td><td>INT8</td><td>Qwen 0.5B</td><td class='num'>0.957</td><td class='num'>0</td><td>full</td><td class='badges'><span class="badge tier-full">FULL PANEL</span></td></tr><tr><td>7</td><td>K8/V4</td><td>Qwen 3B</td><td class='num'>0.951</td><td class='num'>0</td><td>full</td><td class='badges'><span class="badge tier-full">FULL PANEL</span><span class="badge sim">SIMULATED</span></td></tr><tr><td>8</td><td>K8/V4</td><td>Qwen 1.5B</td><td class='num'>0.942</td><td class='num'>0</td><td>full</td><td class='badges'><span class="badge tier-full">FULL PANEL</span><span class="badge sim">SIMULATED</span></td></tr><tr><td>9</td><td>Boundary V</td><td>Qwen 0.5B</td><td class='num'>0.923</td><td class='num'>0</td><td>full</td><td class='badges'><span class="badge tier-full">FULL PANEL</span><span class="badge sim">SIMULATED</span></td></tr><tr><td>10</td><td>K8/V4</td><td>Qwen 0.5B</td><td class='num'>0.914</td><td class='num'>0</td><td>full</td><td class='badges'><span class="badge tier-full">FULL PANEL</span><span class="badge sim">SIMULATED</span></td></tr><tr><td>11</td><td>K8/V4</td><td>Llama 8B</td><td class='num'>0.897</td><td class='num'>0</td><td>small</td><td class='badges'><span class="badge tier-full">FULL PANEL</span><span class="badge sim">SIMULATED</span></td></tr></tbody></table></section><section class="panel" id="tab-repair" role="tabpanel"><table><thead><tr><th>Method</th><th>Panel</th><th>Acceptance</th><th>Failures</th><th>Experiment</th><th>Badges</th><th>Caveat</th></tr></thead><tbody><tr><td>INT8 all suites</td><td>Qwen2.5-0.5B · 128-prompt V10</td><td class='num'>0.957</td><td class='num'>0</td><td>Exp 025</td><td class='badges'><span class="badge tier-repair">REPAIR POLICY</span></td><td class='caveat'>selects compressor+draft_len; not default</td></tr><tr><td>Category adaptive</td><td>Qwen2.5-0.5B · 128-prompt V10</td><td class='num'>0.948</td><td class='num'>0</td><td>Exp 025</td><td class='badges'><span class="badge tier-repair">REPAIR POLICY</span></td><td class='caveat'>selects compressor+draft_len; not default</td></tr><tr><td>Fallback INT8 hard cats</td><td>Qwen2.5-0.5B · 128-prompt V10</td><td class='num'>0.943</td><td class='num'>0</td><td>Exp 025</td><td class='badges'><span class="badge tier-repair">REPAIR POLICY</span></td><td class='caveat'>selects compressor+draft_len; not default</td></tr><tr><td>Draft-len adaptive</td><td>Qwen2.5-0.5B · 128-prompt V10</td><td class='num'>0.930</td><td class='num'>0</td><td>Exp 025</td><td class='badges'><span class="badge tier-repair">REPAIR POLICY</span></td><td class='caveat'>selects compressor+draft_len; not default</td></tr><tr><td>Boundary V baseline</td><td>Qwen2.5-0.5B · 128-prompt V10</td><td class='num'>0.923</td><td class='num'>0</td><td>Exp 025</td><td class='badges'><span class="badge tier-repair">REPAIR POLICY</span></td><td class='caveat'>selects compressor+draft_len; not default</td></tr><tr><td>K8/V4 baseline</td><td>Qwen2.5-0.5B · 128-prompt V10</td><td class='num'>0.914</td><td class='num'>0</td><td>Exp 025</td><td class='badges'><span class="badge tier-repair">REPAIR POLICY</span></td><td class='caveat'>selects compressor+draft_len; not default</td></tr></tbody></table></section><section class="panel" id="tab-restricted" role="tabpanel"><table><thead><tr><th>Method</th><th>Panel</th><th>Acceptance</th><th>Failures</th><th>Experiment</th><th>Badges</th><th>Caveat</th></tr></thead><tbody><tr><td>KVQuant sim</td><td>Qwen2.5-0.5B · V9 core (272 cells)</td><td class='num'>0.792</td><td class='num'>0</td><td>Exp 010</td><td class='badges'><span class="badge tier-restricted">RESTRICTED</span><span class="badge sim">SIMULATED</span><span class="badge nobytes">NO REAL-BYTE CLAIM</span></td><td class='caveat'>simquant; not deployment CUDA; supports_real_bytes_claim=False</td></tr><tr><td>KVQuant sim</td><td>Qwen2.5-0.5B · harder-category spotcheck</td><td class='num'>0.634</td><td class='num'>0</td><td>Exp 014</td><td class='badges'><span class="badge tier-restricted">RESTRICTED</span><span class="badge sim">SIMULATED</span><span class="badge nobytes">NO REAL-BYTE CLAIM</span></td><td class='caveat'>subset panel; compare to Exp 010 anchor 0.792</td></tr><tr><td>KVQuant sim</td><td>Qwen2.5-1.5B · hard panel (200 cells)</td><td class='num'>0.609</td><td class='num'>0</td><td>Exp 023</td><td class='badges'><span class="badge tier-restricted">RESTRICTED</span><span class="badge sim">SIMULATED</span><span class="badge nobytes">NO REAL-BYTE CLAIM</span></td><td class='caveat'>1.5B quantizer artifact; not universal</td></tr><tr><td>TurboQuant Python</td><td>Qwen2.5-0.5B · V9 core (272 cells)</td><td class='num'>0.435</td><td class='num'>0</td><td>Exp 008</td><td class='badges'><span class="badge tier-restricted">RESTRICTED</span><span class="badge nobytes">NO REAL-BYTE CLAIM</span></td><td class='caveat'>not production llama.cpp/MLX; supports_real_bytes_claim=False</td></tr><tr><td>TurboQuant Python</td><td>Qwen2.5-0.5B · harder-category spotcheck</td><td class='num'>0.309</td><td class='num'>0</td><td>Exp 014</td><td class='badges'><span class="badge tier-restricted">RESTRICTED</span><span class="badge nobytes">NO REAL-BYTE CLAIM</span></td><td class='caveat'>subset panel; compare to Exp 008 anchor 0.435</td></tr><tr><td>TurboQuant llama.cpp probe</td><td>Qwen2.5-0.5B · 10-prompt external probe</td><td class='num'>0.486</td><td class='num'>—</td><td>Exp 022</td><td class='badges'><span class="badge tier-restricted">RESTRICTED</span></td><td class='caveat'>HF verifier probe accept; not standard ExactKV compressor panel; no_go integration</td></tr><tr><td>KIVI offline</td><td>Qwen2.5-0.5B · V9 core (272 cells)</td><td class='num'>0.012</td><td class='num'>0</td><td>Exp 009</td><td class='badges'><span class="badge tier-restricted">RESTRICTED</span><span class="badge nobytes">NO REAL-BYTE CLAIM</span></td><td class='caveat'>offline adapter; not KIVI CUDA/Triton production path</td></tr><tr><td>KIVI offline</td><td>Qwen2.5-0.5B · harder-category spotcheck</td><td class='num'>0.019</td><td class='num'>0</td><td>Exp 014</td><td class='badges'><span class="badge tier-restricted">RESTRICTED</span><span class="badge nobytes">NO REAL-BYTE CLAIM</span></td><td class='caveat'>subset panel; compare to Exp 009 anchor 0.012</td></tr></tbody></table></section><section class="panel" id="tab-smoke" role="tabpanel"><table><thead><tr><th>Method</th><th>Panel</th><th>Acceptance</th><th>Failures</th><th>Experiment</th><th>Badges</th><th>Caveat</th></tr></thead><tbody><tr><td>SnapKV experimental</td><td>Qwen2.5-0.5B · 4-prompt smoke (8 cells)</td><td class='num'>—</td><td class='num'>0</td><td>Exp 032b</td><td class='badges'><span class="badge tier-smoke">SMOKE ONLY</span></td><td class='caveat'>smoke-only; not full-suite ranked; restricted experimental SnapKV via kvpress</td></tr></tbody></table></section><section class="panel" id="tab-future" role="tabpanel"><table><thead><tr><th>Method</th><th>Panel</th><th>Acceptance</th><th>Failures</th><th>Experiment</th><th>Badges</th><th>Caveat</th></tr></thead><tbody><tr><td>Shard</td><td>Llama external-drafter candidate</td><td class='num'>—</td><td class='num'>—</td><td>Exp 032 addendum</td><td class='badges'><span class="badge tier-future">FUTURE</span><span class="badge future">NOT INTEGRATED</span></td><td class='caveat'>krish1905/shard; external results not ExactKV; B external drafter path</td></tr><tr><td>SpectralQuant</td><td>Calibrated tensor-adapter candidate</td><td class='num'>—</td><td class='num'>—</td><td>Exp 032 addendum</td><td class='badges'><span class="badge tier-future">FUTURE</span><span class="badge future">NOT INTEGRATED</span></td><td class='caveat'>Dynamis-Labs/spectralquant; no ExactKV adapter yet; external results not ExactKV</td></tr></tbody></table></section>
+
+    <footer>
+      Generated 2026-06-12 19:43 UTC by <code>scripts/exactkv_leaderboard.py</code> from local reports.
+      Not a hosted live backend. No speedup, throughput, latency, tokens/sec, VRAM, or serving claims.
+      External Shard/SpectralQuant results are not ExactKV results.
+    </footer>
+  </div>
+  <script>
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

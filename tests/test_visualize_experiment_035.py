@@ -48,5 +48,14 @@ def test_report_and_leaderboard_exist(run_visualize: None) -> None:
     assert "not a new benchmark" in text
     assert "ExactKV tells you when they start lying" in text
     lb = leaderboard.read_text(encoding="utf-8")
-    assert "snapkv_experimental" in lb
-    assert "not ExactKV results" in lb
+    assert "Full-suite integrated" in lb or "FULL PANEL" in lb
+    assert "Restricted backends" in lb or "RESTRICTED" in lb
+    assert "TurboQuant" in lb
+    assert "KIVI" in lb
+    assert "KVQuant" in lb
+    assert "Smoke-only" in lb or "SMOKE" in lb
+    assert "SnapKV" in lb
+    assert "Future candidates" in lb or "FUTURE" in lb
+    assert "Shard" in lb
+    assert "SpectralQuant" in lb
+    assert "ExactKV results" in lb

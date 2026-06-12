@@ -768,6 +768,11 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 | 7 | Killer correction demo (Exp 034) | ✅ [`EXPERIMENT_034_KILLER_CORRECTION_DEMO.md`](EXPERIMENT_034_KILLER_CORRECTION_DEMO.md) |
 | 7b | Live correction terminal demo | ✅ [`DEMO_EXACTKV_LIVE_CORRECTION.md`](DEMO_EXACTKV_LIVE_CORRECTION.md) |
 | 8 | Visual plot package (Exp 035) | ✅ [`EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md`](EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md) |
+| 8b | Public visual polish (Exp 036) | ✅ [`PUBLIC_VISUAL_PACKAGE.md`](PUBLIC_VISUAL_PACKAGE.md) |
+| 8c | Cinematic crash-test video (optional) | ✅ [`EXACTKV_CRASH_TEST_VIDEO.md`](EXACTKV_CRASH_TEST_VIDEO.md) |
+| 8d | Leaderboard tiering cleanup | ✅ [`leaderboard.md`](leaderboard.md) |
+| 8e | Terminal-native crash-test demo (Exp 034b) | ✅ [`EXACTKV_TERMINAL_CRASH_TEST.md`](EXACTKV_TERMINAL_CRASH_TEST.md) |
+| 8f | Terminal + HTML crash-test leaderboard | ✅ [`leaderboard.html`](leaderboard.html) · `scripts/exactkv_leaderboard.py` |
 | 9 | V13 completion / launch decision | Planned |
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V13.

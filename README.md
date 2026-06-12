@@ -69,7 +69,7 @@ V10/V11 suites are **not universal benchmarks**. Restricted adapters remain **fa
 | V10 | `v0.10.0` | Suite hardening; Exp 012–014; [readiness](docs/V10_READINESS_ASSESSMENT.md) | ✅ |
 | V11 | `v0.11.0` | Launch hardening; Exp 015–020; [readiness](docs/V11_LAUNCH_READINESS.md) | ✅ |
 | V12 | — | Deferred Work Completion Gauntlet ([scope](docs/V12_SCOPE_STATEMENT.md)); Exp 021–027 | Phase 7 ✅ |
-| V13 | — | Practicality Proof ([scope](docs/V13_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 8 ✅; visual plots + leaderboard |
+| V13 | — | Practicality Proof ([scope](docs/V13_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 8e ✅; terminal crash-test demo |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
@@ -80,19 +80,42 @@ acceptance behaviour — **not** tokens/sec, throughput, or latency.
 
 ## Live demo
 
-Recordable terminal replay of the Exp 034 killer correction trace (`tj_002` × `int4_sim`):
+**Primary public demo** — terminal-native crash-test dashboard (replay; no inference):
 
 ```bash
-python3 scripts/demo_exactkv_live_correction.py
+python3 scripts/exactkv_terminal_crash_test.py
 ```
 
-No model inference runs — this replays verified Exp 034 tokens. See [`DEMO_EXACTKV_LIVE_CORRECTION.md`](docs/DEMO_EXACTKV_LIVE_CORRECTION.md).
-
-**Visual package (Exp 035):** [`EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md`](docs/EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md) · [`leaderboard.md`](docs/leaderboard.md)
+Semantic correction trace: `pharm_001` × `k8_v4_sim` (`drop` → `pickup`). See [`EXACTKV_TERMINAL_CRASH_TEST.md`](docs/EXACTKV_TERMINAL_CRASH_TEST.md).
 
 ```bash
-python3 scripts/visualize_experiment_035.py
+# Record for launch (cinematic pacing, ~90–120s)
+python3 scripts/exactkv_terminal_crash_test.py --speed cinematic
 ```
+
+**Optional rendered video:** [`docs/assets/exactkv_crash_test_demo.mp4`](docs/assets/exactkv_crash_test_demo.mp4) · [`EXACTKV_CRASH_TEST_VIDEO.md`](docs/EXACTKV_CRASH_TEST_VIDEO.md)
+
+```bash
+python3 scripts/render_exactkv_crash_test_video.py
+```
+
+**Earlier replays:** [`demo_exactkv_live_correction.py`](scripts/demo_exactkv_live_correction.py) (Exp 034 `tj_002` trace) · [`DEMO_EXACTKV_LIVE_CORRECTION.md`](docs/DEMO_EXACTKV_LIVE_CORRECTION.md)
+
+**Public visuals (Exp 036):** [`PUBLIC_VISUAL_PACKAGE.md`](docs/PUBLIC_VISUAL_PACKAGE.md)
+
+```bash
+python3 scripts/render_public_visuals_036.py
+```
+
+**Crash-test leaderboard** (terminal + HTML from local reports):
+
+```bash
+python3 scripts/exactkv_leaderboard.py
+```
+
+[`leaderboard.md`](docs/leaderboard.md) · [`leaderboard.html`](docs/leaderboard.html)
+
+**Research figures (Exp 035):** [`EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md`](docs/EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md)
 
 ---
 
@@ -771,7 +794,9 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | V9 scope | [`V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) |
 | V10 scope (complete) | [`V10_SCOPE_STATEMENT.md`](docs/V10_SCOPE_STATEMENT.md) |
 | V13 scope | [`V13_SCOPE_STATEMENT.md`](docs/V13_SCOPE_STATEMENT.md) |
-| V13 Phase 8 (Exp 035) | [`EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md`](docs/EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md) — plots + [`leaderboard.md`](docs/leaderboard.md) |
+| V13 Phase 8c (video) | [`EXACTKV_CRASH_TEST_VIDEO.md`](docs/EXACTKV_CRASH_TEST_VIDEO.md) — [watch MP4](docs/assets/exactkv_crash_test_demo.mp4) |
+| V13 Phase 8b (Exp 036) | [`PUBLIC_VISUAL_PACKAGE.md`](docs/PUBLIC_VISUAL_PACKAGE.md) — launch-ready `public_*.png` cards |
+| V13 Phase 8 (Exp 035) | [`EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md`](docs/EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md) — internal research figures |
 | V13 Phase 7b (live demo) | [`DEMO_EXACTKV_LIVE_CORRECTION.md`](docs/DEMO_EXACTKV_LIVE_CORRECTION.md) — `python3 scripts/demo_exactkv_live_correction.py` |
 | V13 Phase 7 (Exp 034) | [`EXPERIMENT_034_KILLER_CORRECTION_DEMO.md`](docs/EXPERIMENT_034_KILLER_CORRECTION_DEMO.md) — killer correction demo; `tj_002` × `int4_sim`; lossy `}}` rejected → `metric`; exact match |
 | V13 Phase 6 (Exp 033) | [`EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md`](docs/EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md) — Llama-3.1-8B-Instruct; 48 cells, 0 failures; span ≡ sequential |

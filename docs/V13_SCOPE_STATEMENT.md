@@ -1,6 +1,6 @@
 # V13 Scope Statement — Practicality Proof
 
-**Status:** **Phase 8 complete** — Exp 035 visual plot package + mini leaderboard ([`EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md`](EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md), [`leaderboard.md`](leaderboard.md)). Phase 7b live demo ready. Span throughput **unsolved**; VRAM savings **forbidden**.
+**Status:** **Phase 8e complete** — terminal-native crash-test demo ([`EXACTKV_TERMINAL_CRASH_TEST.md`](EXACTKV_TERMINAL_CRASH_TEST.md)); semantic trace `pharm_001` (`drop` → `pickup`). Optional MP4 renderer remains secondary. Span throughput **unsolved**; VRAM savings **forbidden**.
 **Builds on:** V12 Phases 0–7 complete (Experiments 021–027); V12 Phase 8 release package may proceed in parallel but **does not authorize public launch**.
 **Not public launch.** v1.0.0 deferred until V13 produces evidence-backed practicality answers or honestly closes remaining gaps.
 
@@ -33,7 +33,12 @@
 | **6** | Llama-3.1-8B small-suite validation (Exp 033) | **Complete** — [`EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md`](EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md); 48 cells, 0 failures; span ≡ sequential |
 | **7** | Killer correction demo (Exp 034) | **Complete** — [`EXPERIMENT_034_KILLER_CORRECTION_DEMO.md`](EXPERIMENT_034_KILLER_CORRECTION_DEMO.md); `tj_002` × `int4_sim`; rejection/correction trace; exact match |
 | **7b** | Live correction terminal demo | **Complete** — [`DEMO_EXACTKV_LIVE_CORRECTION.md`](DEMO_EXACTKV_LIVE_CORRECTION.md); recordable terminal replay of Exp 034 trace |
-| **8** | Visual plot package (Exp 035) | **Complete** — [`EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md`](EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md); 8 PNG assets; [`leaderboard.md`](leaderboard.md) |
+| **8** | Visual plot package (Exp 035) | **Complete** — [`EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md`](EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md); internal research figures |
+| **8b** | Public visual polish (Exp 036) | **Complete** — [`PUBLIC_VISUAL_PACKAGE.md`](PUBLIC_VISUAL_PACKAGE.md); launch-ready `public_*.png` cards |
+| **8c** | Cinematic crash-test video | **Complete** — [`EXACTKV_CRASH_TEST_VIDEO.md`](EXACTKV_CRASH_TEST_VIDEO.md); `exactkv_crash_test_demo.mp4` (120s) |
+| **8d** | Leaderboard tiering cleanup | **Complete** — tiered [`leaderboard.md`](leaderboard.md); TurboQuant/KIVI/KVQuant/SnapKV/Shard/SpectralQuant |
+| **8e** | Terminal-native crash-test demo (Exp 034b) | **Complete** — [`EXACTKV_TERMINAL_CRASH_TEST.md`](EXACTKV_TERMINAL_CRASH_TEST.md); `pharm_001` semantic trace; recordable live dashboard |
+| **8f** | Terminal + HTML crash-test leaderboard | **Complete** — `scripts/exactkv_leaderboard.py`; [`leaderboard.md`](leaderboard.md) · [`leaderboard.html`](leaderboard.html) |
 | **9** | V13 completion / launch decision | Planned |
 
 **Latest tagged release:** `v0.11.0`. V12 substance (Exp 021–027) may ship as `v0.12.0` after Phase 8 without public v1.0.0.
