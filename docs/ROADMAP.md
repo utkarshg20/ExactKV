@@ -759,6 +759,7 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 | 1 | Span verification design (Exp 028) | ✅ [`SPAN_VERIFICATION_DESIGN.md`](SPAN_VERIFICATION_DESIGN.md) |
 | 2 | Span verification (Exp 028 smoke + Exp 029 grid) | ✅ [`EXPERIMENT_029_SPAN_VERIFICATION_GRID.md`](EXPERIMENT_029_SPAN_VERIFICATION_GRID.md) |
 | 3 | Diagnostic timing harness (Exp 030) | ✅ [`EXPERIMENT_030_DIAGNOSTIC_TIMING.md`](EXPERIMENT_030_DIAGNOSTIC_TIMING.md) |
+| 3b | Span GPU/fp16 parity (Exp 030b) | ✅ [`EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md`](EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md) |
 | 4 | Active GPU memory isolation (Exp 031) | Planned |
 | 5 | SnapKV / ShardKV feasibility (Exp 032) | Planned |
 | 6 | Llama-3.1-8B small suite (Exp 033) | Planned |

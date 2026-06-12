@@ -33,6 +33,7 @@ acceptable for V1.
 from __future__ import annotations
 
 import copy
+from typing import Any
 
 import torch
 
@@ -47,6 +48,41 @@ class VerificationEngine:
 
     def __init__(self, runtime: ModelRuntime) -> None:
         self.runtime = runtime
+
+    def _span_verify_forward(
+        self,
+        input_ids: torch.Tensor,
+        past_key_values: Any,
+        **kwargs: Any,
+    ) -> Any:
+        """Forward for batched span verify.
+
+        On fp16 CUDA, default SDPA batched forwards can tie-break argmax differently
+        than single-step sequential forwards when logits are nearly equal (Exp 030b).
+        Math-only SDPA matches eager parity on the lc_003 blocker cell.
+        """
+        if (
+            self.runtime.dtype == torch.float16
+            and self.runtime.device.type == "cuda"
+        ):
+            try:
+                from torch.backends.cuda import sdp_kernel
+
+                with sdp_kernel(
+                    enable_flash=False,
+                    enable_math=True,
+                    enable_mem_efficient=False,
+                ):
+                    return self.runtime.forward(
+                        input_ids,
+                        past_key_values=past_key_values,
+                        **kwargs,
+                    )
+            except Exception:
+                pass
+        return self.runtime.forward(
+            input_ids, past_key_values=past_key_values, **kwargs
+        )
 
     @torch.no_grad()
     def verify_sequential(
@@ -123,10 +159,28 @@ class VerificationEngine:
         if k >= 2:
             temp_kv = copy.deepcopy(full_state.past_key_values)
             teacher_tokens = draft_tokens[:-1]
+            past_len = kv_seq_len(temp_kv)
+            L = len(teacher_tokens)
             input_ids = torch.tensor(
                 [teacher_tokens], dtype=torch.long, device=self.runtime.device
             )
-            out = self.runtime.forward(input_ids, past_key_values=temp_kv)
+            fwd_kwargs: dict[str, Any] = {
+                "cache_position": torch.arange(
+                    past_len,
+                    past_len + L,
+                    device=self.runtime.device,
+                    dtype=torch.long,
+                ),
+                "attention_mask": torch.ones(
+                    1,
+                    past_len + L,
+                    device=self.runtime.device,
+                    dtype=torch.long,
+                ),
+            }
+            out = self._span_verify_forward(
+                input_ids, temp_kv, **fwd_kwargs
+            )
             for i in range(1, k):
                 v_i = int(
                     out.logits[:, i - 1, :].float().argmax(dim=-1).item()
@@ -155,11 +209,6 @@ class VerificationEngine:
         batched path disagrees with ``verify_sequential`` (observed on fp16 Qwen2.5-0.5B
         long-context, Exp 030), fall back to sequential for exactness parity.
         """
-        # Batched teacher-forced logits can diverge from sequential single-step
-        # forwards on fp16 GPU (Exp 030 lc_003).  Use sequential verify there.
-        if self.runtime.dtype in (torch.float16, torch.bfloat16):
-            return self.verify_sequential(full_state, draft_tokens)
-
         batched = self._verify_span_batched(full_state, draft_tokens)
         sequential = self.verify_sequential(full_state, draft_tokens)
         if batched != sequential:

@@ -143,7 +143,7 @@ _D17 and D18 may finalize in V12 Phase 8; **public posting** waits for V13 Phase
 
 | ID | Item | Status | Notes |
 |---|---|---|---|
-| D21 | **Sampling / parallel verify / bonus tokens** | **Span exactness grid complete** | Exp 029 ✅ | Default sequential; bonus still disabled; Phase 3 timing allowed |
+| D21 | **Sampling / parallel verify / bonus tokens** | **Span GPU fp16 parity fixed** | Exp 030b ✅ | Batched span restored via math-only SDPA + cache_position; parity guard kept; **rerun Exp 030 timing** before span speed claims |
 | D22 | **Multi-request batching** | Deferred | Serving-scale feature |
 | D23 | **CPU offload / CUDA kernels** | Deferred | No custom kernels in ExactKV today |
 | D24 | **Broader kvpress** | Deferred | KnormPress only (V6) |

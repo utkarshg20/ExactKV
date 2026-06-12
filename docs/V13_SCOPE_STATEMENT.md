@@ -1,6 +1,6 @@
 # V13 Scope Statement — Practicality Proof
 
-**Status:** **Phase 3 complete** — Experiment 030 diagnostic timing documented; Phase 4 (Exp 031 GPU memory) next.
+**Status:** **Phase 3b complete** — Experiment 030b span GPU/fp16 parity fixed; Phase 4 (Exp 031 GPU memory) next. Full Exp 030 timing rerun recommended before span speed claims.
 **Builds on:** V12 Phases 0–7 complete (Experiments 021–027); V12 Phase 8 release package may proceed in parallel but **does not authorize public launch**.
 **Not public launch.** v1.0.0 deferred until V13 produces evidence-backed practicality answers or honestly closes remaining gaps.
 
@@ -26,6 +26,7 @@
 | **1** | Span/parallel verification design (Exp 028 design) | **Complete** — [`SPAN_VERIFICATION_DESIGN.md`](SPAN_VERIFICATION_DESIGN.md) |
 | **2** | Span/parallel verification implementation (Exp 028–029) | **Complete** — [`EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md`](EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md), [`EXPERIMENT_029_SPAN_VERIFICATION_GRID.md`](EXPERIMENT_029_SPAN_VERIFICATION_GRID.md) |
 | **3** | Diagnostic timing harness (Exp 030) | **Complete** — [`EXPERIMENT_030_DIAGNOSTIC_TIMING.md`](EXPERIMENT_030_DIAGNOSTIC_TIMING.md) |
+| **3b** | Batched span GPU/fp16 parity (Exp 030b) | **Complete** — [`EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md`](EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md) |
 | **4** | Active GPU memory isolation (Exp 031) | Planned |
 | **5** | Hot adapter feasibility — SnapKV / ShardKV (Exp 032) | Planned |
 | **6** | Llama-3.1-8B small-suite validation (Exp 033) | Planned |
