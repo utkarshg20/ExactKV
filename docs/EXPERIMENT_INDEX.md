@@ -40,6 +40,7 @@ under `reports/`.
 | 026 | Attention logging feasibility | [`EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md`](EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md) | True attention weights: sdpa no-go; eager prefill **restricted_go** | — (feasibility) | Qwen eager prefill OK (24 layers, 14 heads); default/decode-step blocked | N/A | Feasibility only; diagnostic; not production; CPU float32 |
 | 027 | Performance/memory truth boundary | [`EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md`](EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md) | Claim-boundary review after V1–V12; not a benchmark | — (review) | Speed and active GPU memory savings **forbidden**; V13 Practicality Proof recommended | N/A | No new timing/GPU measurements; see [`PRACTICALITY_GAP_ANALYSIS.md`](PRACTICALITY_GAP_ANALYSIS.md) |
 | 028 | Span verification smoke | [`EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md`](EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md) | Opt-in span verify vs sequential; 32-cell smoke | 32 | Sequential **0** / span **0** failures; span ≡ sequential outputs | 0 | Smoke only; not speed benchmark; span **not** default; CPU float32 0.5B |
+| 029 | Span verification exactness grid | [`EXPERIMENT_029_SPAN_VERIFICATION_GRID.md`](EXPERIMENT_029_SPAN_VERIFICATION_GRID.md) | Stratified 40-prompt × 5 compressors × draft_len {2,4,8} parity grid | 600 | Sequential **0** / span **0**; span ≡ sequential; `phase3_timing_allowed` | 0 | Exactness grid only; not timing; CPU float32 0.5B |
 
 ---
 
@@ -69,6 +70,7 @@ under `reports/`.
 | 025 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_025_full_suite_repair_policy.py --device cuda --dtype float16` (optional `--include-15b`) |
 | 026 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_026_attention_logging_feasibility.py` |
 | 028 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_028_span_verification_smoke.py` |
+| 029 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_029_span_verification_grid.py` |
 | 027 | Review only — [`EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md`](EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md); optional inspect: `python3 scripts/research/performance_memory_boundary_inspect.py` |
 
 ---

@@ -7,7 +7,7 @@ implemented** unless a linked experiment or release note says otherwise.
 > latency, speedup, runtime, or production-serving claims; `_sim` ≠ packed-bit storage;
 > external paper results are **not** ExactKV results.
 
-**Version path:** V9 ✅ → **V10 ✅ (`v0.10.0`)** → **V11 ✅ (`v0.11.0`)** → **V12 (Phases 0–7 ✅)** → **V13 (Phase 2 smoke ✅)** → v1.0.0 (public launch).
+**Version path:** V9 ✅ → **V10 ✅ (`v0.10.0`)** → **V11 ✅ (`v0.11.0`)** → **V12 (Phases 0–7 ✅)** → **V13 (Phase 2 ✅; Exp 029 grid ✅)** → v1.0.0 (public launch).
 
 **V9 scope:** [`V9_SCOPE_STATEMENT.md`](V9_SCOPE_STATEMENT.md) — **complete** (`v0.9.0`).
 **V10 scope:** [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — **complete** (`v0.10.0`).
@@ -15,7 +15,7 @@ implemented** unless a linked experiment or release note says otherwise.
 **V11 scope:** [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) — **complete** (`v0.11.0`).
 **V11 readiness:** [`V11_LAUNCH_READINESS.md`](V11_LAUNCH_READINESS.md).
 **V12 scope:** [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) — Phases 0–7 complete; Phase 8 release package planned.
-**V13 scope:** [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) — Phase 2 smoke complete.
+**V13 scope:** [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) — Phase 2 complete; Exp 029 grid passed.
 **Experiment 014:** [`EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md`](EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md).
 **V10 suites:** [`V10_PROMPT_SUITES.md`](V10_PROMPT_SUITES.md).
 **Experiment 012:** [`EXPERIMENT_012_EVAL_SUITE_EXPANSION.md`](EXPERIMENT_012_EVAL_SUITE_EXPANSION.md).
@@ -107,12 +107,12 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 
 ---
 
-## V13 — Practicality Proof (Phase 2 smoke complete)
+## V13 — Practicality Proof (Phase 2 complete; Exp 029 grid passed)
 
 | ID / track | Item | Status | V13 phase | Success criteria |
 |---|---|---|---|---|
 | — | **V13 scope statement** | **Complete** | Phase 0 ✅ | [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) |
-| D21 | **Parallel / span verification** | **Implemented (opt-in smoke)** | Phases 2 ✅ / Exp 028 smoke | [`EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md`](EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md); default sequential; Exp 029 grid next |
+| D21 | **Parallel / span verification** | **Exactness grid complete** | Phases 2 ✅ / Exp 028–029 | Smoke + [`EXPERIMENT_029_SPAN_VERIFICATION_GRID.md`](EXPERIMENT_029_SPAN_VERIFICATION_GRID.md); 600 cells, 0 failures; default sequential |
 | — | **Performance proof (diagnostic timing)** | Planned | Phase 3 / Exp 030 | Four-arm harness; fixed hardware; warmup + variance; no headline without Phase 9 |
 | — | **Active GPU memory isolation** | Planned | Phase 4 / Exp 031 | Extend Exp 018; weight/KV/temp separation; no savings claim unless robust |
 | — | **Hot adapter (SnapKV / ShardKV)** | Planned | Phase 5 / Exp 032 | Feasibility first; factory-only; SnapKV preferred |
@@ -143,7 +143,7 @@ _D17 and D18 may finalize in V12 Phase 8; **public posting** waits for V13 Phase
 
 | ID | Item | Status | Notes |
 |---|---|---|---|
-| D21 | **Sampling / parallel verify / bonus tokens** | **Span verify implemented (opt-in)** | Phase 2 ✅ / Exp 028 | Default sequential; bonus still disabled; Exp 029 grid next |
+| D21 | **Sampling / parallel verify / bonus tokens** | **Span exactness grid complete** | Exp 029 ✅ | Default sequential; bonus still disabled; Phase 3 timing allowed |
 | D22 | **Multi-request batching** | Deferred | Serving-scale feature |
 | D23 | **CPU offload / CUDA kernels** | Deferred | No custom kernels in ExactKV today |
 | D24 | **Broader kvpress** | Deferred | KnormPress only (V6) |
