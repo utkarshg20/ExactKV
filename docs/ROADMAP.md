@@ -715,7 +715,7 @@ See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V11.
 
 ---
 
-# V12: Deferred Work Completion Gauntlet (Phase 3 complete)
+# V12: Deferred Work Completion Gauntlet (Phase 7 complete)
 
 ## Goal
 
@@ -736,8 +736,10 @@ Formal scope: [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) (Phases 0–8; 
 | 4 | KIVI CUDA/Triton feasibility or no-go (Exp 024) | ✅ [`EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md`](EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md) |
 | 5 | Full-suite repair-policy validation (Exp 025) | ✅ [`EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md`](EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md) |
 | 6 | True attention logging feasibility (Exp 026) | ✅ [`EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md`](EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md) |
-| 7 | Performance/memory truth boundary (Exp 027) | Planned |
+| 7 | Performance/memory truth boundary (Exp 027) | ✅ [`EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md`](EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md) |
 | 8 | V12 release package + public-launch decision | Planned |
+
+**Next major phase after V12 Phase 8:** **V13 Practicality Proof** — parallel/span verification, diagnostic benchmark harness, isolated GPU memory methodology, hot adapter, Llama-3.1-8B small suite, plots + killer demo. Public v1.0.0 should **defer** until V13 P0 gaps close (see [`PRACTICALITY_GAP_ANALYSIS.md`](PRACTICALITY_GAP_ANALYSIS.md)).
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V12.
 

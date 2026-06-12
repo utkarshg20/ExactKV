@@ -1,6 +1,6 @@
 # V12 Scope Statement — Deferred Work Completion Gauntlet
 
-**Status:** **Phase 6 complete** — Experiment 026 attention logging feasibility documented; Phase 7 (Exp 027) next.
+**Status:** **Phase 7 complete** — Experiment 027 performance/memory truth boundary documented; Phase 8 (release package) next.
 **Builds on:** `v0.11.0` — V11 complete (Experiments 015–020; launch package prepared).
 **Not public launch.** v1.0.0 deferred until V12 substance and exit criteria are met or honestly closed.
 
@@ -9,8 +9,8 @@
 > V12 preserves the exactness gate: `exactkv_failures == 0` on every published experiment.
 > V12 must **finish or conclusively close** major deferred technical tracks before public launch.
 > No throughput, latency, tokens/sec, speedup, `runtime_seconds`,
-> `active_gpu_kv_bytes`, or production-serving claims — unless Experiment 027 approves
-> an explicit, caveated methodology and still does not imply production readiness.
+> `active_gpu_kv_bytes`, or production-serving claims — Experiment 027 **reaffirms
+> these remain forbidden**; no caveated positive methodology was approved.
 > If measurement is not robust, **document deferral** instead of claiming it.
 
 ---
@@ -27,7 +27,7 @@
 | **4** | KIVI CUDA/Triton packed-path feasibility or documented no-go (Exp 024) | **Complete** — [`EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md`](EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md) |
 | **5** | Full-suite repair-policy validation (Exp 025) | **Complete** — [`EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md`](EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md) |
 | **6** | True attention logging feasibility or documented no-go (Exp 026) | **Complete** — [`EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md`](EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md) |
-| **7** | Performance/memory truth boundary review (Exp 027) | Planned |
+| **7** | Performance/memory truth boundary review (Exp 027) | **Complete** — [`EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md`](EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md) |
 | **8** | V12 release package and public-launch decision | Planned |
 
 **Latest release:** `v0.11.0`. **V11 exit docs:**
@@ -104,7 +104,7 @@ without overclaiming.
 | D7 | True attention logging — sdpa blocked; eager prefill **restricted_go** | Phase 6 ✅ / Exp 026 |
 | D8 | Per-head forensics — partial (per-layer KV only) | Phase 6 / Exp 026 |
 | Exp 020 policies | **Full-suite validated (Exp 025)** | Phase 5 ✅ / Exp 025 |
-| D14 (truth boundary) | Methodology pilot only; no savings claim | Phase 7 / Exp 027 |
+| D14 (truth boundary) | **Complete** — speed/VRAM savings **forbidden**; V5 accounting stable | Phase 7 ✅ / Exp 027 |
 | D17 | Policy complete; physical bundle optional | Phase 8 |
 | D18 | Draft complete; not approved for posting | Phase 8 |
 | D11/D12 | vLLM / LMCache direct integration **no-go** | Remain deferred unless scope changes |
@@ -140,7 +140,7 @@ V12 must answer:
 - **No infinite backend gauntlet** — selected tracks only; valid outcome is documented **no-go**.
 - **No implication** that `_sim` compressors are real packed-bit backends.
 - **No implication** that upstream paper results are ExactKV results.
-- **No positive speed, latency, throughput, runtime, tokens/sec, active GPU memory savings, or production-serving claims** unless Exp 027 approves explicit methodology — and even then, no production readiness claim.
+- **No positive speed, latency, throughput, runtime, tokens/sec, active GPU memory savings, or production-serving claims** — Exp 027 reaffirms forbidden (default was already forbidden; no approved caveated methodology).
 - **No model accuracy improvement claims.**
 
 ---
@@ -366,9 +366,9 @@ launch decision.
 
 ## 18. Performance/memory policy
 
-- **No speed claim** unless explicitly measured with approved methodology, baselines, hardware disclosure, and caveats — and still no production readiness claim.
-- **No active GPU memory savings claim** unless robustly isolated (allocator noise, fragmentation, peak vs allocated documented).
-- **V5 `total_kv_footprint_bytes`** remains the stable memory story unless Exp 027 replaces it with stronger evidence.
+- **No speed claim** — Exp 027 reaffirms forbidden; no approved measurement methodology for positive claims.
+- **No active GPU memory savings claim** — Exp 027 reaffirms forbidden; Exp 018 pilot insufficient for VRAM savings headlines.
+- **V5 `total_kv_footprint_bytes`** remains the stable memory story (Exp 027 did not replace it).
 - Exp 018 pilot artifacts stay **outside** the standard schema unless separately approved.
 - Forbidden by default: `tokens_per_second`, `throughput`, `latency`, `speedup`, `runtime_seconds`, `active_gpu_kv_bytes` as ExactKV launch claims.
 
@@ -434,8 +434,8 @@ Public v1.0.0 launch requires **all** of:
 V12 documents, experiment reports, and updated README/ROADMAP sections must **not**:
 
 - Add or imply `tokens_per_second`, `throughput`, `latency`, `speedup`,
-  `runtime_seconds`, or `active_gpu_kv_bytes` as ExactKV results **unless**
-  Experiment 027 explicitly approves a caveated methodology — default remains forbidden.
+  `runtime_seconds`, or `active_gpu_kv_bytes` as ExactKV results — **forbidden**
+  (Exp 027 reaffirms; negation-only mentions in guardrails are OK).
 - Claim production serving readiness or vLLM/LMCache **integration**.
 - Present `_sim` compressors as real packed-bit backends.
 - Cite TurboQuant, KIVI, or KVQuant **paper** results as ExactKV experiment results.

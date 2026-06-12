@@ -93,7 +93,7 @@ V11 covers multi-model validation, serving/profiling probes, and launch package 
 | — | **Full-suite repair-policy validation** | **Complete** | Phase 5 ✅ / Exp 025 | [`EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md`](EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md); 768 cells 0.5B; `exactkv_failures == 0`; 1.5B optional not run |
 | D7 | **True attention logging** | **Restricted go (eager prefill-only)** | Phase 6 ✅ / Exp 026 | [`EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md`](EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md); sdpa blocked; eager prefill OK on Qwen2.5-0.5B |
 | D8 | **Per-head divergence forensics** | **Partial — prefill-only path** | Phase 6 ✅ / Exp 026 | Per-layer KV in Exp 019; per-head via eager prefill snapshots only; decode-step/default runtime blocked |
-| — | **Performance/memory truth boundary** | Planned | Phase 7 / Exp 027 | Claim policy finalized; default remains forbidden |
+| — | **Performance/memory truth boundary** | **Complete** | Phase 7 ✅ / Exp 027 | [`EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md`](EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md); speed/VRAM savings **forbidden**; V13 Practicality Proof recommended |
 | D17 | **Physical raw report bundle** | Planned | Phase 8 | Optional until v1.0.0; policy in [`RAW_ARTIFACT_POLICY.md`](RAW_ARTIFACT_POLICY.md) |
 | D18 | **Launch narrative (final)** | Planned | Phase 8 | Review/approve [`LAUNCH_NARRATIVE_DRAFT.md`](LAUNCH_NARRATIVE_DRAFT.md) |
 | D11 | **Direct vLLM integration** | No-go (Phase A) | — | Out of V12 unless scope changes |
