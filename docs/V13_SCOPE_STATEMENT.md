@@ -1,6 +1,6 @@
 # V13 Scope Statement — Practicality Proof
 
-**Status:** **Phase 5b complete**; **Phase 6 blocked** — Exp 033: `meta-llama/Llama-3.1-8B-Instruct` gated (no HF token on RunPod). Exp 032b SnapKV smoke passed. Span throughput **unsolved**; VRAM savings **forbidden**.
+**Status:** **Phase 7 complete** — Exp 034: killer correction demo **PASS** ([`EXPERIMENT_034_KILLER_CORRECTION_DEMO.md`](EXPERIMENT_034_KILLER_CORRECTION_DEMO.md)); `tj_002` × `int4_sim`, `exactkv_failures == 0`, final output ≡ full greedy. Phase 6 Exp 033 Llama gate passed. Span throughput **unsolved**; VRAM savings **forbidden**.
 **Builds on:** V12 Phases 0–7 complete (Experiments 021–027); V12 Phase 8 release package may proceed in parallel but **does not authorize public launch**.
 **Not public launch.** v1.0.0 deferred until V13 produces evidence-backed practicality answers or honestly closes remaining gaps.
 
@@ -14,7 +14,7 @@
 > Until V13 Phase 9 explicitly approves a claim under documented methodology,
 > **forbidden claims remain forbidden** (see §22).
 
-**Phase 6 (Exp 033) blocked on Llama gated access** — RunPod A5000 reachable; `meta-llama/Llama-3.1-8B-Instruct` requires HF token + license. See [`EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md`](EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md). Phase 7 deferred until Exp 033 exactness gate passes.
+**Phase 8 (Exp 035 visual plot package) may proceed** — Exp 034 killer correction demo passed on Qwen2.5-0.5B (RunPod A5000, fp16). Optional Phase 6b Shard Llama external-drafter probe remains adjunct.
 
 ---
 
@@ -30,8 +30,8 @@
 | **4** | Active GPU memory isolation (Exp 031) | **Complete** — [`EXPERIMENT_031_GPU_MEMORY_ISOLATION.md`](EXPERIMENT_031_GPU_MEMORY_ISOLATION.md) |
 | **5** | Hot adapter feasibility — SnapKV / Shard / SpectralQuant (Exp 032 + addendum) | **Complete** — [`EXPERIMENT_032_SNAPKV_SHARDKV_FEASIBILITY.md`](EXPERIMENT_032_SNAPKV_SHARDKV_FEASIBILITY.md), [`EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md`](EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md) |
 | **5b** | SnapKV experimental adapter MVP | **Complete** — [`EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md`](EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md); factory-only; `exactkv_failures == 0` |
-| **6** | Llama-3.1-8B small-suite validation (Exp 033) | **Blocked** — gated model access; [`EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md`](EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md) |
-| **7** | Killer correction demo (Exp 034) | Planned |
+| **6** | Llama-3.1-8B small-suite validation (Exp 033) | **Complete** — [`EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md`](EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md); 48 cells, 0 failures; span ≡ sequential |
+| **7** | Killer correction demo (Exp 034) | **Complete** — [`EXPERIMENT_034_KILLER_CORRECTION_DEMO.md`](EXPERIMENT_034_KILLER_CORRECTION_DEMO.md); `tj_002` × `int4_sim`; rejection/correction trace; exact match |
 | **8** | Visual plot package (Exp 035) | Planned |
 | **9** | V13 completion / launch decision | Planned |
 

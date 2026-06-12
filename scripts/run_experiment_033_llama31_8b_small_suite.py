@@ -162,7 +162,14 @@ def check_model_access(model_name: str) -> dict[str, Any]:
         AutoConfig.from_pretrained(model_name, token=token, trust_remote_code=True)
         status["accessible"] = True
     except Exception as exc:  # noqa: BLE001
-        status["error"] = str(exc)
+        msg = str(exc)
+        if "not in the authorized list" in msg or "GatedRepoError" in type(exc).__name__:
+            status["error"] = (
+                f"{model_name}: HF token present but account not authorized — "
+                "accept the Meta Llama license at the model page on huggingface.co"
+            )
+        else:
+            status["error"] = msg
     return status
 
 
@@ -296,11 +303,11 @@ def run_one_cell(
     run_span: bool,
 ) -> dict[str, Any]:
     prompt = prompt_entry["prompt"]
-    full_tensor = torch.tensor([full_ids], dtype=torch.long, device=runtime.device)
+    full_tensor = torch.tensor([full_ids], dtype=torch.long)
 
     sequential = _run_exactkv(runtime, prompt, compressor, draft_len, "sequential")
     seq_ids = sequential["output_ids"]
-    seq_exact = token_exact_match(full_tensor, torch.tensor([seq_ids]))
+    seq_exact = token_exact_match(full_tensor, torch.tensor([seq_ids], dtype=torch.long))
 
     span: dict[str, Any] | None = None
     span_exact = None
@@ -312,7 +319,9 @@ def run_one_cell(
         try:
             span = _run_exactkv(runtime, prompt, compressor, draft_len, "span")
             span_ids = span["output_ids"]
-            span_exact = token_exact_match(full_tensor, torch.tensor([span_ids]))
+            span_exact = token_exact_match(
+                full_tensor, torch.tensor([span_ids], dtype=torch.long)
+            )
             span_seq_parity = seq_ids == span_ids
             counters_match = (
                 sequential["total_accepted"] == span["total_accepted"]

@@ -764,8 +764,8 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 | 5 | SnapKV / Shard / SpectralQuant feasibility (Exp 032 + addendum) | ✅ [`EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md`](EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md) |
 | 5b | SnapKV experimental adapter MVP | ✅ [`EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md`](EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md) |
 | 5c | SpectralQuant experimental adapter (optional) | Planned |
-| 6 | Llama-3.1-8B small suite (Exp 033) | **Blocked** — [`EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md`](EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md) (gated Llama access) |
-| 7 | Killer correction demo (Exp 034) | Planned |
+| 6 | Llama-3.1-8B small suite (Exp 033) | ✅ [`EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md`](EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md) |
+| 7 | Killer correction demo (Exp 034) | ✅ [`EXPERIMENT_034_KILLER_CORRECTION_DEMO.md`](EXPERIMENT_034_KILLER_CORRECTION_DEMO.md) |
 | 8 | Visual plot package (Exp 035) | Planned |
 | 9 | V13 completion / launch decision | Planned |
 

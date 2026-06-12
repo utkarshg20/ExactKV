@@ -47,7 +47,8 @@ under `reports/`.
 | 032 | SnapKV / ShardKV feasibility | [`EXPERIMENT_032_SNAPKV_SHARDKV_FEASIBILITY.md`](EXPERIMENT_032_SNAPKV_SHARDKV_FEASIBILITY.md) | Hot-adapter compatibility study; no timing/memory benchmark | — (feasibility) | SnapKV **B**; legacy ShardKV **C** (misread) | N/A | Superseded for Shard repo by 032 addendum |
 | 032 addendum | Shard + SpectralQuant feasibility | [`EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md`](EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md) | Re-inspect krish1905/shard + Dynamis-Labs/spectralquant | — (feasibility) | SnapKV **B** still 5b primary; Shard **B** Llama drafter; SpectralQuant **B** 5c | N/A | No adapter; external results not ExactKV |
 | 032b | SnapKV experimental adapter smoke | [`EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md`](EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md) | 4-prompt exactness smoke; factory-only `snapkv_experimental` | 8 | Exactness gate **pass**; hook isolation **pass**; restricted experimental SnapKV | 0 | No timing/memory benchmark; not in default registry |
-| 033 | Llama-3.1-8B small suite | [`EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md`](EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md) | 12-prompt exactness panel on RunPod GPU | — (blocked) | **BLOCKED** — gated `meta-llama/Llama-3.1-8B-Instruct`; no HF token on RunPod | N/A | Not timing/memory; re-run after HF access |
+| 033 | Llama-3.1-8B small suite | [`EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md`](EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md) | 12-prompt exactness panel on RunPod A5000 (bfloat16) | 48 | Exactness gate **pass**; span ≡ sequential; mean accept ~0.95 | 0 | Not timing/memory; snapkv skipped (no kvpress on pod) |
+| 034 | Killer correction demo | [`EXPERIMENT_034_KILLER_CORRECTION_DEMO.md`](EXPERIMENT_034_KILLER_CORRECTION_DEMO.md) | Search V10 tool_json/code/retrieval/long_context; lossy draft rejection trace | 348 searched; 1 selected | Exactness gate **pass**; `tj_002` × `int4_sim`; draft `}}` rejected → `metric` committed | 0 | Correctness/correction demo only; not timing/memory; Qwen2.5-0.5B RunPod A5000 fp16 |
 
 ---
 
@@ -85,6 +86,7 @@ under `reports/`.
 | 032 addendum | `python3 scripts/research/experiment_032_addendum_shard_spectralquant.py` |
 | 032b | `.venv-kvpress/bin/python scripts/research/run_experiment_032b_snapkv_experimental_smoke.py` |
 | 033 | `bash scripts/research/exp033_llama31_8b_runpod.sh` (RunPod CUDA; `HF_TOKEN` required) |
+| 034 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_034_killer_correction_demo.py --device cuda --dtype float16` (RunPod GPU) |
 | 027 | Review only — [`EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md`](EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md); optional inspect: `python3 scripts/research/performance_memory_boundary_inspect.py` |
 
 ---
