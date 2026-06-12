@@ -44,6 +44,7 @@ under `reports/`.
 | 030 | Diagnostic timing harness | [`EXPERIMENT_030_DIAGNOSTIC_TIMING.md`](EXPERIMENT_030_DIAGNOSTIC_TIMING.md) | Four-arm timing on 20-prompt V10 panel (fp16 GPU, post–030b) | 420+80 | Exactness gate **pass**; full greedy **54.4** tok/s vs ExactKV seq **20.4** tok/s; span **18.4** tok/s (~10% slower than seq despite fewer forwards) | 0 | Diagnostic only; batched span active; span speed **unsolved** |
 | 030b | Span GPU/fp16 parity | [`EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md`](EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md) | Batched vs sequential verifier parity on lc_003 draft_len=8 | — (investigation) | **Parity restored** (SDPA tie-break root cause); engine fix applied; Exp 030 rerun confirms exactness | N/A | Not a timing benchmark; span wall-clock still slower than sequential; RunPod A5000 |
 | 031 | Active GPU memory isolation | [`EXPERIMENT_031_GPU_MEMORY_ISOLATION.md`](EXPERIMENT_031_GPU_MEMORY_ISOLATION.md) | Five-arm CUDA memory isolation on 12-prompt V10 panel (fp16 GPU) | 253 | Exactness gate **pass**; peak allocated **indistinguishable** from full greedy (~1195 MiB); V5 footprint ~1.3 MiB; **no savings claim** | 0 | Diagnostic only; model weights dominate; RunPod A5000 |
+| 032 | SnapKV / ShardKV feasibility | [`EXPERIMENT_032_SNAPKV_SHARDKV_FEASIBILITY.md`](EXPERIMENT_032_SNAPKV_SHARDKV_FEASIBILITY.md) | Hot-adapter compatibility study; no timing/memory benchmark | — (feasibility) | SnapKV **B** (restricted factory MVP); ShardKV **C**; no adapter implemented | N/A | Feasibility only; Phase 5b SnapKV experimental recommended |
 
 ---
 
@@ -77,6 +78,7 @@ under `reports/`.
 | 030 | `bash scripts/research/exp030_diagnostic_timing_runpod.sh` (RunPod CUDA fp16; see report) |
 | 030b | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_030b_span_parity_investigation.py --device cuda` |
 | 031 | `bash scripts/research/exp031_gpu_memory_isolation_runpod.sh` (RunPod CUDA fp16; see report) |
+| 032 | `python3 scripts/research/experiment_032_snapkv_shardkv_feasibility.py` |
 | 027 | Review only — [`EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md`](EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md); optional inspect: `python3 scripts/research/performance_memory_boundary_inspect.py` |
 
 ---

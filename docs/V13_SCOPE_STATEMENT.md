@@ -1,6 +1,6 @@
 # V13 Scope Statement — Practicality Proof
 
-**Status:** **Phase 4 complete** — Exp 031 GPU memory isolation on RunPod A5000 fp16: exactness gate pass; peak allocated **indistinguishable** from full greedy within allocator noise (~1.14 GiB model baseline + ~53 MiB generation delta); **no active GPU memory savings claim**. Phase 5 (Exp 032 SnapKV/ShardKV) next. Span throughput remains **unsolved**.
+**Status:** **Phase 5 complete** — Exp 032 SnapKV/ShardKV feasibility: SnapKV **B (restricted)** via factory-only kvpress path; ShardKV **C (no-go)**; **no adapter implemented**. Phase 5b SnapKV experimental MVP recommended next. Phase 6 (Exp 033 Llama) allowed in parallel. Span throughput remains **unsolved**; VRAM savings remain **forbidden**.
 **Builds on:** V12 Phases 0–7 complete (Experiments 021–027); V12 Phase 8 release package may proceed in parallel but **does not authorize public launch**.
 **Not public launch.** v1.0.0 deferred until V13 produces evidence-backed practicality answers or honestly closes remaining gaps.
 
@@ -14,7 +14,7 @@
 > Until V13 Phase 9 explicitly approves a claim under documented methodology,
 > **forbidden claims remain forbidden** (see §22).
 
-**Phase 5 (Exp 032) may proceed** — Experiment 031 exactness gate passed on RunPod fp16 (`phase5_feasibility_allowed=True`). Active GPU memory savings remain **forbidden**.
+**Phase 5b (SnapKV experimental adapter) may proceed** — Exp 032 chose restricted SnapKV MVP design; factory-only; exactness smoke required. **Phase 6 (Exp 033) may proceed in parallel.**
 
 ---
 
@@ -28,7 +28,8 @@
 | **3** | Diagnostic timing harness (Exp 030) | **Complete** — [`EXPERIMENT_030_DIAGNOSTIC_TIMING.md`](EXPERIMENT_030_DIAGNOSTIC_TIMING.md) |
 | **3b** | Batched span GPU/fp16 parity (Exp 030b) | **Complete** — [`EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md`](EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md) |
 | **4** | Active GPU memory isolation (Exp 031) | **Complete** — [`EXPERIMENT_031_GPU_MEMORY_ISOLATION.md`](EXPERIMENT_031_GPU_MEMORY_ISOLATION.md) |
-| **5** | Hot adapter feasibility — SnapKV / ShardKV (Exp 032) | Planned |
+| **5** | Hot adapter feasibility — SnapKV / ShardKV (Exp 032) | **Complete** — [`EXPERIMENT_032_SNAPKV_SHARDKV_FEASIBILITY.md`](EXPERIMENT_032_SNAPKV_SHARDKV_FEASIBILITY.md) |
+| **5b** | SnapKV experimental adapter MVP | Planned — factory-only; not default registry |
 | **6** | Llama-3.1-8B small-suite validation (Exp 033) | Planned |
 | **7** | Killer correction demo (Exp 034) | Planned |
 | **8** | Visual plot package (Exp 035) | Planned |
