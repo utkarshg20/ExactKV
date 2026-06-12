@@ -37,6 +37,7 @@ under `reports/`.
 | 023 | KVQuant 1.5B validation | [`EXPERIMENT_023_KVQUANT_LARGER_MODEL.md`](EXPERIMENT_023_KVQUANT_LARGER_MODEL.md) | KVQuant simquant on Qwen2.5-1.5B hard V10 panel | 200 | `kvquant_sim_qwen15b` accept **0.609**; `int8` **0.962**; `exactkv_failures == 0` | 0 | Simquant only; not deployment CUDA; RunPod A5000 fp16 |
 | 024 | KIVI CUDA/Triton feasibility | [`EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md`](EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md) | Packed-path CUDA/Triton audit vs Exp 009 offline simulate | — (feasibility) | **`B_restricted_go`**; Triton pack OK; `dequant_cuda` missing; no Qwen KIVI model | N/A | Feasibility only; not acceptance panel; not production serving; RunPod A5000 |
 | 025 | Full-suite repair-policy validation | [`EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md`](EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md) | Exp 020 policies on full 128-prompt V10 suites | 768 | `int8_all` **0.957**; `category_adaptive` **0.948** > boundary4 **0.923**; pilot gains **shrank** vs Exp 020 | 0 | Experiment-layer only; not production policy; CPU float32 0.5B |
+| 026 | Attention logging feasibility | [`EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md`](EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md) | True attention weights: sdpa no-go; eager prefill **restricted_go** | — (feasibility) | Qwen eager prefill OK (24 layers, 14 heads); default/decode-step blocked | N/A | Feasibility only; diagnostic; not production; CPU float32 |
 
 ---
 
@@ -64,6 +65,7 @@ under `reports/`.
 | 023 | `EXACTKV_KVQUANT_QUANTIZERS=/workspace/kvquant_d4/quantizers_qwen15b.pickle python scripts/run_experiment_023_kvquant_larger_model.py` (KVQuant venv, RunPod CUDA) |
 | 024 | `bash scripts/research/kivi_cuda_triton_exp024_runpod_execute.sh` (RunPod CUDA; isolated KIVI venv at `/workspace/kivi_exp024`) |
 | 025 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_025_full_suite_repair_policy.py --device cuda --dtype float16` (optional `--include-15b`) |
+| 026 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_026_attention_logging_feasibility.py` |
 
 ---
 

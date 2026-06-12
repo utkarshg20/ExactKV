@@ -752,6 +752,7 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | V9 scope | [`V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) |
 | V10 scope (complete) | [`V10_SCOPE_STATEMENT.md`](docs/V10_SCOPE_STATEMENT.md) |
 | V12 scope (active) | [`V12_SCOPE_STATEMENT.md`](docs/V12_SCOPE_STATEMENT.md) |
+| V12 Phase 6 (Exp 026) | [`EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md`](docs/EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md) — eager prefill attention logging **`restricted_go`**; sdpa blocked |
 | V12 Phase 5 (Exp 025) | [`EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md`](docs/EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md) — full V10 repair-policy validation; `exactkv_failures == 0` |
 | V12 Phase 4 (Exp 024) | [`EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md`](docs/EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md) — KIVI CUDA/Triton packed-path feasibility; **`B_restricted_go`** |
 | V12 Phase 3 (Exp 023) | [`EXPERIMENT_023_KVQUANT_LARGER_MODEL.md`](docs/EXPERIMENT_023_KVQUANT_LARGER_MODEL.md) — KVQuant 1.5B hard-panel validation; `exactkv_failures == 0` |

@@ -91,8 +91,8 @@ V11 covers multi-model validation, serving/profiling probes, and launch package 
 | D4 | **KVQuant 1.5B/3B real-backend validation** | **1.5B complete** | Phase 3 ✅ / Exp 023 | [`EXPERIMENT_023_KVQUANT_LARGER_MODEL.md`](EXPERIMENT_023_KVQUANT_LARGER_MODEL.md); 1.5B accept **0.609**; 3B stretch not run |
 | D3 | **KIVI CUDA/Triton packed path** | **Feasibility complete (`B_restricted_go`)** | Phase 4 ✅ / Exp 024 | [`EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md`](EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md); Triton pack OK; `dequant_cuda` missing; no Qwen model; BackendAdapter **restricted_future_only** |
 | — | **Full-suite repair-policy validation** | **Complete** | Phase 5 ✅ / Exp 025 | [`EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md`](EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md); 768 cells 0.5B; `exactkv_failures == 0`; 1.5B optional not run |
-| D7 | **True attention logging** | Planned | Phase 6 / Exp 026 | Tiny subset; no fabricated weights; or no-go |
-| D8 | **Per-head divergence forensics** | Planned | Phase 6 / Exp 026 | Depends on D7; per-layer done in Exp 019 |
+| D7 | **True attention logging** | **Restricted go (eager prefill-only)** | Phase 6 ✅ / Exp 026 | [`EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md`](EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md); sdpa blocked; eager prefill OK on Qwen2.5-0.5B |
+| D8 | **Per-head divergence forensics** | **Partial — prefill-only path** | Phase 6 ✅ / Exp 026 | Per-layer KV in Exp 019; per-head via eager prefill snapshots only; decode-step/default runtime blocked |
 | — | **Performance/memory truth boundary** | Planned | Phase 7 / Exp 027 | Claim policy finalized; default remains forbidden |
 | D17 | **Physical raw report bundle** | Planned | Phase 8 | Optional until v1.0.0; policy in [`RAW_ARTIFACT_POLICY.md`](RAW_ARTIFACT_POLICY.md) |
 | D18 | **Launch narrative (final)** | Planned | Phase 8 | Review/approve [`LAUNCH_NARRATIVE_DRAFT.md`](LAUNCH_NARRATIVE_DRAFT.md) |

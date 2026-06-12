@@ -735,7 +735,7 @@ Formal scope: [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) (Phases 0–8; 
 | 3 | KVQuant larger-model validation (Exp 023) | ✅ [`EXPERIMENT_023_KVQUANT_LARGER_MODEL.md`](EXPERIMENT_023_KVQUANT_LARGER_MODEL.md) |
 | 4 | KIVI CUDA/Triton feasibility or no-go (Exp 024) | ✅ [`EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md`](EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md) |
 | 5 | Full-suite repair-policy validation (Exp 025) | ✅ [`EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md`](EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md) |
-| 6 | True attention logging feasibility or no-go (Exp 026) | Planned |
+| 6 | True attention logging feasibility (Exp 026) | ✅ [`EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md`](EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md) |
 | 7 | Performance/memory truth boundary (Exp 027) | Planned |
 | 8 | V12 release package + public-launch decision | Planned |
 
