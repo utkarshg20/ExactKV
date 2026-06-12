@@ -14,7 +14,7 @@ from dataclasses import asdict, dataclass
 from typing import Any
 
 from exactkv.analysis.divergence_autopsy import load_autopsy_prompt_subset
-from exactkv.benchmarks.v10_prompts import load_v10_suite
+from exactkv.benchmarks.v10_prompts import load_all_v10_prompts, load_v10_suite
 from exactkv.compressors import get_compressor
 from exactkv.metrics.acceptance import summarize_acceptance
 from exactkv.metrics.exactness import first_divergence_idx, token_exact_match
@@ -40,6 +40,7 @@ EXP014_HARD_SUITES = (
 
 POLICY_BASELINE_K8 = "baseline_k8_v4"
 POLICY_BASELINE_BOUNDARY4 = "baseline_boundary4"
+POLICY_INT8_ALL = "int8_all"
 POLICY_FALLBACK_INT8_HARD = "fallback_int8_for_hard_categories"
 POLICY_STRUCTURED_SAFE = "structured_safe_mode"
 POLICY_CATEGORY_ADAPTIVE = "category_adaptive_policy"
@@ -50,6 +51,16 @@ ALL_POLICIES = (
     POLICY_BASELINE_BOUNDARY4,
     POLICY_FALLBACK_INT8_HARD,
     POLICY_STRUCTURED_SAFE,
+    POLICY_CATEGORY_ADAPTIVE,
+    POLICY_DRAFT_LEN_ADAPTIVE,
+)
+
+# Experiment 025 panel (full V10 suite; replaces structured_safe_mode with int8_all).
+EXP025_POLICIES = (
+    POLICY_BASELINE_K8,
+    POLICY_BASELINE_BOUNDARY4,
+    POLICY_INT8_ALL,
+    POLICY_FALLBACK_INT8_HARD,
     POLICY_CATEGORY_ADAPTIVE,
     POLICY_DRAFT_LEN_ADAPTIVE,
 )
@@ -95,6 +106,14 @@ def load_exp014_hard_subset(per_suite: int = 10) -> list[dict[str, Any]]:
     return out
 
 
+def load_full_v10_prompts() -> list[dict[str, Any]]:
+    """Load all 128 V10 prompts for Experiment 025 full-suite validation."""
+    prompts = load_all_v10_prompts()
+    for p in prompts:
+        p["v10_panel"] = "exp025_full_v10"
+    return prompts
+
+
 def load_pilot_prompts(*, panel: str = "exp019") -> list[dict[str, Any]]:
     """Return prompt list for Experiment 020."""
     if panel == "exp019":
@@ -116,7 +135,8 @@ def resolve_policy_cell(
     prompt_entry: dict[str, Any],
 ) -> PolicyCellSpec:
     """Map policy + prompt to compressor and draft_len (analysis layer only)."""
-    if policy_name not in ALL_POLICIES:
+    _known = set(ALL_POLICIES) | {POLICY_INT8_ALL}
+    if policy_name not in _known:
         raise ValueError(f"Unknown policy {policy_name!r}")
 
     suite = _suite_name(prompt_entry)
@@ -126,6 +146,9 @@ def resolve_policy_cell(
 
     if policy_name == POLICY_BASELINE_BOUNDARY4:
         return PolicyCellSpec(policy_name, "k8_v4_boundary4_v8_sim", 4)
+
+    if policy_name == POLICY_INT8_ALL:
+        return PolicyCellSpec(policy_name, "int8", 4)
 
     if policy_name == POLICY_FALLBACK_INT8_HARD:
         comp = "int8" if suite in _HARD_SUITES else "k8_v4_boundary4_v8_sim"
@@ -228,16 +251,87 @@ def _mean_accept(results: list[dict[str, Any]]) -> float:
     )
 
 
-def aggregate_policy_results(results: list[dict[str, Any]]) -> dict[str, Any]:
-    """Summarize policy pilot cells."""
+def _compare_policies_to_baseline(
+    by_policy: dict[str, list[dict[str, Any]]],
+    models: list[str],
+    baseline_policy: str,
+    candidate_policies: tuple[str, ...],
+) -> list[dict[str, Any]]:
+    def _prompt_lookup(policy: str, model_name: str) -> dict[str, float]:
+        return {
+            r["prompt_id"]: r["exactkv"]["acceptance"]["acceptance_rate"]
+            for r in by_policy.get(policy, [])
+            if r["model_name"] == model_name
+        }
+
+    comparisons: list[dict[str, Any]] = []
+    for policy in candidate_policies:
+        wins = losses = ties = 0
+        rows: list[dict[str, Any]] = []
+        for model_name in models:
+            baseline = _prompt_lookup(baseline_policy, model_name)
+            for r in by_policy.get(policy, []):
+                if r["model_name"] != model_name:
+                    continue
+                pid = r["prompt_id"]
+                if pid not in baseline:
+                    continue
+                acc = r["exactkv"]["acceptance"]["acceptance_rate"]
+                base = baseline[pid]
+                delta = acc - base
+                if delta > 1e-9:
+                    wins += 1
+                    outcome = "win"
+                elif delta < -1e-9:
+                    losses += 1
+                    outcome = "loss"
+                else:
+                    ties += 1
+                    outcome = "tie"
+                rows.append({
+                    "model_name": model_name,
+                    "prompt_id": pid,
+                    "v10_suite": r.get("v10_suite", ""),
+                    "policy_acceptance": acc,
+                    "baseline_acceptance": base,
+                    "delta": delta,
+                    "outcome": outcome,
+                })
+        comparisons.append({
+            "policy_name": policy,
+            "wins": wins,
+            "losses": losses,
+            "ties": ties,
+            "prompt_rows": rows,
+        })
+    return comparisons
+
+
+def _best_comparison(comparisons: list[dict[str, Any]]) -> dict[str, Any] | None:
+    if not comparisons:
+        return None
+    return max(comparisons, key=lambda x: (x["wins"] - x["losses"], x["wins"]))
+
+
+def aggregate_policy_results(
+    results: list[dict[str, Any]],
+    *,
+    include_int8_all_comparison: bool = False,
+    include_primary_category: bool = False,
+) -> dict[str, Any]:
+    """Summarize policy pilot or full-suite cells."""
     total = len(results)
     failures = sum(1 for r in results if r.get("exactkv_failure"))
 
     by_policy: dict[str, list[dict[str, Any]]] = defaultdict(list)
     by_policy_suite: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    by_policy_primary: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for r in results:
         by_policy[r["policy_name"]].append(r)
         by_policy_suite[(r["policy_name"], r.get("v10_suite", ""))].append(r)
+        if include_primary_category:
+            primary = r.get("v10_primary_category", r.get("category", ""))
+            by_policy_primary[(r["policy_name"], primary)].append(r)
 
     global_by_policy = {}
     for policy, cells in sorted(by_policy.items()):
@@ -268,81 +362,52 @@ def aggregate_policy_results(results: list[dict[str, Any]]) -> dict[str, Any]:
             ),
         })
 
+    per_primary_category: list[dict[str, Any]] = []
+    if include_primary_category:
+        for (policy, primary), cells in sorted(by_policy_primary.items()):
+            per_primary_category.append({
+                "policy_name": policy,
+                "v10_primary_category": primary,
+                "num_cells": len(cells),
+                "mean_acceptance_rate": _mean_accept(cells),
+                "total_rejected": sum(
+                    c["exactkv"]["acceptance"].get("total_rejected", 0) for c in cells
+                ),
+                "total_corrections": sum(
+                    c["exactkv"]["acceptance"].get("total_corrections", 0) for c in cells
+                ),
+            })
+
     models = sorted({r["model_name"] for r in results})
+    policy_names = sorted(by_policy.keys())
 
-    def _prompt_lookup(policy: str, model_name: str) -> dict[str, float]:
-        return {
-            r["prompt_id"]: r["exactkv"]["acceptance"]["acceptance_rate"]
-            for r in by_policy.get(policy, [])
-            if r["model_name"] == model_name
-        }
-
-    def _compare_to_baseline(
-        baseline_policy: str,
-        policy: str,
-    ) -> dict[str, Any]:
-        wins = losses = ties = 0
-        rows = []
-        for model_name in models:
-            baseline = _prompt_lookup(baseline_policy, model_name)
-            for r in by_policy.get(policy, []):
-                if r["model_name"] != model_name:
-                    continue
-                pid = r["prompt_id"]
-                if pid not in baseline:
-                    continue
-                acc = r["exactkv"]["acceptance"]["acceptance_rate"]
-                base = baseline[pid]
-                delta = acc - base
-                if delta > 1e-9:
-                    wins += 1
-                    outcome = "win"
-                elif delta < -1e-9:
-                    losses += 1
-                    outcome = "loss"
-                else:
-                    ties += 1
-                    outcome = "tie"
-                rows.append({
-                    "model_name": model_name,
-                    "prompt_id": pid,
-                    "v10_suite": r.get("v10_suite", ""),
-                    "policy_acceptance": acc,
-                    "baseline_acceptance": base,
-                    "delta": delta,
-                    "outcome": outcome,
-                })
-        return {
-            "policy_name": policy,
-            "wins": wins,
-            "losses": losses,
-            "ties": ties,
-            "prompt_rows": rows,
-        }
-
-    comparisons_k8 = [
-        _compare_to_baseline(POLICY_BASELINE_K8, p)
-        for p in ALL_POLICIES
-        if p != POLICY_BASELINE_K8
-    ]
-    comparisons_b4 = [
-        _compare_to_baseline(POLICY_BASELINE_BOUNDARY4, p)
-        for p in ALL_POLICIES
-        if p != POLICY_BASELINE_BOUNDARY4
-    ]
-
-    best_vs_k8 = max(
-        comparisons_k8,
-        key=lambda x: (x["wins"] - x["losses"], x["wins"]),
-        default=None,
+    comparisons_k8 = _compare_policies_to_baseline(
+        by_policy,
+        models,
+        POLICY_BASELINE_K8,
+        tuple(p for p in policy_names if p != POLICY_BASELINE_K8),
     )
-    best_vs_b4 = max(
-        comparisons_b4,
-        key=lambda x: (x["wins"] - x["losses"], x["wins"]),
-        default=None,
+    comparisons_b4 = _compare_policies_to_baseline(
+        by_policy,
+        models,
+        POLICY_BASELINE_BOUNDARY4,
+        tuple(p for p in policy_names if p != POLICY_BASELINE_BOUNDARY4),
     )
+    comparisons_int8: list[dict[str, Any]] = []
+    best_vs_int8 = None
+    if include_int8_all_comparison and POLICY_INT8_ALL in by_policy:
+        comparisons_int8 = _compare_policies_to_baseline(
+            by_policy,
+            models,
+            POLICY_INT8_ALL,
+            tuple(p for p in policy_names if p != POLICY_INT8_ALL),
+        )
+        best_vs_int8 = _best_comparison(comparisons_int8)
 
-    return {
+    best_vs_k8 = _best_comparison(comparisons_k8)
+    best_vs_b4 = _best_comparison(comparisons_b4)
+
+    out: dict[str, Any] = {
         "total_cells": total,
         "exactkv_failures": failures,
         "global_by_policy": global_by_policy,
@@ -355,6 +420,18 @@ def aggregate_policy_results(results: list[dict[str, Any]]) -> dict[str, Any]:
             global_by_policy, per_category, comparisons_k8, comparisons_b4
         ),
     }
+    if include_primary_category:
+        out["per_primary_category_by_policy"] = per_primary_category
+    if include_int8_all_comparison:
+        out["comparisons_vs_int8_all"] = comparisons_int8
+        out["best_policy_vs_int8_all"] = best_vs_int8
+        int8_g = global_by_policy.get(POLICY_INT8_ALL, {}).get("mean_acceptance_rate")
+        out["int8_all_beaten_globally"] = any(
+            global_by_policy.get(p, {}).get("mean_acceptance_rate", 0.0) > int8_g + 1e-9
+            for p in policy_names
+            if p != POLICY_INT8_ALL and int8_g is not None
+        )
+    return out
 
 
 def evaluate_repair_hypotheses(

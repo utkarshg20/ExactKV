@@ -8,17 +8,20 @@ import pytest
 from exactkv.analysis.divergence_autopsy import load_autopsy_prompt_subset
 from exactkv.analysis.repair_policy import (
     ALL_POLICIES,
+    EXP025_POLICIES,
     FORBIDDEN_POLICY_FIELDS,
     POLICY_BASELINE_BOUNDARY4,
     POLICY_BASELINE_K8,
     POLICY_CATEGORY_ADAPTIVE,
     POLICY_DRAFT_LEN_ADAPTIVE,
     POLICY_FALLBACK_INT8_HARD,
+    POLICY_INT8_ALL,
     POLICY_STRUCTURED_SAFE,
     aggregate_policy_results,
     assert_policy_artifact_safe,
     evaluate_repair_hypotheses,
     load_exp014_hard_subset,
+    load_full_v10_prompts,
     load_pilot_prompts,
     resolve_policy_cell,
 )
@@ -82,6 +85,54 @@ def test_draft_len_adaptive_varies_draft_len():
     assert core.draft_len == 8
     lc = resolve_policy_cell(POLICY_DRAFT_LEN_ADAPTIVE, {"v10_suite": "long_context"})
     assert lc.draft_len == 4
+
+
+def test_int8_all_policy():
+    spec = resolve_policy_cell(POLICY_INT8_ALL, {"v10_suite": "core_v2"})
+    assert spec.compressor_name == "int8"
+    assert spec.draft_len == 4
+
+
+def test_exp025_policies_count():
+    assert len(EXP025_POLICIES) == 6
+    assert POLICY_INT8_ALL in EXP025_POLICIES
+    assert POLICY_STRUCTURED_SAFE not in EXP025_POLICIES
+
+
+def test_load_full_v10_prompts_count():
+    prompts = load_full_v10_prompts()
+    assert len(prompts) == 128
+    assert all(p.get("v10_panel") == "exp025_full_v10" for p in prompts)
+
+
+def test_aggregate_with_int8_all_comparison():
+    results = []
+    for policy in EXP025_POLICIES:
+        acc = 0.96 if policy == POLICY_INT8_ALL else 0.90
+        results.append({
+            "model_name": "Qwen/Qwen2.5-0.5B",
+            "prompt_id": "p1",
+            "v10_suite": "long_context",
+            "v10_primary_category": "long_context",
+            "policy_name": policy,
+            "exactkv_failure": False,
+            "lossy": {"lossy_diverged": False},
+            "exactkv": {
+                "acceptance": {
+                    "acceptance_rate": acc,
+                    "total_rejected": 1,
+                    "total_corrections": 0,
+                },
+            },
+        })
+    agg = aggregate_policy_results(
+        results,
+        include_int8_all_comparison=True,
+        include_primary_category=True,
+    )
+    assert "comparisons_vs_int8_all" in agg
+    assert "per_primary_category_by_policy" in agg
+    assert agg["int8_all_beaten_globally"] is False
 
 
 def test_aggregate_and_hypothesis_evaluation():

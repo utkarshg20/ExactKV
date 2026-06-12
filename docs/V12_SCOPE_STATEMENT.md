@@ -1,6 +1,6 @@
 # V12 Scope Statement — Deferred Work Completion Gauntlet
 
-**Status:** **Phase 4 complete** — Experiment 024 KIVI CUDA/Triton feasibility documented; Phase 5 (Exp 025) next.
+**Status:** **Phase 5 complete** — Experiment 025 full-suite repair-policy validation documented; Phase 6 (Exp 026) next.
 **Builds on:** `v0.11.0` — V11 complete (Experiments 015–020; launch package prepared).
 **Not public launch.** v1.0.0 deferred until V12 substance and exit criteria are met or honestly closed.
 
@@ -25,7 +25,7 @@
 | **2** | TurboQuant llama.cpp / GGUF probe or documented no-go (Exp 022) | **Complete** — [`EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md`](EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md) |
 | **3** | KVQuant larger-model real-backend validation (Exp 023) | **Complete** — [`EXPERIMENT_023_KVQUANT_LARGER_MODEL.md`](EXPERIMENT_023_KVQUANT_LARGER_MODEL.md) |
 | **4** | KIVI CUDA/Triton packed-path feasibility or documented no-go (Exp 024) | **Complete** — [`EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md`](EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md) |
-| **5** | Full-suite repair-policy validation (Exp 025) | Planned |
+| **5** | Full-suite repair-policy validation (Exp 025) | **Complete** — [`EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md`](EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md) |
 | **6** | True attention logging feasibility or documented no-go (Exp 026) | Planned |
 | **7** | Performance/memory truth boundary review (Exp 027) | Planned |
 | **8** | V12 release package and public-launch decision | Planned |
@@ -103,7 +103,7 @@ without overclaiming.
 | D4 (larger model) | KVQuant simquant 0.5B only (Exp 010) | Phase 3 / Exp 023 |
 | D7 | True attention logging — sdpa blocker | Phase 6 / Exp 026 |
 | D8 | Per-head forensics — partial (per-layer KV only) | Phase 6 / Exp 026 |
-| Exp 020 policies | Pilot on 25 prompts only | Phase 5 / Exp 025 |
+| Exp 020 policies | **Full-suite validated (Exp 025)** | Phase 5 ✅ / Exp 025 |
 | D14 (truth boundary) | Methodology pilot only; no savings claim | Phase 7 / Exp 027 |
 | D17 | Policy complete; physical bundle optional | Phase 8 |
 | D18 | Draft complete; not approved for posting | Phase 8 |
