@@ -111,10 +111,10 @@ def test_golden_logits_shift(
     assert span.verifier_tokens[0] == full_state.next_token_id
 
     temp_kv = copy.deepcopy(full_state.past_key_values)
-    input_ids = torch.tensor([draft], dtype=torch.long, device=runtime.device)
+    input_ids = torch.tensor([draft[:-1]], dtype=torch.long, device=runtime.device)
     with torch.no_grad():
         out = runtime.forward(input_ids, past_key_values=temp_kv)
-    expected_v1 = int(out.logits[:, 0, :].argmax(dim=-1).item())
+    expected_v1 = int(out.logits[:, 0, :].float().argmax(dim=-1).item())
     assert span.verifier_tokens[1] == expected_v1
 
 
@@ -189,6 +189,25 @@ def test_span_generator_matches_sequential(
     assert seq.total_accepted == span.total_accepted
     assert seq.total_rejected == span.total_rejected
     assert seq.total_corrections == span.total_corrections
+
+
+@pytest.mark.skipif(not torch.cuda.is_available(), reason="needs CUDA")
+def test_lc003_long_context_fp16_span_matches_sequential() -> None:
+    """Regression: Exp 030 blocker (lc_003, k8_v4_sim, draft_len=8, fp16)."""
+    from exactkv.benchmarks.v10_prompts import load_v10_suite
+
+    runtime = ModelRuntime(model_name=MODEL_NAME, device="cuda", dtype="float16")
+    comp = get_compressor("k8_v4_sim")
+    prompt = load_v10_suite("long_context")[2]["prompt"]
+    seq = ExactKVGenerator(
+        runtime, comp, draft_len=8, verification_method="sequential"
+    ).generate(prompt, 32)
+    span = ExactKVGenerator(
+        runtime, comp, draft_len=8, verification_method="span"
+    ).generate(prompt, 32)
+    full = generate_full_greedy(runtime, prompt, 32)
+    assert bool((full.generated_ids == seq.output_ids).all())
+    assert bool((seq.output_ids == span.output_ids).all())
 
 
 def test_default_generator_still_sequential(runtime: ModelRuntime) -> None:

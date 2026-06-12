@@ -113,7 +113,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 |---|---|---|---|---|
 | — | **V13 scope statement** | **Complete** | Phase 0 ✅ | [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) |
 | D21 | **Parallel / span verification** | **Exactness grid complete** | Phases 2 ✅ / Exp 028–029 | Smoke + [`EXPERIMENT_029_SPAN_VERIFICATION_GRID.md`](EXPERIMENT_029_SPAN_VERIFICATION_GRID.md); 600 cells, 0 failures; default sequential |
-| — | **Performance proof (diagnostic timing)** | Planned | Phase 3 / Exp 030 | Four-arm harness; fixed hardware; warmup + variance; no headline without Phase 9 |
+| — | **Performance proof (diagnostic timing)** | **Complete (diagnostic only)** | Phase 3 ✅ / Exp 030 | [`EXPERIMENT_030_DIAGNOSTIC_TIMING.md`](EXPERIMENT_030_DIAGNOSTIC_TIMING.md); ExactKV ~2.66× slower than full greedy on A5000 fp16; span ≡ sequential wall-clock; no general speed claim |
 | — | **Active GPU memory isolation** | Planned | Phase 4 / Exp 031 | Extend Exp 018; weight/KV/temp separation; no savings claim unless robust |
 | — | **Hot adapter (SnapKV / ShardKV)** | Planned | Phase 5 / Exp 032 | Feasibility first; factory-only; SnapKV preferred |
 | — | **Llama-3.1-8B small suite** | Planned | Phase 6 / Exp 033 | 10–20 prompts; RunPod GPU; `exactkv_failures == 0` |

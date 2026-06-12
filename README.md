@@ -753,6 +753,7 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | V9 scope | [`V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) |
 | V10 scope (complete) | [`V10_SCOPE_STATEMENT.md`](docs/V10_SCOPE_STATEMENT.md) |
 | V13 scope | [`V13_SCOPE_STATEMENT.md`](docs/V13_SCOPE_STATEMENT.md) |
+| V13 Phase 3 (Exp 030) | [`EXPERIMENT_030_DIAGNOSTIC_TIMING.md`](docs/EXPERIMENT_030_DIAGNOSTIC_TIMING.md) — diagnostic timing; exactness gate pass; ExactKV ~2.66× slower than full greedy (fp16 A5000) |
 | V13 Phase 2 (Exp 029 grid) | [`EXPERIMENT_029_SPAN_VERIFICATION_GRID.md`](docs/EXPERIMENT_029_SPAN_VERIFICATION_GRID.md) — **600 cells, 0 failures**; span ≡ sequential; Phase 3 timing allowed |
 | V13 Phase 2 (Exp 028 smoke) | [`EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md`](docs/EXPERIMENT_028_SPAN_VERIFICATION_SMOKE.md) — span verify opt-in; **32 cells, 0 failures** |
 | V13 Phase 1 (Exp 028 design) | [`SPAN_VERIFICATION_DESIGN.md`](docs/SPAN_VERIFICATION_DESIGN.md) — span verification design; HF logits shift |
