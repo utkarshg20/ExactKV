@@ -31,8 +31,8 @@ is faster. It does **not** claim throughput, latency, speedup, or production rea
 | Item | Value |
 |---|---|
 | **Latest release** | [`v0.11.0`](docs/RELEASE_NOTES_V0.11.0.md) — V11 launch hardening (Experiments 015–020) |
-| **Next** | [**V12**](docs/V12_SCOPE_STATEMENT.md) — Deferred Work Completion Gauntlet (not public launch) |
-| **Status** | Research milestone; [not public-launch final](docs/PROJECT_STATUS_V0.11.0.md) |
+| **Next** | [**V13**](docs/V13_SCOPE_STATEMENT.md) — Practicality Proof (not public launch) |
+| **Status** | Research milestone; [public launch deferred](docs/EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md) pending V13 evidence |
 | **Hard gate** | `exactkv_failures == 0` on every published experiment |
 | **Default model** | `Qwen/Qwen2.5-0.5B` (greedy, single-request, CPU-first) |
 | **Compressors** | 15 built-in (`noop`, `int8`, asymmetric `_sim`, layer-aware boundary, `backend_passthrough`, …) |
@@ -51,7 +51,7 @@ V10/V11 suites are **not universal benchmarks**. Restricted adapters remain **fa
 | Repair-policy pilot (Exp 020) | `fallback_int8` **0.979**; `category_adaptive` **0.973** |
 
 > ⚠️ Not production backends. `_sim` = int8 containers. No throughput, latency, active GPU memory savings, or production-serving claims.
-> Public v1.0.0 deferred — see [V11 launch readiness](docs/V11_LAUNCH_READINESS.md); V12 scope: [Deferred Work Completion Gauntlet](docs/V12_SCOPE_STATEMENT.md).
+> Public v1.0.0 deferred — V12 claim boundary ([Exp 027](docs/EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md)); active work: [V13 Practicality Proof](docs/V13_SCOPE_STATEMENT.md).
 
 ---
 
@@ -68,7 +68,8 @@ V10/V11 suites are **not universal benchmarks**. Restricted adapters remain **fa
 | V9 | `v0.9.0` | Real backend gauntlet; Exp 008–011; 1.5B validation | ✅ |
 | V10 | `v0.10.0` | Suite hardening; Exp 012–014; [readiness](docs/V10_READINESS_ASSESSMENT.md) | ✅ |
 | V11 | `v0.11.0` | Launch hardening; Exp 015–020; [readiness](docs/V11_LAUNCH_READINESS.md) | ✅ |
-| V12 | — | Deferred Work Completion Gauntlet ([scope](docs/V12_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 1 ✅ |
+| V12 | — | Deferred Work Completion Gauntlet ([scope](docs/V12_SCOPE_STATEMENT.md)); Exp 021–027 | Phase 7 ✅ |
+| V13 | — | Practicality Proof ([scope](docs/V13_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 0 active |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
@@ -751,7 +752,8 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | v0.8.0 docs | [`RELEASE_NOTES_V0.8.0.md`](docs/RELEASE_NOTES_V0.8.0.md) · [`EXPERIMENT_INDEX.md`](docs/EXPERIMENT_INDEX.md) · [`PROJECT_STATUS_V0.8.0.md`](docs/PROJECT_STATUS_V0.8.0.md) · [`DEFERRED_WORK_REGISTER.md`](docs/DEFERRED_WORK_REGISTER.md) |
 | V9 scope | [`V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) |
 | V10 scope (complete) | [`V10_SCOPE_STATEMENT.md`](docs/V10_SCOPE_STATEMENT.md) |
-| V12 scope (active) | [`V12_SCOPE_STATEMENT.md`](docs/V12_SCOPE_STATEMENT.md) |
+| V13 scope (active) | [`V13_SCOPE_STATEMENT.md`](docs/V13_SCOPE_STATEMENT.md) |
+| V12 scope | [`V12_SCOPE_STATEMENT.md`](docs/V12_SCOPE_STATEMENT.md) |
 | V12 Phase 7 (Exp 027) | [`EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md`](docs/EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md) — speed/VRAM savings **forbidden**; [`PRACTICALITY_GAP_ANALYSIS.md`](docs/PRACTICALITY_GAP_ANALYSIS.md) |
 | V12 Phase 6 (Exp 026) | [`EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md`](docs/EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md) — eager prefill attention logging **`restricted_go`**; sdpa blocked |
 | V12 Phase 5 (Exp 025) | [`EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md`](docs/EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md) — full V10 repair-policy validation; `exactkv_failures == 0` |

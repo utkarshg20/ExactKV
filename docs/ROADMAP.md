@@ -739,19 +739,44 @@ Formal scope: [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) (Phases 0–8; 
 | 7 | Performance/memory truth boundary (Exp 027) | ✅ [`EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md`](EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md) |
 | 8 | V12 release package + public-launch decision | Planned |
 
-**Next major phase after V12 Phase 8:** **V13 Practicality Proof** — parallel/span verification, diagnostic benchmark harness, isolated GPU memory methodology, hot adapter, Llama-3.1-8B small suite, plots + killer demo. Public v1.0.0 should **defer** until V13 P0 gaps close (see [`PRACTICALITY_GAP_ANALYSIS.md`](PRACTICALITY_GAP_ANALYSIS.md)).
-
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V12.
 
 ---
 
-# v1.0.0: Public launch (after V12)
+# V13: Practicality Proof (Phase 0 active)
+
+## Goal
+
+Build and measure the missing systems pieces (span verification, diagnostic timing,
+GPU memory isolation, hot adapter, Llama-3.1-8B, demo, plots) needed to determine
+whether ExactKV is practically useful — not only exactness-safe. **Not public launch.**
+
+Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; Experiments 028–035).
+
+| Phase | Focus | Status |
+|---|---|---|
+| 0 | Scope statement | **Active** |
+| 1 | Span verification design | Planned |
+| 2 | Span verification implementation | Planned |
+| 3 | Diagnostic timing harness (Exp 030) | Planned |
+| 4 | Active GPU memory isolation (Exp 031) | Planned |
+| 5 | SnapKV / ShardKV feasibility (Exp 032) | Planned |
+| 6 | Llama-3.1-8B small suite (Exp 033) | Planned |
+| 7 | Killer correction demo (Exp 034) | Planned |
+| 8 | Visual plot package (Exp 035) | Planned |
+| 9 | V13 completion / launch decision | Planned |
+
+See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V13.
+
+---
+
+# v1.0.0: Public launch (after V13)
 
 Git tag `v1.0.0`, `PROJECT_STATUS` / `RELEASE_NOTES` v1.0.0, optional curated report
-bundle (D17), and reviewed launch narrative (D18) — only after V12 exit criteria in
-[`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) §19.
+bundle (D17), and reviewed launch narrative (D18) — only after V13 Phase 9 exit criteria in
+[`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) §18.
 
-**`v0.11.0` is a research milestone, not public launch.** Public posting remains deferred until V12 gates pass or are honestly closed.
+**Public posting remains deferred** until V13 produces evidence-backed practicality answers or honestly closes gaps ([Exp 027](EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md)).
 
 ---
 

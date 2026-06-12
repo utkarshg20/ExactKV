@@ -7,14 +7,15 @@ implemented** unless a linked experiment or release note says otherwise.
 > latency, speedup, runtime, or production-serving claims; `_sim` ≠ packed-bit storage;
 > external paper results are **not** ExactKV results.
 
-**Version path:** V9 ✅ → **V10 ✅ (`v0.10.0`)** → **V11 ✅ (`v0.11.0`)** → **V12 (active)** → v1.0.0 (public launch).
+**Version path:** V9 ✅ → **V10 ✅ (`v0.10.0`)** → **V11 ✅ (`v0.11.0`)** → **V12 (Phases 0–7 ✅)** → **V13 (active — Phase 0)** → v1.0.0 (public launch).
 
 **V9 scope:** [`V9_SCOPE_STATEMENT.md`](V9_SCOPE_STATEMENT.md) — **complete** (`v0.9.0`).
 **V10 scope:** [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — **complete** (`v0.10.0`).
 **V10 readiness:** [`V10_READINESS_ASSESSMENT.md`](V10_READINESS_ASSESSMENT.md).
 **V11 scope:** [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) — **complete** (`v0.11.0`).
 **V11 readiness:** [`V11_LAUNCH_READINESS.md`](V11_LAUNCH_READINESS.md).
-**V12 scope:** [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) — **Phase 0 active**.
+**V12 scope:** [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) — Phases 0–7 complete; Phase 8 release package planned.
+**V13 scope:** [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) — **Phase 0 active**.
 **Experiment 014:** [`EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md`](EXPERIMENT_014_REAL_BACKEND_SPOTCHECKS.md).
 **V10 suites:** [`V10_PROMPT_SUITES.md`](V10_PROMPT_SUITES.md).
 **Experiment 012:** [`EXPERIMENT_012_EVAL_SUITE_EXPANSION.md`](EXPERIMENT_012_EVAL_SUITE_EXPANSION.md).
@@ -82,38 +83,59 @@ V11 covers multi-model validation, serving/profiling probes, and launch package 
 
 ---
 
-## V12 — Deferred Work Completion Gauntlet (active)
+## V12 — Deferred Work Completion Gauntlet (Phases 0–7 complete)
 
 | ID | Item | Status | V12 phase | Success criteria |
 |---|---|---|---|---|
-| — | **V12 scope statement** | **Active** | Phase 0 | [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) |
+| — | **V12 scope statement** | **Complete** | Phase 0 ✅ | [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) |
 | D2 | **TurboQuant llama.cpp / GGUF / production-fidelity** | **External probe complete (Mode B)** | Phase 1–2 ✅ | [`EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md`](EXPERIMENT_022_TURBOQUANT_LLAMACPP_PROBE.md); BackendAdapter **no-go**; Mode B **go with restrictions** |
 | D4 | **KVQuant 1.5B/3B real-backend validation** | **1.5B complete** | Phase 3 ✅ / Exp 023 | [`EXPERIMENT_023_KVQUANT_LARGER_MODEL.md`](EXPERIMENT_023_KVQUANT_LARGER_MODEL.md); 1.5B accept **0.609**; 3B stretch not run |
 | D3 | **KIVI CUDA/Triton packed path** | **Feasibility complete (`B_restricted_go`)** | Phase 4 ✅ / Exp 024 | [`EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md`](EXPERIMENT_024_KIVI_CUDA_TRITON_FEASIBILITY.md); Triton pack OK; `dequant_cuda` missing; no Qwen model; BackendAdapter **restricted_future_only** |
 | — | **Full-suite repair-policy validation** | **Complete** | Phase 5 ✅ / Exp 025 | [`EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md`](EXPERIMENT_025_FULL_SUITE_REPAIR_POLICY.md); 768 cells 0.5B; `exactkv_failures == 0`; 1.5B optional not run |
 | D7 | **True attention logging** | **Restricted go (eager prefill-only)** | Phase 6 ✅ / Exp 026 | [`EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md`](EXPERIMENT_026_ATTENTION_LOGGING_FEASIBILITY.md); sdpa blocked; eager prefill OK on Qwen2.5-0.5B |
 | D8 | **Per-head divergence forensics** | **Partial — prefill-only path** | Phase 6 ✅ / Exp 026 | Per-layer KV in Exp 019; per-head via eager prefill snapshots only; decode-step/default runtime blocked |
-| — | **Performance/memory truth boundary** | **Complete** | Phase 7 ✅ / Exp 027 | [`EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md`](EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md); speed/VRAM savings **forbidden**; V13 Practicality Proof recommended |
+| — | **Performance/memory truth boundary** | **Complete** | Phase 7 ✅ / Exp 027 | [`EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md`](EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md); speed/VRAM savings **forbidden**; **V13 recommended** |
 | D17 | **Physical raw report bundle** | Planned | Phase 8 | Optional until v1.0.0; policy in [`RAW_ARTIFACT_POLICY.md`](RAW_ARTIFACT_POLICY.md) |
 | D18 | **Launch narrative (final)** | Planned | Phase 8 | Review/approve [`LAUNCH_NARRATIVE_DRAFT.md`](LAUNCH_NARRATIVE_DRAFT.md) |
-| D11 | **Direct vLLM integration** | No-go (Phase A) | — | Out of V12 unless scope changes |
-| D12 | **LMCache integration** | No-go (Phase A) | — | Out of V12 unless scope changes |
-| D16 | **PagedAttention kernel integration** | Deferred | — | Out of V12 scope |
-| D6 | **Sparse V dequantization** | Deferred | — | Out of V12 unless explicitly approved |
-| D9/D10 | **Pre-RoPE / boundary N>4** | Deferred | — | Out of V12 scope |
+| D11 | **Direct vLLM integration** | No-go (Phase A) | — | Out of V12/V13 unless scope changes |
+| D12 | **LMCache integration** | No-go (Phase A) | — | Out of V12/V13 unless scope changes |
+| D16 | **PagedAttention kernel integration** | Deferred | — | Out of V12/V13 scope unless explicitly approved |
+| D6 | **Sparse V dequantization** | Deferred | — | Out of V12/V13 unless explicitly approved |
+| D9/D10 | **Pre-RoPE / boundary N>4** | Deferred | — | Out of V12/V13 scope |
 
-V12 finishes or conclusively closes deferred backend, policy, forensics, and claim-boundary tracks — **not** a performance benchmark or production integration release.
+V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **not** practicality proof.
 
 ---
 
-## v1.0.0 — Public launch tag (after V12 exit)
+## V13 — Practicality Proof (active — Phase 0)
+
+| ID / track | Item | Status | V13 phase | Success criteria |
+|---|---|---|---|---|
+| — | **V13 scope statement** | **Active** | Phase 0 | [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) |
+| D21 | **Parallel / span verification** | Planned | Phases 1–2 / Exp 028–029 | Design doc; span path `exactkv_failures == 0`; sequential baseline preserved |
+| — | **Performance proof (diagnostic timing)** | Planned | Phase 3 / Exp 030 | Four-arm harness; fixed hardware; warmup + variance; no headline without Phase 9 |
+| — | **Active GPU memory isolation** | Planned | Phase 4 / Exp 031 | Extend Exp 018; weight/KV/temp separation; no savings claim unless robust |
+| — | **Hot adapter (SnapKV / ShardKV)** | Planned | Phase 5 / Exp 032 | Feasibility first; factory-only; SnapKV preferred |
+| — | **Llama-3.1-8B small suite** | Planned | Phase 6 / Exp 033 | 10–20 prompts; RunPod GPU; `exactkv_failures == 0` |
+| — | **Killer correction demo** | Planned | Phase 7 / Exp 034 | Reproducible JSON/tool/code trace; exact match to full greedy |
+| — | **Visual plot package** | Planned | Phase 8 / Exp 035 | PNG/SVG from reports; no misleading axes |
+| — | **Headline number audit** | Planned | Phase 9 / Exp 035 | Allowed headlines only; speed/VRAM forbidden unless evidence-backed |
+| — | **Compressed-active-KV memory path** | Investigate in Phase 4 | Phase 4 | Document blocker if full materialization prevents savings |
+| D11/D12 | **Production serving / vLLM / LMCache** | No-go | — | Remain deferred unless later V13 phase explicitly scopes serving |
+| D22 | **Multi-request batching** | Deferred | — | Serving-scale; out of V13 Phase 0–8 |
+
+V13 builds and measures missing practicality pieces — **not** public launch by default.
+
+---
+
+## v1.0.0 — Public launch tag (after V13 exit)
 
 | ID | Item | Status | Success criteria |
 |---|---|---|---|
-| D19 | **Project status v1.0.0** | Deferred | Supersedes [`PROJECT_STATUS_V0.11.0.md`](PROJECT_STATUS_V0.11.0.md); after V12 Phase 8 |
-| D20 | **Git tag `v1.0.0`** | Deferred | [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) §19 gates met |
+| D19 | **Project status v1.0.0** | Deferred | Supersedes [`PROJECT_STATUS_V0.11.0.md`](PROJECT_STATUS_V0.11.0.md); after V13 Phase 9 |
+| D20 | **Git tag `v1.0.0`** | Deferred | [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) §18 gates met |
 
-_D17 and D18 are prepared in V11 Phase 6; finalized in V12 Phase 8; published at v1.0.0 tag._
+_D17 and D18 may finalize in V12 Phase 8; **public posting** waits for V13 Phase 9 claim decision._
 
 ---
 
@@ -121,7 +143,7 @@ _D17 and D18 are prepared in V11 Phase 6; finalized in V12 Phase 8; published at
 
 | ID | Item | Status | Notes |
 |---|---|---|---|
-| D21 | **Sampling / parallel verify / bonus tokens** | Deferred | Out of scope until explicit future version |
+| D21 | **Sampling / parallel verify / bonus tokens** | **Moved to V13** | Phases 1–2 / Exp 028–029 | Span verify primary; sampling/bonus still deferred |
 | D22 | **Multi-request batching** | Deferred | Serving-scale feature |
 | D23 | **CPU offload / CUDA kernels** | Deferred | No custom kernels in ExactKV today |
 | D24 | **Broader kvpress** | Deferred | KnormPress only (V6) |
@@ -139,7 +161,8 @@ remain **deferred, not forgotten**.
 
 ## Related
 
-- [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) — V12 formal scope (Phase 0 active)
+- [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) — V13 formal scope (Phase 0 active)
+- [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) — V12 formal scope (Phases 0–7 complete)
 - [`V11_SCOPE_STATEMENT.md`](V11_SCOPE_STATEMENT.md) — V11 formal scope (complete)
 - [`V11_LAUNCH_READINESS.md`](V11_LAUNCH_READINESS.md) — v0.11.0 gate decision
 - [`V10_SCOPE_STATEMENT.md`](V10_SCOPE_STATEMENT.md) — V10 formal scope (complete)

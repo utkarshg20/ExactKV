@@ -38,6 +38,7 @@ See also: [`EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md`](EXPERIMENT_027
 
 ## Related
 
+- [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) — V13 Practicality Proof (Phase 0 active)
 - [`V12_SCOPE_STATEMENT.md`](V12_SCOPE_STATEMENT.md) — Phase 7 complete after Exp 027
 - [`GPU_MEMORY_METHODOLOGY.md`](GPU_MEMORY_METHODOLOGY.md) — Exp 018 pilot protocol
 - [`V11_LAUNCH_READINESS.md`](V11_LAUNCH_READINESS.md) — prior launch gate (v1.0.0 not yet)
