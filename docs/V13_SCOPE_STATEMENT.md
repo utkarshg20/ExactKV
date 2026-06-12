@@ -1,6 +1,6 @@
 # V13 Scope Statement — Practicality Proof
 
-**Status:** **Phase 5 complete** — Exp 032 SnapKV/ShardKV feasibility: SnapKV **B (restricted)** via factory-only kvpress path; ShardKV **C (no-go)**; **no adapter implemented**. Phase 5b SnapKV experimental MVP recommended next. Phase 6 (Exp 033 Llama) allowed in parallel. Span throughput remains **unsolved**; VRAM savings remain **forbidden**.
+**Status:** **Phase 5 complete (addendum)** — Exp 032 + addendum: SnapKV **B**; Shard (krish1905/shard) **B** as Llama external-drafter probe; SpectralQuant **B** as calibrated tensor adapter; legacy ShardKV label **C**. **Phase 5b SnapKV experimental** still primary; Shard probe deferred to Llama/Phase 6 adjunct. No adapter implemented. Span throughput **unsolved**; VRAM savings **forbidden**.
 **Builds on:** V12 Phases 0–7 complete (Experiments 021–027); V12 Phase 8 release package may proceed in parallel but **does not authorize public launch**.
 **Not public launch.** v1.0.0 deferred until V13 produces evidence-backed practicality answers or honestly closes remaining gaps.
 
@@ -28,8 +28,8 @@
 | **3** | Diagnostic timing harness (Exp 030) | **Complete** — [`EXPERIMENT_030_DIAGNOSTIC_TIMING.md`](EXPERIMENT_030_DIAGNOSTIC_TIMING.md) |
 | **3b** | Batched span GPU/fp16 parity (Exp 030b) | **Complete** — [`EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md`](EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md) |
 | **4** | Active GPU memory isolation (Exp 031) | **Complete** — [`EXPERIMENT_031_GPU_MEMORY_ISOLATION.md`](EXPERIMENT_031_GPU_MEMORY_ISOLATION.md) |
-| **5** | Hot adapter feasibility — SnapKV / ShardKV (Exp 032) | **Complete** — [`EXPERIMENT_032_SNAPKV_SHARDKV_FEASIBILITY.md`](EXPERIMENT_032_SNAPKV_SHARDKV_FEASIBILITY.md) |
-| **5b** | SnapKV experimental adapter MVP | Planned — factory-only; not default registry |
+| **5** | Hot adapter feasibility — SnapKV / Shard / SpectralQuant (Exp 032 + addendum) | **Complete** — [`EXPERIMENT_032_SNAPKV_SHARDKV_FEASIBILITY.md`](EXPERIMENT_032_SNAPKV_SHARDKV_FEASIBILITY.md), [`EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md`](EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md) |
+| **5b** | SnapKV experimental adapter MVP | Planned — factory-only; Shard Llama probe optional with Exp 033 |
 | **6** | Llama-3.1-8B small-suite validation (Exp 033) | Planned |
 | **7** | Killer correction demo (Exp 034) | Planned |
 | **8** | Visual plot package (Exp 035) | Planned |

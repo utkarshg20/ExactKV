@@ -753,7 +753,7 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | V9 scope | [`V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) |
 | V10 scope (complete) | [`V10_SCOPE_STATEMENT.md`](docs/V10_SCOPE_STATEMENT.md) |
 | V13 scope | [`V13_SCOPE_STATEMENT.md`](docs/V13_SCOPE_STATEMENT.md) |
-| V13 Phase 5 (Exp 032) | [`EXPERIMENT_032_SNAPKV_SHARDKV_FEASIBILITY.md`](docs/EXPERIMENT_032_SNAPKV_SHARDKV_FEASIBILITY.md) — SnapKV **B** restricted feasibility; ShardKV **C**; no adapter yet |
+| V13 Phase 5 (Exp 032 + addendum) | [`EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md`](docs/EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md) — SnapKV **B** 5b primary; Shard **B** Llama drafter; SpectralQuant **B** 5c |
 | V13 Phase 4 (Exp 031) | [`EXPERIMENT_031_GPU_MEMORY_ISOLATION.md`](docs/EXPERIMENT_031_GPU_MEMORY_ISOLATION.md) — active GPU memory isolation; peak indistinguishable from full greedy; **no VRAM savings claim** |
 | V13 Phase 3b (Exp 030b) | [`EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md`](docs/EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md) — fp16 batched span parity fixed (SDPA tie-break) |
 | V13 Phase 3 (Exp 030) | [`EXPERIMENT_030_DIAGNOSTIC_TIMING.md`](docs/EXPERIMENT_030_DIAGNOSTIC_TIMING.md) — diagnostic timing; exactness gate pass; span speed unsolved (fp16 A5000) |

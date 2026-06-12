@@ -5,8 +5,11 @@ import pytest
 
 from exactkv.analysis.hot_adapter_feasibility import (
     FeasibilityClass,
+    analyze_shard,
     analyze_shardkv,
     analyze_snapkv,
+    analyze_spectralquant,
+    build_addendum_artifact,
     build_feasibility_artifact,
     design_snapkv_experimental_mvp,
 )
@@ -47,3 +50,23 @@ def test_artifact_forbidden_fields_absent() -> None:
     for field in forbidden:
         assert field not in artifact
         assert f"'{field}'" not in text or field in ("interpretation",)
+
+
+def test_shard_repo_classified_restricted() -> None:
+    shard = analyze_shard()
+    assert shard.classification == FeasibilityClass.B_RESTRICTED
+    assert shard.model_internals_changes_required
+    assert "github.com/krish1905/shard" in shard.external_repo_url
+
+
+def test_spectralquant_classified_restricted() -> None:
+    sq = analyze_spectralquant()
+    assert sq.classification == FeasibilityClass.B_RESTRICTED
+    assert sq.offline_compressor_possible
+
+
+def test_addendum_snapkv_still_phase5b() -> None:
+    artifact = build_addendum_artifact()
+    assert artifact["snapkv_still_recommended_for_5b"] is True
+    assert artifact["shard_or_spectralquant_preempt_snapkv"] is False
+    assert artifact["chosen_path"] == "snapkv_restricted_mvp_phase_5b"

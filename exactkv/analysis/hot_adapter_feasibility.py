@@ -47,6 +47,9 @@ class CandidateFeasibility:
     offline_compressor_possible: bool = False
     factory_only_recommended: bool = True
     production_claim_allowed: bool = False
+    exactkv_integration_path: str = ""
+    integration_path_notes: dict[str, str] = field(default_factory=dict)
+    external_repo_url: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -214,8 +217,203 @@ def analyze_snapkv() -> CandidateFeasibility:
     )
 
 
+def analyze_shard() -> CandidateFeasibility:
+    """Shard (krish1905/shard) — real Llama KV compression Cache subclass."""
+    return CandidateFeasibility(
+        name="Shard",
+        classification=FeasibilityClass.B_RESTRICTED,
+        external_repo_url="https://github.com/krish1905/shard",
+        exactkv_integration_path="C_llama_sidecar_or_external_drafter",
+        integration_path_notes={
+            "A_direct_kvcompressor": (
+                "C — Shard Cache requires fused compressed-K attention and "
+                "enable_llama_fused_attention() monkey-patch; not a tensor-only "
+                "BackendAdapter over past_key_values."
+            ),
+            "B_external_drafter": (
+                "B — Draft with Shard Cache + patched LlamaAttention on an isolated "
+                "model; full-KV verifier on authoritative HF cache (Exp 022 Mode B "
+                "pattern)."
+            ),
+            "C_llama_sidecar_probe": (
+                "B — Best fit: Llama-3.1-8B-only legibility probe alongside Exp 033; "
+                "not a default-registry compressor."
+            ),
+            "D_no_go": "For direct KVCompressor without draft-model fork.",
+        },
+        summary=(
+            "Shard (krish1905/shard) is a **real** Llama-3.1 KV-cache compression "
+            "system: `transformers.Cache` subclass, PCA+VQ asymmetric compression, "
+            "fused Q·K on int4 coefficients without FP16 K materialization. "
+            "README reports ~10× memory reduction at 8K but **0.4–0.5× decode "
+            "throughput** vs FP16 (external results — not ExactKV). ExactKV can "
+            "likely use it only as an **external drafter / Llama-only sidecar probe**, "
+            "not as a Qwen KVCompressor backend without Llama + attention monkey-patch."
+        ),
+        literature_boundary=[
+            "Repo: https://github.com/krish1905/shard — `src/shard/cache.py` subclasses "
+            "`transformers.cache_utils.Cache`.",
+            "`enable_llama_fused_attention()` monkey-patches `LlamaAttention.forward`.",
+            "Triton kernels in `triton_kernels.py` with CPU/PyTorch fallbacks.",
+            "E2E benchmarks via `benchmarks/benchmark.py` (Modal B200).",
+            "Supersedes Exp 032 misread of 'ShardKV' as MIT 6.824 distributed shardkv.",
+        ],
+        requirements=[
+            "Llama model (example: meta-llama/Llama-3.1-8B-Instruct).",
+            "Call `enable_llama_fused_attention(model)` before generate.",
+            "Pass `shard.Cache` as `past_key_values` to `model.generate`.",
+            "Isolated draft model copy for compression/draft path.",
+            "Full-precision HF DynamicCache for verifier (no Shard patch on verify model).",
+        ],
+        compatibility=[
+            CompatibilityAnswer(
+                "Can it produce compressed KV for draft generation?",
+                "Yes — Shard Cache compresses during prefill and streams decode in "
+                "compressed format.",
+            ),
+            CompatibilityAnswer(
+                "Can ExactKV maintain full verifier KV separately?",
+                "Yes **if** verifier model is unpatched and uses standard full KV; "
+                "draft model uses Shard Cache + fused attention only.",
+            ),
+            CompatibilityAnswer(
+                "Does it require changing model forward internals?",
+                "Yes — monkey-patches LlamaAttention for fused compressed-K decode.",
+                blocks_exactkv=False,
+            ),
+            CompatibilityAnswer(
+                "Does it require custom CUDA/Triton?",
+                "Optional — Triton accelerates; PyTorch fallbacks exist.",
+            ),
+            CompatibilityAnswer(
+                "Does it conflict with span verification?",
+                "No — verifier uses full KV on unpatched model.",
+            ),
+            CompatibilityAnswer(
+                "Can it be a direct KVCompressor over past_key_values?",
+                "No — not without reimplementing fused attention inside materialize_for_draft.",
+                blocks_exactkv=True,
+            ),
+        ],
+        blockers=[
+            "Llama-only in reference implementation (no Qwen path).",
+            "Attention monkey-patch must not leak to verifier model.",
+            "Not drop-in for ExactKV BackendAdapter tensor path.",
+            "Aligns with Exp 033 Llama panel, not current Qwen 0.5B smoke path.",
+        ],
+        risks=[
+            "External 10× compression / quality numbers are **not** ExactKV results.",
+            "Decode throughput below FP16 — must not claim ExactKV speedup.",
+            "Overclaiming 'Shard integrated' if only inspired-by slicing.",
+        ],
+        exactkv_generator_changes_required=False,
+        verification_engine_changes_required=False,
+        custom_cuda_required=False,
+        attention_weights_required=False,
+        model_internals_changes_required=True,
+        span_verification_conflict=False,
+        offline_compressor_possible=False,
+        factory_only_recommended=True,
+        production_claim_allowed=False,
+    )
+
+
+def analyze_spectralquant() -> CandidateFeasibility:
+    """SpectralQuant (Dynamis-Labs/spectralquant) — calibration + tensor compressor."""
+    return CandidateFeasibility(
+        name="SpectralQuant",
+        classification=FeasibilityClass.B_RESTRICTED,
+        external_repo_url="https://github.com/Dynamis-Labs/spectralquant",
+        exactkv_integration_path="B_offline_calibration_tensor_compressor",
+        integration_path_notes={
+            "A_direct_kvcompressor": (
+                "B — Wrap `spectralquant.SpectralQuantEngine.compress_keys/decompress_*` "
+                "in BackendAdapter after calibrating per model; materialize dequantized "
+                "K/V for draft forwards."
+            ),
+            "B_offline_calibration_tensor_compressor": (
+                "B — Best fit: EigenspectralCalibrator + per-layer engine; mirrors "
+                "TurboQuant Python adapter (Exp 008) pattern."
+            ),
+            "C_external_drafter": "Possible but unnatural — engine is tensor-level, not HF generate.",
+            "D_no_go": "If turboquant_cutile baseline cannot be installed for kernel path.",
+        },
+        summary=(
+            "SpectralQuant is a **real library** (`src/spectralquant/`) with calibration, "
+            "spectral rotation, non-uniform Lloyd-Max quantization, and selective QJL. "
+            "It **subclasses TurboQuant** for the kernel engine and requires a "
+            "`baseline/turboquant_cutile` clone for full reproduction. It operates on "
+            "**per-layer K/V tensors**, not arbitrary HF `past_key_values` drop-in. "
+            "Paper/repo headline metrics are **external** — not ExactKV results. "
+            "Feasible as **offline calibration + tensor compressor** BackendAdapter (B)."
+        ),
+        literature_boundary=[
+            "Repo: https://github.com/Dynamis-Labs/spectralquant",
+            "Canonical engine: `spectralquant.spectralquant.SpectralQuantEngine` (pure Python).",
+            "Kernel variant: `spectralquant.engine.SpectralQuantEngine` subclasses TurboQuantEngine.",
+            "Requires ~15s calibration (`EigenspectralCalibrator`) per model.",
+            "21 experiment scripts + frozen `results/` JSON — strong paper artifact.",
+            "Qwen/Llama/Mistral/Gemma supported in experiment adapters (llama_like).",
+        ],
+        requirements=[
+            "Calibration pass collecting per-head KV statistics.",
+            "Per-layer `compress_keys` / `compress_values` on tensors extracted from full_state.",
+            "Dequantized materialization for draft attention (materialized_working_kv_bytes).",
+            "Optional: turboquant_cutile for kernel-accelerated path (Modal/CUDA).",
+            "Factory-only adapter; `supports_real_bytes_claim` labeling per capabilities.",
+        ],
+        compatibility=[
+            CompatibilityAnswer(
+                "Can it produce compressed KV for draft generation?",
+                "Yes — after calibration, compress/decompress K/V tensors per layer.",
+            ),
+            CompatibilityAnswer(
+                "Can ExactKV maintain full verifier KV separately?",
+                "Yes — verifier uses authoritative full_state; compression is draft-only.",
+            ),
+            CompatibilityAnswer(
+                "Does it integrate with HF past_key_values directly?",
+                "No — tensor API; adapter must extract/rebuild via cache/utils.",
+                blocks_exactkv=False,
+            ),
+            CompatibilityAnswer(
+                "Does it require calibration artifacts?",
+                "Yes — eigenspectral calibration per model (or cached pickle).",
+            ),
+            CompatibilityAnswer(
+                "Does it depend on TurboQuant?",
+                "Kernel engine subclasses TurboQuantEngine; pure-Python path testable without.",
+            ),
+            CompatibilityAnswer(
+                "Does it conflict with span verification?",
+                "No — verify path uses full KV only.",
+            ),
+        ],
+        blockers=[
+            "Extra dependency surface (spectralquant + optional turboquant_cutile).",
+            "Calibration step before first compress — not zero-config like noop.",
+            "Less public name recognition than SnapKV/Shard for launch legibility.",
+            "Exp 031: active CUDA savings unlikely at 0.5B even if V5 accounting improves.",
+        ],
+        risks=[
+            "Treating paper JSON results as ExactKV outcomes.",
+            "Claiming production SpectralQuant without calibration parity checks.",
+            "Higher implementation time than kvpress SnapKVPress on Qwen.",
+        ],
+        exactkv_generator_changes_required=False,
+        verification_engine_changes_required=False,
+        custom_cuda_required=False,
+        attention_weights_required=False,
+        model_internals_changes_required=False,
+        span_verification_conflict=False,
+        offline_compressor_possible=True,
+        factory_only_recommended=True,
+        production_claim_allowed=False,
+    )
+
+
 def analyze_shardkv() -> CandidateFeasibility:
-    """ShardKV / Shard-style secondary candidate."""
+    """Legacy ShardKV label — superseded by analyze_shard() for krish1905/shard (Exp 032 addendum)."""
     return CandidateFeasibility(
         name="ShardKV",
         classification=FeasibilityClass.C_NO_GO,
@@ -340,6 +538,95 @@ def build_feasibility_artifact() -> dict[str, Any]:
             "speed_claim_allowed": False,
             "production_snapkv_claim_allowed": False,
             "phase5b_recommended": snapkv.classification == FeasibilityClass.B_RESTRICTED,
+            "phase6_llama_allowed": True,
+        },
+    }
+
+
+def build_addendum_artifact() -> dict[str, Any]:
+    """Experiment 032 addendum — Shard + SpectralQuant repo inspection."""
+    snapkv = analyze_snapkv()
+    shard = analyze_shard()
+    spectralquant = analyze_spectralquant()
+    legacy_shardkv = analyze_shardkv()
+
+    ranking = [
+        {
+            "rank": 1,
+            "candidate": "SnapKV",
+            "classification": snapkv.classification.value,
+            "rationale": (
+                "Lowest ExactKV integration risk on Qwen via existing kvpress replay "
+                "pattern (Exp 005); no Llama requirement; fastest Phase 5b MVP."
+            ),
+        },
+        {
+            "rank": 2,
+            "candidate": "Shard",
+            "classification": shard.classification.value,
+            "rationale": (
+                "Highest launch legibility for compressed-KV story, but Llama-only + "
+                "attention monkey-patch → external drafter / Phase 6 adjunct, not "
+                "KVCompressor preempt."
+            ),
+        },
+        {
+            "rank": 3,
+            "candidate": "SpectralQuant",
+            "classification": spectralquant.classification.value,
+            "rationale": (
+                "Real tensor compressor with calibration; more deps and setup than "
+                "SnapKV; better as Phase 5c or parallel probe after TurboQuant wiring."
+            ),
+        },
+        {
+            "rank": 4,
+            "candidate": "ShardKV (legacy label)",
+            "classification": legacy_shardkv.classification.value,
+            "rationale": "Misidentified distributed-systems name — superseded by Shard repo.",
+        },
+    ]
+
+    return {
+        "experiment": "032_addendum",
+        "experiment_class": "v13_hot_adapter_feasibility_addendum",
+        "supersedes_note": (
+            "Revises Exp 032 ShardKV classification. See "
+            "EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md."
+        ),
+        "external_repos": {
+            "shard": shard.external_repo_url,
+            "spectralquant": spectralquant.external_repo_url,
+        },
+        "candidates": {
+            "snapkv": snapkv.to_dict(),
+            "shard": shard.to_dict(),
+            "spectralquant": spectralquant.to_dict(),
+            "shardkv_legacy": legacy_shardkv.to_dict(),
+        },
+        "candidate_ranking": ranking,
+        "chosen_path": "snapkv_restricted_mvp_phase_5b",
+        "phase5b_priority": {
+            "primary": "snapkv_experimental_adapter",
+            "parallel_optional": [
+                "shard_llama_external_drafter_probe_with_exp_033",
+            ],
+            "deferred": [
+                "spectralquant_experimental_adapter_phase_5c",
+            ],
+        },
+        "snapkv_still_recommended_for_5b": True,
+        "shard_or_spectralquant_preempt_snapkv": False,
+        "adapter_implemented": False,
+        "interpretation": {
+            "snapkv_classification": snapkv.classification.value,
+            "shard_classification": shard.classification.value,
+            "spectralquant_classification": spectralquant.classification.value,
+            "full_kv_verifier_authoritative": True,
+            "external_results_are_not_exactkv": True,
+            "active_gpu_memory_savings_claim_allowed": False,
+            "speed_claim_allowed": False,
+            "phase5b_primary": "snapkv_experimental",
             "phase6_llama_allowed": True,
         },
     }
