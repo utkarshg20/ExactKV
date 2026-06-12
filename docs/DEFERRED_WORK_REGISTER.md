@@ -120,8 +120,9 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Shard Llama external-drafter probe** | Planned | Phase 5b/6 adjunct | krish1905/shard; not KVCompressor; pairs with Exp 033 Llama panel |
 | — | **SpectralQuant experimental adapter** | Planned | Phase 5c (optional) | Offline calibration + tensor BackendAdapter; turboquant baseline |
 | — | **Llama-3.1-8B small suite** | **Complete** | Phase 6 ✅ / Exp 033 | [`EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md`](EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md); 48 cells, 0 failures; RunPod A5000 bfloat16 |
-| — | **Killer correction demo** | **Complete** | Phase 7 ✅ / Exp 034 | [`EXPERIMENT_034_KILLER_CORRECTION_DEMO.md`](EXPERIMENT_034_KILLER_CORRECTION_DEMO.md); `tj_002` × `int4_sim`; lossy draft rejected; final output ≡ full greedy |
-| — | **Visual plot package** | Planned | Phase 8 / Exp 035 | PNG/SVG from reports; no misleading axes |
+| — | **Killer correction demo (Markdown trace)** | **Complete** | Phase 7 ✅ / Exp 034 | [`EXPERIMENT_034_KILLER_CORRECTION_DEMO.md`](EXPERIMENT_034_KILLER_CORRECTION_DEMO.md); `tj_002` × `int4_sim`; source data for live demo |
+| — | **Live correction terminal demo** | **Complete** | Phase 7b ✅ | [`DEMO_EXACTKV_LIVE_CORRECTION.md`](DEMO_EXACTKV_LIVE_CORRECTION.md); `scripts/demo_exactkv_live_correction.py`; Exp 034 trace replay |
+| — | **Visual plot package + leaderboard** | **Complete** | Phase 8 ✅ / Exp 035 | [`EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md`](EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md); [`leaderboard.md`](leaderboard.md); 8 PNG assets |
 | — | **Headline number audit** | Planned | Phase 9 / Exp 035 | Allowed headlines only; speed/VRAM forbidden unless evidence-backed |
 | — | **Compressed-active-KV memory path** | **Blocker documented (Exp 031)** | Phase 4 ✅ | Model weights dominate CUDA peak; V5 KV accounting does not translate to active VRAM savings at 0.5B scale |
 | D11/D12 | **Production serving / vLLM / LMCache** | No-go | — | Remain deferred unless later V13 phase explicitly scopes serving |

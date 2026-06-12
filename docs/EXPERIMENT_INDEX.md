@@ -49,6 +49,8 @@ under `reports/`.
 | 032b | SnapKV experimental adapter smoke | [`EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md`](EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md) | 4-prompt exactness smoke; factory-only `snapkv_experimental` | 8 | Exactness gate **pass**; hook isolation **pass**; restricted experimental SnapKV | 0 | No timing/memory benchmark; not in default registry |
 | 033 | Llama-3.1-8B small suite | [`EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md`](EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md) | 12-prompt exactness panel on RunPod A5000 (bfloat16) | 48 | Exactness gate **pass**; span ≡ sequential; mean accept ~0.95 | 0 | Not timing/memory; snapkv skipped (no kvpress on pod) |
 | 034 | Killer correction demo | [`EXPERIMENT_034_KILLER_CORRECTION_DEMO.md`](EXPERIMENT_034_KILLER_CORRECTION_DEMO.md) | Search V10 tool_json/code/retrieval/long_context; lossy draft rejection trace | 348 searched; 1 selected | Exactness gate **pass**; `tj_002` × `int4_sim`; draft `}}` rejected → `metric` committed | 0 | Correctness/correction demo only; not timing/memory; Qwen2.5-0.5B RunPod A5000 fp16 |
+| 034b | Live correction demo | [`DEMO_EXACTKV_LIVE_CORRECTION.md`](DEMO_EXACTKV_LIVE_CORRECTION.md) | Terminal replay of Exp 034 selected trace; recordable | — (replay) | Same trace as Exp 034; no inference during demo | 0 | Live correctness demo; not timing/memory |
+| 035 | Visual plots + leaderboard | [`EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md`](EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md) | PNG package + [`leaderboard.md`](leaderboard.md) from existing reports | — (viz) | Aggregates V10–V13 exactness/acceptance/divergence; diagnostic timing/memory charts | 0 | Visualization only; not a new benchmark |
 
 ---
 
@@ -87,6 +89,8 @@ under `reports/`.
 | 032b | `.venv-kvpress/bin/python scripts/research/run_experiment_032b_snapkv_experimental_smoke.py` |
 | 033 | `bash scripts/research/exp033_llama31_8b_runpod.sh` (RunPod CUDA; `HF_TOKEN` required) |
 | 034 | `TRANSFORMERS_OFFLINE=1 python3 scripts/run_experiment_034_killer_correction_demo.py --device cuda --dtype float16` (RunPod GPU) |
+| 034b live | `python3 scripts/demo_exactkv_live_correction.py` |
+| 035 | `python3 scripts/visualize_experiment_035.py` |
 | 027 | Review only — [`EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md`](EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md); optional inspect: `python3 scripts/research/performance_memory_boundary_inspect.py` |
 
 ---

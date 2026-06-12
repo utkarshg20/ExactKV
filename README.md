@@ -69,12 +69,30 @@ V10/V11 suites are **not universal benchmarks**. Restricted adapters remain **fa
 | V10 | `v0.10.0` | Suite hardening; Exp 012–014; [readiness](docs/V10_READINESS_ASSESSMENT.md) | ✅ |
 | V11 | `v0.11.0` | Launch hardening; Exp 015–020; [readiness](docs/V11_LAUNCH_READINESS.md) | ✅ |
 | V12 | — | Deferred Work Completion Gauntlet ([scope](docs/V12_SCOPE_STATEMENT.md)); Exp 021–027 | Phase 7 ✅ |
-| V13 | — | Practicality Proof ([scope](docs/V13_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 7 ✅; Exp 034 killer correction demo |
+| V13 | — | Practicality Proof ([scope](docs/V13_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 8 ✅; visual plots + leaderboard |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
 
-**Contents:** [Install](#install) · [Tests](#run-tests) · [Example](#run-the-example-script) · [Benchmarks](#run-the-benchmark-suite) · [CLI](#v2-cli) · [Compressors](#v4-asymmetric-compressors-experimental) · [Roadmap](#roadmap-and-research) · [Docs](#key-documents)
+**Contents:** [Install](#install) · [Live demo](#live-demo) · [Tests](#run-tests) · [Example](#run-the-example-script) · [Benchmarks](#run-the-benchmark-suite) · [CLI](#v2-cli) · [Compressors](#v4-asymmetric-compressors-experimental) · [Roadmap](#roadmap-and-research) · [Docs](#key-documents)
+
+---
+
+## Live demo
+
+Recordable terminal replay of the Exp 034 killer correction trace (`tj_002` × `int4_sim`):
+
+```bash
+python3 scripts/demo_exactkv_live_correction.py
+```
+
+No model inference runs — this replays verified Exp 034 tokens. See [`DEMO_EXACTKV_LIVE_CORRECTION.md`](docs/DEMO_EXACTKV_LIVE_CORRECTION.md).
+
+**Visual package (Exp 035):** [`EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md`](docs/EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md) · [`leaderboard.md`](docs/leaderboard.md)
+
+```bash
+python3 scripts/visualize_experiment_035.py
+```
 
 ---
 
@@ -753,6 +771,8 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | V9 scope | [`V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) |
 | V10 scope (complete) | [`V10_SCOPE_STATEMENT.md`](docs/V10_SCOPE_STATEMENT.md) |
 | V13 scope | [`V13_SCOPE_STATEMENT.md`](docs/V13_SCOPE_STATEMENT.md) |
+| V13 Phase 8 (Exp 035) | [`EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md`](docs/EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md) — plots + [`leaderboard.md`](docs/leaderboard.md) |
+| V13 Phase 7b (live demo) | [`DEMO_EXACTKV_LIVE_CORRECTION.md`](docs/DEMO_EXACTKV_LIVE_CORRECTION.md) — `python3 scripts/demo_exactkv_live_correction.py` |
 | V13 Phase 7 (Exp 034) | [`EXPERIMENT_034_KILLER_CORRECTION_DEMO.md`](docs/EXPERIMENT_034_KILLER_CORRECTION_DEMO.md) — killer correction demo; `tj_002` × `int4_sim`; lossy `}}` rejected → `metric`; exact match |
 | V13 Phase 6 (Exp 033) | [`EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md`](docs/EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md) — Llama-3.1-8B-Instruct; 48 cells, 0 failures; span ≡ sequential |
 | V13 Phase 5b (Exp 032b) | [`EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md`](docs/EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md) — factory-only `snapkv_experimental`; 8 cells, 0 failures; restricted experimental SnapKV |
