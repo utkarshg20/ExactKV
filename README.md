@@ -69,7 +69,7 @@ V10/V11 suites are **not universal benchmarks**. Restricted adapters remain **fa
 | V10 | `v0.10.0` | Suite hardening; Exp 012–014; [readiness](docs/V10_READINESS_ASSESSMENT.md) | ✅ |
 | V11 | `v0.11.0` | Launch hardening; Exp 015–020; [readiness](docs/V11_LAUNCH_READINESS.md) | ✅ |
 | V12 | — | Deferred Work Completion Gauntlet ([scope](docs/V12_SCOPE_STATEMENT.md)); Exp 021–027 | Phase 7 ✅ |
-| V13 | — | Practicality Proof ([scope](docs/V13_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 5 ✅; Exp 032 SnapKV feasibility ✅ |
+| V13 | — | Practicality Proof ([scope](docs/V13_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 5b ✅; Exp 032b SnapKV experimental smoke ✅ |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
@@ -753,6 +753,7 @@ Do **not** interpret `int4_sim` memory numbers as real packed-4-bit savings.
 | V9 scope | [`V9_SCOPE_STATEMENT.md`](docs/V9_SCOPE_STATEMENT.md) |
 | V10 scope (complete) | [`V10_SCOPE_STATEMENT.md`](docs/V10_SCOPE_STATEMENT.md) |
 | V13 scope | [`V13_SCOPE_STATEMENT.md`](docs/V13_SCOPE_STATEMENT.md) |
+| V13 Phase 5b (Exp 032b) | [`EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md`](docs/EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md) — factory-only `snapkv_experimental`; 8 cells, 0 failures; restricted experimental SnapKV |
 | V13 Phase 5 (Exp 032 + addendum) | [`EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md`](docs/EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md) — SnapKV **B** 5b primary; Shard **B** Llama drafter; SpectralQuant **B** 5c |
 | V13 Phase 4 (Exp 031) | [`EXPERIMENT_031_GPU_MEMORY_ISOLATION.md`](docs/EXPERIMENT_031_GPU_MEMORY_ISOLATION.md) — active GPU memory isolation; peak indistinguishable from full greedy; **no VRAM savings claim** |
 | V13 Phase 3b (Exp 030b) | [`EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md`](docs/EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md) — fp16 batched span parity fixed (SDPA tie-break) |

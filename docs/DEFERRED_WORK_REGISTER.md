@@ -116,7 +116,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Performance proof (diagnostic timing)** | **Complete (diagnostic only)** | Phase 3 ✅ / Exp 030 | [`EXPERIMENT_030_DIAGNOSTIC_TIMING.md`](EXPERIMENT_030_DIAGNOSTIC_TIMING.md); ExactKV ~2.66× slower than full greedy on A5000 fp16; span ≡ sequential wall-clock; no general speed claim |
 | — | **Active GPU memory isolation** | **Complete (diagnostic)** | Phase 4 ✅ / Exp 031 | [`EXPERIMENT_031_GPU_MEMORY_ISOLATION.md`](EXPERIMENT_031_GPU_MEMORY_ISOLATION.md); exactness gate pass; peak indistinguishable from full greedy; **no savings claim** |
 | — | **Hot adapter (SnapKV / Shard / SpectralQuant)** | **Feasibility complete + addendum** | Phase 5 ✅ / Exp 032 + addendum | [`EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md`](EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md); SnapKV **B** primary 5b; Shard **B** Llama drafter; SpectralQuant **B** deferred 5c |
-| — | **SnapKV experimental adapter** | Planned | Phase 5b | `snapkv_experimental` factory-only via kvpress SnapKVPress; exactness smoke required |
+| — | **SnapKV experimental adapter** | **Complete (smoke)** | Phase 5b ✅ / Exp 032b | [`EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md`](EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md); factory-only; 8 cells, 0 failures; not in default registry |
 | — | **Shard Llama external-drafter probe** | Planned | Phase 5b/6 adjunct | krish1905/shard; not KVCompressor; pairs with Exp 033 Llama panel |
 | — | **SpectralQuant experimental adapter** | Planned | Phase 5c (optional) | Offline calibration + tensor BackendAdapter; turboquant baseline |
 | — | **Llama-3.1-8B small suite** | Planned | Phase 6 / Exp 033 | 10–20 prompts; RunPod GPU; `exactkv_failures == 0` |

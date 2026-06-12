@@ -46,6 +46,7 @@ under `reports/`.
 | 031 | Active GPU memory isolation | [`EXPERIMENT_031_GPU_MEMORY_ISOLATION.md`](EXPERIMENT_031_GPU_MEMORY_ISOLATION.md) | Five-arm CUDA memory isolation on 12-prompt V10 panel (fp16 GPU) | 253 | Exactness gate **pass**; peak allocated **indistinguishable** from full greedy (~1195 MiB); V5 footprint ~1.3 MiB; **no savings claim** | 0 | Diagnostic only; model weights dominate; RunPod A5000 |
 | 032 | SnapKV / ShardKV feasibility | [`EXPERIMENT_032_SNAPKV_SHARDKV_FEASIBILITY.md`](EXPERIMENT_032_SNAPKV_SHARDKV_FEASIBILITY.md) | Hot-adapter compatibility study; no timing/memory benchmark | — (feasibility) | SnapKV **B**; legacy ShardKV **C** (misread) | N/A | Superseded for Shard repo by 032 addendum |
 | 032 addendum | Shard + SpectralQuant feasibility | [`EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md`](EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md) | Re-inspect krish1905/shard + Dynamis-Labs/spectralquant | — (feasibility) | SnapKV **B** still 5b primary; Shard **B** Llama drafter; SpectralQuant **B** 5c | N/A | No adapter; external results not ExactKV |
+| 032b | SnapKV experimental adapter smoke | [`EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md`](EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md) | 4-prompt exactness smoke; factory-only `snapkv_experimental` | 8 | Exactness gate **pass**; hook isolation **pass**; restricted experimental SnapKV | 0 | No timing/memory benchmark; not in default registry |
 
 ---
 
@@ -81,6 +82,7 @@ under `reports/`.
 | 031 | `bash scripts/research/exp031_gpu_memory_isolation_runpod.sh` (RunPod CUDA fp16; see report) |
 | 032 | `python3 scripts/research/experiment_032_snapkv_shardkv_feasibility.py` |
 | 032 addendum | `python3 scripts/research/experiment_032_addendum_shard_spectralquant.py` |
+| 032b | `.venv-kvpress/bin/python scripts/research/run_experiment_032b_snapkv_experimental_smoke.py` |
 | 027 | Review only — [`EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md`](EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md); optional inspect: `python3 scripts/research/performance_memory_boundary_inspect.py` |
 
 ---

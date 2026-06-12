@@ -762,7 +762,7 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 | 3b | Span GPU/fp16 parity (Exp 030b) | ✅ [`EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md`](EXPERIMENT_030B_SPAN_PARITY_INVESTIGATION.md) |
 | 4 | Active GPU memory isolation (Exp 031) | ✅ [`EXPERIMENT_031_GPU_MEMORY_ISOLATION.md`](EXPERIMENT_031_GPU_MEMORY_ISOLATION.md) |
 | 5 | SnapKV / Shard / SpectralQuant feasibility (Exp 032 + addendum) | ✅ [`EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md`](EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md) |
-| 5b | SnapKV experimental adapter MVP | Planned |
+| 5b | SnapKV experimental adapter MVP | ✅ [`EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md`](EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md) |
 | 5c | SpectralQuant experimental adapter (optional) | Planned |
 | 6 | Llama-3.1-8B small suite (Exp 033) | Planned |
 | 7 | Killer correction demo (Exp 034) | Planned |
