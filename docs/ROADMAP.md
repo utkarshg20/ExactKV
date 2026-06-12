@@ -743,7 +743,7 @@ See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V12.
 
 ---
 
-# V13: Practicality Proof (Phase 0 active)
+# V13: Practicality Proof (Phase 1 complete)
 
 ## Goal
 
@@ -755,8 +755,8 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 
 | Phase | Focus | Status |
 |---|---|---|
-| 0 | Scope statement | **Active** |
-| 1 | Span verification design | Planned |
+| 0 | Scope statement | ✅ |
+| 1 | Span verification design (Exp 028) | ✅ [`SPAN_VERIFICATION_DESIGN.md`](SPAN_VERIFICATION_DESIGN.md) |
 | 2 | Span verification implementation | Planned |
 | 3 | Diagnostic timing harness (Exp 030) | Planned |
 | 4 | Active GPU memory isolation (Exp 031) | Planned |

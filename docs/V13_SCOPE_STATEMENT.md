@@ -1,6 +1,6 @@
 # V13 Scope Statement — Practicality Proof
 
-**Status:** **Phase 0 active** — formal scope only; **no code, no experiments yet.**
+**Status:** **Phase 1 complete** — span verification design documented; Phase 2 (implementation) next.
 **Builds on:** V12 Phases 0–7 complete (Experiments 021–027); V12 Phase 8 release package may proceed in parallel but **does not authorize public launch**.
 **Not public launch.** v1.0.0 deferred until V13 produces evidence-backed practicality answers or honestly closes remaining gaps.
 
@@ -14,7 +14,7 @@
 > Until V13 Phase 9 explicitly approves a claim under documented methodology,
 > **forbidden claims remain forbidden** (see §22).
 
-**Do not start Phase 1 until this scope is reviewed and committed.**
+**Do not start Phase 2 until Phase 1 is reviewed and committed.**
 
 ---
 
@@ -22,8 +22,8 @@
 
 | Phase | Focus | Status |
 |---|---|---|
-| **0** | Formal scope statement (this document) | **Active** |
-| **1** | Span/parallel verification design (Exp 028 design) | Planned |
+| **0** | Formal scope statement (this document) | **Complete** |
+| **1** | Span/parallel verification design (Exp 028 design) | **Complete** — [`SPAN_VERIFICATION_DESIGN.md`](SPAN_VERIFICATION_DESIGN.md) |
 | **2** | Span/parallel verification implementation (Exp 028–029) | Planned |
 | **3** | Diagnostic timing harness (Exp 030) | Planned |
 | **4** | Active GPU memory isolation (Exp 031) | Planned |
