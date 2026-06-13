@@ -99,17 +99,20 @@ PUBLIC_LEADERBOARD_COPY = (
     "and future candidates are separated to avoid apples-to-oranges claims."
 )
 
-# Shard Exp 039–040 restricted external-drafter metrics (not full-panel compressor acceptance).
+# Shard Exp 039–041 restricted external-drafter metrics (not full-panel compressor acceptance).
 SHARD_ACCEPTED_PREFIX_MEAN = 58.22
 SHARD_MAX_NEW_TOKENS = 64
 SHARD_ACCEPTED_PREFIX_RATIO = round(SHARD_ACCEPTED_PREFIX_MEAN / SHARD_MAX_NEW_TOKENS, 4)
 SHARD_DIVERGENCE_RATE_039 = 0.1875  # 6/32
 SHARD_MAX_DIVERGENCE_RATE_040 = 0.3125  # length_128tok
+SHARD_COMBINED_DIVERGENCE_RATE_041 = 0.5625  # stream_bits=4 + 128tok
 SHARD_RESTRICTED_CAVEAT = (
     "Exp 039: 32 prompts @64tok, 6 draft divergences (18.75%), accepted-prefix mean 58.22/64, "
-    "exactkv_failures=0. Exp 040: 5-setting ablation, max divergence 31.25% (length_128tok), "
-    "stream_bits=4 at 25%, all exactkv_failures=0. Restricted external-drafter metrics — "
-    "not full-panel compressor acceptance. External Shard README not ExactKV."
+    "exactkv_failures=0. Exp 040: 5-setting ablation, max single-knob divergence 31.25% "
+    "(length_128tok), stream_bits=4 at 25%, all exactkv_failures=0. Exp 041: combined "
+    "stream_bits=4 + 128tok, 18 divergences (56.25%), exactkv_failures=0. Restricted "
+    "external-drafter metrics — not full-panel compressor acceptance. External Shard README "
+    "not ExactKV."
 )
 
 
@@ -502,7 +505,7 @@ def build_tiered_leaderboard(data: PlotData) -> list[LeaderboardEntry]:
         LeaderboardEntry(
             TIER_RESTRICTED,
             "Shard external-drafter probe",
-            "Exp 039–040",
+            "Exp 039–041",
             "Llama-3.1-8B · 32-prompt external probe",
             SHARD_ACCEPTED_PREFIX_RATIO,
             0,
@@ -856,7 +859,7 @@ def write_report_md(data: PlotData, path: Path) -> None:
         "",
         "- No speedup, throughput, latency, tokens/sec, or VRAM savings.",
         "- No production serving or model accuracy improvement.",
-        "- Leaderboard lists Shard as restricted external-drafter probe (Exp 039–040), not integrated compressor.",
+        "- Leaderboard lists Shard as restricted external-drafter probe (Exp 039–041), not integrated compressor.",
         "",
         "## 14. Limitations",
         "",

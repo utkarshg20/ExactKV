@@ -21,7 +21,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Span verification passed exactness grid | Exp 029 | “600-cell span grid: `exactkv_failures == 0`; span ≡ sequential on exactness.” |
 | Terminal demo shows verified semantic drift correction | Exp 034b / `pharm_001` | **Primary** replay: lossy `drop` rejected, verifier `pickup` committed |
 | LongBench-style outcome-green drift demo (secondary) | Exp 037 / `lb_md_001` | LongBench-**style** only; transparent heuristic; not official LongBench score |
-| Shard restricted external-drafter probe | Exp 039–040 RunPod | 32-prompt stress + 5-setting ablation; divergence rates reported; **not** integration claim |
+| Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |
 | Sequential verification is default | Code + docs | Default path; span is optional / non-default |
@@ -51,7 +51,7 @@ Do **not** use these in README, visuals, demos, leaderboard, release notes, or s
 | **Production serving** | Exp 017: sidecar probe only; no integration |
 | **vLLM / LMCache / PagedAttention integration** | D11/D12/D16: no-go or deferred |
 | **Model accuracy improvement** | ExactKV preserves greedy output; does not improve model quality |
-| **Shard restricted external-drafter metrics** | Exp 039–040 leaderboard tier; accepted-prefix mean + divergence rate; **not** full-panel compressor acceptance |
+| **Shard restricted external-drafter metrics** | Exp 039–041 leaderboard tier; accepted-prefix mean + divergence rate; Exp 041 combined 56.25%; **not** full-panel compressor acceptance |
 | **Shard ExactKV integration** | External drafter probe only — not default registry |
 | **Official LongBench score** | Not run; Exp 037 is LongBench-**style** heuristic only |
 | **SpectralQuant ExactKV results** | Not integrated |

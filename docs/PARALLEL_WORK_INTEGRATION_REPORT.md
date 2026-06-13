@@ -60,13 +60,14 @@ No generation logic, verification logic, compressors, or new benchmarks were add
 
 | Field | Value |
 |---|---|
-| Experiment | Exp 038–040 — Shard external-drafter probe + stress + ablation |
+| Experiment | Exp 038–041 — Shard external-drafter probe + stress + ablation + combined stress |
 | Integration | **Not** a default ExactKV compressor |
 | Feasibility (038) | **`pass`** — 4-prompt × 16-token |
 | Stress panel (039) | **`pass`** — 6/32 divergences; `exactkv_failures=0` |
 | Ablation (040) | **`pass`** — length 128 ↑ drift to 31%; `stream_bits=4` modest ↑; all `exactkv_failures=0` |
-| Recommendation | **`expand_shard_lossy_ablation`** — continue bounded Shard; consider SpectralQuant in parallel |
-| Next step | Optional `stream_bits=4` + `max_new_tokens=128`; still no registry entry |
+| Combined stress (041) | **`pass`** — stream_bits=4 + 128tok: **18/32 divergences (56.25%)**; `exactkv_failures=0` |
+| Recommendation | **`stop_shard_bounded_probe_complete`** — bounded probe done; **move to SpectralQuant** |
+| Next step | No further Shard ablation on this panel; SpectralQuant Mode B feasibility |
 
 Shard README throughput/memory numbers are **external results**, not ExactKV results.
 
@@ -79,9 +80,9 @@ Shard README throughput/memory numbers are **external results**, not ExactKV res
 | `scripts/exactkv_leaderboard.py` | ✅ `--plain`, `--summary`, `--watch --once --plain` |
 | `docs/leaderboard.md` | ✅ Tiered (FULL / RESTRICTED / SMOKE / FUTURE) |
 | `docs/leaderboard.html` | ✅ Present |
-| **Shard** | ✅ **RESTRICTED BACKEND** — external-drafter probe (Exp 039–040); not future candidate |
+| **Shard** | ✅ **RESTRICTED BACKEND** — external-drafter probe (Exp 039–041); bounded probe complete |
 | **SpectralQuant** | ✅ **FUTURE CANDIDATE** — no ExactKV panel metrics yet |
-| Tier caveats | ✅ No cross-tier ranking; Shard in RESTRICTED BACKEND (Exp 039–040); SpectralQuant future |
+| Tier caveats | ✅ No cross-tier ranking; Shard in RESTRICTED BACKEND (Exp 039–041); SpectralQuant future |
 | Claims | ✅ No speedup / VRAM / serving headlines |
 
 ---

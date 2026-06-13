@@ -464,7 +464,7 @@ def write_leaderboard_md(entries: list[LeaderboardEntry], path: Path) -> None:
         "- Tiers prevent apples-to-oranges ranking (full panel vs smoke vs restricted).",
         "- **TurboQuant / KIVI / KVQuant** are factory-only restricted adapters.",
         "- **SnapKV experimental** is smoke-only (8 cells).",
-        "- **Shard** has restricted external-drafter probe results under ExactKV verification (Exp 039–040) — not a full-panel integrated compressor.",
+        "- **Shard** has restricted external-drafter probe results under ExactKV verification (Exp 039–041) — not a full-panel integrated compressor.",
         "- **SpectralQuant** remains a future candidate without ExactKV panel numbers.",
         "- External Shard, SpectralQuant, SnapKV paper, or kvpress results are **not** ExactKV results.",
         "- Regenerate: `python3 scripts/exactkv_leaderboard.py --md --html`",

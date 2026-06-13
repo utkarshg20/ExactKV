@@ -126,6 +126,7 @@ def test_leaderboard_md_shard_restricted_not_future(generated: None) -> None:
     assert "58.22/64" in text or "0.911" in text
     assert "18.75%" in text or "6 draft divergences" in text
     assert "31.25%" in text
+    assert "56.25%" in text or "Exp 041" in text
     # Shard must not appear under Future candidates table
     future_idx = text.find("## Future candidates")
     restricted_idx = text.find("## Restricted backends")

@@ -60,7 +60,7 @@ ExactKV Leaderboard ranks integrated compressors by token-level acceptance and e
 | TurboQuant llama.cpp probe | Qwen2.5-0.5B · 10-prompt external probe | 0.486 | — | Exp 022 | RESTRICTED | HF verifier probe accept; not standard ExactKV compressor panel; no_go integration |
 | KIVI offline | Qwen2.5-0.5B · V9 core (272 cells) | 0.012 | 0 | Exp 009 | RESTRICTED, NO REAL-BYTE CLAIM | offline adapter; not KIVI CUDA/Triton production path |
 | KIVI offline | Qwen2.5-0.5B · harder-category spotcheck | 0.019 | 0 | Exp 014 | RESTRICTED, NO REAL-BYTE CLAIM | subset panel; compare to Exp 009 anchor 0.012 |
-| Shard external-drafter probe | Llama-3.1-8B · 32-prompt external probe | 0.910 | 0 | Exp 039–040 | RESTRICTED, EXTERNAL DRAFTER, LLAMA ONLY, NOT DEFAULT, NO SPEED CLAIM, NO MEMORY CLAIM | Exp 039: 32 prompts @64tok, 6 draft divergences (18.75%), accepted-prefix mean 58.22/64, exactkv_failures=0. Exp 040: 5-setting ablation, max divergence 31.25% (length_128tok), stream_bits=4 at 25%, all exactkv_failures=0. Restricted external-drafter metrics — not full-panel compressor acceptance. External Shard README not ExactKV. |
+| Shard external-drafter probe | Llama-3.1-8B · 32-prompt external probe | 0.910 | 0 | Exp 039–041 | RESTRICTED, EXTERNAL DRAFTER, LLAMA ONLY, NOT DEFAULT, NO SPEED CLAIM, NO MEMORY CLAIM | Exp 039: 32 prompts @64tok, 6 draft divergences (18.75%), accepted-prefix mean 58.22/64, exactkv_failures=0. Exp 040: 5-setting ablation, max single-knob divergence 31.25% (length_128tok), stream_bits=4 at 25%, all exactkv_failures=0. Exp 041: combined stream_bits=4 + 128tok, 18 divergences (56.25%), exactkv_failures=0. Restricted external-drafter metrics — not full-panel compressor acceptance. External Shard README not ExactKV. |
 
 ## Smoke-only adapters
 
@@ -79,7 +79,7 @@ ExactKV Leaderboard ranks integrated compressors by token-level acceptance and e
 - Tiers prevent apples-to-oranges ranking (full panel vs smoke vs restricted).
 - **TurboQuant / KIVI / KVQuant** are factory-only restricted adapters.
 - **SnapKV experimental** is smoke-only (8 cells).
-- **Shard** has restricted external-drafter probe results under ExactKV verification (Exp 039–040) — not a full-panel integrated compressor.
+- **Shard** has restricted external-drafter probe results under ExactKV verification (Exp 039–041) — not a full-panel integrated compressor.
 - **SpectralQuant** remains a future candidate without ExactKV panel numbers.
 - External Shard, SpectralQuant, SnapKV paper, or kvpress results are **not** ExactKV results.
 - Regenerate: `python3 scripts/exactkv_leaderboard.py --md --html`

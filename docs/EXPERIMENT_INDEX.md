@@ -60,6 +60,7 @@ under `reports/`.
 | 038 | Shard external-drafter probe | [`EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md`](EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md) | Mode B feasibility; RunPod L40S `--try-run` | 4-prompt panel | `pass` / `restricted_go` | 0 failures on panel | Not integrated; external drafter only |
 | 039 | Shard external stress panel | [`EXPERIMENT_039_SHARD_EXTERNAL_STRESS_PANEL.md`](EXPERIMENT_039_SHARD_EXTERNAL_STRESS_PANEL.md) | 32-prompt × 64-token RunPod stress panel | 32 prompts | `pass` / `restricted_go_with_divergence` | 0 exactkv_failures; 6 draft divergences | Mode B only; not integrated |
 | 040 | Shard ablation (length + lossiness) | [`EXPERIMENT_040_SHARD_EXTERNAL_ABLATION.md`](EXPERIMENT_040_SHARD_EXTERNAL_ABLATION.md) | 5 settings × 32-prompt panel | 32 prompts/setting | `pass` / `expand_shard_lossy_ablation` | 0 exactkv_failures all settings | Length 128 ↑ drift; stream_bits=4 modest ↑ |
+| 041 | Shard combined stress | [`EXPERIMENT_041_SHARD_COMBINED_STRESS.md`](EXPERIMENT_041_SHARD_COMBINED_STRESS.md) | stream_bits=4 + 128tok combined | 32 prompts | `pass` / `stop_shard_bounded_probe_complete` | 0 exactkv_failures; 18 draft divergences (56.25%) | Combined lossy + long gen >> single-knob drift |
 
 ---
 
@@ -106,6 +107,7 @@ under `reports/`.
 | 038 Shard probe | `bash scripts/research/exp038_shard_probe_runpod.sh` (RunPod; `HF_TOKEN` + `SHARD_REPO_PATH=/root/shard`) |
 | 039 Shard stress | `bash scripts/research/exp039_shard_stress_runpod.sh` (RunPod; `HF_TOKEN` + `SHARD_REPO_PATH=/root/shard`) |
 | 040 Shard ablation | `bash scripts/research/exp040_shard_ablation_runpod.sh` (RunPod; `HF_TOKEN` + `SHARD_REPO_PATH=/root/shard`) |
+| 041 Shard combined stress | `bash scripts/research/exp041_shard_combined_stress_runpod.sh` (RunPod; `SHARD_REPO_PATH=/root/shard`; cached Llama) |
 | 035 leaderboard | `python3 scripts/exactkv_leaderboard.py` |
 | 9A audit | Review [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md) · [`PRELAUNCH_HARDENING_PLAN.md`](PRELAUNCH_HARDENING_PLAN.md) |
 | 035 | `python3 scripts/visualize_experiment_035.py` |
