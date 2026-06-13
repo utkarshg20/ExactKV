@@ -79,7 +79,9 @@ Shard README throughput/memory numbers are **external results**, not ExactKV res
 | `scripts/exactkv_leaderboard.py` | ✅ `--plain`, `--summary`, `--watch --once --plain` |
 | `docs/leaderboard.md` | ✅ Tiered (FULL / RESTRICTED / SMOKE / FUTURE) |
 | `docs/leaderboard.html` | ✅ Present |
-| Tier caveats | ✅ No cross-tier ranking; restricted/smoke/future labeled |
+| **Shard** | ✅ **RESTRICTED BACKEND** — external-drafter probe (Exp 039–040); not future candidate |
+| **SpectralQuant** | ✅ **FUTURE CANDIDATE** — no ExactKV panel metrics yet |
+| Tier caveats | ✅ No cross-tier ranking; Shard in RESTRICTED BACKEND (Exp 039–040); SpectralQuant future |
 | Claims | ✅ No speedup / VRAM / serving headlines |
 
 ---

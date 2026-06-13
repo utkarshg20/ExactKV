@@ -43,6 +43,8 @@ def test_leaderboard_script_exits_zero(generated: None) -> None:
         "No speedup, memory savings, or serving claims",
         "FULL · REAL-BYTE",
         "RESTRICTED ·",
+        "EXTERNAL DRAFTER",
+        "Shard external-drafter",
         "SMOKE]",
     ],
 )
@@ -114,6 +116,55 @@ def test_leaderboard_html_exists(generated: None) -> None:
     assert "SIMULATED" in text
     assert "REAL-BYTE" in text
     assert "No speedup, memory savings, or serving claims" in text
+
+
+def test_leaderboard_md_shard_restricted_not_future(generated: None) -> None:
+    text = (_ROOT / "docs" / "leaderboard.md").read_text(encoding="utf-8")
+    assert "Shard external-drafter probe" in text
+    assert "RESTRICTED BACKEND" in text or "Restricted backends" in text
+    assert "EXTERNAL DRAFTER" in text or "external drafter probe" in text
+    assert "58.22/64" in text or "0.911" in text
+    assert "18.75%" in text or "6 draft divergences" in text
+    assert "31.25%" in text
+    # Shard must not appear under Future candidates table
+    future_idx = text.find("## Future candidates")
+    restricted_idx = text.find("## Restricted backends")
+    shard_in_restricted = text[restricted_idx:future_idx].find("Shard external-drafter probe") >= 0
+    assert shard_in_restricted
+    if future_idx >= 0:
+        future_section = text[future_idx:]
+        assert "Shard external-drafter probe" not in future_section
+    assert "SpectralQuant" in text
+    assert "FUTURE" in text
+
+
+def test_leaderboard_shard_caveat_language(generated: None) -> None:
+    text = (_ROOT / "docs" / "leaderboard.md").read_text(encoding="utf-8").lower()
+    assert "not full-panel compressor acceptance" in text
+    assert "external shard readme not exactkv" in text
+    forbidden = [
+        "shard is integrated",
+        "shard improves memory",
+        "shard improves speed",
+        "shard is production-ready",
+        "shard is an exactkv compressor",
+    ]
+    for phrase in forbidden:
+        assert phrase not in text
+
+
+def test_leaderboard_html_shard_restricted(generated: None) -> None:
+    text = (_ROOT / "docs" / "leaderboard.html").read_text(encoding="utf-8")
+    assert "Shard external-drafter probe" in text
+    assert 'data-tab="restricted"' in text
+    assert "EXTERNAL DRAFTER" in text
+    assert "SpectralQuant" in text
+    assert 'data-tab="future"' in text
+    # Future tab should not list Shard probe row
+    future_start = text.find('id="tab-future"')
+    assert future_start >= 0
+    future_panel = text[future_start : future_start + 2500]
+    assert "Shard external-drafter probe" not in future_panel
 
 
 def test_html_has_no_positive_speedup_claims(generated: None) -> None:

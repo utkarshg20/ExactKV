@@ -774,7 +774,10 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 | 8e | Terminal-native crash-test demo (Exp 034b) | ✅ [`EXACTKV_TERMINAL_CRASH_TEST.md`](EXACTKV_TERMINAL_CRASH_TEST.md) |
 | 9B | Prelaunch hardening infrastructure | ✅ [`PRELAUNCH_HARDENING_REPORT.md`](PRELAUNCH_HARDENING_REPORT.md) |
 | 10A | LongBench-style drift demo (Exp 037) | ✅ [`EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md`](EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md) — **secondary** demo |
-| 10B | Shard external-drafter probe (Exp 038) | ✅ [`EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md`](EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md) — RunPod `pass`; `restricted_go` |
+| 10B | Shard external-drafter probe (Exp 038) | ✅ [`EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md`](EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md) |
+| 10B2 | Shard stress panel (Exp 039) | ✅ [`EXPERIMENT_039_SHARD_EXTERNAL_STRESS_PANEL.md`](EXPERIMENT_039_SHARD_EXTERNAL_STRESS_PANEL.md) |
+| 10B3 | Shard ablation (Exp 040) | ✅ [`EXPERIMENT_040_SHARD_EXTERNAL_ABLATION.md`](EXPERIMENT_040_SHARD_EXTERNAL_ABLATION.md) |
+| 10C | Shard leaderboard integration | ✅ RESTRICTED BACKEND tier in [`leaderboard.md`](leaderboard.md) |
 | 10C | Parallel work integration | ✅ [`PARALLEL_WORK_INTEGRATION_REPORT.md`](PARALLEL_WORK_INTEGRATION_REPORT.md) |
 | 9C | Launch validation & should-fix | Planned |
 | 9 | V13 completion / launch decision | **Deferred** |

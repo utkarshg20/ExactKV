@@ -90,7 +90,7 @@ See [`EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md`](EXPERIMENT_035_VISUAL_PLO
 - Speedup, throughput, latency, tokens/sec, or runtime improvement.
 - Active GPU memory savings or production serving readiness.
 - Model accuracy improvement.
-- Shard/SpectralQuant as integrated ExactKV results.
+- Shard has restricted external-drafter probe results (Exp 039–040) in leaderboard RESTRICTED BACKEND tier — not integrated compressor results.
 
 ## 9. Suggested launch use
 

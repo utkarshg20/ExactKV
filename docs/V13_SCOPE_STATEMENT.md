@@ -45,7 +45,7 @@
 | **9** | V13 completion / launch decision | **Deferred** — until 9C validation |
 | **10A** | LongBench-style drift demo (Exp 037) | **Complete** — [`EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md`](EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md); **secondary** terminal demo; bounded CPU search |
 | **10B** | Shard external-drafter probe (Exp 038) | **Complete (restricted_go)** — RunPod L40S pass; 4-prompt panel; BOS harness fix — [`EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md`](EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md) |
-| **10C** | Parallel work integration checkpoint | **Complete** — [`PARALLEL_WORK_INTEGRATION_REPORT.md`](PARALLEL_WORK_INTEGRATION_REPORT.md) |
+| **10C** | Shard leaderboard integration (Exp 039–040) | **Complete** — RESTRICTED BACKEND tier; external-drafter metrics — [`leaderboard.md`](leaderboard.md) |
 
 **Latest tagged release:** `v0.11.0`. `v0.13.0-rc` research preview is a **future possibility only** — not approved. V12 substance (Exp 021–027) may ship as `v0.12.0` after Phase 8 without public v1.0.0.
 
