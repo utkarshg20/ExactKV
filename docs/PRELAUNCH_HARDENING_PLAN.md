@@ -1,7 +1,6 @@
 # Prelaunch Hardening Plan (V13 Phase 9B)
 
-**Status:** Planned — **do not start public launch until must-fix items pass**  
-**Prerequisite:** [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md) (Phase 9A)
+**Status:** Phase 9B infrastructure **complete** — see [`PRELAUNCH_HARDENING_REPORT.md`](PRELAUNCH_HARDENING_REPORT.md). Launch **still blocked** pending clean-clone validation.
 
 > This is an internal execution plan, not a launch announcement.
 > Public launch remains **deferred**.
@@ -24,24 +23,24 @@
 
 | # | Item | Why it matters | Effort | Risk | Owner / status | Required before launch? |
 |---|---|---|---|---|---|---|
-| 1 | **Clean install instructions** | Outsiders must reproduce without maintainer help | M | Low | Planned | **Yes** |
-| 2 | **One-command smoke test** | Fast CI/local gate after clone | M | Low | Planned | **Yes** |
-| 3 | **One-command terminal demo** | Primary “aha” moment; already exists, needs README prominence | S | Low | Script ✅; docs ⏳ | **Yes** |
-| 4 | **One-command leaderboard** | Shows crash-test lab credibility | S | Low | Script ✅; docs ⏳ | **Yes** |
-| 5 | **Claims audit pass** | Prevents overclaim on launch | M | **High** if skipped | [`CLAIMS_AUDIT.md`](CLAIMS_AUDIT.md) drafted ✅; grep pass ⏳ | **Yes** |
-| 6 | **README narrative cleanup** | Current README is research-dense | L | Med | Planned | **Yes** |
-| 7 | **No broken links/assets** | Broken hero links destroy trust | S | Med | Planned | **Yes** |
-| 8 | **Raw report commit guard** | Accidental `reports/*.json` leaks data noise | S | Low | `.gitignore` ✅; CI check ⏳ | **Yes** |
+| 1 | **Clean install instructions** | Outsiders must reproduce without maintainer help | M | Low | **Done** — [`INSTALL.md`](INSTALL.md) | **Yes** |
+| 2 | **One-command smoke test** | Fast CI/local gate after clone | M | Low | **Done** — `scripts/smoke_test.sh` | **Yes** |
+| 3 | **One-command terminal demo** | Primary “aha” moment | S | Low | **Done** — README + `make demo` | **Yes** |
+| 4 | **One-command leaderboard** | Shows crash-test lab credibility | S | Low | **Done** — README + `make leaderboard` | **Yes** |
+| 5 | **Claims audit pass** | Prevents overclaim on launch | M | **High** if skipped | **Done** — `audit_public_claims.py` (public files) | **Yes** |
+| 6 | **README narrative cleanup** | Current README is research-dense | L | Med | **Partial** — top quick-start only | **Yes** |
+| 7 | **No broken links/assets** | Broken hero links destroy trust | S | Med | **Done** — `check_docs_links.py` | **Yes** |
+| 8 | **Raw report commit guard** | Accidental `reports/*.json` leaks | S | Low | **Done** — `check_report_hygiene.py` | **Yes** |
 | 9 | **Terminal demo screen recording** | Shard/TurboQuant-quality launch clip | M | Low | Script ✅; `.cast` ⏳ | No (should-fix) |
-| 10 | **HTML leaderboard polish** | Mobile, a11y, README link | M | Low | v1 ✅; polish ⏳ | No (should-fix) |
+| 10 | **HTML leaderboard polish** | Mobile, a11y, README link | M | Low | **Done** — terminal dashboard + `--summary`/`--watch` | No (should-fix) |
 | 11 | **Limitations page** | Single “what we are not” for outsiders | M | Low | Planned | No (should-fix) |
-| 12 | **LongBench-style drift demo** | Familiar benchmark score-preserving story | L | Med | Not started | No (should-fix) |
+| 12 | **LongBench-style drift demo** | Familiar benchmark score-preserving story | L | Med | **Done** — Exp 037; **secondary** demo | No (should-fix) |
 | 13 | **Release notes (research preview)** | Document what shipped in preview tag | M | Low | Planned | No (should-fix) |
 | 14 | **Release candidate tag** | `v0.12.0` or `v0.13.0-rc` — **not v1.0.0** | S | Med | Deferred | No |
 | 15 | **Speed / runtime path** | Exp 030 shows gap | XL | High | Future work | No |
 | 16 | **Compressed-active KV / VRAM** | Exp 031 shows gap | XL | High | Future work | No |
 | 17 | **Serving integration** | Exp 017 no-go | XL | High | Deferred | No |
-| 18 | **Shard / SpectralQuant adapters** | Feasibility only | L | Med | Deferred | No |
+| 18 | **Shard external-drafter probe** | Exp 038 feasibility | L | Med | **Blocked locally** — RunPod `--try-run` pending | No |
 | 19 | **SnapKV full-suite** | Smoke-only today | L | Med | Deferred | No |
 | 20 | **Broader Llama/Mistral panels** | Beyond Exp 033 small suite | L | Med | Deferred | No |
 

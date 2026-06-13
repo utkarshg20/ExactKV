@@ -14,11 +14,11 @@ Companion: [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md) · [
 Run from repository root after install:
 
 ```bash
-python3 scripts/exactkv_terminal_crash_test.py --no-delay --plain
-python3 scripts/exactkv_leaderboard.py --plain
-python3 scripts/visualize_experiment_035.py
-python3 scripts/render_public_visuals_036.py
-pytest tests/test_exactkv_terminal_crash_test.py tests/test_exactkv_leaderboard.py -q
+bash scripts/smoke_test.sh
+make audit
+python3 scripts/audit_public_claims.py
+python3 scripts/check_docs_links.py
+python3 scripts/check_report_hygiene.py --require-public
 ```
 
 ### Expected outcomes
@@ -114,14 +114,15 @@ If `reports/*.csv` are missing locally, regenerate from experiment scripts (GPU)
 
 ---
 
-## 7. One-command entry points (target for Phase 9B)
+## 7. One-command entry points (Phase 9B)
 
-| Goal | Current command | Phase 9B target |
-|---|---|---|
-| Smoke test | `pytest tests/test_exactkv_terminal_crash_test.py tests/test_exactkv_leaderboard.py -q` | `make smoke` or `scripts/smoke_test.sh` |
-| Terminal demo | `python3 scripts/exactkv_terminal_crash_test.py` | Same; add to README top |
-| Leaderboard | `python3 scripts/exactkv_leaderboard.py` | Same |
-| Full test suite | `TRANSFORMERS_OFFLINE=1 pytest tests/ -q` | Document expected time |
+| Goal | Command |
+|---|---|
+| Smoke test | `bash scripts/smoke_test.sh` or `make smoke` |
+| Terminal demo | `python3 scripts/exactkv_terminal_crash_test.py --speed fast` or `make demo` |
+| Leaderboard | `python3 scripts/exactkv_leaderboard.py` or `make leaderboard` |
+| Prelaunch audits | `make audit` |
+| Full test suite (needs model weights) | `TRANSFORMERS_OFFLINE=1 pytest tests/ -q` |
 
 ---
 

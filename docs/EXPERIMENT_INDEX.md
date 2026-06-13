@@ -55,6 +55,9 @@ under `reports/`.
 | 035 | Visual plots + leaderboard | [`EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md`](EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md) | PNG package + [`leaderboard.md`](leaderboard.md) from existing reports | — (viz) | Aggregates V10–V13 exactness/acceptance/divergence; diagnostic timing/memory charts | 0 | Visualization only; not a new benchmark |
 | 036 | Public visual polish | [`PUBLIC_VISUAL_PACKAGE.md`](PUBLIC_VISUAL_PACKAGE.md) | Launch-ready `public_*.png` cards from Exp 035 data | — (viz) | Hero, killer demo, exactness wall, leaderboard, timing/memory truth | 0 | Public-facing; Exp 035 figures remain internal |
 | 036b | Crash-test video (optional) | [`EXACTKV_CRASH_TEST_VIDEO.md`](EXACTKV_CRASH_TEST_VIDEO.md) | 120s cinematic MP4 from Exp 034 trace | — (replay) | Lossy `}}` rejected → `metric`; V13 proof + honesty cards | 0 | Optional rendered artifact; terminal demo is primary |
+| 037 | LongBench-style drift demo | [`EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md`](EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md) | Bounded score-preserving drift search + secondary terminal demo | 60 searched | `lb_md_001` × `int4_sim`; `billing` rejected → `answer`; outcome heuristic green on all lanes | 0 | LongBench-**style** only; not official LongBench; CPU 0.5B bounded search |
+| 037 live | LongBench-style terminal demo | [`EXACTKV_TERMINAL_LONGBENCH_DRIFT.md`](EXACTKV_TERMINAL_LONGBENCH_DRIFT.md) | **Secondary** replay: outcome green, token path drifted | — (replay) | Multi-doc QA trace; complements pharmacy demo | 0 | Not timing/memory; not official LongBench |
+| 038 | Shard external-drafter probe | [`EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md`](EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md) | Mode B feasibility; RunPod L40S `--try-run` | 4-prompt panel | `pass` / `restricted_go` | 0 failures on panel | Not integrated; external drafter only |
 
 ---
 
@@ -96,6 +99,9 @@ under `reports/`.
 | 034b search | `TRANSFORMERS_OFFLINE=1 python3 scripts/search_experiment_034b_semantic_correction_demo.py --skip-v10` |
 | 034b live | `python3 scripts/demo_exactkv_live_correction.py` |
 | 034c terminal | `python3 scripts/exactkv_terminal_crash_test.py` |
+| 037 search | `python3 scripts/search_longbench_style_drift_demo.py --device cpu --dtype float32` |
+| 037 terminal | `python3 scripts/exactkv_terminal_longbench_drift.py` |
+| 038 Shard probe | `bash scripts/research/exp038_shard_probe_runpod.sh` (RunPod; `HF_TOKEN` + `SHARD_REPO_PATH=/root/shard`) |
 | 035 leaderboard | `python3 scripts/exactkv_leaderboard.py` |
 | 9A audit | Review [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md) · [`PRELAUNCH_HARDENING_PLAN.md`](PRELAUNCH_HARDENING_PLAN.md) |
 | 035 | `python3 scripts/visualize_experiment_035.py` |

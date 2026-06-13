@@ -19,7 +19,9 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Compressed KV used as draft state | Core architecture | “Lossy compressed KV proposes draft tokens only.” |
 | Full-KV verifier preserves exact greedy output | Tested panels only | “On cited panels, final ExactKV output matches full greedy exactly.” |
 | Span verification passed exactness grid | Exp 029 | “600-cell span grid: `exactkv_failures == 0`; span ≡ sequential on exactness.” |
-| Terminal demo shows verified semantic drift correction | Exp 034b / `pharm_001` | “Replay of verified trace: lossy `drop` rejected, verifier `pickup` committed.” |
+| Terminal demo shows verified semantic drift correction | Exp 034b / `pharm_001` | **Primary** replay: lossy `drop` rejected, verifier `pickup` committed |
+| LongBench-style outcome-green drift demo (secondary) | Exp 037 / `lb_md_001` | LongBench-**style** only; transparent heuristic; not official LongBench score |
+| Shard probe restricted_go status | Exp 038 RunPod | `pass` on 4-prompt panel; full greedy agreement; **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |
 | Sequential verification is default | Code + docs | Default path; span is optional / non-default |
@@ -49,7 +51,8 @@ Do **not** use these in README, visuals, demos, leaderboard, release notes, or s
 | **Production serving** | Exp 017: sidecar probe only; no integration |
 | **vLLM / LMCache / PagedAttention integration** | D11/D12/D16: no-go or deferred |
 | **Model accuracy improvement** | ExactKV preserves greedy output; does not improve model quality |
-| **Shard ExactKV results** | Not integrated; external drafter only |
+| **Shard ExactKV results** | Probe pass (Exp 038); 4-prompt panel only — no speedup/serving claims |
+| **Official LongBench score** | Not run; Exp 037 is LongBench-**style** heuristic only |
 | **SpectralQuant ExactKV results** | Not integrated |
 | **SnapKV full-suite performance** | Smoke-only (8 cells) |
 | **SnapKV ranked vs INT8 full panel** | Apples-to-oranges; tiers forbid this |
@@ -82,7 +85,8 @@ Include at least one of these near any public demo, leaderboard, or results tabl
 |---|---|
 | `README.md` | No forbidden claims; launch deferred stated |
 | `docs/leaderboard.md` / `.html` | Tiers visible; no cross-tier ranking headline |
-| `scripts/exactkv_terminal_crash_test.py` | Replay only; disclaimers in doc |
+| `scripts/exactkv_terminal_crash_test.py` | **Primary** replay; disclaimers in doc |
+| `scripts/exactkv_terminal_longbench_drift.py` | **Secondary** replay; LongBench-style disclaimer required |
 | `docs/PUBLIC_VISUAL_PACKAGE.md` | Timing/memory cards labeled diagnostic |
 | `public_*.png` | No speedup/VRAM headline |
 | `docs/EXPERIMENT_*.md` | Per-experiment scope and forbidden footer |
@@ -105,7 +109,8 @@ Include at least one of these near any public demo, leaderboard, or results tabl
 | Item | Status |
 |---|---|
 | Claims audit document | ✅ Created (Phase 9A) |
-| Full repo grep pass | ⏳ Phase 9B |
-| README sign-off | ⏳ Phase 9B |
-| Visual package sign-off | ⏳ Phase 9B |
+| Full repo grep pass | ✅ Phase 9B + 10C (`audit_public_claims.py` PASSED) |
+| README sign-off | ✅ Primary/secondary demo hierarchy documented |
+| Visual package sign-off | ⏳ |
+| Parallel work integration | ✅ Phase 10C — [`PARALLEL_WORK_INTEGRATION_REPORT.md`](PARALLEL_WORK_INTEGRATION_REPORT.md) |
 | Launch approval | ❌ **Not granted** |

@@ -8,8 +8,10 @@ from __future__ import annotations
 
 import argparse
 import html
+import io
 import json
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, TextIO
@@ -37,13 +39,30 @@ from scripts.visualize_experiment_035 import (  # noqa: E402
 
 _TITLE = "KV Compression Crash-Test Leaderboard"
 _SUBTITLE = (
-    "Compressors ranked by token-level acceptance, first divergence, and exactness "
-    "under full-KV verification."
+    "Compressors ranked by acceptance and exactness under full-KV verification"
+)
+_FOOTER = (
+    "No speedup, memory savings, or serving claims. "
+    "ExactKV measures behavioral equivalence to full KV."
 )
 _DISCLAIMER = (
     "Not a speed leaderboard. ExactKV measures when lossy KV drafts start lying — "
     "not throughput, latency, or production readiness."
 )
+_NOT_APPLES = (
+    "Tiers are not apples-to-apples: full-panel compressors are ranked; "
+    "restricted backends, smoke-only adapters, and future candidates are separate."
+)
+
+_TIER_SECTIONS = [
+    (TIER_FULL_PANEL, "FULL PANEL", "Ranked compressors on integrated full/large panels."),
+    (TIER_REPAIR, "REPAIR POLICY", "Adaptive repair policies — not default compressors."),
+    (TIER_RESTRICTED, "RESTRICTED BACKEND", "Factory-only or probe adapters — separate tier."),
+    (TIER_SMOKE, "SMOKE ONLY", "Smoke adapters — not ranked against full-panel compressors."),
+    (TIER_FUTURE, "FUTURE CANDIDATE", "Candidates without ExactKV panel metrics yet."),
+]
+
+_WATCH_INTERVAL_SEC = 4
 
 _TIER_TAB_ORDER = [
     (TIER_FULL_PANEL, "full-suite", "Full-suite integrated"),
@@ -91,10 +110,10 @@ def panel_scope(entry: LeaderboardEntry) -> str:
 def entry_badges(entry: LeaderboardEntry) -> list[str]:
     badges: list[str] = []
     tier_badge = {
-        TIER_FULL_PANEL: "FULL PANEL",
-        TIER_REPAIR: "REPAIR POLICY",
+        TIER_FULL_PANEL: "FULL",
+        TIER_REPAIR: "REPAIR",
         TIER_RESTRICTED: "RESTRICTED",
-        TIER_SMOKE: "SMOKE ONLY",
+        TIER_SMOKE: "SMOKE",
         TIER_FUTURE: "FUTURE",
     }.get(entry.tier, entry.tier)
     badges.append(tier_badge)
@@ -103,23 +122,75 @@ def entry_badges(entry: LeaderboardEntry) -> list[str]:
     caveat_l = entry.caveat.lower()
     method_l = entry.method.lower()
 
-    if (
+    simulated = (
         "sim" in method_l
         or "sim " in status_l
         or "simquant" in caveat_l
         or "sim asymmetric" in status_l
-    ):
+    )
+    if simulated:
         badges.append("SIMULATED")
 
-    if "supports_real_bytes_claim=false" in caveat_l.replace(" ", ""):
+    no_real_byte = (
+        "supports_real_bytes_claim=false" in caveat_l.replace(" ", "")
+        or (entry.tier == TIER_RESTRICTED and "factory-only" in status_l)
+    )
+    if no_real_byte:
         badges.append("NO REAL-BYTE CLAIM")
-    elif entry.tier == TIER_RESTRICTED and "factory-only" in status_l:
-        badges.append("NO REAL-BYTE CLAIM")
+    elif entry.tier in (TIER_FULL_PANEL, TIER_REPAIR) and not simulated:
+        badges.append("REAL-BYTE")
 
     if entry.tier == TIER_FUTURE:
         badges.append("NOT INTEGRATED")
 
     return badges
+
+
+def _fmt_badges(badges: list[str], *, plain: bool = False) -> str:
+    if plain:
+        return "[" + " · ".join(badges) + "]"
+    return " ".join(f"[{b}]" for b in badges)
+
+
+def _emit_title_block(emit: Any, *, plain: bool) -> None:
+    if plain:
+        emit("EXACTKV CRASH-TEST LEADERBOARD")
+        emit(_SUBTITLE)
+        emit("")
+        return
+    width = 72
+    bar = "═" * (width - 2)
+    emit(f"╔{bar}╗")
+    title = "EXACTKV CRASH-TEST LEADERBOARD"
+    emit(f"║ {title.center(width - 4)} ║")
+    sub = _SUBTITLE
+    if len(sub) > width - 6:
+        words = sub.split()
+        line = ""
+        for word in words:
+            chunk = (line + " " + word).strip()
+            if len(chunk) > width - 6:
+                emit(f"║ {line.ljust(width - 4)} ║")
+                line = word
+            else:
+                line = chunk
+        if line:
+            emit(f"║ {line.ljust(width - 4)} ║")
+    else:
+        emit(f"║ {sub.center(width - 4)} ║")
+    emit(f"╚{bar}╝")
+    emit("")
+
+
+def _emit_section_header(emit: Any, title: str, hint: str, *, plain: bool) -> None:
+    if plain:
+        emit(f"── {title} ──")
+        emit(f"   {hint}")
+    else:
+        emit(f"┌─ {title} " + "─" * max(0, 68 - len(title)))
+        emit(f"│  {hint}")
+        emit("└" + "─" * 70)
+    emit("")
 
 
 def _terminal_table(
@@ -153,94 +224,171 @@ def render_terminal(
     *,
     out: TextIO | None = None,
     plain: bool = False,
+    watch: bool = False,
 ) -> str:
     if out is None:
         out = sys.stdout
+    buf = io.StringIO()
     lines: list[str] = []
     by_tier = _entries_by_tier(entries)
 
     def emit(text: str = "") -> None:
         lines.append(text)
         print(text, file=out)
+        print(text, file=buf)
 
-    emit("EXACTKV CRASH-TEST LEADERBOARD")
-    emit(_SUBTITLE)
-    emit("")
+    if watch and not plain:
+        print("\033[2J\033[H", end="", file=out)
+
+    _emit_title_block(emit, plain=plain)
     emit("> " + PUBLIC_TAGLINE.replace("\n", "\n> "))
     emit("")
-
-    # --- FULL PANEL ---
-    emit("FULL PANEL RESULTS")
-    full_rows = by_tier.get(TIER_FULL_PANEL, [])
-    table_rows = [
-        [
-            e.method,
-            short_model(e.model_panel),
-            _fmt_acc(e.mean_acceptance),
-            _fmt_fail(e.exactkv_failures),
-            panel_scope(e),
-        ]
-        for e in full_rows
-    ]
-    for row in _terminal_table(
-        ["Compressor", "Model", "Acceptance", "Failures", "Status"],
-        table_rows,
-        [14, 12, 10, 10, 8],
-    ):
-        emit(row)
+    emit(_NOT_APPLES)
     emit("")
 
-    # --- RESTRICTED ---
-    emit("RESTRICTED BACKENDS")
-    restricted = by_tier.get(TIER_RESTRICTED, [])
-    if restricted:
-        for e in restricted:
-            acc = _fmt_acc(e.mean_acceptance)
-            fail = _fmt_fail(e.exactkv_failures)
-            emit(
-                f"  • {e.method:<22} {short_model(e.model_panel):<10} "
-                f"accept={acc}  failures={fail}  [{e.experiment}]"
-            )
-        emit("  Factory-only adapters — not production runtimes. Tier: RESTRICTED · SIMULATED")
-    else:
-        emit("  (no restricted backend rows)")
-    emit("")
+    for tier, section_title, hint in _TIER_SECTIONS:
+        rows = by_tier.get(tier, [])
+        _emit_section_header(emit, section_title, hint, plain=plain)
 
-    # --- SMOKE ---
-    emit("SMOKE ONLY")
-    smoke = by_tier.get(TIER_SMOKE, [])
-    for e in smoke:
-        fail = _fmt_fail(e.exactkv_failures)
-        emit(f"  • {e.method}: {e.model_panel} — {fail} failures · not full-suite ranked")
-    if not smoke:
-        emit("  (no smoke rows)")
-    emit("")
-
-    # --- FUTURE ---
-    emit("FUTURE CANDIDATES")
-    future = by_tier.get(TIER_FUTURE, [])
-    for e in future:
-        emit(f"  • {e.method}: {e.caveat}")
-    if not future:
-        emit("  (no future candidates)")
-    emit("")
-
-    # --- REPAIR (compact) ---
-    repair = by_tier.get(TIER_REPAIR, [])
-    if repair:
-        emit("REPAIR POLICIES (not compressors — separate tier)")
-        for e in repair[:4]:
-            emit(
-                f"  • {e.method:<24} accept={_fmt_acc(e.mean_acceptance)}  "
-                f"failures={_fmt_fail(e.exactkv_failures)}"
-            )
-        if len(repair) > 4:
-            emit(f"  … +{len(repair) - 4} more in docs/leaderboard.html")
+        if tier == TIER_FULL_PANEL:
+            table_rows = [
+                [
+                    str(e.rank or "—"),
+                    e.method,
+                    short_model(e.model_panel),
+                    _fmt_acc(e.mean_acceptance),
+                    _fmt_fail(e.exactkv_failures),
+                    _fmt_badges(entry_badges(e), plain=plain),
+                ]
+                for e in rows
+            ]
+            for row in _terminal_table(
+                ["#", "Compressor", "Model", "Accept", "Fail", "Badges"],
+                table_rows,
+                [3, 14, 10, 8, 6, 28],
+            ):
+                emit(row)
+        elif tier == TIER_REPAIR:
+            if rows:
+                for e in rows:
+                    emit(
+                        f"  • {e.method:<26} accept={_fmt_acc(e.mean_acceptance)}  "
+                        f"failures={_fmt_fail(e.exactkv_failures)}  "
+                        f"{_fmt_badges(entry_badges(e), plain=plain)}"
+                    )
+            else:
+                emit("  (no repair policy rows)")
+        elif tier == TIER_RESTRICTED:
+            if rows:
+                for e in rows:
+                    emit(
+                        f"  • {e.method:<22} {short_model(e.model_panel):<10} "
+                        f"accept={_fmt_acc(e.mean_acceptance)}  "
+                        f"failures={_fmt_fail(e.exactkv_failures)}  "
+                        f"{_fmt_badges(entry_badges(e), plain=plain)}"
+                    )
+            else:
+                emit("  (no restricted backend rows)")
+        elif tier == TIER_SMOKE:
+            if rows:
+                for e in rows:
+                    emit(
+                        f"  • {e.method}: {e.model_panel} — "
+                        f"{_fmt_fail(e.exactkv_failures)} failures  "
+                        f"{_fmt_badges(entry_badges(e), plain=plain)}"
+                    )
+            else:
+                emit("  (no smoke rows)")
+        elif tier == TIER_FUTURE:
+            if rows:
+                for e in rows:
+                    emit(
+                        f"  • {e.method}: {e.caveat}  "
+                        f"{_fmt_badges(entry_badges(e), plain=plain)}"
+                    )
+            else:
+                emit("  (no future candidates)")
         emit("")
 
+    if watch:
+        ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        emit(f"Last refresh: {ts}  (Ctrl+C to exit)")
+        emit("")
+
+    emit(_FOOTER)
     emit(_DISCLAIMER)
     emit("Canonical: docs/leaderboard.md · Public: docs/leaderboard.html")
+    return buf.getvalue()
+
+
+def render_summary(entries: list[LeaderboardEntry]) -> str:
+    by_tier = _entries_by_tier(entries)
+    full = by_tier.get(TIER_FULL_PANEL, [])
+    repair = by_tier.get(TIER_REPAIR, [])
+    restricted = by_tier.get(TIER_RESTRICTED, [])
+    smoke = by_tier.get(TIER_SMOKE, [])
+    future = by_tier.get(TIER_FUTURE, [])
+
+    tiers_with_rows = sum(1 for t, _, _ in _TIER_SECTIONS if by_tier.get(t))
+
+    best_line = "(no full-panel rows)"
+    if full:
+        top = full[0]
+        best_line = (
+            f"{top.method} on {short_model(top.model_panel)} "
+            f"(accept={_fmt_acc(top.mean_acceptance)}, "
+            f"failures={_fmt_fail(top.exactkv_failures)})"
+        )
+
+    all_failures = [
+        e.exactkv_failures for e in entries if e.exactkv_failures is not None
+    ]
+    nonzero = [f for f in all_failures if f > 0]
+    if not all_failures:
+        fail_line = "no failure counts in local reports"
+    elif not nonzero:
+        fail_line = f"0 ExactKV failures across {len(all_failures)} measured rows"
+    else:
+        fail_line = f"{len(nonzero)} row(s) with nonzero failures (max {max(nonzero)})"
+
+    top_caveat = (
+        "Restricted backends are factory-only — not ranked against full-panel compressors."
+        if restricted
+        else "Smoke-only and future tiers are separated from full-panel ranking."
+    )
+
+    lines = [
+        "EXACTKV LEADERBOARD — LAUNCH SUMMARY",
+        f"Best full-panel: {best_line}",
+        f"Tiers with data: {tiers_with_rows} of {len(_TIER_SECTIONS)}",
+        f"Full-panel ranked rows: {len(full)}",
+        f"Repair policies: {len(repair)} (separate tier)",
+        f"ExactKV failures: {fail_line}",
+        f"Restricted backends: {len(restricted)}",
+        f"Smoke-only adapters: {len(smoke)}",
+        f"Future candidates: {len(future)}",
+        f"Top caveat: {top_caveat}",
+        _FOOTER,
+    ]
     return "\n".join(lines) + "\n"
+
+
+def run_watch(
+    *,
+    plain: bool,
+    once: bool,
+    interval_sec: int = _WATCH_INTERVAL_SEC,
+) -> int:
+    try:
+        while True:
+            entries, _data = load_leaderboard_entries()
+            render_terminal(entries, plain=plain, watch=True)
+            if once:
+                break
+            time.sleep(interval_sec)
+    except KeyboardInterrupt:
+        print("\nWatch stopped.", file=sys.stderr)
+    return 0
 
 
 def write_leaderboard_md(entries: list[LeaderboardEntry], path: Path) -> None:
@@ -249,14 +397,23 @@ def write_leaderboard_md(entries: list[LeaderboardEntry], path: Path) -> None:
         "",
         "_Generated by `scripts/exactkv_leaderboard.py` from local experiment reports._",
         "",
-        f"> {_SUBTITLE}",
+        f"> {_SUBTITLE}.",
         "",
         "> " + PUBLIC_TAGLINE.replace("\n", "\n> "),
         "",
         PUBLIC_LEADERBOARD_COPY,
         "",
-        "> No speedup, throughput, latency, tokens/sec, active GPU memory savings, production serving, "
-        "or model accuracy improvement claim is made.",
+        "## Ranking policy",
+        "",
+        "- **Full-panel results** are ranked by token-level acceptance and ExactKV failures.",
+        "- **Repair policies** are a separate tier — adaptive selectors, not default compressors.",
+        "- **Restricted backends** are listed separately; not ranked against full-panel compressors.",
+        "- **Smoke-only adapters** are diagnostic probes — not ranked against full-panel compressors.",
+        "- **Future candidates** have no ExactKV panel metrics yet.",
+        "",
+        "> " + _NOT_APPLES,
+        "",
+        "> " + _FOOTER,
         "",
     ]
     by_tier = _entries_by_tier(entries)
@@ -298,7 +455,8 @@ def write_leaderboard_md(entries: list[LeaderboardEntry], path: Path) -> None:
         "- **SnapKV experimental** is smoke-only (8 cells).",
         "- **Shard / SpectralQuant** are future candidates without ExactKV panel numbers.",
         "- External Shard, SpectralQuant, SnapKV paper, or kvpress results are **not** ExactKV results.",
-        "- Regenerate: `python3 scripts/exactkv_leaderboard.py`",
+        "- Regenerate: `python3 scripts/exactkv_leaderboard.py --md --html`",
+        "- Live terminal: `python3 scripts/exactkv_leaderboard.py --watch`",
         "",
     ])
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -307,12 +465,13 @@ def write_leaderboard_md(entries: list[LeaderboardEntry], path: Path) -> None:
 
 def _badge_class(badge: str) -> str:
     mapping = {
-        "FULL PANEL": "tier-full",
-        "REPAIR POLICY": "tier-repair",
+        "FULL": "tier-full",
+        "REPAIR": "tier-repair",
         "RESTRICTED": "tier-restricted",
-        "SMOKE ONLY": "tier-smoke",
+        "SMOKE": "tier-smoke",
         "FUTURE": "tier-future",
         "SIMULATED": "sim",
+        "REAL-BYTE": "realbyte",
         "NO REAL-BYTE CLAIM": "nobytes",
         "NOT INTEGRATED": "future",
     }
@@ -398,6 +557,7 @@ def write_leaderboard_html(entries: list[LeaderboardEntry], path: Path) -> None:
       --border: #30363d;
       --amber: #d29922;
       --red: #f85149;
+      --sticky-bg: rgba(13, 17, 23, 0.92);
     }}
     * {{ box-sizing: border-box; }}
     body {{
@@ -407,42 +567,63 @@ def write_leaderboard_html(entries: list[LeaderboardEntry], path: Path) -> None:
       color: var(--text);
       line-height: 1.5;
     }}
-    .wrap {{ max-width: 1100px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }}
-    h1 {{ font-size: 1.75rem; margin: 0 0 0.35rem; letter-spacing: -0.02em; }}
-    .subtitle {{ color: var(--muted); font-size: 1.05rem; max-width: 52rem; }}
+    .sticky-header {{
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--sticky-bg);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.25rem 0.75rem;
+    }}
+    .wrap {{ max-width: 1100px; margin: 0 auto; padding: 0 1.25rem 3rem; }}
+    h1 {{ font-size: 1.65rem; margin: 0 0 0.25rem; letter-spacing: -0.02em; }}
+    .subtitle {{ color: var(--muted); font-size: 1rem; max-width: 52rem; margin: 0; }}
     .tagline {{
-      margin: 1.25rem 0;
-      padding: 0.85rem 1rem;
+      margin: 1rem 0 0.75rem;
+      padding: 0.75rem 1rem;
       border-left: 3px solid var(--accent);
       background: var(--card);
       border-radius: 0 8px 8px 0;
-      font-size: 0.95rem;
+      font-size: 0.92rem;
     }}
-    .disclaimer {{ color: var(--muted); font-size: 0.85rem; margin-top: 1.5rem; }}
+    .not-apples {{
+      margin: 0.75rem 0 0;
+      padding: 0.65rem 0.85rem;
+      background: rgba(210, 153, 34, 0.08);
+      border: 1px solid rgba(210, 153, 34, 0.25);
+      border-radius: 6px;
+      color: #e3b341;
+      font-size: 0.85rem;
+    }}
+    .disclaimer {{ color: var(--muted); font-size: 0.82rem; margin: 0.5rem 0 0; }}
+    .content {{ padding-top: 1.25rem; }}
     .tabs {{
       display: flex;
       flex-wrap: wrap;
-      gap: 0.35rem;
-      margin: 1.5rem 0 0;
-      border-bottom: 1px solid var(--border);
-      padding-bottom: 0.5rem;
+      gap: 0.4rem;
+      margin: 0;
+      padding: 0.75rem 0 0;
     }}
     .tab {{
-      background: transparent;
+      background: var(--card);
       border: 1px solid var(--border);
       color: var(--muted);
-      padding: 0.45rem 0.85rem;
-      border-radius: 6px;
+      padding: 0.5rem 0.9rem;
+      border-radius: 999px;
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
+      font-weight: 500;
+      transition: border-color 0.15s, color 0.15s;
     }}
     .tab:hover {{ border-color: var(--accent); color: var(--text); }}
     .tab.active {{
-      background: var(--card);
+      background: rgba(88, 166, 255, 0.12);
       color: var(--text);
       border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(88, 166, 255, 0.2);
     }}
-    .panel {{ display: none; margin-top: 1rem; }}
+    .panel {{ display: none; margin-top: 1.25rem; }}
     .panel.active {{ display: block; }}
     table {{
       width: 100%;
@@ -462,41 +643,56 @@ def write_leaderboard_html(entries: list[LeaderboardEntry], path: Path) -> None:
     .badges {{ white-space: normal; }}
     .badge {{
       display: inline-block;
-      font-size: 0.68rem;
-      font-weight: 600;
-      padding: 0.15rem 0.4rem;
-      border-radius: 4px;
-      margin: 0.1rem 0.15rem 0.1rem 0;
-      letter-spacing: 0.03em;
+      font-size: 0.66rem;
+      font-weight: 700;
+      padding: 0.18rem 0.45rem;
+      border-radius: 999px;
+      margin: 0.12rem 0.2rem 0.12rem 0;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
     }}
-    .tier-full {{ background: rgba(63, 185, 80, 0.15); color: var(--green); border: 1px solid rgba(63,185,80,0.35); }}
-    .tier-repair {{ background: rgba(88, 166, 255, 0.12); color: var(--accent); border: 1px solid rgba(88,166,255,0.3); }}
-    .tier-restricted {{ background: rgba(210, 153, 34, 0.12); color: var(--amber); border: 1px solid rgba(210,153,34,0.35); }}
-    .tier-smoke {{ background: rgba(139, 148, 158, 0.15); color: var(--muted); border: 1px solid var(--border); }}
-    .tier-future {{ background: rgba(248, 81, 73, 0.1); color: #ff7b72; border: 1px solid rgba(248,81,73,0.3); }}
-    .sim {{ background: rgba(139, 148, 158, 0.12); color: var(--muted); border: 1px solid var(--border); }}
-    .nobytes {{ background: rgba(210, 153, 34, 0.1); color: var(--amber); border: 1px solid rgba(210,153,34,0.25); }}
+    .tier-full {{ background: rgba(63, 185, 80, 0.18); color: var(--green); border: 1px solid rgba(63,185,80,0.4); }}
+    .tier-repair {{ background: rgba(88, 166, 255, 0.14); color: var(--accent); border: 1px solid rgba(88,166,255,0.35); }}
+    .tier-restricted {{ background: rgba(210, 153, 34, 0.14); color: var(--amber); border: 1px solid rgba(210,153,34,0.4); }}
+    .tier-smoke {{ background: rgba(139, 148, 158, 0.18); color: #c9d1d9; border: 1px solid var(--border); }}
+    .tier-future {{ background: rgba(248, 81, 73, 0.12); color: #ff7b72; border: 1px solid rgba(248,81,73,0.35); }}
+    .sim {{ background: rgba(139, 148, 158, 0.14); color: #b1bac4; border: 1px solid var(--border); }}
+    .realbyte {{ background: rgba(63, 185, 80, 0.1); color: #56d364; border: 1px solid rgba(63,185,80,0.3); }}
+    .nobytes {{ background: rgba(210, 153, 34, 0.12); color: var(--amber); border: 1px solid rgba(210,153,34,0.3); }}
     .empty {{ color: var(--muted); padding: 1rem; }}
-    footer {{ margin-top: 2rem; font-size: 0.8rem; color: var(--muted); }}
+    footer {{
+      margin-top: 2.5rem;
+      padding: 1rem 1.1rem;
+      font-size: 0.8rem;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      line-height: 1.6;
+    }}
+    footer strong {{ color: var(--text); font-weight: 600; }}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>{html.escape(_TITLE)}</h1>
-    <p class="subtitle">{html.escape(_SUBTITLE)}</p>
-    <div class="tagline">{html.escape(PUBLIC_TAGLINE)}</div>
-    <p class="disclaimer">{html.escape(_DISCLAIMER)}</p>
-
-    <nav class="tabs" role="tablist">
-      {"".join(tab_buttons)}
-    </nav>
+  <header class="sticky-header">
+    <div class="wrap" style="padding:0;">
+      <h1>{html.escape(_TITLE)}</h1>
+      <p class="subtitle">{html.escape(_SUBTITLE)}.</p>
+      <div class="tagline">{html.escape(PUBLIC_TAGLINE)}</div>
+      <p class="not-apples">{html.escape(_NOT_APPLES)}</p>
+      <p class="disclaimer">{html.escape(_DISCLAIMER)}</p>
+      <nav class="tabs" role="tablist">
+        {"".join(tab_buttons)}
+      </nav>
+    </div>
+  </header>
+  <div class="wrap content">
     {"".join(tab_panels)}
 
     <footer>
+      <strong>Caveat</strong> — {html.escape(_FOOTER)}<br />
       Generated {generated} by <code>scripts/exactkv_leaderboard.py</code> from local reports.
-      Not a hosted live backend. No speedup, throughput, latency, tokens/sec, VRAM, or serving claims.
-      External Shard/SpectralQuant results are not ExactKV results.
+      Not a hosted live backend. External Shard/SpectralQuant results are not ExactKV results.
     </footer>
   </div>
   <script>
@@ -548,7 +744,22 @@ def main() -> int:
     parser.add_argument("--html", action="store_true", help="Write docs/leaderboard.html")
     parser.add_argument("--json", action="store_true", help="Write reports/leaderboard_manifest.json")
     parser.add_argument("--all", action="store_true", help="Terminal + md + html + json")
-    parser.add_argument("--plain", action="store_true", help="Plain terminal output")
+    parser.add_argument("--plain", action="store_true", help="Plain terminal output (no ANSI/box drawing)")
+    parser.add_argument(
+        "--watch",
+        action="store_true",
+        help="Refresh terminal dashboard every few seconds (Ctrl+C to exit)",
+    )
+    parser.add_argument(
+        "--once",
+        action="store_true",
+        help="With --watch: render one frame and exit (for tests)",
+    )
+    parser.add_argument(
+        "--summary",
+        action="store_true",
+        help="Print compact launch/demo summary (~10 lines)",
+    )
     parser.add_argument(
         "--md-path",
         type=Path,
@@ -561,15 +772,40 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    do_all = args.all or not (args.terminal or args.md or args.html or args.json)
+    if args.watch:
+        if args.md or args.html or args.json or args.all:
+            entries, data = load_leaderboard_entries()
+            if args.md:
+                write_leaderboard_md(entries, args.md_path)
+                print(f"Wrote {args.md_path}")
+            if args.html:
+                write_leaderboard_html(entries, args.html_path)
+                print(f"Wrote {args.html_path}")
+            if args.json or args.all:
+                manifest = _ROOT / "reports" / "leaderboard_manifest.json"
+                write_manifest(entries, manifest)
+                print(f"Wrote {manifest}")
+            if data.missing:
+                print(
+                    f"Note: {len(data.missing)} expected CSV(s) missing — some rows omitted.",
+                    file=sys.stderr,
+                )
+        return run_watch(plain=args.plain, once=args.once)
+
     entries, data = load_leaderboard_entries()
 
-    if do_all or args.terminal:
-        render_terminal(entries, plain=args.plain)
-    if do_all or args.md:
+    if args.summary:
+        print(render_summary(entries), end="")
+    else:
+        write_outputs = args.md or args.html or args.json or args.all
+        do_terminal = args.terminal or args.all or not write_outputs
+        if do_terminal:
+            render_terminal(entries, plain=args.plain)
+
+    if args.md or args.all:
         write_leaderboard_md(entries, args.md_path)
         print(f"Wrote {args.md_path}")
-    if do_all or args.html:
+    if args.html or args.all:
         write_leaderboard_html(entries, args.html_path)
         print(f"Wrote {args.html_path}")
     if args.json or args.all:
@@ -578,7 +814,10 @@ def main() -> int:
         print(f"Wrote {manifest}")
 
     if data.missing:
-        print(f"Note: {len(data.missing)} expected CSV(s) missing — some rows omitted.", file=sys.stderr)
+        print(
+            f"Note: {len(data.missing)} expected CSV(s) missing — some rows omitted.",
+            file=sys.stderr,
+        )
     return 0
 
 

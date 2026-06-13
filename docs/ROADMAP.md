@@ -772,10 +772,12 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 | 8c | Cinematic crash-test video (optional) | ✅ [`EXACTKV_CRASH_TEST_VIDEO.md`](EXACTKV_CRASH_TEST_VIDEO.md) |
 | 8d | Leaderboard tiering cleanup | ✅ [`leaderboard.md`](leaderboard.md) |
 | 8e | Terminal-native crash-test demo (Exp 034b) | ✅ [`EXACTKV_TERMINAL_CRASH_TEST.md`](EXACTKV_TERMINAL_CRASH_TEST.md) |
-| 8f | Terminal + HTML crash-test leaderboard | ✅ [`leaderboard.html`](leaderboard.html) · `scripts/exactkv_leaderboard.py` |
-| 9A | Launch readiness gap audit | ✅ [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md) — **not launch-ready** |
-| 9B | Prelaunch hardening | Planned — [`PRELAUNCH_HARDENING_PLAN.md`](PRELAUNCH_HARDENING_PLAN.md) |
-| 9 | V13 completion / launch decision | **Deferred** — until 9B blockers resolved |
+| 9B | Prelaunch hardening infrastructure | ✅ [`PRELAUNCH_HARDENING_REPORT.md`](PRELAUNCH_HARDENING_REPORT.md) |
+| 10A | LongBench-style drift demo (Exp 037) | ✅ [`EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md`](EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md) — **secondary** demo |
+| 10B | Shard external-drafter probe (Exp 038) | ✅ [`EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md`](EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md) — RunPod `pass`; `restricted_go` |
+| 10C | Parallel work integration | ✅ [`PARALLEL_WORK_INTEGRATION_REPORT.md`](PARALLEL_WORK_INTEGRATION_REPORT.md) |
+| 9C | Launch validation & should-fix | Planned |
+| 9 | V13 completion / launch decision | **Deferred** |
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V13.
 

@@ -117,7 +117,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Active GPU memory isolation** | **Complete (diagnostic)** | Phase 4 ✅ / Exp 031 | [`EXPERIMENT_031_GPU_MEMORY_ISOLATION.md`](EXPERIMENT_031_GPU_MEMORY_ISOLATION.md); exactness gate pass; peak indistinguishable from full greedy; **no savings claim** |
 | — | **Hot adapter (SnapKV / Shard / SpectralQuant)** | **Feasibility complete + addendum** | Phase 5 ✅ / Exp 032 + addendum | [`EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md`](EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md); SnapKV **B** primary 5b; Shard **B** Llama drafter; SpectralQuant **B** deferred 5c |
 | — | **SnapKV experimental adapter** | **Complete (smoke)** | Phase 5b ✅ / Exp 032b | [`EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md`](EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md); factory-only; 8 cells, 0 failures; not in default registry |
-| — | **Shard Llama external-drafter probe** | Planned | Phase 5b/6 adjunct | krish1905/shard; not KVCompressor; pairs with Exp 033 Llama panel |
+| — | **Shard Llama external-drafter probe** | **Restricted go (RunPod)** | Phase 10B ✅ | Exp 038: `pass` on 4-prompt panel; `exactkv_failures=0`; Mode B only — [`EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md`](EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md) |
 | — | **SpectralQuant experimental adapter** | Planned | Phase 5c (optional) | Offline calibration + tensor BackendAdapter; turboquant baseline |
 | — | **Llama-3.1-8B small suite** | **Complete** | Phase 6 ✅ / Exp 033 | [`EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md`](EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md); 48 cells, 0 failures; RunPod A5000 bfloat16 |
 | — | **Killer correction demo (Markdown trace)** | **Complete** | Phase 7 ✅ / Exp 034 | [`EXPERIMENT_034_KILLER_CORRECTION_DEMO.md`](EXPERIMENT_034_KILLER_CORRECTION_DEMO.md); `tj_002` × `int4_sim`; source data for live demo |
@@ -130,9 +130,11 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Terminal + HTML crash-test leaderboard** | **Complete** | Phase 8f ✅ | `scripts/exactkv_leaderboard.py`; [`leaderboard.md`](leaderboard.md) · [`leaderboard.html`](leaderboard.html) |
 | — | **Headline number audit** | **Complete (Phase 9A)** | Phase 9A ✅ | [`CLAIMS_AUDIT.md`](CLAIMS_AUDIT.md); full repo grep pass ⏳ Phase 9B |
 | — | **Launch readiness gap audit** | **Complete** | Phase 9A ✅ | [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md); decision: **not ready** |
-| — | **Prelaunch hardening plan** | **Planned** | Phase 9B | [`PRELAUNCH_HARDENING_PLAN.md`](PRELAUNCH_HARDENING_PLAN.md) |
+| — | **Prelaunch hardening plan** | **Infrastructure complete** | Phase 9B ✅ | [`PRELAUNCH_HARDENING_REPORT.md`](PRELAUNCH_HARDENING_REPORT.md) |
+| — | **Smoke test + audits** | **Complete** | Phase 9B ✅ | `scripts/smoke_test.sh`, `audit_public_claims.py`, `check_docs_links.py`, `check_report_hygiene.py` |
 | — | **Repro checklist** | **Complete** | Phase 9A ✅ | [`REPRO_CHECKLIST.md`](REPRO_CHECKLIST.md) |
-| — | **LongBench-style score-preserving drift demo** | Planned | Phase 9B should-fix | Not implemented |
+| — | **LongBench-style score-preserving drift demo** | **Complete (secondary)** | Phase 10A ✅ | Exp 037: `lb_md_001` × `int4_sim`; **not** primary demo — [`EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md`](EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md) |
+| — | **Parallel work integration** | **Complete** | Phase 10C ✅ | [`PARALLEL_WORK_INTEGRATION_REPORT.md`](PARALLEL_WORK_INTEGRATION_REPORT.md) |
 | — | **Compressed-active-KV memory path** | **Blocker documented (Exp 031)** | Phase 4 ✅ | Model weights dominate CUDA peak; V5 KV accounting does not translate to active VRAM savings at 0.5B scale |
 | D11/D12 | **Production serving / vLLM / LMCache** | No-go | — | Remain deferred unless later V13 phase explicitly scopes serving |
 | D22 | **Multi-request batching** | Deferred | — | Serving-scale; out of V13 Phase 0–8 |

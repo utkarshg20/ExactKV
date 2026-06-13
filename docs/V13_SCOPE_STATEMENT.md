@@ -1,6 +1,6 @@
 # V13 Scope Statement — Practicality Proof
 
-**Status:** **Phase 9A complete** — launch readiness gap audit ([`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md)); **public launch NOT approved**. V13 is in **prelaunch hardening** (Phase 9B). Strong demos and exactness evidence exist; must-fix blockers remain.
+**Status:** **Phase 10C complete** — parallel work integrated ([`PARALLEL_WORK_INTEGRATION_REPORT.md`](PARALLEL_WORK_INTEGRATION_REPORT.md)). **Public launch NOT approved.** Clean-clone validation and should-fix items remain.
 **Builds on:** V12 Phases 0–7 complete (Experiments 021–027); V12 Phase 8 release package may proceed in parallel but **does not authorize public launch**.
 **Not public launch.** v1.0.0 deferred until Phase 9B must-fix blockers resolved and launch decision explicitly approved.
 
@@ -14,7 +14,7 @@
 > Until V13 Phase 9 explicitly approves a claim under documented methodology,
 > **forbidden claims remain forbidden** (see §22).
 
-**Phase 9B (prelaunch hardening) may proceed** — must-fix blockers in [`PRELAUNCH_HARDENING_PLAN.md`](PRELAUNCH_HARDENING_PLAN.md). **Do not** tag v1.0.0 or post public launch until audit gates pass.
+**Phase 9C (launch validation) may proceed** — clean-clone repro, demo recording, should-fix items. **Do not** tag v1.0.0 or post public launch until [`PRELAUNCH_HARDENING_REPORT.md`](PRELAUNCH_HARDENING_REPORT.md) gates pass.
 
 ---
 
@@ -40,10 +40,14 @@
 | **8e** | Terminal-native crash-test demo (Exp 034b) | **Complete** — [`EXACTKV_TERMINAL_CRASH_TEST.md`](EXACTKV_TERMINAL_CRASH_TEST.md); `pharm_001` semantic trace; recordable live dashboard |
 | **8f** | Terminal + HTML crash-test leaderboard | **Complete** — `scripts/exactkv_leaderboard.py`; [`leaderboard.md`](leaderboard.md) · [`leaderboard.html`](leaderboard.html) |
 | **9A** | Launch readiness gap audit | **Complete** — [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md); **launch NOT approved** |
-| **9B** | Prelaunch hardening | **Planned** — [`PRELAUNCH_HARDENING_PLAN.md`](PRELAUNCH_HARDENING_PLAN.md) |
-| **9** | V13 completion / launch decision | **Deferred** — until 9B must-fix blockers resolved |
+| **9B** | Prelaunch hardening infrastructure | **Complete** — [`PRELAUNCH_HARDENING_REPORT.md`](PRELAUNCH_HARDENING_REPORT.md); smoke + audits |
+| **9C** | Launch validation & should-fix | Planned |
+| **9** | V13 completion / launch decision | **Deferred** — until 9C validation |
+| **10A** | LongBench-style drift demo (Exp 037) | **Complete** — [`EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md`](EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md); **secondary** terminal demo; bounded CPU search |
+| **10B** | Shard external-drafter probe (Exp 038) | **Complete (restricted_go)** — RunPod L40S pass; 4-prompt panel; BOS harness fix — [`EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md`](EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md) |
+| **10C** | Parallel work integration checkpoint | **Complete** — [`PARALLEL_WORK_INTEGRATION_REPORT.md`](PARALLEL_WORK_INTEGRATION_REPORT.md) |
 
-**Latest tagged release:** `v0.11.0`. V12 substance (Exp 021–027) may ship as `v0.12.0` after Phase 8 without public v1.0.0.
+**Latest tagged release:** `v0.11.0`. `v0.13.0-rc` research preview is a **future possibility only** — not approved. V12 substance (Exp 021–027) may ship as `v0.12.0` after Phase 8 without public v1.0.0.
 
 ---
 

@@ -2,15 +2,27 @@
 
 **Compress the KV cache. Keep every output token.**
 
-Lossy KV-cache compression makes drafting cheaper — but one bad draft token can
-derail the whole sequence. ExactKV runs a **draft → verify → commit** loop: compressors
-draft on a lossy cache, verification always uses **full-precision KV**, and the final
-greedy output **matches uncompressed inference exactly** (`exactkv_output_ids ==
-full_output_ids`).
+ExactKV is a **correctness-first KV-cache compression crash-test lab**: lossy compressed KV proposes draft tokens, a full-precision KV verifier checks them, and the final greedy output matches uncompressed inference on tested panels.
 
-Inspired by [VeriCache](https://arxiv.org/abs/2605.17613). ExactKV is not a
-reimplementation — it is a **compressor-agnostic research platform** for evaluating
-KV-cache compression by exactness, acceptance, divergence, and honest memory accounting.
+**Status:** Prelaunch research prototype. V13 has strong exactness evidence, demos, and a tiered leaderboard, but **public launch and v1.0 are not approved yet**. See [`docs/LAUNCH_READINESS_GAP_AUDIT.md`](docs/LAUNCH_READINESS_GAP_AUDIT.md).
+
+```bash
+# Install (once)
+pip install -e ".[dev]"    # see docs/INSTALL.md
+
+# Smoke test
+bash scripts/smoke_test.sh
+
+# Terminal crash-test demo (replay; no GPU)
+python3 scripts/exactkv_terminal_crash_test.py --speed fast
+
+# Crash-test leaderboard
+python3 scripts/exactkv_leaderboard.py
+```
+
+**Docs:** [`docs/QUICKSTART.md`](docs/QUICKSTART.md) · [`docs/INSTALL.md`](docs/INSTALL.md) · [`docs/leaderboard.html`](docs/leaderboard.html)
+
+**Claims boundary:** No speedup, throughput, latency, tokens/sec, active GPU memory savings, production serving, or model accuracy improvement claim. [`docs/CLAIMS_AUDIT.md`](docs/CLAIMS_AUDIT.md)
 
 ---
 
@@ -32,7 +44,7 @@ is faster. It does **not** claim throughput, latency, speedup, or production rea
 |---|---|
 | **Latest release** | [`v0.11.0`](docs/RELEASE_NOTES_V0.11.0.md) — V11 launch hardening (Experiments 015–020) |
 | **Next** | [**V13**](docs/V13_SCOPE_STATEMENT.md) — Practicality Proof (not public launch) |
-| **Status** | Research milestone; [public launch deferred](docs/EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md) pending V13 evidence |
+| **Status** | Prelaunch hardening ([`LAUNCH_READINESS_GAP_AUDIT.md`](docs/LAUNCH_READINESS_GAP_AUDIT.md)); not v1.0 |
 | **Hard gate** | `exactkv_failures == 0` on every published experiment |
 | **Default model** | `Qwen/Qwen2.5-0.5B` (greedy, single-request, CPU-first) |
 | **Compressors** | 15 built-in (`noop`, `int8`, asymmetric `_sim`, layer-aware boundary, `backend_passthrough`, …) |
@@ -74,9 +86,7 @@ V10/V11 suites are **not universal benchmarks**. Restricted adapters remain **fa
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
 
-**Contents:** [Install](#install) · [Live demo](#live-demo) · [Tests](#run-tests) · [Example](#run-the-example-script) · [Benchmarks](#run-the-benchmark-suite) · [CLI](#v2-cli) · [Compressors](#v4-asymmetric-compressors-experimental) · [Roadmap](#roadmap-and-research) · [Docs](#key-documents)
-
-> Public launch is **not approved**. V13 is in prelaunch/internal hardening ([`LAUNCH_READINESS_GAP_AUDIT.md`](docs/LAUNCH_READINESS_GAP_AUDIT.md)). v1.0.0 deferred.
+**Contents:** [Quickstart](#quickstart) · [Install](#install) · [Live demo](#live-demo) · [Tests](#run-tests) · [Roadmap](#roadmap-and-research) · [Docs](#key-documents)
 
 ---
 
@@ -103,6 +113,14 @@ python3 scripts/render_exactkv_crash_test_video.py
 
 **Earlier replays:** [`demo_exactkv_live_correction.py`](scripts/demo_exactkv_live_correction.py) (Exp 034 `tj_002` trace) · [`DEMO_EXACTKV_LIVE_CORRECTION.md`](docs/DEMO_EXACTKV_LIVE_CORRECTION.md)
 
+**Secondary demo (Exp 037)** — LongBench-style outcome-green / path-drift replay (multi-doc QA; not official LongBench):
+
+```bash
+python3 scripts/exactkv_terminal_longbench_drift.py --speed fast
+```
+
+See [`EXACTKV_TERMINAL_LONGBENCH_DRIFT.md`](docs/EXACTKV_TERMINAL_LONGBENCH_DRIFT.md).
+
 **Public visuals (Exp 036):** [`PUBLIC_VISUAL_PACKAGE.md`](docs/PUBLIC_VISUAL_PACKAGE.md)
 
 ```bash
@@ -121,6 +139,18 @@ python3 scripts/exactkv_leaderboard.py
 
 ---
 
+## Quickstart
+
+See [`docs/QUICKSTART.md`](docs/QUICKSTART.md) for the full five-command path. Minimal:
+
+```bash
+bash scripts/smoke_test.sh
+python3 scripts/exactkv_terminal_crash_test.py --speed fast
+python3 scripts/exactkv_leaderboard.py
+```
+
+---
+
 ## Install
 
 ```bash
@@ -128,13 +158,11 @@ python3 scripts/exactkv_leaderboard.py
 git clone https://github.com/utkarshg20/ExactKV.git
 cd ExactKV
 
-# Install (editable, with dev dependencies)
+# Install (editable, with dev dependencies) — details in docs/INSTALL.md
 pip install -e ".[dev]"
 
-# Download model weights (first run only — ~1 GB)
-python3 -c "from transformers import AutoModelForCausalLM, AutoTokenizer; \
-    AutoModelForCausalLM.from_pretrained('Qwen/Qwen2.5-0.5B'); \
-    AutoTokenizer.from_pretrained('Qwen/Qwen2.5-0.5B')"
+# Verify
+bash scripts/smoke_test.sh
 ```
 
 ---
