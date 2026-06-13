@@ -128,21 +128,29 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Cinematic crash-test video demo** | **Complete (optional)** | Phase 8c ✅ / Exp 036b | [`EXACTKV_CRASH_TEST_VIDEO.md`](EXACTKV_CRASH_TEST_VIDEO.md); 120s MP4 + HTML player; secondary to terminal demo |
 | — | **Terminal-native crash-test demo** | **Complete** | Phase 8e ✅ / Exp 034b | [`EXACTKV_TERMINAL_CRASH_TEST.md`](EXACTKV_TERMINAL_CRASH_TEST.md); `pharm_001` semantic trace (`drop` → `pickup`); primary public demo |
 | — | **Terminal + HTML crash-test leaderboard** | **Complete** | Phase 8f ✅ | `scripts/exactkv_leaderboard.py`; [`leaderboard.md`](leaderboard.md) · [`leaderboard.html`](leaderboard.html) |
-| — | **Headline number audit** | Planned | Phase 9 / Exp 035 | Allowed headlines only; speed/VRAM forbidden unless evidence-backed |
+| — | **Headline number audit** | **Complete (Phase 9A)** | Phase 9A ✅ | [`CLAIMS_AUDIT.md`](CLAIMS_AUDIT.md); full repo grep pass ⏳ Phase 9B |
+| — | **Launch readiness gap audit** | **Complete** | Phase 9A ✅ | [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md); decision: **not ready** |
+| — | **Prelaunch hardening plan** | **Planned** | Phase 9B | [`PRELAUNCH_HARDENING_PLAN.md`](PRELAUNCH_HARDENING_PLAN.md) |
+| — | **Repro checklist** | **Complete** | Phase 9A ✅ | [`REPRO_CHECKLIST.md`](REPRO_CHECKLIST.md) |
+| — | **LongBench-style score-preserving drift demo** | Planned | Phase 9B should-fix | Not implemented |
 | — | **Compressed-active-KV memory path** | **Blocker documented (Exp 031)** | Phase 4 ✅ | Model weights dominate CUDA peak; V5 KV accounting does not translate to active VRAM savings at 0.5B scale |
 | D11/D12 | **Production serving / vLLM / LMCache** | No-go | — | Remain deferred unless later V13 phase explicitly scopes serving |
 | D22 | **Multi-request batching** | Deferred | — | Serving-scale; out of V13 Phase 0–8 |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 
+**Public launch:** ❌ **Not ready** (Phase 9A audit). **Launch decision deferred** until [`PRELAUNCH_HARDENING_PLAN.md`](PRELAUNCH_HARDENING_PLAN.md) must-fix items complete.
+
+**Explicitly future work (post-launch or research):** speed/runtime path, compressed-active KV, active memory savings, serving integration (vLLM/LMCache), Shard/SpectralQuant adapters, SnapKV full-suite, broader Llama/Mistral panels.
+
 ---
 
-## v1.0.0 — Public launch tag (after V13 exit)
+## v1.0.0 — Public launch tag (after V13 exit — **NOT READY**)
 
 | ID | Item | Status | Success criteria |
 |---|---|---|---|
-| D19 | **Project status v1.0.0** | Deferred | Supersedes [`PROJECT_STATUS_V0.11.0.md`](PROJECT_STATUS_V0.11.0.md); after V13 Phase 9 |
-| D20 | **Git tag `v1.0.0`** | Deferred | [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) §18 gates met |
+| D19 | **Project status v1.0.0** | Deferred | [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md) must-fix blockers cleared |
+| D20 | **Git tag `v1.0.0`** | Deferred | Phase 9B hardening + explicit launch approval |
 
 _D17 and D18 may finalize in V12 Phase 8; **public posting** waits for V13 Phase 9 claim decision._
 

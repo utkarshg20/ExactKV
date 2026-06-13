@@ -97,6 +97,7 @@ under `reports/`.
 | 034b live | `python3 scripts/demo_exactkv_live_correction.py` |
 | 034c terminal | `python3 scripts/exactkv_terminal_crash_test.py` |
 | 035 leaderboard | `python3 scripts/exactkv_leaderboard.py` |
+| 9A audit | Review [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md) · [`PRELAUNCH_HARDENING_PLAN.md`](PRELAUNCH_HARDENING_PLAN.md) |
 | 035 | `python3 scripts/visualize_experiment_035.py` |
 | 036 | `python3 scripts/render_public_visuals_036.py` |
 | 036b video | `python3 scripts/render_exactkv_crash_test_video.py` |

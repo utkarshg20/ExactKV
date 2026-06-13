@@ -1,8 +1,8 @@
 # V13 Scope Statement — Practicality Proof
 
-**Status:** **Phase 8e complete** — terminal-native crash-test demo ([`EXACTKV_TERMINAL_CRASH_TEST.md`](EXACTKV_TERMINAL_CRASH_TEST.md)); semantic trace `pharm_001` (`drop` → `pickup`). Optional MP4 renderer remains secondary. Span throughput **unsolved**; VRAM savings **forbidden**.
+**Status:** **Phase 9A complete** — launch readiness gap audit ([`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md)); **public launch NOT approved**. V13 is in **prelaunch hardening** (Phase 9B). Strong demos and exactness evidence exist; must-fix blockers remain.
 **Builds on:** V12 Phases 0–7 complete (Experiments 021–027); V12 Phase 8 release package may proceed in parallel but **does not authorize public launch**.
-**Not public launch.** v1.0.0 deferred until V13 produces evidence-backed practicality answers or honestly closes remaining gaps.
+**Not public launch.** v1.0.0 deferred until Phase 9B must-fix blockers resolved and launch decision explicitly approved.
 
 > V13 is a **practicality proof** — not a public launch, not production serving
 > integration by default, and not a license to overclaim.
@@ -14,7 +14,7 @@
 > Until V13 Phase 9 explicitly approves a claim under documented methodology,
 > **forbidden claims remain forbidden** (see §22).
 
-**Phase 9 (V13 completion / launch decision) may proceed** — Exp 035 visual package generated from existing V10–V13 reports. Optional Phase 6b Shard probe remains adjunct.
+**Phase 9B (prelaunch hardening) may proceed** — must-fix blockers in [`PRELAUNCH_HARDENING_PLAN.md`](PRELAUNCH_HARDENING_PLAN.md). **Do not** tag v1.0.0 or post public launch until audit gates pass.
 
 ---
 
@@ -39,7 +39,9 @@
 | **8d** | Leaderboard tiering cleanup | **Complete** — tiered [`leaderboard.md`](leaderboard.md); TurboQuant/KIVI/KVQuant/SnapKV/Shard/SpectralQuant |
 | **8e** | Terminal-native crash-test demo (Exp 034b) | **Complete** — [`EXACTKV_TERMINAL_CRASH_TEST.md`](EXACTKV_TERMINAL_CRASH_TEST.md); `pharm_001` semantic trace; recordable live dashboard |
 | **8f** | Terminal + HTML crash-test leaderboard | **Complete** — `scripts/exactkv_leaderboard.py`; [`leaderboard.md`](leaderboard.md) · [`leaderboard.html`](leaderboard.html) |
-| **9** | V13 completion / launch decision | Planned |
+| **9A** | Launch readiness gap audit | **Complete** — [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md); **launch NOT approved** |
+| **9B** | Prelaunch hardening | **Planned** — [`PRELAUNCH_HARDENING_PLAN.md`](PRELAUNCH_HARDENING_PLAN.md) |
+| **9** | V13 completion / launch decision | **Deferred** — until 9B must-fix blockers resolved |
 
 **Latest tagged release:** `v0.11.0`. V12 substance (Exp 021–027) may ship as `v0.12.0` after Phase 8 without public v1.0.0.
 

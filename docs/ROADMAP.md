@@ -773,19 +773,21 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 | 8d | Leaderboard tiering cleanup | ✅ [`leaderboard.md`](leaderboard.md) |
 | 8e | Terminal-native crash-test demo (Exp 034b) | ✅ [`EXACTKV_TERMINAL_CRASH_TEST.md`](EXACTKV_TERMINAL_CRASH_TEST.md) |
 | 8f | Terminal + HTML crash-test leaderboard | ✅ [`leaderboard.html`](leaderboard.html) · `scripts/exactkv_leaderboard.py` |
-| 9 | V13 completion / launch decision | Planned |
+| 9A | Launch readiness gap audit | ✅ [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md) — **not launch-ready** |
+| 9B | Prelaunch hardening | Planned — [`PRELAUNCH_HARDENING_PLAN.md`](PRELAUNCH_HARDENING_PLAN.md) |
+| 9 | V13 completion / launch decision | **Deferred** — until 9B blockers resolved |
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) §V13.
 
 ---
 
-# v1.0.0: Public launch (after V13)
+# v1.0.0: Public launch (after V13 — **NOT APPROVED**)
 
 Git tag `v1.0.0`, `PROJECT_STATUS` / `RELEASE_NOTES` v1.0.0, optional curated report
-bundle (D17), and reviewed launch narrative (D18) — only after V13 Phase 9 exit criteria in
-[`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) §18.
+bundle (D17), and reviewed launch narrative (D18) — only after Phase 9B must-fix
+blockers and explicit launch approval ([`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md)).
 
-**Public posting remains deferred** until V13 produces evidence-backed practicality answers or honestly closes gaps ([Exp 027](EXPERIMENT_027_PERFORMANCE_MEMORY_TRUTH_BOUNDARY.md)).
+**Public launch remains deferred.** V13 Phase 9A audit: strong demos and exactness evidence, but install/repro/README/claims hardening incomplete. Runtime speed, active memory savings, and serving are **future work** ([`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md)).
 
 ---
 

@@ -69,12 +69,14 @@ V10/V11 suites are **not universal benchmarks**. Restricted adapters remain **fa
 | V10 | `v0.10.0` | Suite hardening; Exp 012–014; [readiness](docs/V10_READINESS_ASSESSMENT.md) | ✅ |
 | V11 | `v0.11.0` | Launch hardening; Exp 015–020; [readiness](docs/V11_LAUNCH_READINESS.md) | ✅ |
 | V12 | — | Deferred Work Completion Gauntlet ([scope](docs/V12_SCOPE_STATEMENT.md)); Exp 021–027 | Phase 7 ✅ |
-| V13 | — | Practicality Proof ([scope](docs/V13_SCOPE_STATEMENT.md)) → v1.0.0 | Phase 8e ✅; terminal crash-test demo |
+| V13 | — | Practicality Proof ([scope](docs/V13_SCOPE_STATEMENT.md)) | Phase 9A ✅; **prelaunch hardening** — not public-launch-ready |
 
 All published sweeps report **`exactkv_failures == 0`**. ExactKV reports exactness and
 acceptance behaviour — **not** tokens/sec, throughput, or latency.
 
 **Contents:** [Install](#install) · [Live demo](#live-demo) · [Tests](#run-tests) · [Example](#run-the-example-script) · [Benchmarks](#run-the-benchmark-suite) · [CLI](#v2-cli) · [Compressors](#v4-asymmetric-compressors-experimental) · [Roadmap](#roadmap-and-research) · [Docs](#key-documents)
+
+> Public launch is **not approved**. V13 is in prelaunch/internal hardening ([`LAUNCH_READINESS_GAP_AUDIT.md`](docs/LAUNCH_READINESS_GAP_AUDIT.md)). v1.0.0 deferred.
 
 ---
 
