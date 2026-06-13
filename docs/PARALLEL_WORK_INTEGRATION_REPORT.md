@@ -60,13 +60,13 @@ No generation logic, verification logic, compressors, or new benchmarks were add
 
 | Field | Value |
 |---|---|
-| Experiment | Exp 038 — [`EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md`](EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md) |
+| Experiment | Exp 038–039 — [`EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md`](EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md) · [`EXPERIMENT_039_SHARD_EXTERNAL_STRESS_PANEL.md`](EXPERIMENT_039_SHARD_EXTERNAL_STRESS_PANEL.md) |
 | Integration | **Not** a default ExactKV compressor |
 | Local repo | Cloned on RunPod at `/root/shard` |
-| Probe status | **`pass`** — RunPod L40S with `HF_TOKEN`; alignment OK after BOS harness fix |
-| ExactKV panel numbers | 4 prompts; `exactkv_failures=0`; `accepted_prefix_lengths=[16,16,16,16]` |
-| Recommendation | **`restricted_go`** — Mode B external drafter only; not default registry |
-| Next step | Optional larger panel / longer generation; still no registry entry |
+| Feasibility (038) | **`pass`** — 4-prompt × 16-token; `exactkv_failures=0` |
+| Stress panel (039) | **`pass`** — 32-prompt × 64-token; **6 draft divergences**; `exactkv_failures=0` |
+| Recommendation | **`restricted_go_with_divergence`** — Mode B crash-test harness viable |
+| Next step | Optional lower `stream_bits` or `max_new_tokens=128`; still no registry entry |
 
 Shard README throughput/memory numbers are **external results**, not ExactKV results.
 

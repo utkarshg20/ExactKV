@@ -58,6 +58,7 @@ under `reports/`.
 | 037 | LongBench-style drift demo | [`EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md`](EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md) | Bounded score-preserving drift search + secondary terminal demo | 60 searched | `lb_md_001` × `int4_sim`; `billing` rejected → `answer`; outcome heuristic green on all lanes | 0 | LongBench-**style** only; not official LongBench; CPU 0.5B bounded search |
 | 037 live | LongBench-style terminal demo | [`EXACTKV_TERMINAL_LONGBENCH_DRIFT.md`](EXACTKV_TERMINAL_LONGBENCH_DRIFT.md) | **Secondary** replay: outcome green, token path drifted | — (replay) | Multi-doc QA trace; complements pharmacy demo | 0 | Not timing/memory; not official LongBench |
 | 038 | Shard external-drafter probe | [`EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md`](EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md) | Mode B feasibility; RunPod L40S `--try-run` | 4-prompt panel | `pass` / `restricted_go` | 0 failures on panel | Not integrated; external drafter only |
+| 039 | Shard external stress panel | [`EXPERIMENT_039_SHARD_EXTERNAL_STRESS_PANEL.md`](EXPERIMENT_039_SHARD_EXTERNAL_STRESS_PANEL.md) | 32-prompt × 64-token RunPod stress panel | 32 prompts | `pass` / `restricted_go_with_divergence` | 0 exactkv_failures; 6 draft divergences | Mode B only; not integrated |
 
 ---
 
@@ -102,6 +103,7 @@ under `reports/`.
 | 037 search | `python3 scripts/search_longbench_style_drift_demo.py --device cpu --dtype float32` |
 | 037 terminal | `python3 scripts/exactkv_terminal_longbench_drift.py` |
 | 038 Shard probe | `bash scripts/research/exp038_shard_probe_runpod.sh` (RunPod; `HF_TOKEN` + `SHARD_REPO_PATH=/root/shard`) |
+| 039 Shard stress | `bash scripts/research/exp039_shard_stress_runpod.sh` (RunPod; `HF_TOKEN` + `SHARD_REPO_PATH=/root/shard`) |
 | 035 leaderboard | `python3 scripts/exactkv_leaderboard.py` |
 | 9A audit | Review [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md) · [`PRELAUNCH_HARDENING_PLAN.md`](PRELAUNCH_HARDENING_PLAN.md) |
 | 035 | `python3 scripts/visualize_experiment_035.py` |
