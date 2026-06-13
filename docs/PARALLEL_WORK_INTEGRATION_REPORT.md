@@ -60,13 +60,13 @@ No generation logic, verification logic, compressors, or new benchmarks were add
 
 | Field | Value |
 |---|---|
-| Experiment | Exp 038–039 — [`EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md`](EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md) · [`EXPERIMENT_039_SHARD_EXTERNAL_STRESS_PANEL.md`](EXPERIMENT_039_SHARD_EXTERNAL_STRESS_PANEL.md) |
+| Experiment | Exp 038–040 — Shard external-drafter probe + stress + ablation |
 | Integration | **Not** a default ExactKV compressor |
-| Local repo | Cloned on RunPod at `/root/shard` |
-| Feasibility (038) | **`pass`** — 4-prompt × 16-token; `exactkv_failures=0` |
-| Stress panel (039) | **`pass`** — 32-prompt × 64-token; **6 draft divergences**; `exactkv_failures=0` |
-| Recommendation | **`restricted_go_with_divergence`** — Mode B crash-test harness viable |
-| Next step | Optional lower `stream_bits` or `max_new_tokens=128`; still no registry entry |
+| Feasibility (038) | **`pass`** — 4-prompt × 16-token |
+| Stress panel (039) | **`pass`** — 6/32 divergences; `exactkv_failures=0` |
+| Ablation (040) | **`pass`** — length 128 ↑ drift to 31%; `stream_bits=4` modest ↑; all `exactkv_failures=0` |
+| Recommendation | **`expand_shard_lossy_ablation`** — continue bounded Shard; consider SpectralQuant in parallel |
+| Next step | Optional `stream_bits=4` + `max_new_tokens=128`; still no registry entry |
 
 Shard README throughput/memory numbers are **external results**, not ExactKV results.
 
