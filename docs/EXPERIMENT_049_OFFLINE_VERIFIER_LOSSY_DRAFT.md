@@ -168,6 +168,6 @@ Phase 12D extends Phase 12C toward VeriCache’s dual-cache verify loop — loss
 
 ## 16. Next step
 
+- See [`EXPERIMENT_050_OFFLINE_RESTORED_VERIFIER_DRIFT_STRESS.md`](EXPERIMENT_050_OFFLINE_RESTORED_VERIFIER_DRIFT_STRESS.md) (Phase 12E) for drift-stress panel
 - Optional CUDA dtype panel for offline lossy verifier (same exactness gate)
-- Broader prompt panel or additional built-in compressors only with explicit blockers
 - Do **not** wire into default runtime without separate approval

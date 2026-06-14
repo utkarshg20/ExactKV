@@ -37,6 +37,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Full-KV restore panel hardening | Phase 12B / Exp 047 | [`EXPERIMENT_047_FULL_KV_RESTORE_PANEL.md`](EXPERIMENT_047_FULL_KV_RESTORE_PANEL.md); 12-prompt panel; optional CUDA dtypes; **not** serving |
 | Offline verifier restore smoke | Phase 12C / Exp 048 | [`EXPERIMENT_048_OFFLINE_VERIFIER_RESTORE_SMOKE.md`](EXPERIMENT_048_OFFLINE_VERIFIER_RESTORE_SMOKE.md); reloaded full-KV verifier; controlled draft; **not** runtime wired |
 | Offline verifier lossy draft | Phase 12D / Exp 049 | [`EXPERIMENT_049_OFFLINE_VERIFIER_LOSSY_DRAFT.md`](EXPERIMENT_049_OFFLINE_VERIFIER_LOSSY_DRAFT.md); built-in lossy compressors; **not** compressor ranking |
+| Offline restored-verifier drift stress | Phase 12E / Exp 050 | [`EXPERIMENT_050_OFFLINE_RESTORED_VERIFIER_DRIFT_STRESS.md`](EXPERIMENT_050_OFFLINE_RESTORED_VERIFIER_DRIFT_STRESS.md); drift-prone panel; **not** runtime wired |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

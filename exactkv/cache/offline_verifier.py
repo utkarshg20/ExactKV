@@ -1,4 +1,4 @@
-"""Offline verifier restore integration smoke (Phase 12C–12D).
+"""Offline verifier restore integration smoke (Phase 12C–12E).
 
 Isolated draft/verify loop where the verifier reads **reloaded** full-KV payloads
 from ``KVStorageBackend``. **Not** wired into ``ExactKVGenerator`` or default runtime.
@@ -36,9 +36,12 @@ from exactkv.verification.engine import VerificationEngine
 
 EXPERIMENT_048_ID = "exp048_offline_verifier_restore_smoke"
 EXPERIMENT_049_ID = "exp049_offline_verifier_lossy_draft"
+EXPERIMENT_050_ID = "exp050_offline_restored_verifier_drift_stress"
 DEFAULT_MODEL = "Qwen/Qwen2.5-0.5B"
 DEFAULT_MAX_NEW_TOKENS = 12
 DEFAULT_DRAFT_LEN = 4
+DEFAULT_DRIFT_MAX_NEW_TOKENS = 32
+DEFAULT_DRIFT_DRAFT_LENS = (4, 8)
 DRAFT_SOURCE_TYPE = "controlled_draft_with_injected_mismatch"
 VERIFIER_SOURCE = "reloaded_full_kv"
 
@@ -56,7 +59,29 @@ OFFLINE_LOSSY_CLAIM_NOTE = (
     "No speed, latency, throughput, active memory savings, or production-serving claim."
 )
 
+OFFLINE_DRIFT_STRESS_CLAIM_NOTE = (
+    "Offline restored-verifier drift stress (Phase 12E). Reloaded full-KV verifier with "
+    "existing lossy compressor drafts on a drift-prone panel in an isolated loop only — "
+    "not default runtime, vLLM, LMCache, remote prefix runtime, or serving. "
+    "No speed, latency, throughput, active memory savings, or production-serving claim."
+)
+
 DEFAULT_LOSSY_COMPRESSORS = ("int8", "int4_sim", "k8_v4_sim")
+DEFAULT_DRIFT_COMPRESSORS = (
+    "int4_sim",
+    "k8_v4_sim",
+    "k8_v4_boundary4_v8_sim",
+    "int8",
+)
+SEMANTIC_DRIFT_CATEGORIES = frozenset(
+    {
+        "pharmacy_semantic",
+        "longbench_style",
+        "retrieval_copy",
+        "tool_call_json",
+        "structured_json",
+    }
+)
 
 
 @dataclass
@@ -133,6 +158,40 @@ class OfflineLossyCellResult:
         return data
 
 
+@dataclass
+class OfflineDriftStressCellResult:
+    """Per prompt×backend×compressor×draft_len drift-stress cell result."""
+
+    prompt_id: str
+    prompt: str
+    category: str
+    backend_name: str
+    compressor_name: str
+    draft_len: int
+    cache_format: str
+    draft_source: str
+    verifier_source: str
+    live_reference_token_ids: list[int]
+    offline_output_token_ids: list[int]
+    token_exact_match: bool
+    exactkv_failures: int
+    accepted_prefix_lengths: list[int]
+    mean_acceptance: float
+    draft_divergence_count: int
+    semantic_divergence_count: int
+    first_divergence_idx: int | None = None
+    restore_blocker: str = ""
+    draft_blocker: str = ""
+    verification_blocker: str = ""
+    round_traces: list[OfflineVerifierRoundTrace] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        if self.round_traces is not None:
+            data["round_traces"] = [t.to_dict() for t in self.round_traces]
+        return data
+
+
 def default_offline_prompts() -> list[dict[str, str]]:
     """Deterministic 4–8 prompt panel for offline verifier smoke."""
     return [
@@ -160,6 +219,134 @@ def default_lossy_compressors() -> list[str]:
     return available
 
 
+def default_drift_stress_compressors() -> list[str]:
+    """Drift-prone built-in compressors for Phase 12E (registry unchanged)."""
+    available: list[str] = []
+    for name in DEFAULT_DRIFT_COMPRESSORS:
+        try:
+            get_compressor(name)
+            available.append(name)
+        except ValueError:
+            continue
+    return available
+
+
+def _drift_context_pad(text: str, repeats: int = 4) -> str:
+    filler = (
+        "Operational note: teams track migration blockers, renewal risk, "
+        "follow-up owners, and checkpoint dates in weekly reviews. "
+    )
+    return filler * repeats + text
+
+
+def default_drift_stress_prompts() -> list[dict[str, str]]:
+    """Deterministic 8–16 prompt panel targeting lossy draft divergence."""
+    return [
+        {
+            "prompt_id": "drift_001",
+            "category": "pharmacy_semantic",
+            "prompt": (
+                'JSON tool call only: {"tool":"refill_prescription","drug":"ibuprofen",'
+                '"quantity":30,"pickup":'
+            ),
+        },
+        {
+            "prompt_id": "drift_002",
+            "category": "longbench_style",
+            "prompt": _drift_context_pad(
+                "Context document 1: Friday follow-up on SSO is assigned to Maya.\n"
+                "Context document 2: Billing migration checkpoint remains open.\n"
+                "Context document 3: Launch communications go to Priya.\n\n"
+                "Use the context documents to answer exactly who owns the Friday follow-up.\n"
+            ),
+        },
+        {
+            "prompt_id": "drift_003",
+            "category": "tool_call_json",
+            "prompt": (
+                "You are an ordering agent. Return only a JSON tool call.\n\n"
+                "User wants:\n- vegan burger\n- no onions\n- quantity 1\n- pickup\n\n"
+                'Return:\n{"tool":"add_item","item_id":'
+            ),
+        },
+        {
+            "prompt_id": "drift_004",
+            "category": "structured_json",
+            "prompt": 'Return JSON only: {"order_id":"A-1024","status":',
+        },
+        {
+            "prompt_id": "drift_005",
+            "category": "retrieval_copy",
+            "prompt": _drift_context_pad(
+                "Long-context retrieval task:\n"
+                "Background: The operations team logs owner names in triage tickets.\n"
+                "Copy exactly who owns the Friday follow-up according to the ticket: "
+                "OWNER=Maya; TASK=Friday follow-up; STATUS=open\n"
+            ),
+        },
+        {
+            "prompt_id": "drift_006",
+            "category": "code_like",
+            "prompt": (
+                "def validate_order(order):\n"
+                "    if order['fulfillment'] == 'pickup':\n"
+                "        return"
+            ),
+        },
+        {
+            "prompt_id": "drift_007",
+            "category": "long_context_summary",
+            "prompt": _drift_context_pad(
+                "Weekly operations log:\n"
+                "- SSO blocker persists for staging.\n"
+                "- Renewal risk: medium.\n"
+                "- Follow-up owner: Maya.\n"
+                "- Billing migration incomplete; launch owner Priya.\n\n"
+                "Summarize the operational status in 3 bullet points.\n"
+            ),
+        },
+        {
+            "prompt_id": "drift_008",
+            "category": "tool_call_json",
+            "prompt": (
+                'Return JSON: {"action":"transfer","from_account":"checking",'
+                '"to_account":"savings","amount":'
+            ),
+        },
+        {
+            "prompt_id": "drift_009",
+            "category": "structured_json",
+            "prompt": 'List as JSON array: ["red", "green", "blue",',
+        },
+        {
+            "prompt_id": "drift_010",
+            "category": "retrieval_copy",
+            "prompt": (
+                "Passage: The refund window for Pro annual customers is 30 days from purchase. "
+                "Quote the window exactly:"
+            ),
+        },
+        {
+            "prompt_id": "drift_011",
+            "category": "longbench_style",
+            "prompt": _drift_context_pad(
+                "Support policy excerpt:\n"
+                "Pro annual customers may request a full refund within 30 days of purchase.\n"
+                "After 30 days, only exchange credits apply.\n\n"
+                "According to the policy, how many days after purchase can a Pro annual "
+                "customer request a refund?\n"
+            ),
+        },
+        {
+            "prompt_id": "drift_012",
+            "category": "code_like",
+            "prompt": (
+                'import json\n\npayload = {"tool":"search","query":'
+            ),
+        },
+    ]
+
+
 def mean_acceptance_from_traces(traces: list[OfflineVerifierRoundTrace]) -> float:
     """Compute mean acceptance rate across offline verifier rounds."""
     if not traces:
@@ -168,6 +355,26 @@ def mean_acceptance_from_traces(traces: list[OfflineVerifierRoundTrace]) -> floa
     rejected = sum(t.num_rejected for t in traces)
     denom = accepted + rejected
     return accepted / denom if denom > 0 else 1.0
+
+
+def draft_divergence_count_from_traces(traces: list[OfflineVerifierRoundTrace]) -> int:
+    """Count verify rounds where lossy draft did not fully match verifier."""
+    return sum(1 for trace in traces if not trace.all_matched)
+
+
+def semantic_divergence_count_from_traces(
+    traces: list[OfflineVerifierRoundTrace],
+    *,
+    category: str,
+) -> int:
+    """Count correction rounds on semantic-tagged prompts (honest classifier)."""
+    if category not in SEMANTIC_DRIFT_CATEGORIES:
+        return 0
+    return sum(
+        1
+        for trace in traces
+        if trace.correction_token is not None and not trace.all_matched
+    )
 
 
 def propose_controlled_draft(
@@ -713,6 +920,228 @@ def run_offline_lossy_verifier_cell(
         verification_blocker=verification_blocker,
         round_traces=traces,
     )
+
+
+@torch.no_grad()
+def run_offline_drift_stress_cell(
+    runtime: ModelRuntime,
+    *,
+    prompt_id: str,
+    prompt: str,
+    category: str,
+    backend: KVStorageBackend,
+    compressor_name: str,
+    draft_len: int,
+    max_new_tokens: int = DEFAULT_DRIFT_MAX_NEW_TOKENS,
+) -> OfflineDriftStressCellResult:
+    """Run one offline restored-verifier drift-stress cell."""
+    backend_name = getattr(backend, "_backend_name", type(backend).__name__)
+    storage_key = f"{prompt_id}__{compressor_name}__dl{draft_len}"
+    try:
+        compressor = get_compressor(compressor_name)
+    except ValueError as exc:
+        return OfflineDriftStressCellResult(
+            prompt_id=prompt_id,
+            prompt=prompt,
+            category=category,
+            backend_name=backend_name,
+            compressor_name=compressor_name,
+            draft_len=draft_len,
+            cache_format="unknown",
+            draft_source=compressor_name,
+            verifier_source=VERIFIER_SOURCE,
+            live_reference_token_ids=[],
+            offline_output_token_ids=[],
+            token_exact_match=False,
+            exactkv_failures=1,
+            accepted_prefix_lengths=[],
+            mean_acceptance=0.0,
+            draft_divergence_count=0,
+            semantic_divergence_count=0,
+            draft_blocker=str(exc),
+        )
+
+    try:
+        reloaded_state, _capture, cache_format = store_and_reload_prefill_state(
+            runtime,
+            prompt=prompt,
+            backend=backend,
+            prompt_id=storage_key,
+            namespace_prefix="exp050",
+        )
+    except HfKvRestoreError as exc:
+        return OfflineDriftStressCellResult(
+            prompt_id=prompt_id,
+            prompt=prompt,
+            category=category,
+            backend_name=backend_name,
+            compressor_name=compressor_name,
+            draft_len=draft_len,
+            cache_format="unknown",
+            draft_source=compressor_name,
+            verifier_source=VERIFIER_SOURCE,
+            live_reference_token_ids=[],
+            offline_output_token_ids=[],
+            token_exact_match=False,
+            exactkv_failures=1,
+            accepted_prefix_lengths=[],
+            mean_acceptance=0.0,
+            draft_divergence_count=0,
+            semantic_divergence_count=0,
+            restore_blocker=str(exc),
+        )
+    except Exception as exc:  # noqa: BLE001 — smoke must report blockers
+        return OfflineDriftStressCellResult(
+            prompt_id=prompt_id,
+            prompt=prompt,
+            category=category,
+            backend_name=backend_name,
+            compressor_name=compressor_name,
+            draft_len=draft_len,
+            cache_format="unknown",
+            draft_source=compressor_name,
+            verifier_source=VERIFIER_SOURCE,
+            live_reference_token_ids=[],
+            offline_output_token_ids=[],
+            token_exact_match=False,
+            exactkv_failures=1,
+            accepted_prefix_lengths=[],
+            mean_acceptance=0.0,
+            draft_divergence_count=0,
+            semantic_divergence_count=0,
+            restore_blocker=f"{type(exc).__name__}: {exc}",
+        )
+
+    reference = generate_full_greedy(runtime, prompt, max_new_tokens).generated_ids[
+        0
+    ].tolist()
+    offline_output, traces, verification_blockers, draft_blocker = (
+        run_offline_lossy_verifier_loop(
+            runtime,
+            reloaded_state,
+            compressor,
+            max_new_tokens=max_new_tokens,
+            draft_len=draft_len,
+        )
+    )
+    div = first_divergence_index(reference, offline_output)
+    exact = div is None and reference == offline_output
+    verification_blocker = "; ".join(verification_blockers)
+    mean_acc = mean_acceptance_from_traces(traces)
+    draft_div = draft_divergence_count_from_traces(traces)
+    semantic_div = semantic_divergence_count_from_traces(traces, category=category)
+
+    return OfflineDriftStressCellResult(
+        prompt_id=prompt_id,
+        prompt=prompt,
+        category=category,
+        backend_name=backend_name,
+        compressor_name=compressor_name,
+        draft_len=draft_len,
+        cache_format=cache_format,
+        draft_source=compressor_name,
+        verifier_source=VERIFIER_SOURCE,
+        live_reference_token_ids=reference,
+        offline_output_token_ids=offline_output,
+        token_exact_match=exact
+        and not verification_blocker
+        and not draft_blocker,
+        exactkv_failures=0
+        if exact and not verification_blocker and not draft_blocker
+        else 1,
+        accepted_prefix_lengths=[t.accepted_prefix_length for t in traces],
+        mean_acceptance=mean_acc,
+        draft_divergence_count=draft_div,
+        semantic_divergence_count=semantic_div,
+        first_divergence_idx=div,
+        draft_blocker=draft_blocker,
+        verification_blocker=verification_blocker,
+        round_traces=traces,
+    )
+
+
+def validate_exp050_report(report: dict[str, Any]) -> list[str]:
+    """Validate experiment 050 JSON report schema."""
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "model",
+        "device",
+        "dtype",
+        "prompt_count",
+        "storage_backends",
+        "compressor_names",
+        "draft_len_values",
+        "max_new_tokens",
+        "verifier_source",
+        "cells",
+        "exactkv_failures",
+        "token_exact_match_count",
+        "mean_acceptance",
+        "accepted_prefix_lengths",
+        "draft_divergence_count",
+        "first_divergences",
+        "semantic_divergence_count",
+        "restore_blockers",
+        "draft_blockers",
+        "verification_blockers",
+        "no_real_drift_observed",
+        "claim_note",
+        "forbidden_claims",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing report field: {key}")
+    if report.get("experiment_id") != EXPERIMENT_050_ID:
+        errors.append("experiment_id must be exp050_offline_restored_verifier_drift_stress")
+    if report.get("verifier_source") != VERIFIER_SOURCE:
+        errors.append("verifier_source must be reloaded_full_kv")
+    if not isinstance(report.get("no_real_drift_observed"), bool):
+        errors.append("no_real_drift_observed must be a bool")
+    if not report.get("claim_note", "").strip():
+        errors.append("claim_note required")
+    forbidden = report.get("forbidden_claims", [])
+    for term in FORBIDDEN_CLAIMS:
+        if term not in forbidden:
+            errors.append(f"forbidden_claims must include: {term}")
+    cells = report.get("cells", [])
+    exact_count = int(report.get("token_exact_match_count", -1))
+    failures = int(report.get("exactkv_failures", -1))
+    if exact_count >= 0 and failures >= 0 and exact_count + failures != len(cells):
+        errors.append(
+            "token_exact_match_count + exactkv_failures must equal len(cells)"
+        )
+    draft_div = report.get("draft_divergence_count")
+    if not isinstance(draft_div, int) or draft_div < 0:
+        errors.append("draft_divergence_count must be a non-negative int")
+    semantic_div = report.get("semantic_divergence_count")
+    if not isinstance(semantic_div, int) or semantic_div < 0:
+        errors.append("semantic_divergence_count must be a non-negative int")
+    if bool(report.get("no_real_drift_observed")) and int(draft_div or -1) > 0:
+        errors.append("no_real_drift_observed cannot be true when draft_divergence_count > 0")
+    mean_acc = report.get("mean_acceptance")
+    if not isinstance(mean_acc, (int, float)):
+        errors.append("mean_acceptance must be numeric")
+    for cell in cells:
+        for field in (
+            "prompt_id",
+            "backend_name",
+            "compressor_name",
+            "draft_len",
+            "draft_source",
+            "verifier_source",
+            "token_exact_match",
+            "exactkv_failures",
+            "mean_acceptance",
+            "draft_divergence_count",
+            "semantic_divergence_count",
+        ):
+            if field not in cell:
+                errors.append(f"cells missing field: {field}")
+        div = cell.get("first_divergence_idx")
+        if div is not None and not isinstance(div, int):
+            errors.append("first_divergence_idx must be int or null")
+    return errors
 
 
 def validate_exp049_report(report: dict[str, Any]) -> list[str]:
