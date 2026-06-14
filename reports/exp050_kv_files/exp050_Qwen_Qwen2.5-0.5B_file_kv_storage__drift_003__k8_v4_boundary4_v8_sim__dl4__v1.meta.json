@@ -1,0 +1,12 @@
+{
+  "backend_name": "file_kv_storage",
+  "claim_note": "Full-KV restore smoke (Phase 12A). Storage round-trip on real HF past_key_values only \u2014 not vLLM, LMCache, remote prefix runtime, or serving. No speed, latency, throughput, memory, or production-serving claim.",
+  "dtype_summary": "torch.float32,torch.int64",
+  "materialization": "FULL",
+  "metadata_bytes": 612,
+  "residency": "DISK",
+  "role": "VERIFIER",
+  "shape_summary": "[(1, 2, 43, 64), (1, 2, 43, 64), (1, 2, 43, 64), (1, 2, 43, 64), (1, 2, 43, 64), (1, 2, 43, 64), (1, 2, 43, 64), (1, 2, 43, 64)];+41 more",
+  "tensor_count": 49,
+  "total_payload_bytes": 1057112
+}
