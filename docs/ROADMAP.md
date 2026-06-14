@@ -794,6 +794,7 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 | 11F | vLLM prototype path (Stage 5) | ✅ [`VLLM_PROTOTYPE_PATH.md`](VLLM_PROTOTYPE_PATH.md) |
 | 11G | LMCache prototype path (Stage 6) | ✅ [`LMCACHE_PROTOTYPE_PATH.md`](LMCACHE_PROTOTYPE_PATH.md) |
 | 11H | Remote prefix cache semantics (Stage 7) | ✅ [`REMOTE_PREFIX_CACHE_SEMANTICS.md`](REMOTE_PREFIX_CACHE_SEMANTICS.md) |
+| 11I | Throughput benchmark harness (Stage 8) | ✅ [`THROUGHPUT_BENCHMARK_HARNESS.md`](THROUGHPUT_BENCHMARK_HARNESS.md) |
 | 10I | Benchmark gap analysis | ✅ [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md) |
 | 10C | Parallel work integration | ✅ [`PARALLEL_WORK_INTEGRATION_REPORT.md`](PARALLEL_WORK_INTEGRATION_REPORT.md) |
 | 9C | Launch validation & should-fix | Planned |

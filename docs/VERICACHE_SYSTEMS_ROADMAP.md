@@ -134,17 +134,17 @@ ExactKV should eventually implement **VeriCache-equivalent functionality**:
 
 ---
 
-### Stage 8 — Throughput benchmark harness
+### Stage 8 — Throughput benchmark harness ✅ (Phase 11I contract spike)
 
 | Field | Detail |
 |---|---|
-| **Goal** | Reproducible tokens/sec / latency methodology **including verify overhead** |
-| **Files likely touched** | `exactkv/metrics/timing.py`, benchmark scripts, reporting |
-| **Implementation risk** | Medium — honest comparison vs full greedy |
-| **Test gate** | Harness CI smoke; methodology doc sign-off |
-| **Claims unlocked** | **Diagnostic** throughput numbers with verify overhead stated — **not** speedup claims until Stage 9–10 |
+| **Goal** | Throughput/latency methodology contracts + diagnostic schema — **not** speedup claim |
+| **Files likely touched** | `exactkv/benchmarks/throughput_contract.py`, [`THROUGHPUT_BENCHMARK_HARNESS.md`](THROUGHPUT_BENCHMARK_HARNESS.md) |
+| **Implementation risk** | Low — metadata only; Exp 030 diagnostic cited |
+| **Test gate** | `tests/test_throughput_benchmark_contract.py` |
+| **Claims unlocked** | Panel-bound **diagnostic** timing with exactness gate — **not** speedup until `CLAIM_ALLOWED` gates pass |
 
-**Current:** Exp 030 diagnostic only — ExactKV slower on tested panel.
+**Current:** `ThroughputBenchmarkPlan` + validators; Exp 030 shows ExactKV **slower** than full greedy on tested panel; **not** wired to generator.
 
 ---
 
@@ -205,6 +205,6 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 ## 5. Recommended next phase (after 11A)
 
-**Stage 8 throughput benchmark harness design** — diagnostic methodology docs and harness contracts; still no speedup claims until gates clear.
+**Stage 9 paper-like reproduction panel design** — fixed panel contracts and claim boundaries; still no VeriCache throughput reproduction claim.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).
