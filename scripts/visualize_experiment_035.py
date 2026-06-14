@@ -115,6 +115,12 @@ SHARD_RESTRICTED_CAVEAT = (
     "not ExactKV."
 )
 
+SPECTRALQUANT_SMOKE_CAVEAT = (
+    "SpectralQuant has ExactKV tensor-smoke coverage, but no generation-time ExactKV probe yet. "
+    "Synthetic K/V round-trip pass (Exp 042); tensor smoke only — not generation integration. "
+    "External paper/README not ExactKV."
+)
+
 
 @dataclass
 class PlotData:
@@ -530,9 +536,14 @@ def build_tiered_leaderboard(data: PlotData) -> list[LeaderboardEntry]:
 
     entries.append(
         LeaderboardEntry(
-            TIER_FUTURE, "SpectralQuant", "Exp 032 addendum", "Calibrated tensor-adapter candidate",
-            None, None, "not integrated",
-            "Dynamis-Labs/spectralquant; no ExactKV adapter yet; external results not ExactKV",
+            TIER_SMOKE,
+            "SpectralQuant",
+            "Exp 042",
+            "Synthetic K/V tensor smoke · external probe",
+            None,
+            None,
+            "tensor probe (not integrated)",
+            SPECTRALQUANT_SMOKE_CAVEAT,
         ),
     )
     return entries

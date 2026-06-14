@@ -129,6 +129,16 @@ def entry_badges(entry: LeaderboardEntry) -> list[str]:
         ])
         return badges
 
+    if "spectralquant" in method_l:
+        badges.extend([
+            "TENSOR PROBE",
+            "NOT GENERATION",
+            "NOT DEFAULT",
+            "NO SPEED CLAIM",
+            "NO MEMORY CLAIM",
+        ])
+        return badges
+
     status_l = entry.integration_status.lower()
     caveat_l = entry.caveat.lower()
     method_l = entry.method.lower()
@@ -303,11 +313,18 @@ def render_terminal(
         elif tier == TIER_SMOKE:
             if rows:
                 for e in rows:
-                    emit(
-                        f"  • {e.method}: {e.model_panel} — "
-                        f"{_fmt_fail(e.exactkv_failures)} failures  "
-                        f"{_fmt_badges(entry_badges(e), plain=plain)}"
-                    )
+                    if e.method.lower() == "spectralquant":
+                        emit(
+                            f"  • {e.method}: {e.model_panel} — "
+                            f"tensor smoke passed  accept=N/A  failures=N/A  "
+                            f"{_fmt_badges(entry_badges(e), plain=plain)}"
+                        )
+                    else:
+                        emit(
+                            f"  • {e.method}: {e.model_panel} — "
+                            f"{_fmt_fail(e.exactkv_failures)} failures  "
+                            f"{_fmt_badges(entry_badges(e), plain=plain)}"
+                        )
             else:
                 emit("  (no smoke rows)")
         elif tier == TIER_FUTURE:
@@ -420,7 +437,7 @@ def write_leaderboard_md(entries: list[LeaderboardEntry], path: Path) -> None:
         "- **Repair policies** are a separate tier — adaptive selectors, not default compressors.",
         "- **Restricted backends** are listed separately; not ranked against full-panel compressors. Shard shows restricted external-drafter metrics (accepted-prefix mean, divergence rate) — not standard compressor acceptance.",
         "- **Smoke-only adapters** are diagnostic probes — not ranked against full-panel compressors.",
-        "- **Future candidates** have no ExactKV panel metrics yet.",
+        "- **Future candidates** have no ExactKV panel or tensor-smoke metrics yet.",
         "",
         "> " + _NOT_APPLES,
         "",
@@ -464,8 +481,8 @@ def write_leaderboard_md(entries: list[LeaderboardEntry], path: Path) -> None:
         "- Tiers prevent apples-to-oranges ranking (full panel vs smoke vs restricted).",
         "- **TurboQuant / KIVI / KVQuant** are factory-only restricted adapters.",
         "- **SnapKV experimental** is smoke-only (8 cells).",
+        "- **SpectralQuant** has ExactKV tensor-smoke coverage, but no generation-time ExactKV probe yet (Exp 042).",
         "- **Shard** has restricted external-drafter probe results under ExactKV verification (Exp 039–041) — not a full-panel integrated compressor.",
-        "- **SpectralQuant** remains a future candidate without ExactKV panel numbers.",
         "- External Shard, SpectralQuant, SnapKV paper, or kvpress results are **not** ExactKV results.",
         "- Regenerate: `python3 scripts/exactkv_leaderboard.py --md --html`",
         "- Live terminal: `python3 scripts/exactkv_leaderboard.py --watch`",
@@ -490,6 +507,8 @@ def _badge_class(badge: str) -> str:
         "NOT DEFAULT": "nobytes",
         "NO SPEED CLAIM": "nobytes",
         "NO MEMORY CLAIM": "nobytes",
+        "TENSOR PROBE": "tier-smoke",
+        "NOT GENERATION": "nobytes",
     }
     return mapping.get(badge, "default")
 
@@ -708,7 +727,7 @@ def write_leaderboard_html(entries: list[LeaderboardEntry], path: Path) -> None:
     <footer>
       <strong>Caveat</strong> — {html.escape(_FOOTER)}<br />
       Generated {generated} by <code>scripts/exactkv_leaderboard.py</code> from local reports.
-      Not a hosted live backend. Shard has restricted external-drafter probe results; external Shard/SpectralQuant README results are not ExactKV results.
+      Not a hosted live backend. Shard has restricted external-drafter probe results; SpectralQuant has tensor-smoke coverage only (Exp 042); external Shard/SpectralQuant README results are not ExactKV results.
     </footer>
   </div>
   <script>

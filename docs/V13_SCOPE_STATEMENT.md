@@ -46,6 +46,7 @@
 | **10A** | LongBench-style drift demo (Exp 037) | **Complete** — [`EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md`](EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md); **secondary** terminal demo; bounded CPU search |
 | **10B** | Shard external-drafter probe (Exp 038) | **Complete (restricted_go)** — RunPod L40S pass; 4-prompt panel; BOS harness fix — [`EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md`](EXPERIMENT_038_SHARD_EXTERNAL_DRAFTER_PROBE.md) |
 | **10D** | SpectralQuant probe (Exp 042) | **Complete** — tensor smoke pass; model probe restricted_no_go — [`EXPERIMENT_042_SPECTRALQUANT_PROBE.md`](EXPERIMENT_042_SPECTRALQUANT_PROBE.md) |
+| **10E** | SpectralQuant leaderboard integration | **Complete** — SMOKE ONLY / TENSOR PROBE tier — [`leaderboard.md`](leaderboard.md) |
 
 **Latest tagged release:** `v0.11.0`. `v0.13.0-rc` research preview is a **future possibility only** — not approved. V12 substance (Exp 021–027) may ship as `v0.12.0` after Phase 8 without public v1.0.0.
 

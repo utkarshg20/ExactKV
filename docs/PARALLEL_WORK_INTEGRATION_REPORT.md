@@ -83,7 +83,7 @@ Shard README throughput/memory numbers are **external results**, not ExactKV res
 | Tensor smoke | **pass** — synthetic K/V compress/decompress; shapes preserved |
 | Model probe | **Not attempted** — `restricted_no_go` (no generation-time cache path) |
 | `exactkv_failures` | N/A (no generation probe) |
-| Recommendation | **`tensor_smoke_only`** — optional offline BackendAdapter next |
+| Recommendation | **`tensor_smoke_only`** — leaderboard SMOKE ONLY tier (Exp 10E); optional offline BackendAdapter next |
 
 External SpectralQuant paper/README metrics are **not** ExactKV results.
 
@@ -97,8 +97,8 @@ External SpectralQuant paper/README metrics are **not** ExactKV results.
 | `docs/leaderboard.md` | ✅ Tiered (FULL / RESTRICTED / SMOKE / FUTURE) |
 | `docs/leaderboard.html` | ✅ Present |
 | **Shard** | ✅ **RESTRICTED BACKEND** — external-drafter probe (Exp 039–041); bounded probe complete |
-| **SpectralQuant** | ✅ **FUTURE CANDIDATE** — Exp 042 tensor smoke pass; no ExactKV generation probe yet |
-| Tier caveats | ✅ No cross-tier ranking; Shard in RESTRICTED BACKEND (Exp 039–041); SpectralQuant future |
+| **SpectralQuant** | ✅ **SMOKE ONLY / TENSOR PROBE** — Exp 042 tensor smoke pass; no generation-time ExactKV probe yet |
+| Tier caveats | ✅ No cross-tier ranking; Shard in RESTRICTED BACKEND (Exp 039–041); SpectralQuant in SMOKE ONLY (Exp 042) |
 | Claims | ✅ No speedup / VRAM / serving headlines |
 
 ---
@@ -123,7 +123,7 @@ External SpectralQuant paper/README metrics are **not** ExactKV results.
 - Production serving, vLLM/LMCache integration.
 - Model accuracy improvement.
 - **Shard ExactKV panel numbers** beyond the 4-prompt Exp 038 probe (no speedup/serving extrapolation).
-- **SpectralQuant ExactKV results** (not integrated).
+- **SpectralQuant ExactKV generation results** (tensor smoke only; not integrated).
 - **SnapKV full-suite** performance (smoke-only).
 - **Official LongBench** score or ranking.
 - **Public launch ready** / **v1.0 ready**.

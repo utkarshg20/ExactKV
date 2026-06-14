@@ -15,7 +15,7 @@ ExactKV Leaderboard ranks integrated compressors by token-level acceptance and e
 - **Repair policies** are a separate tier — adaptive selectors, not default compressors.
 - **Restricted backends** are listed separately; not ranked against full-panel compressors. Shard shows restricted external-drafter metrics (accepted-prefix mean, divergence rate) — not standard compressor acceptance.
 - **Smoke-only adapters** are diagnostic probes — not ranked against full-panel compressors.
-- **Future candidates** have no ExactKV panel metrics yet.
+- **Future candidates** have no ExactKV panel or tensor-smoke metrics yet.
 
 > Tiers are not apples-to-apples: full-panel compressors are ranked; restricted backends, smoke-only adapters, and future candidates are separate.
 
@@ -67,20 +67,15 @@ ExactKV Leaderboard ranks integrated compressors by token-level acceptance and e
 | Method | Model / panel | Acceptance | Failures | Experiment | Badges | Caveat |
 | --- | --- | ---: | ---: | --- | --- | --- |
 | SnapKV experimental | Qwen2.5-0.5B · 4-prompt smoke (8 cells) | — | 0 | Exp 032b | SMOKE | smoke-only; not full-suite ranked; restricted experimental SnapKV via kvpress |
-
-## Future candidates
-
-| Method | Model / panel | Acceptance | Failures | Experiment | Badges | Caveat |
-| --- | --- | ---: | ---: | --- | --- | --- |
-| SpectralQuant | Calibrated tensor-adapter candidate | — | — | Exp 032 addendum | FUTURE, NOT INTEGRATED | Dynamis-Labs/spectralquant; no ExactKV adapter yet; external results not ExactKV |
+| SpectralQuant | Synthetic K/V tensor smoke · external probe | — | — | Exp 042 | SMOKE, TENSOR PROBE, NOT GENERATION, NOT DEFAULT, NO SPEED CLAIM, NO MEMORY CLAIM | SpectralQuant has ExactKV tensor-smoke coverage, but no generation-time ExactKV probe yet. Synthetic K/V round-trip pass (Exp 042); tensor smoke only — not generation integration. External paper/README not ExactKV. |
 
 ## Notes
 
 - Tiers prevent apples-to-oranges ranking (full panel vs smoke vs restricted).
 - **TurboQuant / KIVI / KVQuant** are factory-only restricted adapters.
 - **SnapKV experimental** is smoke-only (8 cells).
+- **SpectralQuant** has ExactKV tensor-smoke coverage, but no generation-time ExactKV probe yet (Exp 042).
 - **Shard** has restricted external-drafter probe results under ExactKV verification (Exp 039–041) — not a full-panel integrated compressor.
-- **SpectralQuant** remains a future candidate without ExactKV panel numbers.
 - External Shard, SpectralQuant, SnapKV paper, or kvpress results are **not** ExactKV results.
 - Regenerate: `python3 scripts/exactkv_leaderboard.py --md --html`
 - Live terminal: `python3 scripts/exactkv_leaderboard.py --watch`

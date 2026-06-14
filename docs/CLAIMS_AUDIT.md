@@ -26,6 +26,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |
 | Sequential verification is default | Code + docs | Default path; span is optional / non-default |
 | SnapKV smoke exactness | Exp 032b only | “8-cell smoke: `exactkv_failures == 0`” — **not** full-suite |
+| SpectralQuant tensor smoke | Exp 042 only | “Synthetic K/V tensor smoke pass” — **not** generation integration |
 | Llama-3.1-8B small-suite exactness | Exp 033 only | “12-prompt small suite, 48 cells” — **not** full V10 |
 | Timing diagnostic honesty | Exp 030 | “Diagnostic only: ExactKV slower on tested panel” — not a benefit claim |
 | Memory diagnostic honesty | Exp 031 | “Diagnostic only: no active VRAM savings at tested scale” |
@@ -54,6 +55,7 @@ Do **not** use these in README, visuals, demos, leaderboard, release notes, or s
 | **Shard restricted external-drafter metrics** | Exp 039–041 leaderboard tier; accepted-prefix mean + divergence rate; Exp 041 combined 56.25%; **not** full-panel compressor acceptance |
 | **Shard ExactKV integration** | External drafter probe only — not default registry |
 | **Official LongBench score** | Not run; Exp 037 is LongBench-**style** heuristic only |
+| **SpectralQuant tensor smoke (leaderboard)** | Exp 042 | SMOKE ONLY tier; tensor round-trip pass; acceptance/failures N/A — **not** generation probe |
 | SpectralQuant external probe | Exp 042 | Tensor smoke on synthetic K/V; import OK; **not** generation integration |
 | **SnapKV full-suite performance** | Smoke-only (8 cells) |
 | **SnapKV ranked vs INT8 full panel** | Apples-to-oranges; tiers forbid this |
