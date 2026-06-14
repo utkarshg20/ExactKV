@@ -120,15 +120,17 @@ ExactKV should eventually implement **VeriCache-equivalent functionality**:
 
 ---
 
-### Stage 7 — Remote prefix caching experiment
+### Stage 7 — Remote prefix caching experiment ✅ (Phase 11H semantics spike)
 
 | Field | Detail |
 |---|---|
-| **Goal** | Simulated remote drafter + near-storage verifier (per `FUTURE_RESEARCH.md`) |
-| **Files likely touched** | New `exactkv/distributed/` or experiment scripts |
-| **Implementation risk** | High — distributed correctness |
-| **Test gate** | Multi-process replay tests; `exactkv_failures == 0` on sim panel |
-| **Claims unlocked** | “Remote prefix prototype on sim panel” only |
+| **Goal** | Prefix identity, compatibility, loopback mock via storage backends — **not** network runtime |
+| **Files likely touched** | `exactkv/cache/remote_prefix.py`, [`REMOTE_PREFIX_CACHE_SEMANTICS.md`](REMOTE_PREFIX_CACHE_SEMANTICS.md) |
+| **Implementation risk** | Low — loopback only; no generator wiring |
+| **Test gate** | `tests/test_remote_prefix_cache_semantics.py` |
+| **Claims unlocked** | “Prefix identity + loopback round-trip on tiny tensors” — **not** remote prefix runtime |
+
+**Current:** `LoopbackPrefixCache` + `PrefixRestorePlan`; no network I/O; remote placeholder blocked; **not** wired to generator.
 
 ---
 
@@ -203,6 +205,6 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 ## 5. Recommended next phase (after 11A)
 
-**Stage 7 remote prefix caching design spike** — metadata for distributed prefix semantics (similar to 11G), still without remote runtime. Do **not** claim remote prefix caching until Stage 7 gates clear.
+**Stage 8 throughput benchmark harness design** — diagnostic methodology docs and harness contracts; still no speedup claims until gates clear.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

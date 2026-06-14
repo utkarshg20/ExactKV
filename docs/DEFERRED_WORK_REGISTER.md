@@ -147,6 +147,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Extended verification scheduler (Stage 4 spike)** | **Complete** | Phase 11E ✅ | [`EXTENDED_VERIFICATION_SCHEDULER.md`](EXTENDED_VERIFICATION_SCHEDULER.md) |
 | — | **vLLM prototype path (Stage 5 spike)** | **Complete** | Phase 11F ✅ | [`VLLM_PROTOTYPE_PATH.md`](VLLM_PROTOTYPE_PATH.md); contract-only; **not** integrated |
 | — | **LMCache prototype path (Stage 6 spike)** | **Complete** | Phase 11G ✅ | [`LMCACHE_PROTOTYPE_PATH.md`](LMCACHE_PROTOTYPE_PATH.md); contract-only; **not** integrated |
+| — | **Remote prefix cache semantics (Stage 7 spike)** | **Complete** | Phase 11H ✅ | [`REMOTE_PREFIX_CACHE_SEMANTICS.md`](REMOTE_PREFIX_CACHE_SEMANTICS.md); loopback mock only; **not** remote runtime |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

@@ -37,7 +37,7 @@ Companion: [`VERICACHE_SYSTEMS_ROADMAP.md`](VERICACHE_SYSTEMS_ROADMAP.md) · [`V
 | **Full KV storage separate from compressed KV** | Dual-cache architecture | **partial** | `FullKVState` + `CompressedKVState`; alignment invariant in generator | Dedicated storage manager; tiered residency; non-materializing hot path | Alignment invariant tests; cache state tests | Authoritative full KV separate from draft compressed KV in HF harness | Dual-cache equals VeriCache production memory layout |
 | **CPU / host full-KV cache** | Offload full KV to host for verify | **missing** | Exp 017/007 serving harness discusses ownership only | Host-resident full KV pool; sync policy | Host-cache round-trip tests; memory peak tests | Not implemented — correctness harness keeps KV on same device in V1 path | CPU offload reduces GPU memory today |
 | **Disk / storage-backed KV cache** | Persistent full/compressed KV tiers | **missing** | None in runtime | Block store, mmap, checkpoint/restore of KV blocks | Storage backend integration tests | Not implemented | Disk-backed KV is production-ready in ExactKV |
-| **Remote prefix cache** | Remote drafter + near-storage verify | **missing** | `docs/FUTURE_RESEARCH.md` direction only | RPC transport, prefix ownership, slow-link simulation | Multi-process prefix replay tests | Not implemented | Remote prefix caching reproduced |
+| **Remote prefix cache** | Remote drafter + near-storage verify | **partial** | Phase 11H: `LoopbackPrefixCache` + `PrefixRestorePlan` — loopback only | RPC transport, real remote tier, multi-process replay | `tests/test_remote_prefix_cache_semantics.py` | Prefix identity + loopback round-trip on tiny tensors only | Remote prefix caching reproduced or runtime exists |
 | **vLLM integration** | Serving engine integration | **missing** | Exp 007/017: **no-go reaffirmed**; sidecar probe only | PagedAttention bridge, block export, scheduler hooks | Serving integration tests (none today) | Sidecar/metadata probe feasibility only (Exp 017) | vLLM integration exists or is production-ready |
 | **LMCache integration** | External KV store / tiering | **missing** | Exp 007/017: **no-go reaffirmed** | LMCache-backed full KV restore for verify steps | Tier restore correctness tests | Not implemented | LMCache integration exists |
 | **Extended verification** | Parallel / single-pass multi-token verify | **partial** | Span verify (Exp 028–029); bonus token **disabled** | Paper parallel verify at scale; bonus-token acceptance policy | Exp 029 grid; span parity tests (Exp 030b) | Span ≡ sequential exactness on tested grid | Extended verify equals VeriCache throughput path |
@@ -72,7 +72,7 @@ Companion: [`VERICACHE_SYSTEMS_ROADMAP.md`](VERICACHE_SYSTEMS_ROADMAP.md) · [`V
 | **Dual-cache systems** | Logical separation yes; **storage manager**, offload tiers, and materialization-free hot path **no**. |
 | **Extended verification** | Span verify yes; **bonus-token** and paper **parallel verify at serving scale** **no**. |
 | **Compressor / model coverage** | Strong on Qwen built-ins; **restricted** external probes only for Shard/SpectralQuant; not paper matrix. |
-| **Serving context** | Harness + sidecar **probe** (Exp 017); **not** integration. vLLM (11F) and LMCache (11G) prototype **contracts** document gates — **not** runtime. |
+| **Serving context** | Harness + sidecar **probe** (Exp 017); **not** integration. vLLM (11F), LMCache (11G) contracts; remote prefix **loopback** (11H) — **not** runtime. |
 
 ---
 
@@ -80,7 +80,7 @@ Companion: [`VERICACHE_SYSTEMS_ROADMAP.md`](VERICACHE_SYSTEMS_ROADMAP.md) · [`V
 
 - vLLM integration (documented **no-go**).
 - LMCache integration (documented **no-go**).
-- Remote prefix caching.
+- Remote prefix caching **runtime** (Phase 11H loopback semantics only).
 - Cross-resource staggering / async transfer / CPU host cache tiers.
 - Batching and production serving runtime.
 - Throughput reproduction harness with VeriCache-comparable methodology.
