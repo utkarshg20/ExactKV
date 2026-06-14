@@ -170,6 +170,6 @@ Phase 12B extends Phase 12A’s first real restore smoke toward Stage 2 full-KV 
 
 ## 12. Next step
 
-- Thread restore panel into offline verifier experiments (still **not** default runtime)
-- Expand to additional models only with same exactness gate and explicit blockers
+- See [`EXPERIMENT_048_OFFLINE_VERIFIER_RESTORE_SMOKE.md`](EXPERIMENT_048_OFFLINE_VERIFIER_RESTORE_SMOKE.md) (Phase 12C) for offline verifier restore integration
+- Optional CUDA dtype panel for offline verifier (same exactness gate)
 - Do **not** claim LMCache/vLLM/remote prefix until respective contract gates clear

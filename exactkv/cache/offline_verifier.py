@@ -1,0 +1,458 @@
+"""Offline verifier restore integration smoke (Phase 12C).
+
+Isolated draft/verify loop where the verifier reads **reloaded** full-KV payloads
+from ``KVStorageBackend``. **Not** wired into ``ExactKVGenerator`` or default runtime.
+
+This is an offline verifier restore smoke, not default runtime integration.
+"""
+from __future__ import annotations
+
+from dataclasses import asdict, dataclass
+from typing import Any
+
+import torch
+
+from exactkv.cache.dual_cache import CacheResidency
+from exactkv.cache.full_state import FullKVState
+from exactkv.cache.hf_kv_restore import (
+    FORBIDDEN_CLAIMS,
+    HfKvRestoreError,
+    PrefillKVCapture,
+    build_storage_payload_from_cache,
+    capture_prefill_kv,
+    detect_hf_cache_format,
+    first_divergence_index,
+    restore_cache_from_storage_payload,
+    store_prefill_payload,
+)
+from exactkv.cache.storage import KVStorageBackend, KVStorageHandle
+from exactkv.runtime.generation import generate_full_greedy
+from exactkv.runtime.model_runtime import ModelRuntime
+from exactkv.verification.acceptance import AcceptanceResult, compute_acceptance
+from exactkv.verification.engine import VerificationEngine
+
+EXPERIMENT_048_ID = "exp048_offline_verifier_restore_smoke"
+DEFAULT_MODEL = "Qwen/Qwen2.5-0.5B"
+DEFAULT_MAX_NEW_TOKENS = 12
+DEFAULT_DRAFT_LEN = 4
+DRAFT_SOURCE_TYPE = "controlled_draft_with_injected_mismatch"
+VERIFIER_SOURCE = "reloaded_full_kv"
+
+OFFLINE_VERIFIER_CLAIM_NOTE = (
+    "Offline verifier restore smoke (Phase 12C). Reloaded full-KV payloads used as "
+    "verifier source in an isolated draft/verify loop only — not default runtime, "
+    "vLLM, LMCache, remote prefix runtime, or serving. "
+    "No speed, latency, throughput, active memory savings, or production-serving claim."
+)
+
+
+@dataclass
+class OfflineVerifierRoundTrace:
+    """One draft/verify/commit round in the offline loop."""
+
+    round_idx: int
+    draft_tokens: list[int]
+    verifier_tokens: list[int]
+    accepted_prefix_length: int
+    correction_token: int | None
+    committed_tokens: list[int]
+    all_matched: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class OfflineVerifierCellResult:
+    """Per prompt×backend offline verifier smoke result."""
+
+    prompt_id: str
+    prompt: str
+    backend_name: str
+    cache_format: str
+    draft_source_type: str
+    verifier_source: str
+    live_reference_token_ids: list[int]
+    offline_output_token_ids: list[int]
+    token_exact_match: bool
+    exactkv_failures: int
+    accepted_prefix_lengths: list[int]
+    first_divergence_idx: int | None = None
+    restore_blocker: str = ""
+    verification_blocker: str = ""
+    round_traces: list[OfflineVerifierRoundTrace] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        if self.round_traces is not None:
+            data["round_traces"] = [t.to_dict() for t in self.round_traces]
+        return data
+
+
+def default_offline_prompts() -> list[dict[str, str]]:
+    """Deterministic 4–8 prompt panel for offline verifier smoke."""
+    return [
+        {"prompt_id": "offline_001", "prompt": "What is 2+2? Answer in one word."},
+        {"prompt_id": "offline_002", "prompt": "Name the capital of France."},
+        {"prompt_id": "offline_003", "prompt": 'Return JSON: {"color":'},
+        {"prompt_id": "offline_004", "prompt": "def add(a, b):\n    return"},
+        {
+            "prompt_id": "offline_005",
+            "prompt": "Passage: Water boils at 100C. State the boiling point:",
+        },
+        {"prompt_id": "offline_006", "prompt": '<tool_call>{"name": "lookup", "id":'},
+    ]
+
+
+def propose_controlled_draft(
+    reference: list[int],
+    position: int,
+    draft_len: int,
+    round_idx: int,
+    vocab_size: int,
+) -> list[int]:
+    """Propose draft tokens from reference with optional injected mismatch.
+
+    Controlled draft source for restore-verifier integration smoke — **not**
+    compressor evaluation.
+    """
+    chunk = reference[position : position + draft_len]
+    if not chunk:
+        return []
+    draft = list(chunk)
+    if round_idx % 2 == 1 and len(draft) >= 2:
+        wrong = (draft[1] + 1) % max(vocab_size, 1)
+        if wrong == draft[1]:
+            wrong = (draft[1] + 2) % max(vocab_size, 1)
+        draft[1] = wrong
+    return draft
+
+
+def truncate_at_eos(tokens: list[int], eos_token_id: int) -> tuple[list[int], bool]:
+    """Return tokens up to and including the first EOS (if any)."""
+    result: list[int] = []
+    for token in tokens:
+        result.append(token)
+        if token == eos_token_id:
+            return result, True
+    return result, False
+
+
+def reconstruct_output_from_acceptances(
+    acceptances: list[tuple[list[int], AcceptanceResult]],
+    *,
+    eos_token_id: int | None = None,
+) -> list[int]:
+    """Rebuild final output from per-round draft/acceptance pairs (unit-test helper)."""
+    output: list[int] = []
+    for _draft, acceptance in acceptances:
+        committed = list(acceptance.accepted_tokens)
+        if acceptance.correction_token is not None:
+            committed.append(acceptance.correction_token)
+        if eos_token_id is not None:
+            committed, eos_found = truncate_at_eos(committed, eos_token_id)
+            output.extend(committed)
+            if eos_found:
+                break
+        else:
+            output.extend(committed)
+    return output
+
+
+@torch.no_grad()
+def commit_full_state(
+    runtime: ModelRuntime,
+    full_state: FullKVState,
+    committed_tokens: list[int],
+) -> FullKVState:
+    """Advance authoritative full KV state after a commit (isolated copy)."""
+    past_kv = full_state.past_key_values
+    current_next_token_id = full_state.next_token_id
+    new_gen_ids: list[int] = full_state.generated_ids.squeeze(0).tolist()
+
+    for token_id in committed_tokens:
+        new_gen_ids.append(token_id)
+        if token_id == runtime.eos_token_id:
+            current_next_token_id = runtime.eos_token_id
+            break
+        tok_tensor = torch.tensor(
+            [[token_id]], dtype=torch.long, device=runtime.device
+        )
+        out = runtime.forward(tok_tensor, past_key_values=past_kv)
+        past_kv = out.past_key_values
+        current_next_token_id = int(out.logits[:, -1, :].argmax(dim=-1).item())
+
+    gen_tensor = torch.tensor([new_gen_ids], dtype=torch.long, device=runtime.device)
+    full_seq = torch.cat([full_state.prompt_ids, gen_tensor], dim=1)
+    return FullKVState(
+        past_key_values=past_kv,
+        prompt_ids=full_state.prompt_ids,
+        generated_ids=gen_tensor,
+        full_sequence_ids=full_seq,
+        device=full_state.device,
+        dtype=full_state.dtype,
+        metadata={"next_token_id": current_next_token_id},
+    )
+
+
+def full_state_from_prefill_capture(
+    capture: PrefillKVCapture,
+    *,
+    past_key_values: Any,
+    next_token_id: int,
+    device: torch.device,
+    dtype: torch.dtype,
+) -> FullKVState:
+    """Wrap reloaded prefill KV in a ``FullKVState``."""
+    empty_gen = torch.zeros(1, 0, dtype=torch.long, device=device)
+    return FullKVState(
+        past_key_values=past_key_values,
+        prompt_ids=capture.prompt_ids,
+        generated_ids=empty_gen,
+        full_sequence_ids=capture.prompt_ids,
+        device=device,
+        dtype=dtype,
+        metadata={"next_token_id": next_token_id},
+    )
+
+
+def store_and_reload_prefill_state(
+    runtime: ModelRuntime,
+    *,
+    prompt: str,
+    backend: KVStorageBackend,
+    prompt_id: str,
+    namespace_prefix: str = "exp048",
+) -> tuple[FullKVState, PrefillKVCapture, str]:
+    """Capture prefill KV, persist via backend, reload into ``FullKVState``."""
+    capture = capture_prefill_kv(runtime, prompt)
+    payload = build_storage_payload_from_cache(capture)
+    backend_name = getattr(backend, "_backend_name", type(backend).__name__)
+    handle = KVStorageHandle(
+        namespace=f"{namespace_prefix}/{capture.model_name}/{backend_name}",
+        key=prompt_id,
+        version="1",
+    )
+    residency = (
+        CacheResidency.CPU
+        if backend_name == "in_memory_kv_storage"
+        else CacheResidency.DISK
+    )
+    store_prefill_payload(backend, handle, payload, residency=residency)
+    loaded = backend.get(handle).payload
+    restored_cache, restored_next = restore_cache_from_storage_payload(
+        loaded, device=runtime.device
+    )
+    state = full_state_from_prefill_capture(
+        capture,
+        past_key_values=restored_cache,
+        next_token_id=restored_next,
+        device=runtime.device,
+        dtype=runtime.dtype,
+    )
+    cache_format = detect_hf_cache_format(restored_cache)
+    return state, capture, cache_format
+
+
+@torch.no_grad()
+def run_offline_verifier_loop(
+    runtime: ModelRuntime,
+    reloaded_state: FullKVState,
+    reference: list[int],
+    *,
+    max_new_tokens: int,
+    draft_len: int = DEFAULT_DRAFT_LEN,
+) -> tuple[list[int], list[OfflineVerifierRoundTrace], list[str]]:
+    """Run isolated draft/verify/commit loop with reloaded full KV as verifier."""
+    engine = VerificationEngine(runtime)
+    output: list[int] = []
+    traces: list[OfflineVerifierRoundTrace] = []
+    verification_blockers: list[str] = []
+    state = reloaded_state
+    round_idx = 0
+    done = False
+
+    while not done and len(output) < max_new_tokens:
+        remaining = max_new_tokens - len(output)
+        n = min(draft_len, remaining)
+        draft = propose_controlled_draft(
+            reference, len(output), n, round_idx, runtime.vocab_size
+        )
+        if not draft:
+            break
+
+        try:
+            acceptance = engine.verify_sequential(state, draft)
+        except Exception as exc:  # noqa: BLE001 — report verification blockers
+            verification_blockers.append(f"round {round_idx}: {type(exc).__name__}: {exc}")
+            break
+
+        committed = list(acceptance.accepted_tokens)
+        if acceptance.correction_token is not None:
+            committed.append(acceptance.correction_token)
+        committed, eos_found = truncate_at_eos(committed, runtime.eos_token_id)
+        if not committed:
+            break
+
+        state = commit_full_state(runtime, state, committed)
+        output.extend(committed)
+        traces.append(
+            OfflineVerifierRoundTrace(
+                round_idx=round_idx,
+                draft_tokens=list(draft),
+                verifier_tokens=list(acceptance.verifier_tokens),
+                accepted_prefix_length=acceptance.num_accepted,
+                correction_token=acceptance.correction_token,
+                committed_tokens=committed,
+                all_matched=acceptance.all_matched,
+            )
+        )
+        round_idx += 1
+        if eos_found or len(output) >= max_new_tokens:
+            done = True
+
+    return output, traces, verification_blockers
+
+
+@torch.no_grad()
+def run_offline_verifier_cell(
+    runtime: ModelRuntime,
+    *,
+    prompt_id: str,
+    prompt: str,
+    backend: KVStorageBackend,
+    max_new_tokens: int = DEFAULT_MAX_NEW_TOKENS,
+    draft_len: int = DEFAULT_DRAFT_LEN,
+) -> OfflineVerifierCellResult:
+    """Run one offline verifier restore smoke cell."""
+    backend_name = getattr(backend, "_backend_name", type(backend).__name__)
+    try:
+        reloaded_state, _capture, cache_format = store_and_reload_prefill_state(
+            runtime,
+            prompt=prompt,
+            backend=backend,
+            prompt_id=prompt_id,
+        )
+    except HfKvRestoreError as exc:
+        return OfflineVerifierCellResult(
+            prompt_id=prompt_id,
+            prompt=prompt,
+            backend_name=backend_name,
+            cache_format="unknown",
+            draft_source_type=DRAFT_SOURCE_TYPE,
+            verifier_source=VERIFIER_SOURCE,
+            live_reference_token_ids=[],
+            offline_output_token_ids=[],
+            token_exact_match=False,
+            exactkv_failures=1,
+            accepted_prefix_lengths=[],
+            restore_blocker=str(exc),
+        )
+    except Exception as exc:  # noqa: BLE001 — smoke must report blockers
+        return OfflineVerifierCellResult(
+            prompt_id=prompt_id,
+            prompt=prompt,
+            backend_name=backend_name,
+            cache_format="unknown",
+            draft_source_type=DRAFT_SOURCE_TYPE,
+            verifier_source=VERIFIER_SOURCE,
+            live_reference_token_ids=[],
+            offline_output_token_ids=[],
+            token_exact_match=False,
+            exactkv_failures=1,
+            accepted_prefix_lengths=[],
+            restore_blocker=f"{type(exc).__name__}: {exc}",
+        )
+
+    reference = generate_full_greedy(runtime, prompt, max_new_tokens).generated_ids[
+        0
+    ].tolist()
+    offline_output, traces, verification_blockers = run_offline_verifier_loop(
+        runtime,
+        reloaded_state,
+        reference,
+        max_new_tokens=max_new_tokens,
+        draft_len=draft_len,
+    )
+    div = first_divergence_index(reference, offline_output)
+    exact = div is None and reference == offline_output
+    verification_blocker = "; ".join(verification_blockers)
+
+    return OfflineVerifierCellResult(
+        prompt_id=prompt_id,
+        prompt=prompt,
+        backend_name=backend_name,
+        cache_format=cache_format,
+        draft_source_type=DRAFT_SOURCE_TYPE,
+        verifier_source=VERIFIER_SOURCE,
+        live_reference_token_ids=reference,
+        offline_output_token_ids=offline_output,
+        token_exact_match=exact and not verification_blocker,
+        exactkv_failures=0 if exact and not verification_blocker else 1,
+        accepted_prefix_lengths=[t.accepted_prefix_length for t in traces],
+        first_divergence_idx=div,
+        verification_blocker=verification_blocker,
+        round_traces=traces,
+    )
+
+
+def validate_exp048_report(report: dict[str, Any]) -> list[str]:
+    """Validate experiment 048 JSON report schema."""
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "model",
+        "device",
+        "dtype",
+        "prompt_count",
+        "storage_backends",
+        "cache_format",
+        "draft_source_type",
+        "verifier_source",
+        "cells",
+        "exactkv_failures",
+        "token_exact_match_count",
+        "accepted_prefix_lengths",
+        "first_divergences",
+        "restore_blockers",
+        "verification_blockers",
+        "claim_note",
+        "forbidden_claims",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing report field: {key}")
+    if report.get("experiment_id") != EXPERIMENT_048_ID:
+        errors.append("experiment_id must be exp048_offline_verifier_restore_smoke")
+    if report.get("verifier_source") != VERIFIER_SOURCE:
+        errors.append("verifier_source must be reloaded_full_kv")
+    if not report.get("claim_note", "").strip():
+        errors.append("claim_note required")
+    forbidden = report.get("forbidden_claims", [])
+    for term in FORBIDDEN_CLAIMS:
+        if term not in forbidden:
+            errors.append(f"forbidden_claims must include: {term}")
+    cells = report.get("cells", [])
+    if int(report.get("prompt_count", 0)) <= 0 and cells:
+        errors.append("prompt_count must be positive when cells present")
+    exact_count = int(report.get("token_exact_match_count", -1))
+    failures = int(report.get("exactkv_failures", -1))
+    if exact_count >= 0 and failures >= 0 and exact_count + failures != len(cells):
+        errors.append(
+            "token_exact_match_count + exactkv_failures must equal len(cells)"
+        )
+    for cell in cells:
+        for field in (
+            "prompt_id",
+            "backend_name",
+            "draft_source_type",
+            "verifier_source",
+            "token_exact_match",
+            "exactkv_failures",
+        ):
+            if field not in cell:
+                errors.append(f"cells missing field: {field}")
+        div = cell.get("first_divergence_idx")
+        if div is not None and not isinstance(div, int):
+            errors.append("first_divergence_idx must be int or null")
+    return errors
