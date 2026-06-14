@@ -121,6 +121,19 @@ SPECTRALQUANT_SMOKE_CAVEAT = (
     "External paper/README not ExactKV."
 )
 
+# Exp 045 restricted adapter panel (12 prompts, Qwen2.5-0.5B CPU).
+SPECTRALQUANT_PANEL_MEAN_ACCEPTANCE = 0.481
+SPECTRALQUANT_KEY_MAX_RECON_ERROR = 38.99
+SPECTRALQUANT_RESTRICTED_CAVEAT = (
+    "Exp 045: 12-prompt restricted adapter panel @32tok, draft_len=4, "
+    f"mean acceptance {SPECTRALQUANT_PANEL_MEAN_ACCEPTANCE:.3f}, exactkv_failures=0. "
+    "Materializing factory-only adapter: compresses K/V then materialises dequant tensors "
+    "for draft — no active memory savings. 6-prompt eigenspectral calibration; "
+    f"key max reconstruction error ~{SPECTRALQUANT_KEY_MAX_RECON_ERROR:.0f} (layer 0). "
+    "11/12 prompts had draft divergence corrected by verifier. Small-panel adapter "
+    "acceptance — not full-panel compressor ranking. External SpectralQuant README not ExactKV."
+)
+
 
 @dataclass
 class PlotData:
@@ -518,6 +531,16 @@ def build_tiered_leaderboard(data: PlotData) -> list[LeaderboardEntry]:
             "external drafter probe (Mode B); Llama-only; not default registry",
             SHARD_RESTRICTED_CAVEAT,
         ),
+        LeaderboardEntry(
+            TIER_RESTRICTED,
+            "SpectralQuant experimental adapter",
+            "Exp 045",
+            "Qwen2.5-0.5B · 12-prompt restricted panel",
+            SPECTRALQUANT_PANEL_MEAN_ACCEPTANCE,
+            0,
+            "factory-only materializing adapter; not default registry",
+            SPECTRALQUANT_RESTRICTED_CAVEAT,
+        ),
     ]
     entries.extend(restricted_static)
 
@@ -532,19 +555,6 @@ def build_tiered_leaderboard(data: PlotData) -> list[LeaderboardEntry]:
             "factory-only smoke adapter",
             "smoke-only; not full-suite ranked; restricted experimental SnapKV via kvpress",
         )
-    )
-
-    entries.append(
-        LeaderboardEntry(
-            TIER_SMOKE,
-            "SpectralQuant",
-            "Exp 042",
-            "Synthetic K/V tensor smoke · external probe",
-            None,
-            None,
-            "tensor probe (not integrated)",
-            SPECTRALQUANT_SMOKE_CAVEAT,
-        ),
     )
     return entries
 

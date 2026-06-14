@@ -17,6 +17,10 @@ from exactkv.external.spectralquant_probe import resolve_spectralquant_repo_path
 
 EXPERIMENT_043_ID = "043_spectralquant_real_kv_smoke"
 EXPERIMENT_044_ID = "044_spectralquant_adapter_smoke"
+EXPERIMENT_045_ID = "045_spectralquant_restricted_panel"
+
+# Exp 045 promotion: restricted backend row requires >=8 prompts and exactkv_failures==0.
+PANEL_PROMOTION_MIN_PROMPTS = 8
 
 DEFAULT_MODEL = "Qwen/Qwen2.5-0.5B"
 
@@ -59,6 +63,29 @@ REQUIRED_044_KEYS = frozenset({
     "limitations",
     "claims_forbidden",
     "recommendation",
+})
+
+REQUIRED_045_KEYS = frozenset({
+    "experiment_id",
+    "status",
+    "adapter_name",
+    "not_default_registry",
+    "model",
+    "prompt_count",
+    "calibration",
+    "panel_composition",
+    "exactkv_failures",
+    "acceptance_summary",
+    "divergence_summary",
+    "reconstruction_error_summary",
+    "materializing_adapter",
+    "memory_claim_note",
+    "supports_real_bytes_claim",
+    "leaderboard_decision",
+    "limitations",
+    "claims_forbidden",
+    "recommendation",
+    "per_prompt",
 })
 
 
@@ -427,3 +454,72 @@ def validate_044_report(report: dict[str, Any]) -> None:
     missing = REQUIRED_044_KEYS - report.keys()
     if missing:
         raise ValueError(f"044 report missing keys: {sorted(missing)}")
+
+
+def validate_045_report(report: dict[str, Any]) -> None:
+    missing = REQUIRED_045_KEYS - report.keys()
+    if missing:
+        raise ValueError(f"045 report missing keys: {sorted(missing)}")
+
+
+def default_calibration_prompts_panel() -> list[str]:
+    """6-prompt calibration set for restricted panel (bounded runtime)."""
+    return [
+        "The quick brown fox jumps over the lazy dog.",
+        "ExactKV verifies compressed KV drafts against a full-KV reference.",
+        "Retrieval systems must return verbatim spans when asked to copy text.",
+        "Long documents require summarization without inventing new facts.",
+        '{"name": "test", "value": 42}',
+        "def add(a, b):\n    return a + b\n",
+    ]
+
+
+def load_restricted_panel(*, per_suite: int = 2, max_prompts: int = 12) -> list[dict[str, Any]]:
+    """Load 12-prompt restricted panel across six V10 categories."""
+    from exactkv.benchmarks.v10_prompts import load_v10_suite
+
+    specs = [
+        ("core_v2", "natural_language"),
+        ("retrieval_copy", "retrieval_copy"),
+        ("long_context", "long_context"),
+        ("tool_json", "tool_schema"),
+        ("code_structured", "code_structured"),
+        ("reasoning_math", "reasoning_math"),
+    ]
+    out: list[dict[str, Any]] = []
+    for suite_name, label in specs:
+        try:
+            suite = load_v10_suite(suite_name)
+        except (FileNotFoundError, ValueError):
+            continue
+        for row in suite[:per_suite]:
+            entry = dict(row)
+            entry["panel_category"] = label
+            out.append(entry)
+        if len(out) >= max_prompts:
+            break
+    return out[:max_prompts]
+
+
+def leaderboard_promotion_decision(
+    *,
+    exactkv_failures: int,
+    prompt_count: int,
+) -> dict[str, Any]:
+    """Whether Exp 045 qualifies for RESTRICTED BACKEND leaderboard row."""
+    promote = exactkv_failures == 0 and prompt_count >= PANEL_PROMOTION_MIN_PROMPTS
+    return {
+        "promote_to_restricted_backend": promote,
+        "min_prompts_required": PANEL_PROMOTION_MIN_PROMPTS,
+        "exactkv_failures_required": 0,
+        "tier_if_promoted": "RESTRICTED BACKEND",
+        "tier_if_not": "SMOKE ONLY",
+        "reason": (
+            f"exactkv_failures=0 and prompt_count={prompt_count}>={PANEL_PROMOTION_MIN_PROMPTS}"
+            if promote
+            else (
+                f"exactkv_failures={exactkv_failures} or "
+                f"prompt_count={prompt_count}<{PANEL_PROMOTION_MIN_PROMPTS}"
+            )
+        ),
+    }

@@ -45,9 +45,9 @@ def test_leaderboard_script_exits_zero(generated: None) -> None:
         "RESTRICTED ·",
         "EXTERNAL DRAFTER",
         "Shard external-drafter",
-        "SpectralQuant",
-        "TENSOR PROBE",
-        "tensor smoke passed",
+        "SpectralQuant experimental adapter",
+        "FACTORY-ONLY ADAPTER",
+        "MATERIALIZING",
         "SMOKE]",
     ],
 )
@@ -140,41 +140,39 @@ def test_leaderboard_md_shard_restricted_not_future(generated: None) -> None:
         assert "Shard external-drafter probe" not in future_section
 
 
-def test_leaderboard_spectralquant_smoke_not_future(generated: None) -> None:
+def test_leaderboard_spectralquant_restricted_not_full_panel(generated: None) -> None:
     text = (_ROOT / "docs" / "leaderboard.md").read_text(encoding="utf-8")
-    assert "SpectralQuant" in text
-    assert "Smoke-only adapters" in text
-    assert "TENSOR PROBE" in text
-    assert "NOT GENERATION" in text
-    assert "tensor-smoke coverage" in text.lower()
-    assert "no generation-time exactkv probe yet" in text.lower()
+    assert "SpectralQuant experimental adapter" in text
+    assert "Restricted backends" in text
+    assert "FACTORY-ONLY ADAPTER" in text or "factory-only" in text.lower()
+    assert "SMALL PANEL" in text or "12-prompt" in text
+    assert "Exp 045" in text
+    assert "0.481" in text
+    restricted_idx = text.find("## Restricted backends")
     smoke_idx = text.find("## Smoke-only adapters")
-    assert smoke_idx >= 0
-    future_idx = text.find("## Future candidates")
-    smoke_end = future_idx if future_idx >= 0 else len(text)
-    smoke_section = text[smoke_idx:smoke_end]
-    assert "SpectralQuant" in smoke_section
-    assert "Exp 042" in smoke_section
-    assert "tensor smoke" in smoke_section.lower()
-    # SpectralQuant must not appear under Future candidates
-    if future_idx >= 0:
-        assert "SpectralQuant" not in text[future_idx:]
-    # Not ranked with full-panel compressors
     full_idx = text.find("## Full-suite integrated")
-    full_section = text[full_idx:smoke_idx]
+    assert restricted_idx >= 0
+    restricted_end = smoke_idx if smoke_idx >= 0 else len(text)
+    restricted_section = text[restricted_idx:restricted_end]
+    assert "SpectralQuant experimental adapter" in restricted_section
+    # Not in full-panel ranking
+    full_section = text[full_idx:restricted_idx]
     assert "SpectralQuant" not in full_section
-    # N/A generation metrics — not real acceptance/failures
-    sq_row = [ln for ln in smoke_section.splitlines() if "SpectralQuant" in ln][0]
-    assert "—" in sq_row  # acceptance and failures N/A
-    assert "0.9" not in sq_row and "1.000" not in sq_row
+    # Not in smoke-only adapters table (may appear in Notes)
+    if smoke_idx >= 0:
+        notes_idx = text.find("## Notes")
+        smoke_end = notes_idx if notes_idx >= 0 else len(text)
+        smoke_table = text[smoke_idx:smoke_end]
+        assert "| SpectralQuant experimental adapter |" not in smoke_table
 
 
 def test_leaderboard_spectralquant_caveat_language(generated: None) -> None:
     text = (_ROOT / "docs" / "leaderboard.md").read_text(encoding="utf-8").lower()
+    assert "materializ" in text
+    assert "not full-panel" in text or "small-panel" in text
     forbidden = [
         "spectralquant is integrated",
-        "spectralquant has exactkv acceptance",
-        "spectralquant has exactkv_failures=0",
+        "spectralquant has exactkv acceptance on full panel",
         "spectralquant improves memory",
         "spectralquant improves speed",
     ]
@@ -182,30 +180,23 @@ def test_leaderboard_spectralquant_caveat_language(generated: None) -> None:
         assert phrase not in text
 
 
-def test_leaderboard_html_spectralquant_smoke(generated: None) -> None:
+def test_leaderboard_html_spectralquant_restricted(generated: None) -> None:
     text = (_ROOT / "docs" / "leaderboard.html").read_text(encoding="utf-8")
-    assert "SpectralQuant" in text
-    assert 'data-tab="smoke"' in text
-    assert "TENSOR PROBE" in text
-    assert "NOT GENERATION" in text
-    assert "tensor-smoke coverage" in text.lower()
-    smoke_start = text.find('id="tab-smoke"')
-    assert smoke_start >= 0
-    future_start = text.find('id="tab-future"')
-    smoke_end = future_start if future_start >= 0 else len(text)
-    smoke_panel = text[smoke_start:smoke_end]
-    assert "SpectralQuant" in smoke_panel
-    assert "Exp 042" in smoke_panel
-    if future_start >= 0:
-        footer_start = text.find("<footer>", future_start)
-        future_end = footer_start if footer_start >= 0 else future_start + 800
-        future_panel = text[future_start:future_end]
-        assert "SpectralQuant" not in future_panel
-    # Not in restricted backend tab as generation probe
+    assert "SpectralQuant experimental adapter" in text
+    assert 'data-tab="restricted"' in text
+    assert "FACTORY-ONLY ADAPTER" in text
+    assert "MATERIALIZING" in text
     restricted_start = text.find('id="tab-restricted"')
-    restricted_end = smoke_start
+    assert restricted_start >= 0
+    smoke_start = text.find('id="tab-smoke"')
+    footer_start = text.find("<footer>", restricted_start)
+    restricted_end = footer_start if footer_start >= 0 else len(text)
     restricted_panel = text[restricted_start:restricted_end]
-    assert "SpectralQuant" not in restricted_panel
+    assert "SpectralQuant experimental adapter" in restricted_panel
+    if smoke_start >= 0:
+        smoke_end = footer_start if footer_start > smoke_start else len(text)
+        smoke_panel = text[smoke_start:smoke_end]
+        assert "SpectralQuant experimental adapter" not in smoke_panel
 
 
 def test_leaderboard_shard_caveat_language(generated: None) -> None:
@@ -228,9 +219,9 @@ def test_leaderboard_html_shard_restricted(generated: None) -> None:
     assert "Shard external-drafter probe" in text
     assert 'data-tab="restricted"' in text
     assert "EXTERNAL DRAFTER" in text
-    assert "SpectralQuant" in text
-    assert 'data-tab="smoke"' in text
-    assert "TENSOR PROBE" in text
+    assert "SpectralQuant experimental adapter" in text
+    assert 'data-tab="restricted"' in text
+    assert "FACTORY-ONLY ADAPTER" in text
     # Future tab should not list Shard probe row or SpectralQuant
     future_start = text.find('id="tab-future"')
     if future_start >= 0:

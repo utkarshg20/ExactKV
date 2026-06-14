@@ -61,20 +61,20 @@ ExactKV Leaderboard ranks integrated compressors by token-level acceptance and e
 | KIVI offline | Qwen2.5-0.5B · V9 core (272 cells) | 0.012 | 0 | Exp 009 | RESTRICTED, NO REAL-BYTE CLAIM | offline adapter; not KIVI CUDA/Triton production path |
 | KIVI offline | Qwen2.5-0.5B · harder-category spotcheck | 0.019 | 0 | Exp 014 | RESTRICTED, NO REAL-BYTE CLAIM | subset panel; compare to Exp 009 anchor 0.012 |
 | Shard external-drafter probe | Llama-3.1-8B · 32-prompt external probe | 0.910 | 0 | Exp 039–041 | RESTRICTED, EXTERNAL DRAFTER, LLAMA ONLY, NOT DEFAULT, NO SPEED CLAIM, NO MEMORY CLAIM | Exp 039: 32 prompts @64tok, 6 draft divergences (18.75%), accepted-prefix mean 58.22/64, exactkv_failures=0. Exp 040: 5-setting ablation, max single-knob divergence 31.25% (length_128tok), stream_bits=4 at 25%, all exactkv_failures=0. Exp 041: combined stream_bits=4 + 128tok, 18 divergences (56.25%), exactkv_failures=0. Restricted external-drafter metrics — not full-panel compressor acceptance. External Shard README not ExactKV. |
+| SpectralQuant experimental adapter | Qwen2.5-0.5B · 12-prompt restricted panel | 0.481 | 0 | Exp 045 | RESTRICTED, FACTORY-ONLY ADAPTER, SMALL PANEL, MATERIALIZING, NOT DEFAULT, NO SPEED CLAIM, NO MEMORY CLAIM | Exp 045: 12-prompt restricted adapter panel @32tok, draft_len=4, mean acceptance 0.481, exactkv_failures=0. Materializing factory-only adapter: compresses K/V then materialises dequant tensors for draft — no active memory savings. 6-prompt eigenspectral calibration; key max reconstruction error ~39 (layer 0). 11/12 prompts had draft divergence corrected by verifier. Small-panel adapter acceptance — not full-panel compressor ranking. External SpectralQuant README not ExactKV. |
 
 ## Smoke-only adapters
 
 | Method | Model / panel | Acceptance | Failures | Experiment | Badges | Caveat |
 | --- | --- | ---: | ---: | --- | --- | --- |
 | SnapKV experimental | Qwen2.5-0.5B · 4-prompt smoke (8 cells) | — | 0 | Exp 032b | SMOKE | smoke-only; not full-suite ranked; restricted experimental SnapKV via kvpress |
-| SpectralQuant | Synthetic K/V tensor smoke · external probe | — | — | Exp 042 | SMOKE, TENSOR PROBE, NOT GENERATION, NOT DEFAULT, NO SPEED CLAIM, NO MEMORY CLAIM | SpectralQuant has ExactKV tensor-smoke coverage, but no generation-time ExactKV probe yet. Synthetic K/V round-trip pass (Exp 042); tensor smoke only — not generation integration. External paper/README not ExactKV. |
 
 ## Notes
 
 - Tiers prevent apples-to-oranges ranking (full panel vs smoke vs restricted).
 - **TurboQuant / KIVI / KVQuant** are factory-only restricted adapters.
 - **SnapKV experimental** is smoke-only (8 cells).
-- **SpectralQuant** has ExactKV tensor-smoke coverage, but no generation-time ExactKV probe yet (Exp 042).
+- **SpectralQuant experimental adapter** has a 12-prompt restricted panel (Exp 045) — factory-only, materializing; not full-panel ranked.
 - **Shard** has restricted external-drafter probe results under ExactKV verification (Exp 039–041) — not a full-panel integrated compressor.
 - External Shard, SpectralQuant, SnapKV paper, or kvpress results are **not** ExactKV results.
 - Regenerate: `python3 scripts/exactkv_leaderboard.py --md --html`

@@ -130,13 +130,23 @@ def entry_badges(entry: LeaderboardEntry) -> list[str]:
         return badges
 
     if "spectralquant" in method_l:
-        badges.extend([
-            "TENSOR PROBE",
-            "NOT GENERATION",
-            "NOT DEFAULT",
-            "NO SPEED CLAIM",
-            "NO MEMORY CLAIM",
-        ])
+        if entry.tier == TIER_RESTRICTED or "experimental adapter" in method_l:
+            badges.extend([
+                "FACTORY-ONLY ADAPTER",
+                "SMALL PANEL",
+                "MATERIALIZING",
+                "NOT DEFAULT",
+                "NO SPEED CLAIM",
+                "NO MEMORY CLAIM",
+            ])
+        else:
+            badges.extend([
+                "TENSOR PROBE",
+                "NOT GENERATION",
+                "NOT DEFAULT",
+                "NO SPEED CLAIM",
+                "NO MEMORY CLAIM",
+            ])
         return badges
 
     status_l = entry.integration_status.lower()
@@ -481,7 +491,7 @@ def write_leaderboard_md(entries: list[LeaderboardEntry], path: Path) -> None:
         "- Tiers prevent apples-to-oranges ranking (full panel vs smoke vs restricted).",
         "- **TurboQuant / KIVI / KVQuant** are factory-only restricted adapters.",
         "- **SnapKV experimental** is smoke-only (8 cells).",
-        "- **SpectralQuant** has ExactKV tensor-smoke coverage, but no generation-time ExactKV probe yet (Exp 042).",
+        "- **SpectralQuant experimental adapter** has a 12-prompt restricted panel (Exp 045) — factory-only, materializing; not full-panel ranked.",
         "- **Shard** has restricted external-drafter probe results under ExactKV verification (Exp 039–041) — not a full-panel integrated compressor.",
         "- External Shard, SpectralQuant, SnapKV paper, or kvpress results are **not** ExactKV results.",
         "- Regenerate: `python3 scripts/exactkv_leaderboard.py --md --html`",
@@ -509,6 +519,9 @@ def _badge_class(badge: str) -> str:
         "NO MEMORY CLAIM": "nobytes",
         "TENSOR PROBE": "tier-smoke",
         "NOT GENERATION": "nobytes",
+        "FACTORY-ONLY ADAPTER": "tier-restricted",
+        "SMALL PANEL": "tier-restricted",
+        "MATERIALIZING": "nobytes",
     }
     return mapping.get(badge, "default")
 
@@ -727,7 +740,7 @@ def write_leaderboard_html(entries: list[LeaderboardEntry], path: Path) -> None:
     <footer>
       <strong>Caveat</strong> — {html.escape(_FOOTER)}<br />
       Generated {generated} by <code>scripts/exactkv_leaderboard.py</code> from local reports.
-      Not a hosted live backend. Shard has restricted external-drafter probe results; SpectralQuant has tensor-smoke coverage only (Exp 042); external Shard/SpectralQuant README results are not ExactKV results.
+      Not a hosted live backend. Shard has restricted external-drafter probe results; SpectralQuant has 12-prompt restricted adapter panel (Exp 045); external Shard/SpectralQuant README results are not ExactKV results.
     </footer>
   </div>
   <script>

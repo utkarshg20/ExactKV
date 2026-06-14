@@ -91,7 +91,7 @@ See [`EXPERIMENT_035_VISUAL_PLOTS_AND_LEADERBOARD.md`](EXPERIMENT_035_VISUAL_PLO
 - Active GPU memory savings or production serving readiness.
 - Model accuracy improvement.
 - Shard has restricted external-drafter probe results (Exp 039–041) in leaderboard RESTRICTED BACKEND tier — not integrated compressor results.
-- SpectralQuant has ExactKV tensor-smoke coverage only (Exp 042, SMOKE ONLY tier) — not generation integration or acceptance metrics.
+- SpectralQuant has a 12-prompt restricted adapter panel (Exp 045, RESTRICTED BACKEND tier) — factory-only materializing adapter; not full-panel ranked.
 
 ## 9. Suggested launch use
 
