@@ -148,17 +148,17 @@ ExactKV should eventually implement **VeriCache-equivalent functionality**:
 
 ---
 
-### Stage 9 — Paper-like reproduction panel
+### Stage 9 — Paper-like reproduction panel ✅ (Phase 11J contract spike)
 
 | Field | Detail |
 |---|---|
-| **Goal** | Fixed compressor × model × benchmark panel comparable to VeriCache paper **methodology** |
-| **Files likely touched** | Experiment scripts, `reports/` (gitignored), leaderboard tier |
-| **Implementation risk** | Medium — scope creep into fake paper numbers |
-| **Test gate** | Panel tests; claims audit pass; explicit panel citation |
-| **Claims unlocked** | “On panel P, ExactKV measured X” — panel-bound only |
+| **Goal** | Paper-like panel metadata: models, compressors, workloads, metrics, gates — **not** a run |
+| **Files likely touched** | `exactkv/benchmarks/paper_panel_contract.py`, [`PAPER_LIKE_REPRODUCTION_PANEL.md`](PAPER_LIKE_REPRODUCTION_PANEL.md) |
+| **Implementation risk** | Low — metadata only; no new benchmark runs |
+| **Test gate** | `tests/test_paper_panel_contract.py` |
+| **Claims unlocked** | Panel contract + gate requirements — **not** paper reproduction |
 
-**Current:** V10 suites + restricted probes — **not** paper panel.
+**Current:** `PaperLikeReproductionPanel` defaults `CONTRACT_ONLY`; `claim_eligible=False`; external paper numbers **not** ExactKV results.
 
 ---
 
@@ -205,6 +205,6 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 ## 5. Recommended next phase (after 11A)
 
-**Stage 9 paper-like reproduction panel design** — fixed panel contracts and claim boundaries; still no VeriCache throughput reproduction claim.
+**Stage 10 VeriCache-parity RC checklist design** — process gate using Stage 9 panel contract; still no automatic speed/serving claim.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

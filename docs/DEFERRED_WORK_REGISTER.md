@@ -149,6 +149,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **LMCache prototype path (Stage 6 spike)** | **Complete** | Phase 11G ✅ | [`LMCACHE_PROTOTYPE_PATH.md`](LMCACHE_PROTOTYPE_PATH.md); contract-only; **not** integrated |
 | — | **Remote prefix cache semantics (Stage 7 spike)** | **Complete** | Phase 11H ✅ | [`REMOTE_PREFIX_CACHE_SEMANTICS.md`](REMOTE_PREFIX_CACHE_SEMANTICS.md); loopback mock only; **not** remote runtime |
 | — | **Throughput benchmark harness (Stage 8 spike)** | **Complete** | Phase 11I ✅ | [`THROUGHPUT_BENCHMARK_HARNESS.md`](THROUGHPUT_BENCHMARK_HARNESS.md); methodology only; **not** speedup claim |
+| — | **Paper-like reproduction panel (Stage 9 spike)** | **Complete** | Phase 11J ✅ | [`PAPER_LIKE_REPRODUCTION_PANEL.md`](PAPER_LIKE_REPRODUCTION_PANEL.md); contract only; **not** paper run |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

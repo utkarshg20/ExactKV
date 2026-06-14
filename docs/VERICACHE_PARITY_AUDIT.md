@@ -48,7 +48,7 @@ Companion: [`VERICACHE_SYSTEMS_ROADMAP.md`](VERICACHE_SYSTEMS_ROADMAP.md) · [`V
 | **Quality / correctness evaluation** | Exact + task metrics | **done** (ExactKV focus) | V10 suites; `exactkv_failures`; benchmark-gap docs | Official LongBench/RULER scores (out of scope for ExactKV claim) | Benchmark runner tests; gap analysis tests | Token-level exactness + acceptance on tested panels | Outcome benchmarks replaced by ExactKV |
 | **KL / distributional divergence evaluation** | Distributional checks beyond greedy | **missing** | `docs/FUTURE_RESEARCH.md` mentions KL | KL / logprob divergence harness vs full KV | Statistical divergence tests | Not implemented | KL parity with VeriCache paper |
 | **Paper-like compressor coverage** | Broad compressor ecosystem in paper | **partial** | Built-ins + restricted factory adapters; Shard/SpectralQuant probes | Integrated paper compressors at paper settings | Per-backend restricted tests | Cited compressor rows with caveats | VeriCache compressor matrix reproduced |
-| **Paper-like benchmark coverage** | Paper benchmark suite | **missing** | V10 custom suites; LongBench-**style** demo only | Paper benchmark reproduction panel | Future Stage 9 panel tests | Custom crash-test panels only | Paper benchmarks reproduced as ExactKV results |
+| **Paper-like benchmark coverage** | Paper benchmark suite | **partial** | V10 custom suites; Phase 11J panel **contract**; LongBench-**style** demo only | Locked paper panel run + gates | `tests/test_paper_panel_contract.py` | Panel contract + gate requirements — **not** paper reproduction | Paper benchmarks reproduced as ExactKV results |
 
 ---
 
