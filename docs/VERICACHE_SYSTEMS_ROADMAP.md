@@ -106,15 +106,17 @@ ExactKV should eventually implement **VeriCache-equivalent functionality**:
 
 ---
 
-### Stage 6 — LMCache / prefix cache integration
+### Stage 6 — LMCache / prefix cache integration ✅ (Phase 11G contract spike)
 
 | Field | Detail |
 |---|---|
-| **Goal** | LMCache (or equivalent) as full-KV backing tier for verify steps |
-| **Files likely touched** | `exactkv/storage/` + LMCache client adapter |
-| **Implementation risk** | High — async restore vs synchronous verify |
-| **Test gate** | Restore correctness tests; ownership invariant tests |
-| **Claims unlocked** | “LMCache-backed verify path tested on panel” — **not** production tiering |
+| **Goal** | LMCache prototype integration gates and storage-mapping metadata — **not** runtime |
+| **Files likely touched** | `exactkv/integrations/lmcache_contract.py`, [`LMCACHE_PROTOTYPE_PATH.md`](LMCACHE_PROTOTYPE_PATH.md) |
+| **Implementation risk** | Low — metadata only; LMCache not imported |
+| **Test gate** | `tests/test_lmcache_prototype_contract.py` |
+| **Claims unlocked** | “LMCache prototype contract metadata exists” — **not** “LMCache integrated” |
+
+**Current:** `LMCachePrototypePlan` + gates; `rollback_fallback_path` unsatisfied; remote prefix **not active**; vLLM contract **contract-only**; **not integrated**.
 
 ---
 
@@ -201,6 +203,6 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 ## 5. Recommended next phase (after 11A)
 
-**Stage 6 LMCache prototype contract** — metadata and gates for prefix-cache backing (similar to 11F), still without runtime integration. Do **not** claim LMCache integration until gates clear.
+**Stage 7 remote prefix caching design spike** — metadata for distributed prefix semantics (similar to 11G), still without remote runtime. Do **not** claim remote prefix caching until Stage 7 gates clear.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

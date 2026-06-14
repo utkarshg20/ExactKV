@@ -28,6 +28,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Materialized draft backend spike | Phase 11D | [`MATERIALIZED_COMPRESSED_DRAFT_BACKEND.md`](MATERIALIZED_COMPRESSED_DRAFT_BACKEND.md); metadata only; **not** hot compressed attention |
 | Extended verification scheduler | Phase 11E | [`EXTENDED_VERIFICATION_SCHEDULER.md`](EXTENDED_VERIFICATION_SCHEDULER.md); bonus-token disabled; **not** runtime wired |
 | vLLM prototype path contract | Phase 11F | [`VLLM_PROTOTYPE_PATH.md`](VLLM_PROTOTYPE_PATH.md); gates + metadata only; **not** vLLM integrated |
+| LMCache prototype path contract | Phase 11G | [`LMCACHE_PROTOTYPE_PATH.md`](LMCACHE_PROTOTYPE_PATH.md); gates + metadata only; **not** LMCache or remote prefix integrated |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |
