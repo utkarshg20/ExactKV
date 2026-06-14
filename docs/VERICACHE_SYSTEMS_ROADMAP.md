@@ -78,17 +78,17 @@ ExactKV should eventually implement **VeriCache-equivalent functionality**:
 
 ---
 
-### Stage 4 — Extended verification scheduler
+### Stage 4 — Extended verification scheduler ✅ (Phase 11E contract spike)
 
 | Field | Detail |
 |---|---|
-| **Goal** | Span/default parallel verify policies; optional bonus-token policy; verify scheduling hooks |
-| **Files likely touched** | `exactkv/verification/`, generator round loop |
-| **Implementation risk** | Medium — fp16/CUDA parity (see Exp 030b) |
-| **Test gate** | Exp 029-scale grid; span ≡ sequential; bonus-token policy tests |
-| **Claims unlocked** | “Extended verification modes preserve exactness on tested grid” — **not** VeriCache throughput yet |
+| **Goal** | Policy metadata for sequential, span, bonus-disabled, serving placeholder schedules |
+| **Files likely touched** | `exactkv/verify/scheduler.py`, [`EXTENDED_VERIFICATION_SCHEDULER.md`](EXTENDED_VERIFICATION_SCHEDULER.md) |
+| **Implementation risk** | Low — metadata only; runtime unchanged |
+| **Test gate** | `tests/test_extended_verification_scheduler.py` |
+| **Claims unlocked** | Scheduler policy contracts exist — **not** throughput or parallel runtime |
 
-**Current:** span verify exists; bonus-token disabled; no cross-round scheduler.
+**Current:** factories + validators; bonus-token disabled; vLLM/LMCache placeholders; **not** wired to generator.
 
 ---
 

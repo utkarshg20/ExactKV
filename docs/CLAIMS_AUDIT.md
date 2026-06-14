@@ -26,6 +26,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Dual-cache contract layer | Phase 11B | [`DUAL_CACHE_ABSTRACTION.md`](DUAL_CACHE_ABSTRACTION.md); metadata only — **not** storage manager or savings claim |
 | Full-KV storage manager spike | Phase 11C | [`FULL_KV_STORAGE_MANAGER.md`](FULL_KV_STORAGE_MANAGER.md); in-memory + file backends; **not** runtime wired |
 | Materialized draft backend spike | Phase 11D | [`MATERIALIZED_COMPRESSED_DRAFT_BACKEND.md`](MATERIALIZED_COMPRESSED_DRAFT_BACKEND.md); metadata only; **not** hot compressed attention |
+| Extended verification scheduler | Phase 11E | [`EXTENDED_VERIFICATION_SCHEDULER.md`](EXTENDED_VERIFICATION_SCHEDULER.md); bonus-token disabled; **not** runtime wired |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |
