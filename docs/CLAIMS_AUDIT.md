@@ -42,6 +42,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Restored-verifier runner consolidation | Phase 12G / Exp 052 | [`RESTORED_VERIFIER_RUNNER.md`](RESTORED_VERIFIER_RUNNER.md); isolated runner API; **not** runtime wired |
 | Runner-backed drift panel | Phase 12H / Exp 053 | [`EXPERIMENT_053_RESTORED_VERIFIER_RUNNER_PANEL.md`](EXPERIMENT_053_RESTORED_VERIFIER_RUNNER_PANEL.md); canonical runner path; **not** runtime wired |
 | Experimental restored-verifier runtime | Phase 13A / Exp 054 | [`EXPERIMENTAL_RESTORED_VERIFIER_RUNTIME.md`](EXPERIMENTAL_RESTORED_VERIFIER_RUNTIME.md); explicit opt-in only; **not** default runtime |
+| Explicit CLI experimental restored-verifier | Phase 13B / Exp 055 | [`EXPERIMENT_055_EXPERIMENTAL_RESTORED_VERIFIER_CLI.md`](EXPERIMENT_055_EXPERIMENTAL_RESTORED_VERIFIER_CLI.md); `--experimental-restored-verifier` only; **not** default CLI |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

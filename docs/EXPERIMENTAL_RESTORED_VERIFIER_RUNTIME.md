@@ -94,10 +94,23 @@ result = run_experimental_restored_verifier(
     ExperimentalRestoredVerifierConfig.disabled()
 )
 
-# Enabled — explicit opt-in
+# Enabled — explicit opt-in (Python API)
 config = default_experimental_smoke_config()
 result = run_experimental_restored_verifier(config)
 ```
+
+### CLI opt-in (Phase 13B)
+
+```bash
+# Disabled — flag absent; runner not called
+python3 scripts/research/run_exp055_experimental_restored_verifier_cli.py
+
+# Enabled — explicit flag required
+python3 scripts/research/run_exp055_experimental_restored_verifier_cli.py \
+  --experimental-restored-verifier
+```
+
+See [`EXPERIMENT_055_EXPERIMENTAL_RESTORED_VERIFIER_CLI.md`](EXPERIMENT_055_EXPERIMENTAL_RESTORED_VERIFIER_CLI.md).
 
 ---
 

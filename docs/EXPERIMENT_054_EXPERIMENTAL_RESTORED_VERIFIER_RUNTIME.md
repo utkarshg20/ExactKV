@@ -148,5 +148,5 @@ Phase 13A exposes an opt-in experimental path toward VeriCache’s stored-verifi
 
 ## 15. Next step
 
-- Optional CLI flag that calls `run_experimental_restored_verifier()` behind explicit `--experimental-restored-verifier` (still non-default)
-- Phase 13B+: human-reviewed gate before any default-runtime wiring discussion
+- See [`EXPERIMENT_055_EXPERIMENTAL_RESTORED_VERIFIER_CLI.md`](EXPERIMENT_055_EXPERIMENTAL_RESTORED_VERIFIER_CLI.md) (Phase 13B) for explicit CLI flag
+- Optional CLI flag on additional research scripts only — still non-default
