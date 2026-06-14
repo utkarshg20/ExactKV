@@ -5,7 +5,7 @@
 > ExactKV is **not** a full VeriCache reproduction today.  
 > ExactKV currently reproduces **VeriCache-style draft/verify algorithmic semantics** on a Hugging Face correctness harness — **not** the VeriCache serving system, scheduler, or paper-level performance results.
 
-Companion: [`VERICACHE_SYSTEMS_ROADMAP.md`](VERICACHE_SYSTEMS_ROADMAP.md) · [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) · [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md) · [`PHASE_10_EXTERNAL_METHODS_SUMMARY.md`](PHASE_10_EXTERNAL_METHODS_SUMMARY.md)
+Companion: [`VERICACHE_SYSTEMS_ROADMAP.md`](VERICACHE_SYSTEMS_ROADMAP.md) · [`VERICACHE_PARITY_CLAIM_GATE.md`](VERICACHE_PARITY_CLAIM_GATE.md) · [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) · [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md) · [`PHASE_10_EXTERNAL_METHODS_SUMMARY.md`](PHASE_10_EXTERNAL_METHODS_SUMMARY.md)
 
 **Attribution:** Draft-then-verify algorithm from Yao et al., *VeriCache: Turning Lossy KV Cache into Lossless LLM Inference*, arXiv:2605.17613, 2026. ExactKV does **not** claim to have invented this algorithm.
 

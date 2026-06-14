@@ -32,6 +32,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Remote prefix cache semantics | Phase 11H | [`REMOTE_PREFIX_CACHE_SEMANTICS.md`](REMOTE_PREFIX_CACHE_SEMANTICS.md); loopback mock only; **not** remote runtime |
 | Throughput benchmark harness | Phase 11I | [`THROUGHPUT_BENCHMARK_HARNESS.md`](THROUGHPUT_BENCHMARK_HARNESS.md); methodology contract; **not** speedup claim |
 | Paper-like reproduction panel | Phase 11J | [`PAPER_LIKE_REPRODUCTION_PANEL.md`](PAPER_LIKE_REPRODUCTION_PANEL.md); contract only; **not** paper reproduction |
+| VeriCache parity RC claim gate | Phase 11K | [`VERICACHE_PARITY_CLAIM_GATE.md`](VERICACHE_PARITY_CLAIM_GATE.md); allowed/forbidden classification; **not** full parity |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

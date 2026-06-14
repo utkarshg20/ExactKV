@@ -162,15 +162,17 @@ ExactKV should eventually implement **VeriCache-equivalent functionality**:
 
 ---
 
-### Stage 10 — Release candidate for VeriCache-parity claim
+### Stage 10 — Release candidate for VeriCache-parity claim ✅ (Phase 11K claim gate)
 
 | Field | Detail |
 |---|---|
-| **Goal** | Independent review: algorithm + systems + measured panels satisfy pre-defined parity checklist |
-| **Files likely touched** | Release notes, parity audit update, launch validation |
-| **Implementation risk** | Process — overclaim if gates skipped |
-| **Test gate** | Full pytest; clean-clone smoke; parity audit all **done** or explicitly deferred; no forbidden claims |
-| **Claims unlocked** | **Only after checklist:** “ExactKV implements VeriCache-equivalent functionality on documented panel” — still **not** automatic production/speed claim |
+| **Goal** | Conservative claim gate: allowed / forbidden / blocked categories — **not** RC certification |
+| **Files likely touched** | `exactkv/claims/vericache_parity_gate.py`, [`VERICACHE_PARITY_CLAIM_GATE.md`](VERICACHE_PARITY_CLAIM_GATE.md) |
+| **Implementation risk** | Low — classification metadata; human review required for any unlock |
+| **Test gate** | `tests/test_vericache_parity_claim_gate.py` |
+| **Claims unlocked** | Explicit allowed-with-scope list — **not** full parity; `full_parity_claim_allowed=False` |
+
+**Current:** default gate classifies algorithmic/correctness as allowed-with-scope; throughput/memory/serving/full parity **forbidden**; vLLM/LMCache **contract-only**.
 
 ---
 
@@ -205,6 +207,6 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 ## 5. Recommended next phase (after 11A)
 
-**Stage 10 VeriCache-parity RC checklist design** — process gate using Stage 9 panel contract; still no automatic speed/serving claim.
+**Post-11K:** Independent human review + locked panel runs remain required before any `full_parity_claim_allowed` upgrade — no further contract-only phases planned in Stages 1–10.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).
