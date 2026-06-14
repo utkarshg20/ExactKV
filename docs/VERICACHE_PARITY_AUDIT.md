@@ -72,7 +72,7 @@ Companion: [`VERICACHE_SYSTEMS_ROADMAP.md`](VERICACHE_SYSTEMS_ROADMAP.md) · [`V
 | **Dual-cache systems** | Logical separation yes; **storage manager**, offload tiers, and materialization-free hot path **no**. |
 | **Extended verification** | Span verify yes; **bonus-token** and paper **parallel verify at serving scale** **no**. |
 | **Compressor / model coverage** | Strong on Qwen built-ins; **restricted** external probes only for Shard/SpectralQuant; not paper matrix. |
-| **Serving context** | Harness + sidecar **probe** (Exp 017); **not** integration. |
+| **Serving context** | Harness + sidecar **probe** (Exp 017); **not** integration. vLLM prototype **contract** (Phase 11F) documents gates — **not** runtime. |
 
 ---
 

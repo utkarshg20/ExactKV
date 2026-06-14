@@ -145,6 +145,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Full-KV storage manager (Stage 2 spike)** | **Complete** | Phase 11C ✅ | [`FULL_KV_STORAGE_MANAGER.md`](FULL_KV_STORAGE_MANAGER.md); tiny payload smoke only |
 | — | **Materialized compressed-draft backend (Stage 3 spike)** | **Complete** | Phase 11D ✅ | [`MATERIALIZED_COMPRESSED_DRAFT_BACKEND.md`](MATERIALIZED_COMPRESSED_DRAFT_BACKEND.md) |
 | — | **Extended verification scheduler (Stage 4 spike)** | **Complete** | Phase 11E ✅ | [`EXTENDED_VERIFICATION_SCHEDULER.md`](EXTENDED_VERIFICATION_SCHEDULER.md) |
+| — | **vLLM prototype path (Stage 5 spike)** | **Complete** | Phase 11F ✅ | [`VLLM_PROTOTYPE_PATH.md`](VLLM_PROTOTYPE_PATH.md); contract-only; **not** integrated |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

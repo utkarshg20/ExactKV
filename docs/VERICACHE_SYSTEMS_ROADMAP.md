@@ -92,17 +92,17 @@ ExactKV should eventually implement **VeriCache-equivalent functionality**:
 
 ---
 
-### Stage 5 — vLLM prototype path
+### Stage 5 — vLLM prototype path ✅ (Phase 11F contract spike)
 
 | Field | Detail |
 |---|---|
-| **Goal** | Prototype authoritative full-KV export / verify hook — **not** production merge |
-| **Files likely touched** | New `exactkv/serving/vllm/`; revisit Exp 017 conclusions |
-| **Implementation risk** | Very high — paged KV ≠ HF `FullKVState`; fork risk |
-| **Test gate** | Prototype panel: `exactkv_failures == 0` on bounded prompt set |
-| **Claims unlocked** | “vLLM prototype path evaluated” — **not** “vLLM integrated” until Stage 10 |
+| **Goal** | vLLM prototype integration gates and cache-mapping metadata — **not** runtime |
+| **Files likely touched** | `exactkv/integrations/vllm_contract.py`, [`VLLM_PROTOTYPE_PATH.md`](VLLM_PROTOTYPE_PATH.md) |
+| **Implementation risk** | Low — metadata only; vLLM not imported |
+| **Test gate** | `tests/test_vllm_prototype_contract.py` |
+| **Claims unlocked** | “vLLM prototype contract metadata exists” — **not** “vLLM integrated” |
 
-**Current:** Exp 007/017 **no-go** for direct integration.
+**Current:** `VLLMPrototypePlan` + gates; `rollback_fallback_path` unsatisfied; Exp 007/017 no-go unchanged; **contract-only, not integrated**.
 
 ---
 
@@ -201,6 +201,6 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 ## 5. Recommended next phase (after 11A)
 
-**Stage 1 hardening** or **Stage 2 spike design doc** — pick one storage-backed full-KV experiment on a **tiny panel** before any serving integration. Do **not** jump to vLLM until dual-cache storage contracts are stable.
+**Stage 6 LMCache prototype contract** — metadata and gates for prefix-cache backing (similar to 11F), still without runtime integration. Do **not** claim LMCache integration until gates clear.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).
