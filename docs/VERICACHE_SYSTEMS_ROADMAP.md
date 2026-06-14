@@ -62,6 +62,8 @@ ExactKV should eventually implement **VeriCache-equivalent functionality**:
 
 **Current:** in-memory + file backends; **not** wired into `ExactKVGenerator`. Production GPU/host tiers remain future work.
 
+**Phase 12A–12B (real restore smoke):** [`EXPERIMENT_046_FULL_KV_RESTORE_SMOKE.md`](EXPERIMENT_046_FULL_KV_RESTORE_SMOKE.md) (tiny panel) and [`EXPERIMENT_047_FULL_KV_RESTORE_PANEL.md`](EXPERIMENT_047_FULL_KV_RESTORE_PANEL.md) (12-prompt panel + optional CUDA dtypes) prove HF `past_key_values` round-trip with continuation equivalence — **not** serving, memory savings, or throughput.
+
 ---
 
 ### Stage 3 — Materialized compressed-draft backend ✅ (Phase 11D design spike)
@@ -207,6 +209,6 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 ## 5. Recommended next phase (after 11A)
 
-**Post-11K:** Independent human review + locked panel runs remain required before any `full_parity_claim_allowed` upgrade — no further contract-only phases planned in Stages 1–10.
+**Post-11K / Post-12B:** Thread restore panel into offline verifier experiments (still **not** default runtime). Independent human review + locked panel runs remain required before any `full_parity_claim_allowed` upgrade.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

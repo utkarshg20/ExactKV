@@ -33,6 +33,8 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Throughput benchmark harness | Phase 11I | [`THROUGHPUT_BENCHMARK_HARNESS.md`](THROUGHPUT_BENCHMARK_HARNESS.md); methodology contract; **not** speedup claim |
 | Paper-like reproduction panel | Phase 11J | [`PAPER_LIKE_REPRODUCTION_PANEL.md`](PAPER_LIKE_REPRODUCTION_PANEL.md); contract only; **not** paper reproduction |
 | VeriCache parity RC claim gate | Phase 11K | [`VERICACHE_PARITY_CLAIM_GATE.md`](VERICACHE_PARITY_CLAIM_GATE.md); allowed/forbidden classification; **not** full parity |
+| Full-KV restore smoke (real HF KV) | Phase 12A / Exp 046 | [`EXPERIMENT_046_FULL_KV_RESTORE_SMOKE.md`](EXPERIMENT_046_FULL_KV_RESTORE_SMOKE.md); tiny panel; in-memory + file; **not** runtime wired |
+| Full-KV restore panel hardening | Phase 12B / Exp 047 | [`EXPERIMENT_047_FULL_KV_RESTORE_PANEL.md`](EXPERIMENT_047_FULL_KV_RESTORE_PANEL.md); 12-prompt panel; optional CUDA dtypes; **not** serving |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

@@ -1,16 +1,17 @@
-"""HF full-KV capture, storage, reload, and continuation smoke (Phase 12A).
+"""HF full-KV capture, storage, reload, and continuation smoke (Phase 12A–12B).
 
 Real ``past_key_values`` round-trip through ``KVStorageBackend``. **Not** wired into
 ``ExactKVGenerator`` or default runtime.
 
-This is a full-KV restore smoke, not a serving runtime.
+This is a full-KV restore smoke/panel, not a serving runtime.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from typing import Any
 
 import torch
+import transformers
 
 from exactkv.cache.dual_cache import CacheResidency
 from exactkv.cache.storage import (
@@ -30,8 +31,10 @@ from exactkv.cache.utils import (
 from exactkv.runtime.model_runtime import ModelRuntime
 
 EXPERIMENT_046_ID = "exp046_full_kv_restore_smoke"
+EXPERIMENT_047_ID = "exp047_full_kv_restore_panel"
 DEFAULT_MODEL = "Qwen/Qwen2.5-0.5B"
 DEFAULT_MAX_NEW_TOKENS = 8
+DEFAULT_PANEL_MAX_NEW_TOKENS = 12
 
 CLAIM_NOTE = (
     "Full-KV restore smoke (Phase 12A). Storage round-trip on real HF past_key_values "
@@ -39,11 +42,18 @@ CLAIM_NOTE = (
     "No speed, latency, throughput, memory, or production-serving claim."
 )
 
+PANEL_CLAIM_NOTE = (
+    "Full-KV restore panel (Phase 12B). Multi-prompt storage round-trip on real HF "
+    "past_key_values only — not vLLM, LMCache, remote prefix runtime, or serving. "
+    "No speed, latency, throughput, active memory savings, or production-serving claim."
+)
+
 FORBIDDEN_CLAIMS = (
     "speedup",
     "latency improvement",
     "throughput improvement",
     "memory savings",
+    "active memory savings",
     "production serving",
     "vericache throughput reproduced",
     "full vericache reproduction",
@@ -123,6 +133,50 @@ class RestorePromptResult:
     restored_decoded: str
     first_divergence_idx: int | None = None
     restore_blocker: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class DeviceDtypeConfig:
+    """Device/dtype matrix entry for panel runs."""
+
+    device: str
+    dtype: str
+    required: bool
+    status: str = "pending"  # pending | tested | skipped
+    skip_reason: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class RestorePanelCellResult:
+    """Per-cell restore equivalence result with hardened metadata."""
+
+    prompt_id: str
+    prompt: str
+    category: str
+    backend_name: str
+    device: str
+    dtype: str
+    cache_format: str
+    prompt_length: int
+    continuation_token_count: int
+    layer_count: int
+    shape_summary: str
+    dtype_summary: str
+    payload_byte_summary: int
+    token_exact_match: bool
+    live_token_ids: list[int]
+    restored_token_ids: list[int]
+    live_decoded: str
+    restored_decoded: str
+    first_divergence_idx: int | None = None
+    restore_blocker: str = ""
+    cell_status: str = "passed"  # passed | failed | skipped
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -277,6 +331,128 @@ def store_prefill_payload(
     backend.put(handle, payload, metadata)
 
 
+def payload_byte_summary(payload: dict[str, Any]) -> int:
+    """Return total tensor payload bytes for a storage payload."""
+    _, total_bytes, _, _ = summarize_tensor_payload(payload)
+    return total_bytes
+
+
+def resolve_panel_device_dtype_configs() -> list[DeviceDtypeConfig]:
+    """Return required CPU float32 plus optional CUDA configs when available."""
+    configs = [
+        DeviceDtypeConfig(device="cpu", dtype="float32", required=True, status="pending"),
+    ]
+    if torch.cuda.is_available():
+        configs.append(
+            DeviceDtypeConfig(
+                device="cuda", dtype="float16", required=False, status="pending"
+            )
+        )
+        if torch.cuda.is_bf16_supported():
+            configs.append(
+                DeviceDtypeConfig(
+                    device="cuda", dtype="bfloat16", required=False, status="pending"
+                )
+            )
+    else:
+        configs.extend(
+            [
+                DeviceDtypeConfig(
+                    device="cuda",
+                    dtype="float16",
+                    required=False,
+                    status="skipped",
+                    skip_reason="CUDA unavailable",
+                ),
+                DeviceDtypeConfig(
+                    device="cuda",
+                    dtype="bfloat16",
+                    required=False,
+                    status="skipped",
+                    skip_reason="CUDA unavailable",
+                ),
+            ]
+        )
+    return configs
+
+
+def default_panel_prompts() -> list[dict[str, str]]:
+    """Deterministic 8–16 prompt panel covering common continuation styles."""
+    return [
+        {
+            "prompt_id": "panel_001",
+            "category": "short_natural",
+            "prompt": "The weather today is sunny and",
+        },
+        {
+            "prompt_id": "panel_002",
+            "category": "short_natural",
+            "prompt": "What is the square root of 64? Answer:",
+        },
+        {
+            "prompt_id": "panel_003",
+            "category": "structured_json",
+            "prompt": 'Return JSON only: {"name": "Ada", "role":',
+        },
+        {
+            "prompt_id": "panel_004",
+            "category": "structured_json",
+            "prompt": 'List as JSON array: ["red", "green",',
+        },
+        {
+            "prompt_id": "panel_005",
+            "category": "retrieval_copy",
+            "prompt": (
+                "Passage: The capital of France is Paris. "
+                "Repeat exactly: The capital is"
+            ),
+        },
+        {
+            "prompt_id": "panel_006",
+            "category": "retrieval_copy",
+            "prompt": "Source: Mount Everest is 8849 meters tall. Quote the height:",
+        },
+        {
+            "prompt_id": "panel_007",
+            "category": "code_like",
+            "prompt": "def factorial(n):\n    if n <= 1:\n        return",
+        },
+        {
+            "prompt_id": "panel_008",
+            "category": "code_like",
+            "prompt": "import json\n\ndata = {'key': 'value'}\nprint(",
+        },
+        {
+            "prompt_id": "panel_009",
+            "category": "long_context_summary",
+            "prompt": (
+                "Background: ExactKV uses a full-KV verifier to correct lossy draft "
+                "KV drift while preserving greedy output on tested panels. "
+                "In one sentence, summarize the verifier role:"
+            ),
+        },
+        {
+            "prompt_id": "panel_010",
+            "category": "long_context_summary",
+            "prompt": (
+                "Notes: Phase 12 stores real HF past_key_values through pluggable "
+                "backends and reloads them for continuation equivalence checks. "
+                "Summarize the storage step in one short phrase:"
+            ),
+        },
+        {
+            "prompt_id": "panel_011",
+            "category": "tool_call_style",
+            "prompt": '<tool_call>{"name": "search", "args": {"query":',
+        },
+        {
+            "prompt_id": "panel_012",
+            "category": "tool_call_style",
+            "prompt": 'Use function get_weather(city="London") to fetch',
+        },
+    ]
+
+
 def run_restore_equivalence_for_prompt(
     runtime: ModelRuntime,
     *,
@@ -284,6 +460,7 @@ def run_restore_equivalence_for_prompt(
     prompt: str,
     backend: KVStorageBackend,
     max_new_tokens: int = DEFAULT_MAX_NEW_TOKENS,
+    namespace_prefix: str = "exp046",
 ) -> RestorePromptResult:
     """Capture, store, reload, and compare greedy continuations."""
     backend_name = getattr(backend, "_backend_name", type(backend).__name__)
@@ -298,7 +475,7 @@ def run_restore_equivalence_for_prompt(
         )
 
         handle = KVStorageHandle(
-            namespace=f"exp046/{capture.model_name}",
+            namespace=f"{namespace_prefix}/{capture.model_name}",
             key=prompt_id,
             version="1",
         )
@@ -355,6 +532,210 @@ def run_restore_equivalence_for_prompt(
             restored_decoded="",
             restore_blocker=f"{type(exc).__name__}: {exc}",
         )
+
+
+@torch.no_grad()
+def run_restore_panel_cell(
+    runtime: ModelRuntime,
+    *,
+    prompt_id: str,
+    prompt: str,
+    category: str,
+    backend: KVStorageBackend,
+    max_new_tokens: int = DEFAULT_PANEL_MAX_NEW_TOKENS,
+    namespace_prefix: str = "exp047",
+) -> RestorePanelCellResult:
+    """Capture, store, reload, and compare greedy continuations with panel metadata."""
+    backend_name = getattr(backend, "_backend_name", type(backend).__name__)
+    device = str(runtime.device)
+    dtype = str(runtime.dtype)
+    try:
+        capture = capture_prefill_kv(runtime, prompt)
+        payload = build_storage_payload_from_cache(capture)
+        prompt_length = int(capture.prompt_ids.shape[-1])
+        layer_count = capture.cache_summary.layer_count
+        shape_summary = capture.cache_summary.shape_summary
+        dtype_summary = capture.cache_summary.dtype_summary
+        byte_summary = payload_byte_summary(payload)
+
+        live_cache, live_next = restore_cache_from_storage_payload(
+            payload, device=runtime.device
+        )
+        live = continue_greedy_from_cache(
+            runtime, live_cache, live_next, max_new_tokens
+        )
+
+        handle = KVStorageHandle(
+            namespace=f"{namespace_prefix}/{capture.model_name}/{device}/{dtype}",
+            key=prompt_id,
+            version="1",
+        )
+        residency = (
+            CacheResidency.CPU
+            if backend_name == "in_memory_kv_storage"
+            else CacheResidency.DISK
+        )
+        store_prefill_payload(backend, handle, payload, residency=residency)
+        loaded = backend.get(handle).payload
+        restored_cache, restored_next = restore_cache_from_storage_payload(
+            loaded, device=runtime.device
+        )
+        restored = continue_greedy_from_cache(
+            runtime, restored_cache, restored_next, max_new_tokens
+        )
+
+        div = first_divergence_index(live.token_ids, restored.token_ids)
+        exact = div is None and live.token_ids == restored.token_ids
+        return RestorePanelCellResult(
+            prompt_id=prompt_id,
+            prompt=prompt,
+            category=category,
+            backend_name=backend_name,
+            device=device,
+            dtype=dtype,
+            cache_format=capture.cache_summary.cache_format,
+            prompt_length=prompt_length,
+            continuation_token_count=len(live.token_ids),
+            layer_count=layer_count,
+            shape_summary=shape_summary,
+            dtype_summary=dtype_summary,
+            payload_byte_summary=byte_summary,
+            token_exact_match=exact,
+            live_token_ids=live.token_ids,
+            restored_token_ids=restored.token_ids,
+            live_decoded=live.decoded_text,
+            restored_decoded=restored.decoded_text,
+            first_divergence_idx=div,
+            cell_status="passed" if exact else "failed",
+        )
+    except HfKvRestoreError as exc:
+        return RestorePanelCellResult(
+            prompt_id=prompt_id,
+            prompt=prompt,
+            category=category,
+            backend_name=backend_name,
+            device=device,
+            dtype=dtype,
+            cache_format="unknown",
+            prompt_length=0,
+            continuation_token_count=0,
+            layer_count=0,
+            shape_summary="",
+            dtype_summary="",
+            payload_byte_summary=0,
+            token_exact_match=False,
+            live_token_ids=[],
+            restored_token_ids=[],
+            live_decoded="",
+            restored_decoded="",
+            restore_blocker=str(exc),
+            cell_status="failed",
+        )
+    except Exception as exc:  # noqa: BLE001 — panel must report blockers
+        return RestorePanelCellResult(
+            prompt_id=prompt_id,
+            prompt=prompt,
+            category=category,
+            backend_name=backend_name,
+            device=device,
+            dtype=dtype,
+            cache_format="unknown",
+            prompt_length=0,
+            continuation_token_count=0,
+            layer_count=0,
+            shape_summary="",
+            dtype_summary="",
+            payload_byte_summary=0,
+            token_exact_match=False,
+            live_token_ids=[],
+            restored_token_ids=[],
+            live_decoded="",
+            restored_decoded="",
+            restore_blocker=f"{type(exc).__name__}: {exc}",
+            cell_status="failed",
+        )
+
+
+def reconcile_panel_cell_counts(report: dict[str, Any]) -> list[str]:
+    """Verify passed + failed + skipped == total_cells."""
+    errors: list[str] = []
+    per_cell = report.get("per_cell", [])
+    passed = int(report.get("passed_cells", 0))
+    failed = int(report.get("failed_cells", 0))
+    skipped = int(report.get("skipped_cells", 0))
+    total = int(report.get("total_cells", 0))
+    if passed + failed + skipped != total:
+        errors.append(
+            f"cell count mismatch: passed({passed})+failed({failed})+skipped({skipped})"
+            f" != total_cells({total})"
+        )
+    status_counts = {"passed": 0, "failed": 0, "skipped": 0}
+    for cell in per_cell:
+        status = cell.get("cell_status", "")
+        if status in status_counts:
+            status_counts[status] += 1
+    if status_counts["passed"] != passed:
+        errors.append("passed_cells does not match per_cell passed count")
+    if status_counts["failed"] != failed:
+        errors.append("failed_cells does not match per_cell failed count")
+    if status_counts["skipped"] != skipped:
+        errors.append("skipped_cells does not match per_cell skipped count")
+    return errors
+
+
+def validate_exp047_report(report: dict[str, Any]) -> list[str]:
+    """Validate experiment 047 JSON report schema."""
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "model",
+        "transformers_version",
+        "total_cells",
+        "passed_cells",
+        "failed_cells",
+        "skipped_cells",
+        "storage_backends_tested",
+        "device_dtype_configs_tested",
+        "cache_formats_detected",
+        "aggregate_exactness",
+        "per_cell",
+        "restore_blockers",
+        "claim_note",
+        "forbidden_claims",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing report field: {key}")
+    if report.get("experiment_id") != EXPERIMENT_047_ID:
+        errors.append("experiment_id must be exp047_full_kv_restore_panel")
+    if not report.get("claim_note", "").strip():
+        errors.append("claim_note required")
+    forbidden = report.get("forbidden_claims", [])
+    for term in FORBIDDEN_CLAIMS:
+        if term not in forbidden:
+            errors.append(f"forbidden_claims must include: {term}")
+    errors.extend(reconcile_panel_cell_counts(report))
+    agg = report.get("aggregate_exactness", {})
+    if isinstance(agg, dict):
+        if int(agg.get("token_exact_match_count", -1)) < 0:
+            errors.append("aggregate_exactness.token_exact_match_count required")
+    else:
+        errors.append("aggregate_exactness must be a dict")
+    for cell in report.get("per_cell", []):
+        for field in (
+            "prompt_id",
+            "backend_name",
+            "device",
+            "dtype",
+            "cache_format",
+            "cell_status",
+        ):
+            if field not in cell:
+                errors.append(f"per_cell missing field: {field}")
+        div = cell.get("first_divergence_idx")
+        if div is not None and not isinstance(div, int):
+            errors.append("first_divergence_idx must be int or null")
+    return errors
 
 
 def validate_exp046_report(report: dict[str, Any]) -> list[str]:

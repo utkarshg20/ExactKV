@@ -151,6 +151,6 @@ VeriCache separates full-KV verifier residency from compressed draft paths. Phas
 
 ## 11. Next step
 
-- Expand restore smoke to additional models/dtypes with same exactness gate
+- See [`EXPERIMENT_047_FULL_KV_RESTORE_PANEL.md`](EXPERIMENT_047_FULL_KV_RESTORE_PANEL.md) (Phase 12B) for multi-prompt panel hardening
 - Thread restore plan into offline verifier experiments (still **not** default runtime)
 - Do **not** claim LMCache/vLLM/remote prefix until respective contract gates clear
