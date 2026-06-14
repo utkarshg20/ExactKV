@@ -128,5 +128,6 @@ Phase 13B adds CLI opt-in toward stored-verifier experimentation — still isola
 
 ## 13. Next step
 
+- Phase 14A: CUDA restored-verifier runtime gate — [`EXPERIMENT_056_CUDA_RESTORED_VERIFIER_RUNTIME_GATE.md`](EXPERIMENT_056_CUDA_RESTORED_VERIFIER_RUNTIME_GATE.md)
 - Wire flag into additional research scripts only (never default main CLI)
 - Phase 13C+: human-reviewed gate before any default-runtime discussion

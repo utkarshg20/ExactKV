@@ -62,7 +62,7 @@ ExactKV should eventually implement **VeriCache-equivalent functionality**:
 
 **Current:** in-memory + file backends; **not** wired into `ExactKVGenerator`. Production GPU/host tiers remain future work.
 
-**Phase 12A–12H + 13A–13B (restore + runner + experimental opt-in + CLI):** [`EXPERIMENT_046_FULL_KV_RESTORE_SMOKE.md`](EXPERIMENT_046_FULL_KV_RESTORE_SMOKE.md) through [`EXPERIMENT_055_EXPERIMENTAL_RESTORED_VERIFIER_CLI.md`](EXPERIMENT_055_EXPERIMENTAL_RESTORED_VERIFIER_CLI.md) — **not** serving, memory savings, or throughput.
+**Phase 12A–12H + 13A–13B + 14A (restore + runner + experimental opt-in + CLI + CUDA runtime gate):** [`EXPERIMENT_046_FULL_KV_RESTORE_SMOKE.md`](EXPERIMENT_046_FULL_KV_RESTORE_SMOKE.md) through [`EXPERIMENT_056_CUDA_RESTORED_VERIFIER_RUNTIME_GATE.md`](EXPERIMENT_056_CUDA_RESTORED_VERIFIER_RUNTIME_GATE.md) — **not** serving, memory savings, or throughput.
 
 ---
 
@@ -209,6 +209,6 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 ## 5. Recommended next phase (after 11A)
 
-**Post-11K / Post-13B:** Phase 13B adds `--experimental-restored-verifier` CLI flag; default CLI/runtime unchanged. Independent human review remains required before any `full_parity_claim_allowed` upgrade.
+**Post-11K / Post-13B / Post-14A:** Phase 13B adds `--experimental-restored-verifier` CLI flag; Phase 14A adds CUDA exactness gate for `run_experimental_restored_verifier()`; default CLI/runtime unchanged. Independent human review remains required before any `full_parity_claim_allowed` upgrade.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

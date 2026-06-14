@@ -11,8 +11,15 @@ from dataclasses import asdict, dataclass, field
 from enum import Enum
 from typing import Any
 
+import torch
+
 from exactkv.cache.hf_kv_restore import FORBIDDEN_CLAIMS
-from exactkv.cache.offline_verifier import DEFAULT_MODEL, VERIFIER_SOURCE
+from exactkv.cache.offline_verifier import (
+    DEFAULT_MODEL,
+    VERIFIER_SOURCE,
+    configure_cuda_determinism,
+    resolve_cuda_drift_dtype_configs,
+)
 from exactkv.cache.restored_verifier_runner import (
     DEFAULT_SMOKE_COMPRESSORS,
     DEFAULT_SMOKE_DRAFT_LEN,
@@ -24,6 +31,11 @@ from exactkv.cache.restored_verifier_runner import (
 )
 
 EXPERIMENT_054_ID = "exp054_experimental_restored_verifier_runtime"
+EXPERIMENT_056_ID = "exp056_cuda_restored_verifier_runtime_gate"
+RUNTIME_PATH_EXPERIMENTAL = "run_experimental_restored_verifier"
+CLI_OPT_IN_REQUIRED = True
+DEFAULT_CUDA_GATE_MAX_NEW_TOKENS = 12
+DEFAULT_CUDA_GATE_DRAFT_LEN = 4
 
 EXPERIMENTAL_RUNTIME_CLAIM_NOTE = (
     "Non-default experimental restored-verifier runtime (Phase 13A). Explicit opt-in "
@@ -33,6 +45,17 @@ EXPERIMENTAL_RUNTIME_CLAIM_NOTE = (
 )
 
 EXP054_CLAIM_NOTE = EXPERIMENTAL_RUNTIME_CLAIM_NOTE
+
+EXPERIMENTAL_CUDA_GATE_CLAIM_NOTE = (
+    "CUDA exactness gate for explicit experimental restored-verifier runtime "
+    "(Phase 14A). Restored full KV used only when explicitly enabled; default "
+    "ExactKV generation unchanged. Not vLLM, LMCache, remote prefix runtime, or "
+    "serving. No speed, latency, throughput, active memory savings, or "
+    "production-serving claim. Passing this gate is CUDA exactness evidence only, "
+    "not a performance result."
+)
+
+EXP056_CLAIM_NOTE = EXPERIMENTAL_CUDA_GATE_CLAIM_NOTE
 
 _REQUIRED_CLAIM_MARKERS = (
     "experimental",
@@ -388,6 +411,357 @@ def validate_exp054_report(report: dict[str, Any]) -> list[str]:
         exact_count = int(report.get("token_exact_match_count", -1))
         total = int(report.get("total_cells", 0))
         if total > 0 and exact_count + failures != total:
+            errors.append("token_exact_match_count + exactkv_failures must equal total_cells")
+    draft_div = report.get("draft_divergence_count")
+    if not isinstance(draft_div, int) or draft_div < 0:
+        errors.append("draft_divergence_count must be a non-negative int")
+    mean_acc = report.get("mean_acceptance")
+    if not isinstance(mean_acc, (int, float)):
+        errors.append("mean_acceptance must be numeric")
+    return errors
+
+
+@dataclass
+class CudaRuntimeGateDtypeResult:
+    """Per-dtype experimental runtime gate outcome."""
+
+    dtype: str
+    dtype_supported: bool
+    status: str
+    skip_reason: str = ""
+    runtime_result: ExperimentalRuntimeResult | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        data: dict[str, Any] = {
+            "dtype": self.dtype,
+            "dtype_supported": self.dtype_supported,
+            "status": self.status,
+            "skip_reason": self.skip_reason,
+        }
+        if self.runtime_result is not None:
+            data["runtime_result"] = self.runtime_result.to_dict()
+        return data
+
+
+@dataclass
+class CudaRuntimeGateResult:
+    """Aggregate CUDA restored-verifier runtime gate result."""
+
+    cuda_available: bool
+    dtype_results: list[CudaRuntimeGateDtypeResult]
+    status: str
+    total_cells: int
+    exactkv_failures: int
+    token_exact_match_count: int
+    mean_acceptance: float
+    draft_divergence_count: int
+    accepted_prefix_lengths: list[list[int]]
+    first_divergences: list[dict[str, Any]]
+    skipped_configs: list[dict[str, Any]]
+    cuda_blockers: list[str]
+    restore_blockers: list[str]
+    draft_blockers: list[str]
+    verification_blockers: list[str]
+    dtype_supported: dict[str, bool]
+    claim_note: str = EXP056_CLAIM_NOTE
+
+
+def default_cuda_gate_experimental_config(
+    dtype: str,
+    **overrides: Any,
+) -> ExperimentalRestoredVerifierConfig:
+    """Explicit enabled experimental config for one CUDA dtype gate cell."""
+    cfg = ExperimentalRestoredVerifierConfig(
+        enabled=True,
+        mode=ExperimentalRuntimeMode.RESTORED_VERIFIER_OFFLINE,
+        model_id=DEFAULT_MODEL,
+        device="cuda",
+        dtype=dtype,
+        prompt_ids=list(DEFAULT_SMOKE_PROMPT_IDS),
+        storage_backends=["in_memory_kv_storage"],
+        compressor_names=list(DEFAULT_SMOKE_COMPRESSORS),
+        draft_lens=[DEFAULT_CUDA_GATE_DRAFT_LEN],
+        max_new_tokens=DEFAULT_CUDA_GATE_MAX_NEW_TOKENS,
+        verifier_source=VERIFIER_SOURCE,
+        claim_note=EXP056_CLAIM_NOTE,
+        namespace_prefix=f"exp056/{dtype}",
+    )
+    for key, value in overrides.items():
+        if hasattr(cfg, key):
+            setattr(cfg, key, value)
+    return cfg
+
+
+def run_cuda_restored_verifier_runtime_gate(
+    *,
+    model_id: str = DEFAULT_MODEL,
+    prompt_ids: list[str] | None = None,
+    max_new_tokens: int = DEFAULT_CUDA_GATE_MAX_NEW_TOKENS,
+    draft_len: int = DEFAULT_CUDA_GATE_DRAFT_LEN,
+) -> CudaRuntimeGateResult:
+    """Run CUDA exactness gate via explicit experimental runtime path only."""
+    cuda_available = torch.cuda.is_available()
+    dtype_configs = resolve_cuda_drift_dtype_configs()
+    dtype_supported = {c.dtype: c.dtype_supported for c in dtype_configs}
+    skipped_configs = [c.to_dict() for c in dtype_configs if c.status == "skipped"]
+    prompt_ids = prompt_ids or list(DEFAULT_SMOKE_PROMPT_IDS)
+
+    if not cuda_available:
+        return CudaRuntimeGateResult(
+            cuda_available=False,
+            dtype_results=[],
+            status="blocked",
+            total_cells=0,
+            exactkv_failures=0,
+            token_exact_match_count=0,
+            mean_acceptance=0.0,
+            draft_divergence_count=0,
+            accepted_prefix_lengths=[],
+            first_divergences=[],
+            skipped_configs=skipped_configs,
+            cuda_blockers=["CUDA unavailable"],
+            restore_blockers=[],
+            draft_blockers=[],
+            verification_blockers=[],
+            dtype_supported=dtype_supported,
+        )
+
+    configure_cuda_determinism()
+    dtype_results: list[CudaRuntimeGateDtypeResult] = []
+    all_accepted: list[list[int]] = []
+    per_cell_mean: list[float] = []
+    first_divergences: list[dict[str, Any]] = []
+    restore_blockers: list[str] = []
+    draft_blockers: list[str] = []
+    verification_blockers: list[str] = []
+    cuda_blockers: list[str] = []
+    total_cells = 0
+    exact_matches = 0
+    failures = 0
+    total_draft_div = 0
+    tested_any = False
+
+    for cfg_entry in dtype_configs:
+        if cfg_entry.status == "skipped":
+            dtype_results.append(
+                CudaRuntimeGateDtypeResult(
+                    dtype=cfg_entry.dtype,
+                    dtype_supported=cfg_entry.dtype_supported,
+                    status="skipped",
+                    skip_reason=cfg_entry.skip_reason,
+                )
+            )
+            continue
+
+        exp_cfg = default_cuda_gate_experimental_config(
+            cfg_entry.dtype,
+            model_id=model_id,
+            prompt_ids=prompt_ids,
+            max_new_tokens=max_new_tokens,
+            draft_lens=[draft_len],
+        )
+        try:
+            runtime_result = run_experimental_restored_verifier(
+                exp_cfg,
+                experiment_id=EXPERIMENT_056_ID,
+            )
+        except Exception as exc:  # noqa: BLE001
+            reason = f"{cfg_entry.dtype}: {type(exc).__name__}: {exc}"
+            cuda_blockers.append(reason)
+            cfg_entry.status = "skipped"
+            cfg_entry.skip_reason = reason
+            dtype_results.append(
+                CudaRuntimeGateDtypeResult(
+                    dtype=cfg_entry.dtype,
+                    dtype_supported=cfg_entry.dtype_supported,
+                    status="skipped",
+                    skip_reason=reason,
+                )
+            )
+            skipped_configs.append(cfg_entry.to_dict())
+            continue
+
+        tested_any = True
+        dtype_status = runtime_result.status
+        if runtime_result.runner_report is not None:
+            report = runtime_result.runner_report
+            total_cells += report.total_cells
+            exact_matches += report.token_exact_match_count
+            failures += report.exactkv_failures
+            total_draft_div += report.draft_divergence_count
+            for cell in report.cells:
+                all_accepted.append(list(cell.accepted_prefix_lengths))
+                per_cell_mean.append(cell.mean_acceptance)
+            first_divergences.extend(report.first_divergences)
+            blockers = report.blockers
+            restore_blockers.extend(blockers.get("restore_blockers", []))
+            draft_blockers.extend(blockers.get("draft_blockers", []))
+            verification_blockers.extend(blockers.get("verification_blockers", []))
+            if report.exactkv_failures > 0:
+                cuda_blockers.append(
+                    f"{cfg_entry.dtype}: exactkv_failures={report.exactkv_failures}"
+                )
+
+        dtype_results.append(
+            CudaRuntimeGateDtypeResult(
+                dtype=cfg_entry.dtype,
+                dtype_supported=cfg_entry.dtype_supported,
+                status=dtype_status,
+                runtime_result=runtime_result,
+            )
+        )
+        cfg_entry.status = "tested"
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
+    if not tested_any:
+        return CudaRuntimeGateResult(
+            cuda_available=True,
+            dtype_results=dtype_results,
+            status="blocked",
+            total_cells=0,
+            exactkv_failures=0,
+            token_exact_match_count=0,
+            mean_acceptance=0.0,
+            draft_divergence_count=0,
+            accepted_prefix_lengths=[],
+            first_divergences=[],
+            skipped_configs=skipped_configs,
+            cuda_blockers=cuda_blockers or ["no CUDA dtype configs could be tested"],
+            restore_blockers=restore_blockers,
+            draft_blockers=draft_blockers,
+            verification_blockers=verification_blockers,
+            dtype_supported=dtype_supported,
+        )
+
+    mean_acc = sum(per_cell_mean) / len(per_cell_mean) if per_cell_mean else 0.0
+    status = "pass" if failures == 0 else "failed"
+    return CudaRuntimeGateResult(
+        cuda_available=True,
+        dtype_results=dtype_results,
+        status=status,
+        total_cells=total_cells,
+        exactkv_failures=failures,
+        token_exact_match_count=exact_matches,
+        mean_acceptance=mean_acc,
+        draft_divergence_count=total_draft_div,
+        accepted_prefix_lengths=all_accepted,
+        first_divergences=first_divergences,
+        skipped_configs=skipped_configs,
+        cuda_blockers=cuda_blockers,
+        restore_blockers=restore_blockers,
+        draft_blockers=draft_blockers,
+        verification_blockers=verification_blockers,
+        dtype_supported=dtype_supported,
+    )
+
+
+def report_to_exp056_json(
+    result: CudaRuntimeGateResult,
+    *,
+    model_id: str = DEFAULT_MODEL,
+    prompt_count: int | None = None,
+) -> dict[str, Any]:
+    """Serialize CUDA runtime gate result to Exp 056 JSON schema."""
+    tested_dtypes = [d.dtype for d in result.dtype_results if d.status != "skipped"]
+    prompt_count = prompt_count if prompt_count is not None else len(DEFAULT_SMOKE_PROMPT_IDS)
+    return {
+        "experiment_id": EXPERIMENT_056_ID,
+        "status": result.status,
+        "cuda_available": result.cuda_available,
+        "model": model_id,
+        "runtime_path": RUNTIME_PATH_EXPERIMENTAL,
+        "cli_opt_in_required": CLI_OPT_IN_REQUIRED,
+        "device": "cuda" if result.cuda_available else "unknown",
+        "dtype_configs": tested_dtypes,
+        "dtype_supported": result.dtype_supported,
+        "prompt_count": prompt_count,
+        "storage_backend": "in_memory_kv_storage",
+        "compressor_names": list(DEFAULT_SMOKE_COMPRESSORS),
+        "draft_len": DEFAULT_CUDA_GATE_DRAFT_LEN,
+        "max_new_tokens": DEFAULT_CUDA_GATE_MAX_NEW_TOKENS,
+        "verifier_source": VERIFIER_SOURCE,
+        "total_cells": result.total_cells,
+        "exactkv_failures": result.exactkv_failures,
+        "token_exact_match_count": result.token_exact_match_count,
+        "mean_acceptance": result.mean_acceptance,
+        "draft_divergence_count": result.draft_divergence_count,
+        "accepted_prefix_lengths": result.accepted_prefix_lengths,
+        "first_divergences": result.first_divergences,
+        "skipped_configs": result.skipped_configs,
+        "cuda_blockers": result.cuda_blockers,
+        "restore_blockers": result.restore_blockers,
+        "draft_blockers": result.draft_blockers,
+        "verification_blockers": result.verification_blockers,
+        "dtype_results": [d.to_dict() for d in result.dtype_results],
+        "claim_note": result.claim_note,
+        "forbidden_claims": list(FORBIDDEN_CLAIMS),
+    }
+
+
+def validate_exp056_report(report: dict[str, Any]) -> list[str]:
+    """Validate experiment 056 JSON report schema."""
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "cuda_available",
+        "model",
+        "runtime_path",
+        "cli_opt_in_required",
+        "device",
+        "dtype_configs",
+        "dtype_supported",
+        "prompt_count",
+        "storage_backend",
+        "compressor_names",
+        "draft_len",
+        "max_new_tokens",
+        "verifier_source",
+        "total_cells",
+        "exactkv_failures",
+        "token_exact_match_count",
+        "mean_acceptance",
+        "draft_divergence_count",
+        "accepted_prefix_lengths",
+        "first_divergences",
+        "skipped_configs",
+        "cuda_blockers",
+        "restore_blockers",
+        "draft_blockers",
+        "verification_blockers",
+        "claim_note",
+        "forbidden_claims",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing report field: {key}")
+    if report.get("experiment_id") != EXPERIMENT_056_ID:
+        errors.append("experiment_id must be exp056_cuda_restored_verifier_runtime_gate")
+    if not isinstance(report.get("cuda_available"), bool):
+        errors.append("cuda_available must be a bool")
+    if report.get("runtime_path") != RUNTIME_PATH_EXPERIMENTAL:
+        errors.append("runtime_path must be run_experimental_restored_verifier")
+    if report.get("cli_opt_in_required") is not True:
+        errors.append("cli_opt_in_required must be true")
+    if report.get("verifier_source") != VERIFIER_SOURCE:
+        errors.append("verifier_source must be reloaded_full_kv")
+    if not isinstance(report.get("dtype_supported"), dict):
+        errors.append("dtype_supported must be a dict")
+    if not isinstance(report.get("skipped_configs"), list):
+        errors.append("skipped_configs must be a list")
+    if not report.get("claim_note", "").strip():
+        errors.append("claim_note required")
+    forbidden = report.get("forbidden_claims", [])
+    for term in FORBIDDEN_CLAIMS:
+        if term not in forbidden:
+            errors.append(f"forbidden_claims must include: {term}")
+    if not report.get("cuda_available") and report.get("status") == "pass":
+        errors.append("status cannot be pass when cuda_available is false")
+    exact_count = int(report.get("token_exact_match_count", -1))
+    failures = int(report.get("exactkv_failures", -1))
+    total = int(report.get("total_cells", -1))
+    if total >= 0 and exact_count >= 0 and failures >= 0 and total > 0:
+        if exact_count + failures != total:
             errors.append("token_exact_match_count + exactkv_failures must equal total_cells")
     draft_div = report.get("draft_divergence_count")
     if not isinstance(draft_div, int) or draft_div < 0:
