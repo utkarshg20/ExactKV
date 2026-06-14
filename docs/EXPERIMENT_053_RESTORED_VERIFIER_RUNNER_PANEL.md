@@ -170,6 +170,5 @@ Phase 12H exercises the dual-cache verify loop through the consolidated runner â
 
 ## 16. Next step
 
+- See [`EXPERIMENTAL_RESTORED_VERIFIER_RUNTIME.md`](EXPERIMENTAL_RESTORED_VERIFIER_RUNTIME.md) (Phase 13A) for explicit opt-in experimental runtime API
 - Deprecate direct-loop scripts for new panels; use `run_restored_verifier()` as canonical path
-- Optional CUDA panel via `--cuda` when hardware available
-- Documentation-only public threading â€” still **not** default runtime wiring
