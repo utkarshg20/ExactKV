@@ -67,9 +67,25 @@ No generation logic, verification logic, compressors, or new benchmarks were add
 | Ablation (040) | **`pass`** — length 128 ↑ drift to 31%; `stream_bits=4` modest ↑; all `exactkv_failures=0` |
 | Combined stress (041) | **`pass`** — stream_bits=4 + 128tok: **18/32 divergences (56.25%)**; `exactkv_failures=0` |
 | Recommendation | **`stop_shard_bounded_probe_complete`** — bounded probe done; **move to SpectralQuant** |
-| Next step | No further Shard ablation on this panel; SpectralQuant Mode B feasibility |
+| Next step | Optional offline BackendAdapter (Exp 042: tensor smoke pass; model probe restricted_no_go) |
 
 Shard README throughput/memory numbers are **external results**, not ExactKV results.
+
+---
+
+## 5b. SpectralQuant status (Exp 042)
+
+| Field | Value |
+|---|---|
+| Experiment | Exp 042 — SpectralQuant external probe |
+| Integration | **Not** a default ExactKV compressor |
+| Import | **OK** — pure-Python `SpectralQuantEngine` importable from external clone |
+| Tensor smoke | **pass** — synthetic K/V compress/decompress; shapes preserved |
+| Model probe | **Not attempted** — `restricted_no_go` (no generation-time cache path) |
+| `exactkv_failures` | N/A (no generation probe) |
+| Recommendation | **`tensor_smoke_only`** — optional offline BackendAdapter next |
+
+External SpectralQuant paper/README metrics are **not** ExactKV results.
 
 ---
 
@@ -81,7 +97,7 @@ Shard README throughput/memory numbers are **external results**, not ExactKV res
 | `docs/leaderboard.md` | ✅ Tiered (FULL / RESTRICTED / SMOKE / FUTURE) |
 | `docs/leaderboard.html` | ✅ Present |
 | **Shard** | ✅ **RESTRICTED BACKEND** — external-drafter probe (Exp 039–041); bounded probe complete |
-| **SpectralQuant** | ✅ **FUTURE CANDIDATE** — no ExactKV panel metrics yet |
+| **SpectralQuant** | ✅ **FUTURE CANDIDATE** — Exp 042 tensor smoke pass; no ExactKV generation probe yet |
 | Tier caveats | ✅ No cross-tier ranking; Shard in RESTRICTED BACKEND (Exp 039–041); SpectralQuant future |
 | Claims | ✅ No speedup / VRAM / serving headlines |
 

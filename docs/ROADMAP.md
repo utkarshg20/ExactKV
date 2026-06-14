@@ -779,6 +779,7 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 | 10B3 | Shard ablation (Exp 040) | ✅ [`EXPERIMENT_040_SHARD_EXTERNAL_ABLATION.md`](EXPERIMENT_040_SHARD_EXTERNAL_ABLATION.md) |
 | 10B4 | Shard combined stress (Exp 041) | ✅ [`EXPERIMENT_041_SHARD_COMBINED_STRESS.md`](EXPERIMENT_041_SHARD_COMBINED_STRESS.md) — `stop_shard_bounded_probe_complete` |
 | 10C | Shard leaderboard integration | ✅ RESTRICTED BACKEND tier in [`leaderboard.md`](leaderboard.md) |
+| 10D | SpectralQuant probe (Exp 042) | ✅ [`EXPERIMENT_042_SPECTRALQUANT_PROBE.md`](EXPERIMENT_042_SPECTRALQUANT_PROBE.md) — `tensor_smoke_only` |
 | 10C | Parallel work integration | ✅ [`PARALLEL_WORK_INTEGRATION_REPORT.md`](PARALLEL_WORK_INTEGRATION_REPORT.md) |
 | 9C | Launch validation & should-fix | Planned |
 | 9 | V13 completion / launch decision | **Deferred** |

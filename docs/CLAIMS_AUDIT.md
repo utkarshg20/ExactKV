@@ -54,7 +54,7 @@ Do **not** use these in README, visuals, demos, leaderboard, release notes, or s
 | **Shard restricted external-drafter metrics** | Exp 039–041 leaderboard tier; accepted-prefix mean + divergence rate; Exp 041 combined 56.25%; **not** full-panel compressor acceptance |
 | **Shard ExactKV integration** | External drafter probe only — not default registry |
 | **Official LongBench score** | Not run; Exp 037 is LongBench-**style** heuristic only |
-| **SpectralQuant ExactKV results** | Not integrated |
+| SpectralQuant external probe | Exp 042 | Tensor smoke on synthetic K/V; import OK; **not** generation integration |
 | **SnapKV full-suite performance** | Smoke-only (8 cells) |
 | **SnapKV ranked vs INT8 full panel** | Apples-to-oranges; tiers forbid this |
 | **Real packed INT4/INT2 storage** | `_sim` uses INT8 containers |
