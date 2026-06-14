@@ -50,15 +50,17 @@ ExactKV should eventually implement **VeriCache-equivalent functionality**:
 
 ---
 
-### Stage 2 — Full-KV storage manager
+### Stage 2 — Full-KV storage manager ✅ (Phase 11C design spike)
 
 | Field | Detail |
 |---|---|
-| **Goal** | Pluggable full-KV backing: in-GPU, pinned host, mmap/disk blocks |
-| **Files likely touched** | New `exactkv/storage/`; `FullKVState` materialization paths |
-| **Implementation risk** | High — correctness vs performance; eviction policy |
-| **Test gate** | Round-trip store/load exactness tests; peak memory accounting tests |
-| **Claims unlocked** | “Full KV can reside off hot path” on **tested** tier — **not** production savings headline |
+| **Goal** | Pluggable full-KV backing: serialize, store, reload tiny verifier payloads |
+| **Files likely touched** | `exactkv/cache/storage.py`, [`FULL_KV_STORAGE_MANAGER.md`](FULL_KV_STORAGE_MANAGER.md) |
+| **Implementation risk** | Medium — production format/eviction deferred |
+| **Test gate** | `tests/test_full_kv_storage_manager.py` |
+| **Claims unlocked** | “Storage contract round-trips on tiny payloads” — **not** offload or savings |
+
+**Current:** in-memory + file backends; **not** wired into `ExactKVGenerator`. Production GPU/host tiers remain future work.
 
 ---
 

@@ -142,6 +142,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **VeriCache full system parity** | **Audit complete (11A)** | Phase 11A ✅ | [`VERICACHE_PARITY_AUDIT.md`](VERICACHE_PARITY_AUDIT.md) — algorithm **mostly done**; serving/throughput **missing** |
 | — | **VeriCache systems roadmap** | **Planned** | Phase 11A ✅ doc | [`VERICACHE_SYSTEMS_ROADMAP.md`](VERICACHE_SYSTEMS_ROADMAP.md) Stages 1–10 |
 | — | **Dual-cache contract (Stage 1)** | **Complete** | Phase 11B ✅ | [`DUAL_CACHE_ABSTRACTION.md`](DUAL_CACHE_ABSTRACTION.md); not wired to generator |
+| — | **Full-KV storage manager (Stage 2 spike)** | **Complete** | Phase 11C ✅ | [`FULL_KV_STORAGE_MANAGER.md`](FULL_KV_STORAGE_MANAGER.md); tiny payload smoke only |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

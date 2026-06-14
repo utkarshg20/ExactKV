@@ -24,6 +24,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Benchmark gap framing | Phase 10I | Outcome benchmarks vs ExactKV path equivalence — [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md); complementary, not replacement |
 | VeriCache parity (algorithm only) | Phase 11A | Draft/verify semantics on HF harness — [`VERICACHE_PARITY_AUDIT.md`](VERICACHE_PARITY_AUDIT.md); **not** full system reproduction |
 | Dual-cache contract layer | Phase 11B | [`DUAL_CACHE_ABSTRACTION.md`](DUAL_CACHE_ABSTRACTION.md); metadata only — **not** storage manager or savings claim |
+| Full-KV storage manager spike | Phase 11C | [`FULL_KV_STORAGE_MANAGER.md`](FULL_KV_STORAGE_MANAGER.md); in-memory + file backends; **not** runtime wired |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |
