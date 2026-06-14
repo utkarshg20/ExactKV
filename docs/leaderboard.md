@@ -48,7 +48,7 @@ ExactKV Leaderboard ranks integrated compressors by token-level acceptance and e
 | Boundary V baseline | Qwen2.5-0.5B · 128-prompt V10 | 0.923 | 0 | Exp 025 | REPAIR, REAL-BYTE | selects compressor+draft_len; not default |
 | K8/V4 baseline | Qwen2.5-0.5B · 128-prompt V10 | 0.914 | 0 | Exp 025 | REPAIR, REAL-BYTE | selects compressor+draft_len; not default |
 
-## Restricted backends
+## RESTRICTED BACKEND
 
 | Method | Model / panel | Acceptance | Failures | Experiment | Badges | Caveat |
 | --- | --- | ---: | ---: | --- | --- | --- |

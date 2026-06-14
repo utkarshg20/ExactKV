@@ -784,6 +784,8 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 | 10F | SpectralQuant real KV + adapter smoke (043–044) | ✅ |
 | 10G | SpectralQuant restricted panel (045) | ✅ RESTRICTED BACKEND in [`leaderboard.md`](leaderboard.md) |
 | 10H | External methods consolidation | ✅ [`PHASE_10_EXTERNAL_METHODS_SUMMARY.md`](PHASE_10_EXTERNAL_METHODS_SUMMARY.md) |
+| 9C | Launch validation (research preview) | ✅ [`LAUNCH_VALIDATION_REPORT.md`](LAUNCH_VALIDATION_REPORT.md) |
+| 9D | RC blocker fixes | ✅ deps + static anchors + heading fix |
 | 10I | Benchmark gap analysis | ✅ [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md) |
 | 10C | Parallel work integration | ✅ [`PARALLEL_WORK_INTEGRATION_REPORT.md`](PARALLEL_WORK_INTEGRATION_REPORT.md) |
 | 9C | Launch validation & should-fix | Planned |

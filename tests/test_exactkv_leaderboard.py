@@ -88,7 +88,7 @@ def test_leaderboard_md_exists(generated: None) -> None:
     text = path.read_text(encoding="utf-8")
     assert "KV Compression Crash-Test Leaderboard" in text
     assert "Full-suite integrated" in text
-    assert "Restricted backends" in text
+    assert "RESTRICTED BACKEND" in text
     assert "Smoke-only adapters" in text
     assert "Future candidates" in text
     assert "Ranking policy" in text
@@ -132,7 +132,9 @@ def test_leaderboard_md_shard_restricted_not_future(generated: None) -> None:
     assert "56.25%" in text or "Exp 041" in text
     # Shard must not appear under Future candidates table
     future_idx = text.find("## Future candidates")
-    restricted_idx = text.find("## Restricted backends")
+    restricted_idx = text.find("## RESTRICTED BACKEND")
+    if restricted_idx < 0:
+        restricted_idx = text.find("## Restricted backends")
     shard_in_restricted = text[restricted_idx:future_idx if future_idx >= 0 else len(text)].find("Shard external-drafter probe") >= 0
     assert shard_in_restricted
     if future_idx >= 0:
@@ -143,12 +145,14 @@ def test_leaderboard_md_shard_restricted_not_future(generated: None) -> None:
 def test_leaderboard_spectralquant_restricted_not_full_panel(generated: None) -> None:
     text = (_ROOT / "docs" / "leaderboard.md").read_text(encoding="utf-8")
     assert "SpectralQuant experimental adapter" in text
-    assert "Restricted backends" in text
+    assert "RESTRICTED BACKEND" in text
     assert "FACTORY-ONLY ADAPTER" in text or "factory-only" in text.lower()
     assert "SMALL PANEL" in text or "12-prompt" in text
     assert "Exp 045" in text
     assert "0.481" in text
-    restricted_idx = text.find("## Restricted backends")
+    restricted_idx = text.find("## RESTRICTED BACKEND")
+    if restricted_idx < 0:
+        restricted_idx = text.find("## Restricted backends")
     smoke_idx = text.find("## Smoke-only adapters")
     full_idx = text.find("## Full-suite integrated")
     assert restricted_idx >= 0

@@ -5,7 +5,7 @@
 > This checklist supports **prelaunch hardening**, not public launch.
 > GPU is optional for most items below.
 
-Companion: [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md) · [`CLAIMS_AUDIT.md`](CLAIMS_AUDIT.md)
+Companion: [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md) · [`CLAIMS_AUDIT.md`](CLAIMS_AUDIT.md) · [`LAUNCH_VALIDATION_REPORT.md`](LAUNCH_VALIDATION_REPORT.md) (Phase 9C)
 
 ---
 
@@ -20,6 +20,8 @@ python3 scripts/audit_public_claims.py
 python3 scripts/check_docs_links.py
 python3 scripts/check_report_hygiene.py --require-public
 ```
+
+`pip install -e ".[dev]"` includes `matplotlib` and `pillow` for leaderboard and public visual scripts.
 
 ### Expected outcomes
 
@@ -42,6 +44,8 @@ pip install -e ".[dev]"
 ```
 
 Then run §1 quick repro.
+
+See [`LAUNCH_VALIDATION_REPORT.md`](LAUNCH_VALIDATION_REPORT.md) for Phase 9C clean-clone results (2026-06-14).
 
 | Step | Pass? |
 |---|---|
@@ -120,6 +124,7 @@ If `reports/*.csv` are missing locally, regenerate from experiment scripts (GPU)
 |---|---|
 | Smoke test | `bash scripts/smoke_test.sh` or `make smoke` |
 | Terminal demo | `python3 scripts/exactkv_terminal_crash_test.py --speed fast` or `make demo` |
+| Record terminal (transcript) | `bash scripts/record_terminal_demo.sh` |
 | Leaderboard | `python3 scripts/exactkv_leaderboard.py` or `make leaderboard` |
 | Prelaunch audits | `make audit` |
 | Full test suite (needs model weights) | `TRANSFORMERS_OFFLINE=1 pytest tests/ -q` |

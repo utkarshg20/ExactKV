@@ -134,6 +134,31 @@ SPECTRALQUANT_RESTRICTED_CAVEAT = (
     "acceptance — not full-panel compressor ranking. External SpectralQuant README not ExactKV."
 )
 
+# Published full-panel anchors (Exp 012/015/016/033) — fallback when gitignored CSVs absent.
+_FULL_PANEL_STATIC: list[LeaderboardEntry] = [
+    LeaderboardEntry(TIER_FULL_PANEL, "No compression", "Exp 012", "Qwen2.5-0.5B · 128-prompt V10", 1.000, 0, "built-in identity", "full/large panel"),
+    LeaderboardEntry(TIER_FULL_PANEL, "Passthrough", "Exp 012", "Qwen2.5-0.5B · 128-prompt V10", 1.000, 0, "built-in passthrough", "full/large panel"),
+    LeaderboardEntry(TIER_FULL_PANEL, "INT8", "Exp 016", "Qwen2.5-3B · 128-prompt V10", 0.991, 0, "built-in symmetric INT8", "full/large panel"),
+    LeaderboardEntry(TIER_FULL_PANEL, "INT8", "Exp 033", "Llama-3.1-8B · 12-prompt small suite", 0.980, 0, "built-in symmetric INT8", "full/large panel"),
+    LeaderboardEntry(TIER_FULL_PANEL, "INT8", "Exp 015", "Qwen2.5-1.5B · 128-prompt V10", 0.978, 0, "built-in symmetric INT8", "full/large panel"),
+    LeaderboardEntry(TIER_FULL_PANEL, "INT8", "Exp 012", "Qwen2.5-0.5B · 128-prompt V10", 0.957, 0, "built-in symmetric INT8", "full/large panel"),
+    LeaderboardEntry(TIER_FULL_PANEL, "K8/V4", "Exp 016", "Qwen2.5-3B · 128-prompt V10", 0.951, 0, "built-in sim asymmetric", "full/large panel"),
+    LeaderboardEntry(TIER_FULL_PANEL, "K8/V4", "Exp 015", "Qwen2.5-1.5B · 128-prompt V10", 0.942, 0, "built-in sim asymmetric", "full/large panel"),
+    LeaderboardEntry(TIER_FULL_PANEL, "Boundary V", "Exp 012", "Qwen2.5-0.5B · 128-prompt V10", 0.923, 0, "built-in sim asymmetric", "full/large panel"),
+    LeaderboardEntry(TIER_FULL_PANEL, "K8/V4", "Exp 012", "Qwen2.5-0.5B · 128-prompt V10", 0.914, 0, "built-in sim asymmetric", "full/large panel"),
+    LeaderboardEntry(TIER_FULL_PANEL, "K8/V4", "Exp 033", "Llama-3.1-8B · 12-prompt small suite", 0.897, 0, "built-in sim asymmetric", "full/large panel"),
+]
+
+# Published repair-policy anchors (Exp 025) — fallback when gitignored CSV absent.
+_REPAIR_POLICY_STATIC: list[LeaderboardEntry] = [
+    LeaderboardEntry(TIER_REPAIR, "INT8 all suites", "Exp 025", "Qwen2.5-0.5B · 128-prompt V10", 0.957, 0, "repair policy (not a compressor)", "selects compressor+draft_len; not default"),
+    LeaderboardEntry(TIER_REPAIR, "Category adaptive", "Exp 025", "Qwen2.5-0.5B · 128-prompt V10", 0.948, 0, "repair policy (not a compressor)", "selects compressor+draft_len; not default"),
+    LeaderboardEntry(TIER_REPAIR, "Fallback INT8 hard cats", "Exp 025", "Qwen2.5-0.5B · 128-prompt V10", 0.943, 0, "repair policy (not a compressor)", "selects compressor+draft_len; not default"),
+    LeaderboardEntry(TIER_REPAIR, "Draft-len adaptive", "Exp 025", "Qwen2.5-0.5B · 128-prompt V10", 0.930, 0, "repair policy (not a compressor)", "selects compressor+draft_len; not default"),
+    LeaderboardEntry(TIER_REPAIR, "Boundary V baseline", "Exp 025", "Qwen2.5-0.5B · 128-prompt V10", 0.923, 0, "repair policy (not a compressor)", "selects compressor+draft_len; not default"),
+    LeaderboardEntry(TIER_REPAIR, "K8/V4 baseline", "Exp 025", "Qwen2.5-0.5B · 128-prompt V10", 0.914, 0, "repair policy (not a compressor)", "selects compressor+draft_len; not default"),
+]
+
 
 @dataclass
 class PlotData:
@@ -438,6 +463,20 @@ def build_tiered_leaderboard(data: PlotData) -> list[LeaderboardEntry]:
         e = _csv_panel_entry(TIER_FULL_PANEL, labels.get(comp, comp), exp, rel, comp, panel, status, "full/large panel")
         if e:
             full_panel.append(e)
+    if not full_panel:
+        full_panel = [
+            LeaderboardEntry(
+                tier=e.tier,
+                method=e.method,
+                experiment=e.experiment,
+                model_panel=e.model_panel,
+                mean_acceptance=e.mean_acceptance,
+                exactkv_failures=e.exactkv_failures,
+                integration_status=e.integration_status,
+                caveat=e.caveat,
+            )
+            for e in _FULL_PANEL_STATIC
+        ]
     full_panel.sort(key=lambda e: (-(e.mean_acceptance or 0), e.method))
     for i, e in enumerate(full_panel, 1):
         e.rank = i
@@ -478,6 +517,22 @@ def build_tiered_leaderboard(data: PlotData) -> list[LeaderboardEntry]:
                     caveat="selects compressor+draft_len; not default",
                 )
             )
+    elif not repair_rows:
+        entries.extend(
+            [
+                LeaderboardEntry(
+                    tier=e.tier,
+                    method=e.method,
+                    experiment=e.experiment,
+                    model_panel=e.model_panel,
+                    mean_acceptance=e.mean_acceptance,
+                    exactkv_failures=e.exactkv_failures,
+                    integration_status=e.integration_status,
+                    caveat=e.caveat,
+                )
+                for e in _REPAIR_POLICY_STATIC
+            ]
+        )
 
     # Restricted backends — values from published experiment reports (not fabricated).
     restricted_static = [

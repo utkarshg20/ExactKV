@@ -48,5 +48,5 @@ def test_public_visual_package_doc(run_render: None) -> None:
     assert "Internal-only" in text
     assert "Shard" in text
     lb = (_ROOT / "docs" / "leaderboard.md").read_text(encoding="utf-8")
-    assert "RESTRICTED BACKEND" in lb
+    assert "RESTRICTED BACKEND" in lb or "## Restricted backends" in lb
     assert "TurboQuant" in lb

@@ -74,13 +74,13 @@ TRANSFORMERS_OFFLINE=1 pytest tests/ -q
 
 ## Optional: visualization dependencies
 
-Scripts `visualize_experiment_035.py` and `render_public_visuals_036.py` require **matplotlib** and **Pillow**. These are not in `[dev]` extras today:
+`matplotlib` and `Pillow` are included in `[dev]` extras (leaderboard + public visual scripts).
 
 ```bash
-pip install matplotlib pillow
+pip install -e ".[dev]"
 ```
 
-Not required for smoke test, terminal demo, or leaderboard.
+Not required if you only run core package import checks without leaderboard regeneration.
 
 ---
 

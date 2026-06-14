@@ -50,6 +50,8 @@
 | **10D–10G** | SpectralQuant probe → restricted panel (Exp 042–045) | **Complete** — RESTRICTED BACKEND adapter row (Exp 045) |
 | **10H** | External methods consolidation | **Complete** — [`PHASE_10_EXTERNAL_METHODS_SUMMARY.md`](PHASE_10_EXTERNAL_METHODS_SUMMARY.md) |
 | **10I** | Benchmark gap analysis | **Complete** — [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md) |
+| **9C** | Launch validation | **Complete** — [`LAUNCH_VALIDATION_REPORT.md`](LAUNCH_VALIDATION_REPORT.md) |
+| **9D** | RC blocker fixes | **Complete** — verdict: `research-preview-rc-ready` (commit + optional MP4) |
 
 **Latest tagged release:** `v0.11.0`. `v0.13.0-rc` research preview is a **future possibility only** — not approved. V12 substance (Exp 021–027) may ship as `v0.12.0` after Phase 8 without public v1.0.0.
 

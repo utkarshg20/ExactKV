@@ -20,6 +20,8 @@ Companion: [`PHASE_10_EXTERNAL_METHODS_SUMMARY.md`](PHASE_10_EXTERNAL_METHODS_SU
 | **10D–10G** | Exp 042–045 — SpectralQuant probe → restricted panel | ✅ **Complete** |
 | **10H** | External methods consolidation | ✅ This report + [`PHASE_10_EXTERNAL_METHODS_SUMMARY.md`](PHASE_10_EXTERNAL_METHODS_SUMMARY.md) |
 | **10I** | Benchmark gap analysis | ✅ [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md) |
+| **9C** | Launch validation | ✅ [`LAUNCH_VALIDATION_REPORT.md`](LAUNCH_VALIDATION_REPORT.md) |
+| **9D** | RC blocker fixes | ✅ `matplotlib`/`pillow` in dev; static leaderboard anchors; `RESTRICTED BACKEND` heading |
 | **8f** | Terminal + HTML crash-test leaderboard | ✅ |
 
 ---
@@ -129,7 +131,7 @@ Regenerate: `python3 scripts/exactkv_leaderboard.py --md --html`
 | 2 | Terminal demo screen recording | ⏳ |
 | 3 | Shard RunPod probe | ✅ 038–041 complete |
 | 4 | SpectralQuant restricted panel | ✅ Exp 045 |
-| 5 | Explicit launch decision (9C) | ❌ not granted |
+| 5 | Explicit launch decision (9C) | ✅ validation complete; tag not created |
 
 ---
 

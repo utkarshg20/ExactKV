@@ -67,7 +67,7 @@ _WATCH_INTERVAL_SEC = 4
 _TIER_TAB_ORDER = [
     (TIER_FULL_PANEL, "full-suite", "Full-suite integrated"),
     (TIER_REPAIR, "repair", "Repair policies"),
-    (TIER_RESTRICTED, "restricted", "Restricted backends"),
+    (TIER_RESTRICTED, "restricted", "RESTRICTED BACKEND"),
     (TIER_SMOKE, "smoke", "Smoke-only adapters"),
     (TIER_FUTURE, "future", "Future candidates"),
 ]

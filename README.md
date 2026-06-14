@@ -20,7 +20,7 @@ python3 scripts/exactkv_terminal_crash_test.py --speed fast
 python3 scripts/exactkv_leaderboard.py
 ```
 
-**Docs:** [`docs/QUICKSTART.md`](docs/QUICKSTART.md) · [`docs/INSTALL.md`](docs/INSTALL.md) · [`docs/leaderboard.html`](docs/leaderboard.html) · [`docs/BENCHMARK_GAP_ANALYSIS.md`](docs/BENCHMARK_GAP_ANALYSIS.md)
+**Docs:** [`docs/QUICKSTART.md`](docs/QUICKSTART.md) · [`docs/INSTALL.md`](docs/INSTALL.md) · [`docs/leaderboard.html`](docs/leaderboard.html) · [`docs/BENCHMARK_GAP_ANALYSIS.md`](docs/BENCHMARK_GAP_ANALYSIS.md) · [`docs/LAUNCH_VALIDATION_REPORT.md`](docs/LAUNCH_VALIDATION_REPORT.md)
 
 **Claims boundary:** No speedup, throughput, latency, tokens/sec, active GPU memory savings, production serving, or model accuracy improvement claim. [`docs/CLAIMS_AUDIT.md`](docs/CLAIMS_AUDIT.md)
 

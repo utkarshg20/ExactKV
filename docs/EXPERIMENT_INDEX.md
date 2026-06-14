@@ -117,6 +117,8 @@ under `reports/`.
 | 044 SpectralQuant adapter smoke | `python3 scripts/research/run_exp044_spectralquant_adapter_smoke.py` with `SPECTRALQUANT_REPO_PATH` |
 | 045 SpectralQuant restricted panel | `python3 scripts/research/run_exp045_spectralquant_restricted_panel.py` with `SPECTRALQUANT_REPO_PATH` |
 | 10H consolidation | Review [`PHASE_10_EXTERNAL_METHODS_SUMMARY.md`](PHASE_10_EXTERNAL_METHODS_SUMMARY.md) |
+| 9C launch validation | Review [`LAUNCH_VALIDATION_REPORT.md`](LAUNCH_VALIDATION_REPORT.md) |
+| 9D RC blocker fixes | See [`LAUNCH_VALIDATION_REPORT.md`](LAUNCH_VALIDATION_REPORT.md) § Phase 9D |
 | 10I benchmark gap | Review [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md) |
 | 035 leaderboard | `python3 scripts/exactkv_leaderboard.py` |
 | 9A audit | Review [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md) · [`PRELAUNCH_HARDENING_PLAN.md`](PRELAUNCH_HARDENING_PLAN.md) |
@@ -132,6 +134,7 @@ under `reports/`.
 
 - [`PHASE_10_EXTERNAL_METHODS_SUMMARY.md`](PHASE_10_EXTERNAL_METHODS_SUMMARY.md) — Shard + SpectralQuant consolidation (Phase 10H)
 - [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md) — outcome benchmarks vs ExactKV equivalence (Phase 10I)
+- [`LAUNCH_VALIDATION_REPORT.md`](LAUNCH_VALIDATION_REPORT.md) — Phase 9C research preview validation
 - [`RELEASE_NOTES_V0.10.0.md`](RELEASE_NOTES_V0.10.0.md) — V10 changelog (latest)
 - [`PROJECT_STATUS_V0.10.0.md`](PROJECT_STATUS_V0.10.0.md) — current project status
 - [`V10_READINESS_ASSESSMENT.md`](V10_READINESS_ASSESSMENT.md) — v1.0.0 launch-gate decision
