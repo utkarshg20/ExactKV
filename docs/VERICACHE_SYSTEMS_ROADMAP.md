@@ -64,17 +64,17 @@ ExactKV should eventually implement **VeriCache-equivalent functionality**:
 
 ---
 
-### Stage 3 — Materialized compressed-draft backend
+### Stage 3 — Materialized compressed-draft backend ✅ (Phase 11D design spike)
 
 | Field | Detail |
 |---|---|
-| **Goal** | Reduce materialize-then-draft overhead; optional fused decompress-for-attention path |
-| **Files likely touched** | `exactkv/compressors/`, adapter backends, metrics |
-| **Implementation risk** | High — kernel/adapter coupling; exactness regressions |
-| **Test gate** | `exactkv_failures == 0` grid per backend; memory diagnostic panel |
-| **Claims unlocked** | Backend-specific **diagnostic** memory footprint — **not** active savings without Exp 031-style proof |
+| **Goal** | Describe draft/verifier split when draft path materializes compressed KV |
+| **Files likely touched** | `exactkv/cache/materialized_backend.py`, [`MATERIALIZED_COMPRESSED_DRAFT_BACKEND.md`](MATERIALIZED_COMPRESSED_DRAFT_BACKEND.md) |
+| **Implementation risk** | Medium — must not imply hot compressed attention |
+| **Test gate** | `tests/test_materialized_compressed_draft_backend.py` |
+| **Claims unlocked** | Valid `DualCacheState` from materialized draft + stored verifier metadata — **not** savings |
 
-**Note:** SpectralQuant adapter today is **materializing** — Stage 3 target state is hotter draft path.
+**Current:** synthetic tensor smoke; identity / simulated / external-adapter kinds; **not** wired to generator.
 
 ---
 
