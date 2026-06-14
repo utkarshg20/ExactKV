@@ -168,6 +168,6 @@ VeriCache separates stored full-KV verifier residency from compressed draft path
 
 ## 14. Next step
 
+- See [`EXPERIMENT_049_OFFLINE_VERIFIER_LOSSY_DRAFT.md`](EXPERIMENT_049_OFFLINE_VERIFIER_LOSSY_DRAFT.md) (Phase 12D) for lossy compressor draft integration
 - Optional CUDA dtype panel for offline verifier (same exactness gate)
-- Thread offline verifier into broader offline experiments (still **not** default runtime)
-- Do **not** claim LMCache/vLLM/remote prefix until respective contract gates clear
+- Do **not** wire into default runtime without separate approval

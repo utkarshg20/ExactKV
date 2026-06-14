@@ -153,6 +153,8 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **VeriCache parity RC claim gate (Stage 10 spike)** | **Complete** | Phase 11K ✅ | [`VERICACHE_PARITY_CLAIM_GATE.md`](VERICACHE_PARITY_CLAIM_GATE.md); classification only; **not** RC certified |
 | — | **Full-KV restore smoke (Stage 2 real HF KV)** | **Complete** | Phase 12A ✅ | [`EXPERIMENT_046_FULL_KV_RESTORE_SMOKE.md`](EXPERIMENT_046_FULL_KV_RESTORE_SMOKE.md); 4-prompt smoke; **not** runtime wired |
 | — | **Full-KV restore panel hardening (Stage 2 panel)** | **Complete** | Phase 12B ✅ | [`EXPERIMENT_047_FULL_KV_RESTORE_PANEL.md`](EXPERIMENT_047_FULL_KV_RESTORE_PANEL.md); 12-prompt panel; optional CUDA; **not** serving |
+| — | **Offline verifier restore smoke (Stage 2 verifier)** | **Complete** | Phase 12C ✅ | [`EXPERIMENT_048_OFFLINE_VERIFIER_RESTORE_SMOKE.md`](EXPERIMENT_048_OFFLINE_VERIFIER_RESTORE_SMOKE.md); reloaded full-KV verifier; **not** runtime wired |
+| — | **Offline verifier lossy draft (Stage 2 dual-cache smoke)** | **Complete** | Phase 12D ✅ | [`EXPERIMENT_049_OFFLINE_VERIFIER_LOSSY_DRAFT.md`](EXPERIMENT_049_OFFLINE_VERIFIER_LOSSY_DRAFT.md); int8/int4_sim/k8_v4_sim; **not** serving |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

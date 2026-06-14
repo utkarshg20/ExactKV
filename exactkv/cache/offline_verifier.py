@@ -1,4 +1,4 @@
-"""Offline verifier restore integration smoke (Phase 12C).
+"""Offline verifier restore integration smoke (Phase 12C–12D).
 
 Isolated draft/verify loop where the verifier reads **reloaded** full-KV payloads
 from ``KVStorageBackend``. **Not** wired into ``ExactKVGenerator`` or default runtime.
@@ -7,6 +7,7 @@ This is an offline verifier restore smoke, not default runtime integration.
 """
 from __future__ import annotations
 
+import copy
 from dataclasses import asdict, dataclass
 from typing import Any
 
@@ -25,13 +26,16 @@ from exactkv.cache.hf_kv_restore import (
     restore_cache_from_storage_payload,
     store_prefill_payload,
 )
+from exactkv.cache.compressed_state import CompressedKVState
 from exactkv.cache.storage import KVStorageBackend, KVStorageHandle
+from exactkv.compressors import get_compressor
 from exactkv.runtime.generation import generate_full_greedy
 from exactkv.runtime.model_runtime import ModelRuntime
 from exactkv.verification.acceptance import AcceptanceResult, compute_acceptance
 from exactkv.verification.engine import VerificationEngine
 
 EXPERIMENT_048_ID = "exp048_offline_verifier_restore_smoke"
+EXPERIMENT_049_ID = "exp049_offline_verifier_lossy_draft"
 DEFAULT_MODEL = "Qwen/Qwen2.5-0.5B"
 DEFAULT_MAX_NEW_TOKENS = 12
 DEFAULT_DRAFT_LEN = 4
@@ -45,6 +49,15 @@ OFFLINE_VERIFIER_CLAIM_NOTE = (
     "No speed, latency, throughput, active memory savings, or production-serving claim."
 )
 
+OFFLINE_LOSSY_CLAIM_NOTE = (
+    "Offline verifier lossy-draft smoke (Phase 12D). Reloaded full-KV verifier with "
+    "existing built-in lossy compressor draft logic in an isolated loop only — not "
+    "default runtime, vLLM, LMCache, remote prefix runtime, or serving. "
+    "No speed, latency, throughput, active memory savings, or production-serving claim."
+)
+
+DEFAULT_LOSSY_COMPRESSORS = ("int8", "int4_sim", "k8_v4_sim")
+
 
 @dataclass
 class OfflineVerifierRoundTrace:
@@ -57,6 +70,7 @@ class OfflineVerifierRoundTrace:
     correction_token: int | None
     committed_tokens: list[int]
     all_matched: bool
+    num_rejected: int = 0
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -89,6 +103,36 @@ class OfflineVerifierCellResult:
         return data
 
 
+@dataclass
+class OfflineLossyCellResult:
+    """Per prompt×backend×compressor offline lossy-draft result."""
+
+    prompt_id: str
+    prompt: str
+    backend_name: str
+    compressor_name: str
+    cache_format: str
+    draft_source: str
+    verifier_source: str
+    live_reference_token_ids: list[int]
+    offline_output_token_ids: list[int]
+    token_exact_match: bool
+    exactkv_failures: int
+    accepted_prefix_lengths: list[int]
+    mean_acceptance: float
+    first_divergence_idx: int | None = None
+    restore_blocker: str = ""
+    draft_blocker: str = ""
+    verification_blocker: str = ""
+    round_traces: list[OfflineVerifierRoundTrace] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        if self.round_traces is not None:
+            data["round_traces"] = [t.to_dict() for t in self.round_traces]
+        return data
+
+
 def default_offline_prompts() -> list[dict[str, str]]:
     """Deterministic 4–8 prompt panel for offline verifier smoke."""
     return [
@@ -102,6 +146,28 @@ def default_offline_prompts() -> list[dict[str, str]]:
         },
         {"prompt_id": "offline_006", "prompt": '<tool_call>{"name": "lookup", "id":'},
     ]
+
+
+def default_lossy_compressors() -> list[str]:
+    """Built-in lossy compressors available for Phase 12D without registry changes."""
+    available: list[str] = []
+    for name in DEFAULT_LOSSY_COMPRESSORS:
+        try:
+            get_compressor(name)
+            available.append(name)
+        except ValueError:
+            continue
+    return available
+
+
+def mean_acceptance_from_traces(traces: list[OfflineVerifierRoundTrace]) -> float:
+    """Compute mean acceptance rate across offline verifier rounds."""
+    if not traces:
+        return 1.0
+    accepted = sum(t.accepted_prefix_length for t in traces)
+    rejected = sum(t.num_rejected for t in traces)
+    denom = accepted + rejected
+    return accepted / denom if denom > 0 else 1.0
 
 
 def propose_controlled_draft(
@@ -255,6 +321,62 @@ def store_and_reload_prefill_state(
 
 
 @torch.no_grad()
+def draft_lossy_tokens(
+    runtime: ModelRuntime,
+    compressor: Any,
+    compressed: CompressedKVState,
+    n: int,
+) -> tuple[list[int], str]:
+    """Generate draft tokens from lossy/materialized compressed KV (isolated _draft copy)."""
+    try:
+        draft_kv: Any = copy.deepcopy(compressor.materialize_for_draft(compressed))
+        d_current: int = compressed.next_token_id
+        draft_tokens: list[int] = []
+        for i in range(n):
+            draft_tokens.append(d_current)
+            if d_current == runtime.eos_token_id:
+                break
+            if i < n - 1:
+                tok_tensor = torch.tensor(
+                    [[d_current]], dtype=torch.long, device=runtime.device
+                )
+                out = runtime.forward(tok_tensor, past_key_values=draft_kv)
+                draft_kv = out.past_key_values
+                d_current = int(out.logits[:, -1, :].argmax(dim=-1).item())
+        return draft_tokens, ""
+    except Exception as exc:  # noqa: BLE001 — report draft blockers
+        return [], f"{type(exc).__name__}: {exc}"
+
+
+def verify_draft_with_compressor(
+    engine: VerificationEngine,
+    compressor: Any,
+    full_state: FullKVState,
+    draft_tokens: list[int],
+) -> AcceptanceResult:
+    """Sequential verify, honoring compressor ``verification_mode`` when present."""
+    verify = engine.verify_sequential
+    mode = getattr(compressor, "verification_mode", None)
+    if callable(mode):
+        with mode():
+            return verify(full_state, draft_tokens)
+    return verify(full_state, draft_tokens)
+
+
+def _assert_cache_alignment(
+    full_state: FullKVState,
+    compressed: CompressedKVState,
+    *,
+    round_idx: int,
+) -> None:
+    if full_state.seq_len != compressed.logical_seq_len:
+        raise RuntimeError(
+            f"cache alignment broken after round {round_idx}: "
+            f"full={full_state.seq_len}, compressed={compressed.logical_seq_len}"
+        )
+
+
+@torch.no_grad()
 def run_offline_verifier_loop(
     runtime: ModelRuntime,
     reloaded_state: FullKVState,
@@ -305,6 +427,7 @@ def run_offline_verifier_loop(
                 correction_token=acceptance.correction_token,
                 committed_tokens=committed,
                 all_matched=acceptance.all_matched,
+                num_rejected=acceptance.num_rejected,
             )
         )
         round_idx += 1
@@ -312,6 +435,84 @@ def run_offline_verifier_loop(
             done = True
 
     return output, traces, verification_blockers
+
+
+@torch.no_grad()
+def run_offline_lossy_verifier_loop(
+    runtime: ModelRuntime,
+    reloaded_state: FullKVState,
+    compressor: Any,
+    *,
+    max_new_tokens: int,
+    draft_len: int = DEFAULT_DRAFT_LEN,
+) -> tuple[list[int], list[OfflineVerifierRoundTrace], list[str], str]:
+    """Run isolated lossy draft / reloaded-KV verify / commit loop."""
+    engine = VerificationEngine(runtime)
+    try:
+        compressed = compressor.compress(reloaded_state)
+        _assert_cache_alignment(reloaded_state, compressed, round_idx=-1)
+    except Exception as exc:  # noqa: BLE001 — report draft blockers
+        return [], [], [], f"compress failed: {type(exc).__name__}: {exc}"
+
+    output: list[int] = []
+    traces: list[OfflineVerifierRoundTrace] = []
+    verification_blockers: list[str] = []
+    state = reloaded_state
+    round_idx = 0
+    done = False
+
+    while not done and len(output) < max_new_tokens:
+        remaining = max_new_tokens - len(output)
+        n = min(draft_len, remaining)
+        draft, draft_err = draft_lossy_tokens(runtime, compressor, compressed, n)
+        if draft_err:
+            return output, traces, verification_blockers, draft_err
+        if not draft:
+            break
+
+        try:
+            acceptance = verify_draft_with_compressor(engine, compressor, state, draft)
+        except Exception as exc:  # noqa: BLE001 — report verification blockers
+            verification_blockers.append(f"round {round_idx}: {type(exc).__name__}: {exc}")
+            break
+
+        committed = list(acceptance.accepted_tokens)
+        if acceptance.correction_token is not None:
+            committed.append(acceptance.correction_token)
+        committed, eos_found = truncate_at_eos(committed, runtime.eos_token_id)
+        if not committed:
+            break
+
+        state = commit_full_state(runtime, state, committed)
+        try:
+            compressed = compressor.update_after_commit(compressed, state)
+            _assert_cache_alignment(state, compressed, round_idx=round_idx)
+        except Exception as exc:  # noqa: BLE001 — report draft blockers
+            return (
+                output,
+                traces,
+                verification_blockers,
+                f"update_after_commit failed: {type(exc).__name__}: {exc}",
+            )
+
+        output.extend(committed)
+        traces.append(
+            OfflineVerifierRoundTrace(
+                round_idx=round_idx,
+                draft_tokens=list(draft),
+                verifier_tokens=list(acceptance.verifier_tokens),
+                accepted_prefix_length=acceptance.num_accepted,
+                correction_token=acceptance.correction_token,
+                committed_tokens=committed,
+                all_matched=acceptance.all_matched,
+                num_rejected=acceptance.num_rejected,
+            )
+        )
+        round_idx += 1
+        if eos_found or len(output) >= max_new_tokens:
+            done = True
+
+    return output, traces, verification_blockers, ""
 
 
 @torch.no_grad()
@@ -394,6 +595,192 @@ def run_offline_verifier_cell(
         verification_blocker=verification_blocker,
         round_traces=traces,
     )
+
+
+@torch.no_grad()
+def run_offline_lossy_verifier_cell(
+    runtime: ModelRuntime,
+    *,
+    prompt_id: str,
+    prompt: str,
+    backend: KVStorageBackend,
+    compressor_name: str,
+    max_new_tokens: int = DEFAULT_MAX_NEW_TOKENS,
+    draft_len: int = DEFAULT_DRAFT_LEN,
+) -> OfflineLossyCellResult:
+    """Run one offline lossy-draft verifier restore smoke cell."""
+    backend_name = getattr(backend, "_backend_name", type(backend).__name__)
+    try:
+        compressor = get_compressor(compressor_name)
+    except ValueError as exc:
+        return OfflineLossyCellResult(
+            prompt_id=prompt_id,
+            prompt=prompt,
+            backend_name=backend_name,
+            compressor_name=compressor_name,
+            cache_format="unknown",
+            draft_source=compressor_name,
+            verifier_source=VERIFIER_SOURCE,
+            live_reference_token_ids=[],
+            offline_output_token_ids=[],
+            token_exact_match=False,
+            exactkv_failures=1,
+            accepted_prefix_lengths=[],
+            mean_acceptance=0.0,
+            draft_blocker=str(exc),
+        )
+
+    try:
+        reloaded_state, _capture, cache_format = store_and_reload_prefill_state(
+            runtime,
+            prompt=prompt,
+            backend=backend,
+            prompt_id=f"{prompt_id}__{compressor_name}",
+            namespace_prefix="exp049",
+        )
+    except HfKvRestoreError as exc:
+        return OfflineLossyCellResult(
+            prompt_id=prompt_id,
+            prompt=prompt,
+            backend_name=backend_name,
+            compressor_name=compressor_name,
+            cache_format="unknown",
+            draft_source=compressor_name,
+            verifier_source=VERIFIER_SOURCE,
+            live_reference_token_ids=[],
+            offline_output_token_ids=[],
+            token_exact_match=False,
+            exactkv_failures=1,
+            accepted_prefix_lengths=[],
+            mean_acceptance=0.0,
+            restore_blocker=str(exc),
+        )
+    except Exception as exc:  # noqa: BLE001 — smoke must report blockers
+        return OfflineLossyCellResult(
+            prompt_id=prompt_id,
+            prompt=prompt,
+            backend_name=backend_name,
+            compressor_name=compressor_name,
+            cache_format="unknown",
+            draft_source=compressor_name,
+            verifier_source=VERIFIER_SOURCE,
+            live_reference_token_ids=[],
+            offline_output_token_ids=[],
+            token_exact_match=False,
+            exactkv_failures=1,
+            accepted_prefix_lengths=[],
+            mean_acceptance=0.0,
+            restore_blocker=f"{type(exc).__name__}: {exc}",
+        )
+
+    reference = generate_full_greedy(runtime, prompt, max_new_tokens).generated_ids[
+        0
+    ].tolist()
+    offline_output, traces, verification_blockers, draft_blocker = (
+        run_offline_lossy_verifier_loop(
+            runtime,
+            reloaded_state,
+            compressor,
+            max_new_tokens=max_new_tokens,
+            draft_len=draft_len,
+        )
+    )
+    div = first_divergence_index(reference, offline_output)
+    exact = div is None and reference == offline_output
+    verification_blocker = "; ".join(verification_blockers)
+    mean_acc = mean_acceptance_from_traces(traces)
+
+    return OfflineLossyCellResult(
+        prompt_id=prompt_id,
+        prompt=prompt,
+        backend_name=backend_name,
+        compressor_name=compressor_name,
+        cache_format=cache_format,
+        draft_source=compressor_name,
+        verifier_source=VERIFIER_SOURCE,
+        live_reference_token_ids=reference,
+        offline_output_token_ids=offline_output,
+        token_exact_match=exact
+        and not verification_blocker
+        and not draft_blocker,
+        exactkv_failures=0
+        if exact and not verification_blocker and not draft_blocker
+        else 1,
+        accepted_prefix_lengths=[t.accepted_prefix_length for t in traces],
+        mean_acceptance=mean_acc,
+        first_divergence_idx=div,
+        draft_blocker=draft_blocker,
+        verification_blocker=verification_blocker,
+        round_traces=traces,
+    )
+
+
+def validate_exp049_report(report: dict[str, Any]) -> list[str]:
+    """Validate experiment 049 JSON report schema."""
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "model",
+        "device",
+        "dtype",
+        "prompt_count",
+        "storage_backends",
+        "compressor_names",
+        "draft_len",
+        "max_new_tokens",
+        "verifier_source",
+        "cells",
+        "exactkv_failures",
+        "token_exact_match_count",
+        "accepted_prefix_lengths",
+        "mean_acceptance",
+        "first_divergences",
+        "restore_blockers",
+        "draft_blockers",
+        "verification_blockers",
+        "claim_note",
+        "forbidden_claims",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing report field: {key}")
+    if report.get("experiment_id") != EXPERIMENT_049_ID:
+        errors.append("experiment_id must be exp049_offline_verifier_lossy_draft")
+    if report.get("verifier_source") != VERIFIER_SOURCE:
+        errors.append("verifier_source must be reloaded_full_kv")
+    if not report.get("claim_note", "").strip():
+        errors.append("claim_note required")
+    forbidden = report.get("forbidden_claims", [])
+    for term in FORBIDDEN_CLAIMS:
+        if term not in forbidden:
+            errors.append(f"forbidden_claims must include: {term}")
+    cells = report.get("cells", [])
+    exact_count = int(report.get("token_exact_match_count", -1))
+    failures = int(report.get("exactkv_failures", -1))
+    if exact_count >= 0 and failures >= 0 and exact_count + failures != len(cells):
+        errors.append(
+            "token_exact_match_count + exactkv_failures must equal len(cells)"
+        )
+    mean_acc = report.get("mean_acceptance")
+    if not isinstance(mean_acc, (int, float)):
+        errors.append("mean_acceptance must be numeric")
+    for cell in cells:
+        for field in (
+            "prompt_id",
+            "backend_name",
+            "compressor_name",
+            "draft_source",
+            "verifier_source",
+            "token_exact_match",
+            "exactkv_failures",
+            "mean_acceptance",
+        ):
+            if field not in cell:
+                errors.append(f"cells missing field: {field}")
+        div = cell.get("first_divergence_idx")
+        if div is not None and not isinstance(div, int):
+            errors.append("first_divergence_idx must be int or null")
+    return errors
 
 
 def validate_exp048_report(report: dict[str, Any]) -> list[str]:
