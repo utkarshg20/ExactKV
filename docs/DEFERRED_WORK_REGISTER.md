@@ -117,8 +117,9 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Active GPU memory isolation** | **Complete (diagnostic)** | Phase 4 ✅ / Exp 031 | [`EXPERIMENT_031_GPU_MEMORY_ISOLATION.md`](EXPERIMENT_031_GPU_MEMORY_ISOLATION.md); exactness gate pass; peak indistinguishable from full greedy; **no savings claim** |
 | — | **Hot adapter (SnapKV / Shard / SpectralQuant)** | **Feasibility complete + addendum** | Phase 5 ✅ / Exp 032 + addendum | [`EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md`](EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md); SnapKV **B** primary 5b; Shard **B** Llama drafter; SpectralQuant **B** deferred 5c |
 | — | **SnapKV experimental adapter** | **Complete (smoke)** | Phase 5b ✅ / Exp 032b | [`EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md`](EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md); factory-only; 8 cells, 0 failures; not in default registry |
-| — | **Shard Llama external-drafter probe** | **Bounded probe complete** | Phase 10B–10C ✅ | Exp 038–041: probe + stress + ablation + combined stress; leaderboard RESTRICTED BACKEND — **stop Shard; move to SpectralQuant** |
-| — | **SpectralQuant experimental adapter** | **Probe complete (tensor smoke)** | Phase 10D ✅ / Exp 042 | [`EXPERIMENT_042_SPECTRALQUANT_PROBE.md`](EXPERIMENT_042_SPECTRALQUANT_PROBE.md); tensor smoke pass; model probe restricted_no_go — leaderboard **SMOKE ONLY** (Exp 10E); optional offline BackendAdapter next |
+| — | **Shard Llama external-drafter probe** | **Bounded probe complete** | Phase 10B–10C ✅ | Exp 038–041: probe + stress + ablation + combined stress; RESTRICTED BACKEND; **stop_shard_bounded_probe_complete** |
+| — | **SpectralQuant experimental adapter** | **Restricted panel complete** | Phase 10D–10G ✅ | Exp 042–045: probe → real KV → adapter smoke → 12-prompt panel; RESTRICTED BACKEND (Exp 045); **not** default registry |
+| — | **External methods consolidation** | **Complete** | Phase 10H ✅ | [`PHASE_10_EXTERNAL_METHODS_SUMMARY.md`](PHASE_10_EXTERNAL_METHODS_SUMMARY.md) |
 | — | **Llama-3.1-8B small suite** | **Complete** | Phase 6 ✅ / Exp 033 | [`EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md`](EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md); 48 cells, 0 failures; RunPod A5000 bfloat16 |
 | — | **Killer correction demo (Markdown trace)** | **Complete** | Phase 7 ✅ / Exp 034 | [`EXPERIMENT_034_KILLER_CORRECTION_DEMO.md`](EXPERIMENT_034_KILLER_CORRECTION_DEMO.md); `tj_002` × `int4_sim`; source data for live demo |
 | — | **Live correction terminal demo** | **Complete** | Phase 7b ✅ | [`DEMO_EXACTKV_LIVE_CORRECTION.md`](DEMO_EXACTKV_LIVE_CORRECTION.md); `scripts/demo_exactkv_live_correction.py`; Exp 034 trace replay |
@@ -143,7 +144,7 @@ V13 builds and measures missing practicality pieces — **not** public launch by
 
 **Public launch:** ❌ **Not ready** (Phase 9A audit). **Launch decision deferred** until [`PRELAUNCH_HARDENING_PLAN.md`](PRELAUNCH_HARDENING_PLAN.md) must-fix items complete.
 
-**Explicitly future work (post-launch or research):** speed/runtime path, compressed-active KV, active memory savings, serving integration (vLLM/LMCache), Shard/SpectralQuant adapters, SnapKV full-suite, broader Llama/Mistral panels.
+**Explicitly future work (post-launch or research):** speed/runtime path, compressed-active KV, active memory savings, serving integration (vLLM/LMCache), SnapKV full-suite, broader Llama/Mistral panels, SpectralQuant/Shard **full-panel** expansion (restricted probes complete for Phase 10).
 
 ---
 

@@ -62,6 +62,9 @@ under `reports/`.
 | 040 | Shard ablation (length + lossiness) | [`EXPERIMENT_040_SHARD_EXTERNAL_ABLATION.md`](EXPERIMENT_040_SHARD_EXTERNAL_ABLATION.md) | 5 settings × 32-prompt panel | 32 prompts/setting | `pass` / `expand_shard_lossy_ablation` | 0 exactkv_failures all settings | Length 128 ↑ drift; stream_bits=4 modest ↑ |
 | 041 | Shard combined stress | [`EXPERIMENT_041_SHARD_COMBINED_STRESS.md`](EXPERIMENT_041_SHARD_COMBINED_STRESS.md) | stream_bits=4 + 128tok combined | 32 prompts | `pass` / `stop_shard_bounded_probe_complete` | 0 exactkv_failures; 18 draft divergences (56.25%) | Combined lossy + long gen >> single-knob drift |
 | 042 | SpectralQuant probe | [`EXPERIMENT_042_SPECTRALQUANT_PROBE.md`](EXPERIMENT_042_SPECTRALQUANT_PROBE.md) | External import + tensor smoke | — | `tensor_smoke_only` | N/A (no model probe) | Tensor K/V smoke pass; no generation adapter |
+| 043 | SpectralQuant real KV smoke | [`EXPERIMENT_043_SPECTRALQUANT_REAL_KV_SMOKE.md`](EXPERIMENT_043_SPECTRALQUANT_REAL_KV_SMOKE.md) | Real HF prefill K/V round-trip | Qwen 0.5B | `pass` / `real_kv_tensor_smoke` | N/A (not generation) | Layer-0 key max err ~39; calibration required |
+| 044 | SpectralQuant adapter smoke | [`EXPERIMENT_044_SPECTRALQUANT_ADAPTER_SMOKE.md`](EXPERIMENT_044_SPECTRALQUANT_ADAPTER_SMOKE.md) | Factory-only adapter ExactKV smoke | 4 prompts | `pass` / `restricted_adapter_go` | 0 | mean accept 0.629; materializing adapter |
+| 045 | SpectralQuant restricted panel | [`EXPERIMENT_045_SPECTRALQUANT_RESTRICTED_PANEL.md`](EXPERIMENT_045_SPECTRALQUANT_RESTRICTED_PANEL.md) | 12-prompt restricted adapter panel | 12 prompts | `pass` / `promote_restricted_backend` | 0; 11/12 draft divergences | mean accept 0.481; RESTRICTED BACKEND tier |
 
 ---
 
@@ -110,6 +113,11 @@ under `reports/`.
 | 040 Shard ablation | `bash scripts/research/exp040_shard_ablation_runpod.sh` (RunPod; `HF_TOKEN` + `SHARD_REPO_PATH=/root/shard`) |
 | 041 Shard combined stress | `bash scripts/research/exp041_shard_combined_stress_runpod.sh` (RunPod; `SHARD_REPO_PATH=/root/shard`; cached Llama) |
 | 042 SpectralQuant probe | `python3 scripts/probe_spectralquant.py` · `--try-import --try-tensor-smoke --try-model-probe` with `SPECTRALQUANT_REPO_PATH` |
+| 043 SpectralQuant real KV | `python3 scripts/research/run_exp043_spectralquant_real_kv_smoke.py` with `SPECTRALQUANT_REPO_PATH` |
+| 044 SpectralQuant adapter smoke | `python3 scripts/research/run_exp044_spectralquant_adapter_smoke.py` with `SPECTRALQUANT_REPO_PATH` |
+| 045 SpectralQuant restricted panel | `python3 scripts/research/run_exp045_spectralquant_restricted_panel.py` with `SPECTRALQUANT_REPO_PATH` |
+| 10H consolidation | Review [`PHASE_10_EXTERNAL_METHODS_SUMMARY.md`](PHASE_10_EXTERNAL_METHODS_SUMMARY.md) |
+| 10I benchmark gap | Review [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md) |
 | 035 leaderboard | `python3 scripts/exactkv_leaderboard.py` |
 | 9A audit | Review [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md) · [`PRELAUNCH_HARDENING_PLAN.md`](PRELAUNCH_HARDENING_PLAN.md) |
 | 035 | `python3 scripts/visualize_experiment_035.py` |
@@ -122,6 +130,8 @@ under `reports/`.
 
 ## Related
 
+- [`PHASE_10_EXTERNAL_METHODS_SUMMARY.md`](PHASE_10_EXTERNAL_METHODS_SUMMARY.md) — Shard + SpectralQuant consolidation (Phase 10H)
+- [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md) — outcome benchmarks vs ExactKV equivalence (Phase 10I)
 - [`RELEASE_NOTES_V0.10.0.md`](RELEASE_NOTES_V0.10.0.md) — V10 changelog (latest)
 - [`PROJECT_STATUS_V0.10.0.md`](PROJECT_STATUS_V0.10.0.md) — current project status
 - [`V10_READINESS_ASSESSMENT.md`](V10_READINESS_ASSESSMENT.md) — v1.0.0 launch-gate decision

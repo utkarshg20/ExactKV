@@ -763,7 +763,7 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 | 4 | Active GPU memory isolation (Exp 031) | ✅ [`EXPERIMENT_031_GPU_MEMORY_ISOLATION.md`](EXPERIMENT_031_GPU_MEMORY_ISOLATION.md) |
 | 5 | SnapKV / Shard / SpectralQuant feasibility (Exp 032 + addendum) | ✅ [`EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md`](EXPERIMENT_032_ADDENDUM_SHARD_SPECTRALQUANT.md) |
 | 5b | SnapKV experimental adapter MVP | ✅ [`EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md`](EXPERIMENT_032B_SNAPKV_EXPERIMENTAL_SMOKE.md) |
-| 5c | SpectralQuant experimental adapter (optional) | Planned |
+| 5c | SpectralQuant experimental adapter | ✅ Exp 043–045 — RESTRICTED BACKEND panel ([`EXPERIMENT_045_SPECTRALQUANT_RESTRICTED_PANEL.md`](EXPERIMENT_045_SPECTRALQUANT_RESTRICTED_PANEL.md)) |
 | 6 | Llama-3.1-8B small suite (Exp 033) | ✅ [`EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md`](EXPERIMENT_033_LLAMA31_8B_SMALL_SUITE.md) |
 | 7 | Killer correction demo (Exp 034) | ✅ [`EXPERIMENT_034_KILLER_CORRECTION_DEMO.md`](EXPERIMENT_034_KILLER_CORRECTION_DEMO.md) |
 | 7b | Live correction terminal demo | ✅ [`DEMO_EXACTKV_LIVE_CORRECTION.md`](DEMO_EXACTKV_LIVE_CORRECTION.md) |
@@ -779,8 +779,12 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 | 10B3 | Shard ablation (Exp 040) | ✅ [`EXPERIMENT_040_SHARD_EXTERNAL_ABLATION.md`](EXPERIMENT_040_SHARD_EXTERNAL_ABLATION.md) |
 | 10B4 | Shard combined stress (Exp 041) | ✅ [`EXPERIMENT_041_SHARD_COMBINED_STRESS.md`](EXPERIMENT_041_SHARD_COMBINED_STRESS.md) — `stop_shard_bounded_probe_complete` |
 | 10C | Shard leaderboard integration | ✅ RESTRICTED BACKEND tier in [`leaderboard.md`](leaderboard.md) |
-| 10D | SpectralQuant probe (Exp 042) | ✅ [`EXPERIMENT_042_SPECTRALQUANT_PROBE.md`](EXPERIMENT_042_SPECTRALQUANT_PROBE.md) — `tensor_smoke_only` |
-| 10E | SpectralQuant leaderboard integration | ✅ SMOKE ONLY / TENSOR PROBE tier in [`leaderboard.md`](leaderboard.md) |
+| 10D | SpectralQuant probe (Exp 042) | ✅ [`EXPERIMENT_042_SPECTRALQUANT_PROBE.md`](EXPERIMENT_042_SPECTRALQUANT_PROBE.md) |
+| 10E | SpectralQuant smoke leaderboard (superseded) | ✅ → promoted in 10G |
+| 10F | SpectralQuant real KV + adapter smoke (043–044) | ✅ |
+| 10G | SpectralQuant restricted panel (045) | ✅ RESTRICTED BACKEND in [`leaderboard.md`](leaderboard.md) |
+| 10H | External methods consolidation | ✅ [`PHASE_10_EXTERNAL_METHODS_SUMMARY.md`](PHASE_10_EXTERNAL_METHODS_SUMMARY.md) |
+| 10I | Benchmark gap analysis | ✅ [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md) |
 | 10C | Parallel work integration | ✅ [`PARALLEL_WORK_INTEGRATION_REPORT.md`](PARALLEL_WORK_INTEGRATION_REPORT.md) |
 | 9C | Launch validation & should-fix | Planned |
 | 9 | V13 completion / launch decision | **Deferred** |

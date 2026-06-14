@@ -21,12 +21,15 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Span verification passed exactness grid | Exp 029 | “600-cell span grid: `exactkv_failures == 0`; span ≡ sequential on exactness.” |
 | Terminal demo shows verified semantic drift correction | Exp 034b / `pharm_001` | **Primary** replay: lossy `drop` rejected, verifier `pickup` committed |
 | LongBench-style outcome-green drift demo (secondary) | Exp 037 / `lb_md_001` | LongBench-**style** only; transparent heuristic; not official LongBench score |
+| Benchmark gap framing | Phase 10I | Outcome benchmarks vs ExactKV path equivalence — [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md); complementary, not replacement |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |
 | Sequential verification is default | Code + docs | Default path; span is optional / non-default |
 | SnapKV smoke exactness | Exp 032b only | “8-cell smoke: `exactkv_failures == 0`” — **not** full-suite |
 | SpectralQuant tensor smoke | Exp 042 only | “Synthetic K/V tensor smoke pass” — **not** generation integration |
+| SpectralQuant restricted adapter panel | Exp 045 only | “12-prompt panel: mean accept 0.481, exactkv_failures=0” — **small panel**; materializing factory-only adapter |
+| SpectralQuant adapter smoke | Exp 044 only | “4-prompt smoke: exactkv_failures=0” — **not** full-panel |
 | Llama-3.1-8B small-suite exactness | Exp 033 only | “12-prompt small suite, 48 cells” — **not** full V10 |
 | Timing diagnostic honesty | Exp 030 | “Diagnostic only: ExactKV slower on tested panel” — not a benefit claim |
 | Memory diagnostic honesty | Exp 031 | “Diagnostic only: no active VRAM savings at tested scale” |
@@ -55,8 +58,9 @@ Do **not** use these in README, visuals, demos, leaderboard, release notes, or s
 | **Shard restricted external-drafter metrics** | Exp 039–041 leaderboard tier; accepted-prefix mean + divergence rate; Exp 041 combined 56.25%; **not** full-panel compressor acceptance |
 | **Shard ExactKV integration** | External drafter probe only — not default registry |
 | **Official LongBench score** | Not run; Exp 037 is LongBench-**style** heuristic only |
-| **SpectralQuant tensor smoke (leaderboard)** | Exp 042 | SMOKE ONLY tier; tensor round-trip pass; acceptance/failures N/A — **not** generation probe |
+| **SpectralQuant tensor smoke (leaderboard)** | Exp 042 | Superseded by Exp 045 RESTRICTED BACKEND row — do not cite smoke tier |
 | SpectralQuant external probe | Exp 042 | Tensor smoke on synthetic K/V; import OK; **not** generation integration |
+| **SpectralQuant restricted adapter (Exp 045)** | Exp 045 | 12-prompt panel; materializing factory-only; mean accept 0.481; **not** full-panel ranking |
 | **SnapKV full-suite performance** | Smoke-only (8 cells) |
 | **SnapKV ranked vs INT8 full panel** | Apples-to-oranges; tiers forbid this |
 | **Real packed INT4/INT2 storage** | `_sim` uses INT8 containers |

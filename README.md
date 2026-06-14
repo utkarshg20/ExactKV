@@ -4,7 +4,7 @@
 
 ExactKV is a **correctness-first KV-cache compression crash-test lab**: lossy compressed KV proposes draft tokens, a full-precision KV verifier checks them, and the final greedy output matches uncompressed inference on tested panels.
 
-**Status:** Prelaunch research prototype. V13 has strong exactness evidence, demos, and a tiered leaderboard, but **public launch and v1.0 are not approved yet**. See [`docs/LAUNCH_READINESS_GAP_AUDIT.md`](docs/LAUNCH_READINESS_GAP_AUDIT.md).
+**Status:** Prelaunch research prototype. V13 has strong exactness evidence, demos, a tiered leaderboard, and **completed Shard/SpectralQuant restricted external-method probes (Phase 10)** — but **public launch and v1.0 are not approved yet**. See [`docs/LAUNCH_READINESS_GAP_AUDIT.md`](docs/LAUNCH_READINESS_GAP_AUDIT.md) · [`docs/PHASE_10_EXTERNAL_METHODS_SUMMARY.md`](docs/PHASE_10_EXTERNAL_METHODS_SUMMARY.md).
 
 ```bash
 # Install (once)
@@ -20,7 +20,7 @@ python3 scripts/exactkv_terminal_crash_test.py --speed fast
 python3 scripts/exactkv_leaderboard.py
 ```
 
-**Docs:** [`docs/QUICKSTART.md`](docs/QUICKSTART.md) · [`docs/INSTALL.md`](docs/INSTALL.md) · [`docs/leaderboard.html`](docs/leaderboard.html)
+**Docs:** [`docs/QUICKSTART.md`](docs/QUICKSTART.md) · [`docs/INSTALL.md`](docs/INSTALL.md) · [`docs/leaderboard.html`](docs/leaderboard.html) · [`docs/BENCHMARK_GAP_ANALYSIS.md`](docs/BENCHMARK_GAP_ANALYSIS.md)
 
 **Claims boundary:** No speedup, throughput, latency, tokens/sec, active GPU memory savings, production serving, or model accuracy improvement claim. [`docs/CLAIMS_AUDIT.md`](docs/CLAIMS_AUDIT.md)
 
