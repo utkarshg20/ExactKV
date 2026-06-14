@@ -1,4 +1,4 @@
-"""Offline verifier restore integration smoke (Phase 12C–12E).
+"""Offline verifier restore integration smoke (Phase 12C–12F).
 
 Isolated draft/verify loop where the verifier reads **reloaded** full-KV payloads
 from ``KVStorageBackend``. **Not** wired into ``ExactKVGenerator`` or default runtime.
@@ -37,6 +37,7 @@ from exactkv.verification.engine import VerificationEngine
 EXPERIMENT_048_ID = "exp048_offline_verifier_restore_smoke"
 EXPERIMENT_049_ID = "exp049_offline_verifier_lossy_draft"
 EXPERIMENT_050_ID = "exp050_offline_restored_verifier_drift_stress"
+EXPERIMENT_051_ID = "exp051_offline_verifier_cuda_drift_panel"
 DEFAULT_MODEL = "Qwen/Qwen2.5-0.5B"
 DEFAULT_MAX_NEW_TOKENS = 12
 DEFAULT_DRAFT_LEN = 4
@@ -64,6 +65,22 @@ OFFLINE_DRIFT_STRESS_CLAIM_NOTE = (
     "existing lossy compressor drafts on a drift-prone panel in an isolated loop only — "
     "not default runtime, vLLM, LMCache, remote prefix runtime, or serving. "
     "No speed, latency, throughput, active memory savings, or production-serving claim."
+)
+
+OFFLINE_CUDA_DRIFT_CLAIM_NOTE = (
+    "Offline restored-verifier CUDA drift panel (Phase 12F). CUDA exactness check for "
+    "reloaded full-KV verifier with lossy drafts in an isolated loop only — not default "
+    "runtime, vLLM, LMCache, remote prefix runtime, or serving. "
+    "No speed, latency, throughput, active memory savings, or production-serving claim."
+)
+
+DEFAULT_CUDA_DRIFT_PROMPT_IDS = (
+    "drift_001",
+    "drift_002",
+    "drift_003",
+    "drift_005",
+    "drift_006",
+    "drift_011",
 )
 
 DEFAULT_LOSSY_COMPRESSORS = ("int8", "int4_sim", "k8_v4_sim")
@@ -183,6 +200,57 @@ class OfflineDriftStressCellResult:
     restore_blocker: str = ""
     draft_blocker: str = ""
     verification_blocker: str = ""
+    round_traces: list[OfflineVerifierRoundTrace] | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        data = asdict(self)
+        if self.round_traces is not None:
+            data["round_traces"] = [t.to_dict() for t in self.round_traces]
+        return data
+
+
+@dataclass
+class CudaDtypeConfig:
+    """CUDA dtype matrix entry for Phase 12F."""
+
+    device: str
+    dtype: str
+    dtype_supported: bool
+    status: str = "pending"  # pending | tested | skipped
+    skip_reason: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class OfflineCudaDriftCellResult:
+    """Per CUDA drift-panel cell with exactness metadata."""
+
+    prompt_id: str
+    prompt: str
+    category: str
+    backend_name: str
+    compressor_name: str
+    draft_len: int
+    device: str
+    dtype: str
+    cache_format: str
+    draft_source: str
+    verifier_source: str
+    live_reference_token_ids: list[int]
+    offline_output_token_ids: list[int]
+    token_exact_match: bool
+    exactkv_failures: int
+    accepted_prefix_lengths: list[int]
+    mean_acceptance: float
+    draft_divergence_count: int
+    semantic_divergence_count: int
+    first_divergence_idx: int | None = None
+    restore_blocker: str = ""
+    draft_blocker: str = ""
+    verification_blocker: str = ""
+    exactness_blocker: str = ""
     round_traces: list[OfflineVerifierRoundTrace] | None = None
 
     def to_dict(self) -> dict[str, Any]:
@@ -345,6 +413,72 @@ def default_drift_stress_prompts() -> list[dict[str, str]]:
             ),
         },
     ]
+
+
+def default_cuda_drift_prompts(*, full_panel: bool = False) -> list[dict[str, str]]:
+    """Reduced 6-prompt CUDA panel by default; optional full 12-prompt panel."""
+    all_prompts = default_drift_stress_prompts()
+    if full_panel:
+        return all_prompts
+    by_id = {p["prompt_id"]: p for p in all_prompts}
+    return [by_id[pid] for pid in DEFAULT_CUDA_DRIFT_PROMPT_IDS if pid in by_id]
+
+
+def resolve_cuda_drift_dtype_configs() -> list[CudaDtypeConfig]:
+    """Return CUDA float16 and optional bfloat16 configs when hardware permits."""
+    if not torch.cuda.is_available():
+        return [
+            CudaDtypeConfig(
+                device="cuda",
+                dtype="float16",
+                dtype_supported=False,
+                status="skipped",
+                skip_reason="CUDA unavailable",
+            ),
+            CudaDtypeConfig(
+                device="cuda",
+                dtype="bfloat16",
+                dtype_supported=False,
+                status="skipped",
+                skip_reason="CUDA unavailable",
+            ),
+        ]
+    configs = [
+        CudaDtypeConfig(
+            device="cuda",
+            dtype="float16",
+            dtype_supported=True,
+            status="pending",
+        )
+    ]
+    if torch.cuda.is_bf16_supported():
+        configs.append(
+            CudaDtypeConfig(
+                device="cuda",
+                dtype="bfloat16",
+                dtype_supported=True,
+                status="pending",
+            )
+        )
+    else:
+        configs.append(
+            CudaDtypeConfig(
+                device="cuda",
+                dtype="bfloat16",
+                dtype_supported=False,
+                status="skipped",
+                skip_reason="bfloat16 not supported on this CUDA device",
+            )
+        )
+    return configs
+
+
+def configure_cuda_determinism() -> None:
+    """Best-effort deterministic CUDA settings for greedy exactness checks."""
+    if not torch.cuda.is_available():
+        return
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 
 def mean_acceptance_from_traces(traces: list[OfflineVerifierRoundTrace]) -> float:
@@ -933,10 +1067,12 @@ def run_offline_drift_stress_cell(
     compressor_name: str,
     draft_len: int,
     max_new_tokens: int = DEFAULT_DRIFT_MAX_NEW_TOKENS,
+    namespace_prefix: str = "exp050",
+    storage_key: str | None = None,
 ) -> OfflineDriftStressCellResult:
     """Run one offline restored-verifier drift-stress cell."""
     backend_name = getattr(backend, "_backend_name", type(backend).__name__)
-    storage_key = f"{prompt_id}__{compressor_name}__dl{draft_len}"
+    storage_key = storage_key or f"{prompt_id}__{compressor_name}__dl{draft_len}"
     try:
         compressor = get_compressor(compressor_name)
     except ValueError as exc:
@@ -967,7 +1103,7 @@ def run_offline_drift_stress_cell(
             prompt=prompt,
             backend=backend,
             prompt_id=storage_key,
-            namespace_prefix="exp050",
+            namespace_prefix=namespace_prefix,
         )
     except HfKvRestoreError as exc:
         return OfflineDriftStressCellResult(
@@ -1058,6 +1194,176 @@ def run_offline_drift_stress_cell(
         verification_blocker=verification_blocker,
         round_traces=traces,
     )
+
+
+def _exactness_blocker_from_drift_result(result: OfflineDriftStressCellResult) -> str:
+    """Build exactness blocker text when offline output diverges from live greedy."""
+    if result.exactkv_failures == 0:
+        return ""
+    if result.restore_blocker or result.draft_blocker or result.verification_blocker:
+        return ""
+    idx = result.first_divergence_idx
+    if idx is None:
+        return "offline output length or token sequence diverged from live full greedy"
+    return f"offline output diverged from live full greedy at token index {idx}"
+
+
+def drift_stress_to_cuda_cell(
+    result: OfflineDriftStressCellResult,
+    *,
+    device: str,
+    dtype: str,
+) -> OfflineCudaDriftCellResult:
+    """Convert a drift-stress cell result into a CUDA panel cell result."""
+    return OfflineCudaDriftCellResult(
+        prompt_id=result.prompt_id,
+        prompt=result.prompt,
+        category=result.category,
+        backend_name=result.backend_name,
+        compressor_name=result.compressor_name,
+        draft_len=result.draft_len,
+        device=device,
+        dtype=dtype,
+        cache_format=result.cache_format,
+        draft_source=result.draft_source,
+        verifier_source=result.verifier_source,
+        live_reference_token_ids=result.live_reference_token_ids,
+        offline_output_token_ids=result.offline_output_token_ids,
+        token_exact_match=result.token_exact_match,
+        exactkv_failures=result.exactkv_failures,
+        accepted_prefix_lengths=result.accepted_prefix_lengths,
+        mean_acceptance=result.mean_acceptance,
+        draft_divergence_count=result.draft_divergence_count,
+        semantic_divergence_count=result.semantic_divergence_count,
+        first_divergence_idx=result.first_divergence_idx,
+        restore_blocker=result.restore_blocker,
+        draft_blocker=result.draft_blocker,
+        verification_blocker=result.verification_blocker,
+        exactness_blocker=_exactness_blocker_from_drift_result(result),
+        round_traces=result.round_traces,
+    )
+
+
+@torch.no_grad()
+def run_offline_cuda_drift_cell(
+    runtime: ModelRuntime,
+    *,
+    prompt_id: str,
+    prompt: str,
+    category: str,
+    backend: KVStorageBackend,
+    compressor_name: str,
+    draft_len: int,
+    dtype: str,
+    max_new_tokens: int = DEFAULT_DRIFT_MAX_NEW_TOKENS,
+) -> OfflineCudaDriftCellResult:
+    """Run one CUDA offline restored-verifier drift panel cell."""
+    storage_key = f"{prompt_id}__{compressor_name}__dl{draft_len}__{dtype}"
+    result = run_offline_drift_stress_cell(
+        runtime,
+        prompt_id=prompt_id,
+        prompt=prompt,
+        category=category,
+        backend=backend,
+        compressor_name=compressor_name,
+        draft_len=draft_len,
+        max_new_tokens=max_new_tokens,
+        namespace_prefix=f"exp051/{dtype}",
+        storage_key=storage_key,
+    )
+    device = str(runtime.device)
+    return drift_stress_to_cuda_cell(result, device=device, dtype=dtype)
+
+
+def validate_exp051_report(report: dict[str, Any]) -> list[str]:
+    """Validate experiment 051 JSON report schema."""
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "model",
+        "device",
+        "dtype",
+        "prompt_count",
+        "storage_backends",
+        "compressor_names",
+        "draft_len_values",
+        "max_new_tokens",
+        "verifier_source",
+        "cells",
+        "exactkv_failures",
+        "token_exact_match_count",
+        "mean_acceptance",
+        "accepted_prefix_lengths",
+        "draft_divergence_count",
+        "semantic_divergence_count",
+        "first_divergences",
+        "cuda_available",
+        "dtype_supported",
+        "skipped_configs",
+        "restore_blockers",
+        "draft_blockers",
+        "verification_blockers",
+        "exactness_blockers",
+        "claim_note",
+        "forbidden_claims",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing report field: {key}")
+    if report.get("experiment_id") != EXPERIMENT_051_ID:
+        errors.append("experiment_id must be exp051_offline_verifier_cuda_drift_panel")
+    if report.get("verifier_source") != VERIFIER_SOURCE:
+        errors.append("verifier_source must be reloaded_full_kv")
+    if not isinstance(report.get("cuda_available"), bool):
+        errors.append("cuda_available must be a bool")
+    if not isinstance(report.get("dtype_supported"), dict):
+        errors.append("dtype_supported must be a dict")
+    if not isinstance(report.get("skipped_configs"), list):
+        errors.append("skipped_configs must be a list")
+    if not report.get("claim_note", "").strip():
+        errors.append("claim_note required")
+    forbidden = report.get("forbidden_claims", [])
+    for term in FORBIDDEN_CLAIMS:
+        if term not in forbidden:
+            errors.append(f"forbidden_claims must include: {term}")
+    cells = report.get("cells", [])
+    exact_count = int(report.get("token_exact_match_count", -1))
+    failures = int(report.get("exactkv_failures", -1))
+    if exact_count >= 0 and failures >= 0 and exact_count + failures != len(cells):
+        errors.append(
+            "token_exact_match_count + exactkv_failures must equal len(cells)"
+        )
+    draft_div = report.get("draft_divergence_count")
+    if not isinstance(draft_div, int) or draft_div < 0:
+        errors.append("draft_divergence_count must be a non-negative int")
+    semantic_div = report.get("semantic_divergence_count")
+    if not isinstance(semantic_div, int) or semantic_div < 0:
+        errors.append("semantic_divergence_count must be a non-negative int")
+    mean_acc = report.get("mean_acceptance")
+    if not isinstance(mean_acc, (int, float)):
+        errors.append("mean_acceptance must be numeric")
+    for cell in cells:
+        for field in (
+            "prompt_id",
+            "backend_name",
+            "compressor_name",
+            "draft_len",
+            "device",
+            "dtype",
+            "draft_source",
+            "verifier_source",
+            "token_exact_match",
+            "exactkv_failures",
+            "mean_acceptance",
+            "draft_divergence_count",
+            "semantic_divergence_count",
+        ):
+            if field not in cell:
+                errors.append(f"cells missing field: {field}")
+        div = cell.get("first_divergence_idx")
+        if div is not None and not isinstance(div, int):
+            errors.append("first_divergence_idx must be int or null")
+    return errors
 
 
 def validate_exp050_report(report: dict[str, Any]) -> list[str]:

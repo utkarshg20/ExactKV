@@ -62,7 +62,7 @@ ExactKV should eventually implement **VeriCache-equivalent functionality**:
 
 **Current:** in-memory + file backends; **not** wired into `ExactKVGenerator`. Production GPU/host tiers remain future work.
 
-**Phase 12A–12E (real restore + offline verifier smoke):** [`EXPERIMENT_046_FULL_KV_RESTORE_SMOKE.md`](EXPERIMENT_046_FULL_KV_RESTORE_SMOKE.md) through [`EXPERIMENT_050_OFFLINE_RESTORED_VERIFIER_DRIFT_STRESS.md`](EXPERIMENT_050_OFFLINE_RESTORED_VERIFIER_DRIFT_STRESS.md) — **not** serving, memory savings, or throughput.
+**Phase 12A–12G (real restore + offline verifier smoke + runner):** [`EXPERIMENT_046_FULL_KV_RESTORE_SMOKE.md`](EXPERIMENT_046_FULL_KV_RESTORE_SMOKE.md) through [`EXPERIMENT_052_RESTORED_VERIFIER_RUNNER_SMOKE.md`](EXPERIMENT_052_RESTORED_VERIFIER_RUNNER_SMOKE.md) — **not** serving, memory savings, or throughput.
 
 ---
 
@@ -209,6 +209,6 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 ## 5. Recommended next phase (after 11A)
 
-**Post-11K / Post-12E:** Optional CUDA offline verifier/drift panels (still **not** default runtime). Independent human review + locked panel runs remain required before any `full_parity_claim_allowed` upgrade.
+**Post-11K / Post-12G:** Phase 12G runner API consolidates offline verifier panels; use for future isolated experiments. Independent human review + locked panel runs remain required before any `full_parity_claim_allowed` upgrade.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

@@ -161,5 +161,5 @@ Phase 12E stress-tests the dual-cache verify loop with stored full-KV verifier r
 
 ## 18. Next step
 
-- Optional CUDA dtype drift panel (same exactness gate)
-- Thread drift-stress panel into offline verifier documentation only — still **not** default runtime wiring
+- See [`RESTORED_VERIFIER_RUNNER.md`](RESTORED_VERIFIER_RUNNER.md) and [`EXPERIMENT_052_RESTORED_VERIFIER_RUNNER_SMOKE.md`](EXPERIMENT_052_RESTORED_VERIFIER_RUNNER_SMOKE.md) (Phase 12G) for consolidated isolated runner
+- See [`EXPERIMENT_051_OFFLINE_VERIFIER_CUDA_DRIFT_PANEL.md`](EXPERIMENT_051_OFFLINE_VERIFIER_CUDA_DRIFT_PANEL.md) (Phase 12F) for CUDA float16/bfloat16 drift panel
