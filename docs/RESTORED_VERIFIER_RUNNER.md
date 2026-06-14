@@ -10,7 +10,7 @@
 > ExactKV still does **not** reproduce VeriCache throughput results.  
 > **Current ExactKV generation and verification behavior is unchanged.**
 
-Companion: [`EXPERIMENT_052_RESTORED_VERIFIER_RUNNER_SMOKE.md`](EXPERIMENT_052_RESTORED_VERIFIER_RUNNER_SMOKE.md) · `exactkv/cache/restored_verifier_runner.py`
+Companion: [`EXPERIMENT_052_RESTORED_VERIFIER_RUNNER_SMOKE.md`](EXPERIMENT_052_RESTORED_VERIFIER_RUNNER_SMOKE.md) · [`EXPERIMENT_053_RESTORED_VERIFIER_RUNNER_PANEL.md`](EXPERIMENT_053_RESTORED_VERIFIER_RUNNER_PANEL.md) · `exactkv/cache/restored_verifier_runner.py`
 
 ---
 
@@ -37,6 +37,8 @@ Prior evidence:
 
 - **Phase 12E** (CPU float32 drift stress): 192/192 token exact match, 264 draft divergence rounds
 - **Phase 12F** (CUDA panel): additional CUDA evidence when hardware permits; skipped cleanly when CUDA unavailable
+- **Phase 12G** (runner smoke): 12/12 exact via `run_restored_verifier()`
+- **Phase 12H** (runner panel): Exp 050-style drift panel via runner only — see [`EXPERIMENT_053_RESTORED_VERIFIER_RUNNER_PANEL.md`](EXPERIMENT_053_RESTORED_VERIFIER_RUNNER_PANEL.md)
 
 ---
 
@@ -83,11 +85,13 @@ It exists so researchers can run controlled “lossy draft + restored verifier�
 ```python
 from exactkv.cache.restored_verifier_runner import (
     RestoredVerifierRunConfig,
+    default_panel_config,
     default_smoke_config,
     run_restored_verifier,
-    report_to_exp052_json,
+    report_to_exp053_json,
 )
 
+# Smoke (Exp 052)
 config = default_smoke_config(
     prompt_ids=["offline_001", "offline_002"],
     compressor_names=["int8", "int4_sim"],
@@ -95,14 +99,20 @@ config = default_smoke_config(
     max_new_tokens=12,
 )
 report = run_restored_verifier(config)
-payload = report_to_exp052_json(report)
+
+# Drift panel (Exp 053)
+from exactkv.cache.restored_verifier_runner import default_panel_prompt_ids
+
+panel = default_panel_config(prompt_ids=default_panel_prompt_ids(full_panel=True))
+report = run_restored_verifier(panel, experiment_id="exp053_restored_verifier_runner_panel")
+payload = report_to_exp053_json(report)
 ```
 
 Key types:
 
-- `RestoredVerifierRunConfig` — model, device, dtype, prompts, backends, compressors, draft_len
-- `RestoredVerifierCellResult` — per-cell exactness, acceptance, blockers
-- `RestoredVerifierRunReport` — aggregate metrics and exactness gate
+- `RestoredVerifierRunConfig` — model, device, dtype, prompts, backends, compressors, `draft_len_values`
+- `RestoredVerifierCellResult` — per-cell exactness, acceptance, drift counts, blockers
+- `RestoredVerifierRunReport` — aggregate metrics, `no_real_drift_observed`, exactness gate
 
 ---
 

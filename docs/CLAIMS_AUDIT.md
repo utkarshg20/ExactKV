@@ -40,6 +40,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Offline restored-verifier drift stress | Phase 12E / Exp 050 | [`EXPERIMENT_050_OFFLINE_RESTORED_VERIFIER_DRIFT_STRESS.md`](EXPERIMENT_050_OFFLINE_RESTORED_VERIFIER_DRIFT_STRESS.md); drift-prone panel; **not** runtime wired |
 | Offline verifier CUDA drift panel | Phase 12F / Exp 051 | [`EXPERIMENT_051_OFFLINE_VERIFIER_CUDA_DRIFT_PANEL.md`](EXPERIMENT_051_OFFLINE_VERIFIER_CUDA_DRIFT_PANEL.md); CUDA fp16/bf16 exactness; **not** runtime wired |
 | Restored-verifier runner consolidation | Phase 12G / Exp 052 | [`RESTORED_VERIFIER_RUNNER.md`](RESTORED_VERIFIER_RUNNER.md); isolated runner API; **not** runtime wired |
+| Runner-backed drift panel | Phase 12H / Exp 053 | [`EXPERIMENT_053_RESTORED_VERIFIER_RUNNER_PANEL.md`](EXPERIMENT_053_RESTORED_VERIFIER_RUNNER_PANEL.md); canonical runner path; **not** runtime wired |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

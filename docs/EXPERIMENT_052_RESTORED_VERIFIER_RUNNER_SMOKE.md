@@ -155,6 +155,5 @@ Phase 12G packages the dual-cache verify loop into an isolated runner — still 
 
 ## 14. Next step
 
-- Use runner for future offline panels without duplicating Phase 12C–12E scripts
-- Optional CUDA runner configs when Phase 12F hardware is available
-- Documentation-only threading into public materials — still **not** default runtime wiring
+- See [`EXPERIMENT_053_RESTORED_VERIFIER_RUNNER_PANEL.md`](EXPERIMENT_053_RESTORED_VERIFIER_RUNNER_PANEL.md) (Phase 12H) for runner-backed drift panel
+- Use `run_restored_verifier()` as canonical path for future offline panels

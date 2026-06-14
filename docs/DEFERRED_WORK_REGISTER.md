@@ -158,6 +158,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Offline restored-verifier drift stress (Stage 2 drift panel)** | **Complete** | Phase 12E ✅ | [`EXPERIMENT_050_OFFLINE_RESTORED_VERIFIER_DRIFT_STRESS.md`](EXPERIMENT_050_OFFLINE_RESTORED_VERIFIER_DRIFT_STRESS.md); drift-prone panel; **not** serving |
 | — | **Offline verifier CUDA drift panel (Stage 2 CUDA exactness)** | **Complete** | Phase 12F ✅ | [`EXPERIMENT_051_OFFLINE_VERIFIER_CUDA_DRIFT_PANEL.md`](EXPERIMENT_051_OFFLINE_VERIFIER_CUDA_DRIFT_PANEL.md); CUDA fp16/bf16; **not** serving |
 | — | **Restored-verifier runner consolidation (Stage 2 API)** | **Complete** | Phase 12G ✅ | [`RESTORED_VERIFIER_RUNNER.md`](RESTORED_VERIFIER_RUNNER.md); isolated runner; **not** serving |
+| — | **Runner-backed drift panel (Stage 2 canonical path)** | **Complete** | Phase 12H ✅ | [`EXPERIMENT_053_RESTORED_VERIFIER_RUNNER_PANEL.md`](EXPERIMENT_053_RESTORED_VERIFIER_RUNNER_PANEL.md); via `run_restored_verifier()`; **not** serving |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 
