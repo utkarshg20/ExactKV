@@ -137,8 +137,11 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **LongBench-style score-preserving drift demo** | **Complete (secondary)** | Phase 10A ✅ | Exp 037: `lb_md_001` × `int4_sim`; **not** primary demo — [`EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md`](EXPERIMENT_037_LONGBENCH_STYLE_DRIFT_DEMO.md) |
 | — | **Parallel work integration** | **Complete** | Phase 10C ✅ | [`PARALLEL_WORK_INTEGRATION_REPORT.md`](PARALLEL_WORK_INTEGRATION_REPORT.md) |
 | — | **Compressed-active-KV memory path** | **Blocker documented (Exp 031)** | Phase 4 ✅ | Model weights dominate CUDA peak; V5 KV accounting does not translate to active VRAM savings at 0.5B scale |
-| D11/D12 | **Production serving / vLLM / LMCache** | No-go | — | Remain deferred unless later V13 phase explicitly scopes serving |
-| D22 | **Multi-request batching** | Deferred | — | Serving-scale; out of V13 Phase 0–8 |
+| D11/D12 | **Production serving / vLLM / LMCache** | No-go | — | Remain deferred; see [`VERICACHE_SYSTEMS_ROADMAP.md`](VERICACHE_SYSTEMS_ROADMAP.md) Stages 5–6 |
+| D22 | **Multi-request batching** | Deferred | — | Serving-scale; see VeriCache roadmap Stage 5+ |
+| — | **VeriCache full system parity** | **Audit complete (11A)** | Phase 11A ✅ | [`VERICACHE_PARITY_AUDIT.md`](VERICACHE_PARITY_AUDIT.md) — algorithm **mostly done**; serving/throughput **missing** |
+| — | **VeriCache systems roadmap** | **Planned** | Phase 11A ✅ doc | [`VERICACHE_SYSTEMS_ROADMAP.md`](VERICACHE_SYSTEMS_ROADMAP.md) Stages 1–10 |
+| — | **Dual-cache contract (Stage 1)** | **Complete** | Phase 11B ✅ | [`DUAL_CACHE_ABSTRACTION.md`](DUAL_CACHE_ABSTRACTION.md); not wired to generator |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

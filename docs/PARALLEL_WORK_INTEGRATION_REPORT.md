@@ -22,6 +22,7 @@ Companion: [`PHASE_10_EXTERNAL_METHODS_SUMMARY.md`](PHASE_10_EXTERNAL_METHODS_SU
 | **10I** | Benchmark gap analysis | ✅ [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md) |
 | **9C** | Launch validation | ✅ [`LAUNCH_VALIDATION_REPORT.md`](LAUNCH_VALIDATION_REPORT.md) |
 | **9D** | RC blocker fixes | ✅ `matplotlib`/`pillow` in dev; static leaderboard anchors; `RESTRICTED BACKEND` heading |
+| **11A** | VeriCache parity audit | ✅ [`VERICACHE_PARITY_AUDIT.md`](VERICACHE_PARITY_AUDIT.md) · [`VERICACHE_SYSTEMS_ROADMAP.md`](VERICACHE_SYSTEMS_ROADMAP.md) |
 | **8f** | Terminal + HTML crash-test leaderboard | ✅ |
 
 ---
@@ -99,6 +100,7 @@ Regenerate: `python3 scripts/exactkv_leaderboard.py --md --html`
 - Shard is **external-drafter only** (not integrated compressor).
 - **Research-demo-ready** — not production/serving-ready.
 - Outcome benchmarks and ExactKV answer **different questions** ([`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md)).
+- VeriCache **algorithmic semantics** on HF harness — **not** full system reproduction ([`VERICACHE_PARITY_AUDIT.md`](VERICACHE_PARITY_AUDIT.md)).
 
 ---
 

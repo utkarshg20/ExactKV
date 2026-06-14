@@ -22,6 +22,8 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Terminal demo shows verified semantic drift correction | Exp 034b / `pharm_001` | **Primary** replay: lossy `drop` rejected, verifier `pickup` committed |
 | LongBench-style outcome-green drift demo (secondary) | Exp 037 / `lb_md_001` | LongBench-**style** only; transparent heuristic; not official LongBench score |
 | Benchmark gap framing | Phase 10I | Outcome benchmarks vs ExactKV path equivalence — [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md); complementary, not replacement |
+| VeriCache parity (algorithm only) | Phase 11A | Draft/verify semantics on HF harness — [`VERICACHE_PARITY_AUDIT.md`](VERICACHE_PARITY_AUDIT.md); **not** full system reproduction |
+| Dual-cache contract layer | Phase 11B | [`DUAL_CACHE_ABSTRACTION.md`](DUAL_CACHE_ABSTRACTION.md); metadata only — **not** storage manager or savings claim |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |
@@ -57,7 +59,8 @@ Do **not** use these in README, visuals, demos, leaderboard, release notes, or s
 | **Model accuracy improvement** | ExactKV preserves greedy output; does not improve model quality |
 | **Shard restricted external-drafter metrics** | Exp 039–041 leaderboard tier; accepted-prefix mean + divergence rate; Exp 041 combined 56.25%; **not** full-panel compressor acceptance |
 | **Shard ExactKV integration** | External drafter probe only — not default registry |
-| **Official LongBench score** | Not run; Exp 037 is LongBench-**style** heuristic only |
+| **Full VeriCache system reproduction** | Phase 11A audit — algorithm yes, serving/throughput **no** |
+| **VeriCache throughput or memory benefits** | Not measured as ExactKV benefits; Exp 030/031 honesty |
 | **SpectralQuant tensor smoke (leaderboard)** | Exp 042 | Superseded by Exp 045 RESTRICTED BACKEND row — do not cite smoke tier |
 | SpectralQuant external probe | Exp 042 | Tensor smoke on synthetic K/V; import OK; **not** generation integration |
 | **SpectralQuant restricted adapter (Exp 045)** | Exp 045 | 12-prompt panel; materializing factory-only; mean accept 0.481; **not** full-panel ranking |
