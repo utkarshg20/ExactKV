@@ -1,6 +1,6 @@
 # Experiment 065: Idle-GPU vLLM Object-Level KV/Cache Probe (Phase 15E)
 
-**Status:** **blocked** on auto-serving RunPod vLLM template (`happy_blush_scallop`) — `blocked_by_running_server`; idle GPU required for object-level pass. Report: `reports/experiment_065_idle_vllm_object_kv_probe.json` (generate on idle pod).
+**Status:** **deferred** on auto-serving RunPod vLLM template (`happy_blush_scallop`) — `blocked_by_running_server`; idle GPU required for object-level pass. Report: `reports/experiment_065_idle_vllm_object_kv_probe.json` (generate on idle pod).
 
 > This is an **idle-GPU vLLM object-level probe**, not ExactKV-vLLM integration. This is **not vLLM integration**.  
 > **No vLLM runtime integration is implemented.**  

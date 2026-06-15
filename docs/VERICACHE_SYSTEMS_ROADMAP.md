@@ -221,8 +221,12 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 15D (vLLM KV/cache visibility probe):** [`EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md`](EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md) — metadata-only object inspection on idle GPU; **not** ExactKV integration.
 
-**Phase 15E (idle-GPU object KV probe):** [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md) — object-level probe requires idle GPU; **not** ExactKV integration.
+**Phase 15E (idle-GPU object KV probe):** [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md) — **deferred** on auto-serving RunPod vLLM template; idle pod required; **not** ExactKV integration.
 
-**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env / Post-15C / Post-15D / Post-15E:** vLLM environment feasibility track only (no integration claim); default CLI/runtime unchanged on cu128 pod.
+**Phase 16A (streaming quantized-KV attention feasibility):** [`EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md`](EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md) — tensor-level reference; chunked dequantized attention; **not** inference integration or throughput.
+
+**Phase 16B (HF single-layer attention-drift probe):** [`EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md`](EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md) — offline HF Q/K/V drift; **not** generation integration or throughput.
+
+**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env / Post-15C / Post-15D / Post-15E / Post-16A / Post-16B:** vLLM environment feasibility track deferred at 15E; Phase 16A–16B compressed-attention research; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

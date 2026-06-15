@@ -170,7 +170,9 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **vLLM container/CUDA-13 feasibility** | **Complete** | Phase 15C-env ✅ | [`EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md`](EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md); vLLM template probe; **not** vLLM integration |
 | — | **vLLM API surface reconnaissance** | **Complete** | Phase 15C ✅ | [`EXPERIMENT_063_VLLM_API_SURFACE_RECON.md`](EXPERIMENT_063_VLLM_API_SURFACE_RECON.md); API/KV visibility only; **not** vLLM integration |
 | — | **vLLM KV/cache visibility probe** | **Complete** | Phase 15D ✅ | [`EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md`](EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md); metadata-only object inspection; **not** vLLM integration |
-| — | **Idle-GPU vLLM object KV probe** | **Complete** | Phase 15E ✅ | [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md); object-level probe on idle GPU; **not** vLLM integration |
+| — | **Idle-GPU vLLM object KV probe** | **Deferred** | Phase 15E ⏸ | [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md); blocked on auto-serving RunPod vLLM template; **not** vLLM integration |
+| — | **Streaming quantized-KV attention feasibility** | **Complete** | Phase 16A ✅ | [`EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md`](EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md); tensor-level reference; **not** inference integration |
+| — | **HF single-layer attention-drift probe** | **Complete** | Phase 16B ✅ | [`EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md`](EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md); offline HF Q/K/V drift; **not** generation integration |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

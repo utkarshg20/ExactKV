@@ -52,7 +52,9 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | vLLM container/CUDA-13 feasibility | Phase 15C-env / Exp 062 | [`EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md`](EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md); vLLM template probe only; **not** vLLM integration |
 | vLLM API surface reconnaissance | Phase 15C / Exp 063 | [`EXPERIMENT_063_VLLM_API_SURFACE_RECON.md`](EXPERIMENT_063_VLLM_API_SURFACE_RECON.md); import/object visibility only; **not** vLLM integration |
 | vLLM KV/cache visibility probe | Phase 15D / Exp 064 | [`EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md`](EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md); metadata-only object inspection; **not** vLLM integration |
-| Idle-GPU vLLM object KV probe | Phase 15E / Exp 065 | [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md); object-level probe on idle GPU; **not** vLLM integration |
+| Idle-GPU vLLM object KV probe | Phase 15E / Exp 065 | [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md); **deferred** on auto-serving RunPod template; **not** vLLM integration |
+| Streaming quantized-KV attention feasibility | Phase 16A / Exp 066 | [`EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md`](EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md); tensor-level reference only; **not** inference integration |
+| HF single-layer attention-drift probe | Phase 16B / Exp 067 | [`EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md`](EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md); offline HF Q/K/V drift only; **not** generation integration |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

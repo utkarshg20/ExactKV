@@ -183,15 +183,25 @@ See [`EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md`](EXPERIMENT_064_VLLM_KV_VISIBI
 
 ---
 
-## 18. Phase 15E idle-GPU object KV probe
+## 18. Phase 15E idle-GPU object KV probe (**deferred**)
 
 Exp 065 (`run_exp065_idle_vllm_object_kv_probe.py`) requires an idle GPU (no auto-started serve) for object-level cache/engine metadata inspection — **not** ExactKV integration.
+
+**Status:** **deferred** — RunPod vLLM CUDA-13 template auto-starts `vllm serve` (Qwen3-8B or misconfigured entrypoint), blocking idle object-level pass. Do not spend further vLLM infra effort until a true idle pod is available.
 
 See [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md).
 
 ---
 
-## 19. How Stage 6+ build on this
+## 19. Phase 16A streaming quantized-KV attention feasibility
+
+Exp 066 (`run_exp066_streaming_quant_attention_feasibility.py`) compares full, materialized-compressed, and streaming-compressed attention at tensor level — **not** ExactKV or vLLM integration.
+
+See [`EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md`](EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md).
+
+---
+
+## 20. How Stage 6+ build on this
 
 | Stage | Connection |
 |---|---|
@@ -203,7 +213,8 @@ See [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJ
 | **Phase 15C-env** | vLLM container/CUDA-13 feasibility — [`EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md`](EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md) |
 | **Phase 15C** | vLLM API surface reconnaissance — [`EXPERIMENT_063_VLLM_API_SURFACE_RECON.md`](EXPERIMENT_063_VLLM_API_SURFACE_RECON.md) |
 | **Phase 15D** | vLLM KV/cache visibility probe — [`EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md`](EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md) |
-| **Phase 15E** | Idle-GPU vLLM object KV probe — [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md) |
+| **Phase 15E** | Idle-GPU vLLM object KV probe — [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md) (**deferred**) |
+| **Phase 16A** | Streaming quantized-KV attention feasibility — [`EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md`](EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md) |
 | **Prototype runtime** (future) | Implements `rollback_fallback_path`; may advance status toward `PROTOTYPE_READY` |
 
 ---
