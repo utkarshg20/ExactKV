@@ -210,5 +210,5 @@ Phase 14B adds **diagnostic memory accounting** toward understanding restored-ve
 
 ## 14. Next step
 
-- Phase 14C: expanded memory panel (more prompts/backends) — still diagnostic, no savings claims
-- Human-reviewed gate before any default-runtime discussion remains required
+- Phase 14C: expanded memory panel — [`EXPERIMENT_058_EXPANDED_GPU_MEMORY_PANEL.md`](EXPERIMENT_058_EXPANDED_GPU_MEMORY_PANEL.md)
+- Phase 14D: optional drift-prone prompt subset under same diagnostic framework — still no savings claims

@@ -163,6 +163,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Explicit CLI experimental restored-verifier (Stage 3 CLI)** | **Complete** | Phase 13B ✅ | [`EXPERIMENT_055_EXPERIMENTAL_RESTORED_VERIFIER_CLI.md`](EXPERIMENT_055_EXPERIMENTAL_RESTORED_VERIFIER_CLI.md); flag-only opt-in; **not** default CLI |
 | — | **CUDA experimental restored-verifier runtime gate** | **Complete** | Phase 14A ✅ | [`EXPERIMENT_056_CUDA_RESTORED_VERIFIER_RUNTIME_GATE.md`](EXPERIMENT_056_CUDA_RESTORED_VERIFIER_RUNTIME_GATE.md); CUDA exactness via runtime API; **not** default runtime |
 | — | **GPU memory accounting diagnostic** | **Complete** | Phase 14B ✅ | [`EXPERIMENT_057_GPU_MEMORY_ACCOUNTING.md`](EXPERIMENT_057_GPU_MEMORY_ACCOUNTING.md); diagnostic CUDA memory only; **not** memory savings claim |
+| — | **Expanded GPU memory panel** | **Complete** | Phase 14C ✅ | [`EXPERIMENT_058_EXPANDED_GPU_MEMORY_PANEL.md`](EXPERIMENT_058_EXPANDED_GPU_MEMORY_PANEL.md); broader exactness-gated memory panel; **not** memory savings claim |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 
