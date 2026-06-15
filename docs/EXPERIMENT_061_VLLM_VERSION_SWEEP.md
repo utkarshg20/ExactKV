@@ -118,8 +118,8 @@ VeriCache depends on a working vLLM serving stack. This sweep finds an environme
 
 ## 12. Next step
 
-- **Phase 15C-env:** Provision a **CUDA 13** base image, official vLLM container, or source build on RunPod — then re-run Exp 061 or a single-venv feasibility probe
-- **Do not** proceed to Phase 15C API reconnaissance on this cu128 pod without a passing vLLM candidate
+- **Phase 15C-env complete:** Exp 062 on RunPod vLLM template — see [`EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md`](EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md)
+- **Phase 15C:** API surface reconnaissance on CUDA-13 vLLM image (still no ExactKV integration)
 
 ---
 

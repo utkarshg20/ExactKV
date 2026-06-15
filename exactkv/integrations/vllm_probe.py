@@ -56,6 +56,39 @@ EXP060_CLAIM_NOTE = (
     "only. Default ExactKV generation behavior unchanged."
 )
 
+EXPERIMENT_061_ID = "exp061_vllm_version_sweep"
+DEFAULT_EXP061_REPORT = Path("reports/experiment_061_vllm_version_sweep.json")
+DEFAULT_VLLM_SWEEP_ROOT = _REPO_ROOT / ".venv-vllm-sweep"
+DEFAULT_SWEEP_LOG_DIR = _REPO_ROOT / "reports" / "vllm_sweep_logs"
+DEFAULT_SWEEP_MANIFEST = _REPO_ROOT / "reports" / "vllm_sweep_manifest.json"
+DEFAULT_SWEEP_MAX_CANDIDATES = 5
+
+EXP061_CLAIM_NOTE = (
+    "vLLM environment compatibility sweep (Phase 15B-unblock). Versioned isolated "
+    "venvs only — not system Python. Identifies a candidate vLLM wheel for future "
+    "integration work only; no ExactKV vLLM integration, serving, batching, or "
+    "performance claims. Default ExactKV generation behavior unchanged."
+)
+
+CANDIDATE_CLASSIFICATIONS = (
+    "install_failed",
+    "import_failed",
+    "cuda_failed",
+    "generation_failed",
+    "pass",
+)
+
+EXPERIMENT_062_ID = "exp062_vllm_container_feasibility"
+DEFAULT_EXP062_REPORT = Path("reports/experiment_062_vllm_container_feasibility.json")
+
+EXP062_CLAIM_NOTE = (
+    "vLLM container/CUDA-13 environment feasibility probe (Phase 15C-env). "
+    "Environment and import inspection only — not ExactKV vLLM integration, serving, "
+    "batching, or performance claims. Passing this phase means a vLLM-compatible "
+    "environment exists for future integration design only. ExactKV default runtime "
+    "unchanged."
+)
+
 
 @dataclass
 class PythonEnvMetadata:
@@ -379,6 +412,475 @@ def validate_exp060_report(report: dict[str, Any]) -> list[str]:
     return errors
 
 
+def _sanitize_version_for_path(version: str) -> str:
+    return version.replace(".", "_").replace("/", "_")
+
+
+def sweep_venv_path(version: str, sweep_root: Path | None = None) -> Path:
+    """Return isolated venv path for one sweep candidate version."""
+    root = sweep_root or DEFAULT_VLLM_SWEEP_ROOT
+    return root / f"vllm-{_sanitize_version_for_path(version)}"
+
+
+def sweep_log_dir(version: str, log_root: Path | None = None) -> Path:
+    """Return per-candidate sweep log directory."""
+    root = log_root or DEFAULT_SWEEP_LOG_DIR
+    return root / version
+
+
+def _read_known_bad_version_from_exp060() -> str:
+    report_path = _REPO_ROOT / DEFAULT_EXP060_REPORT
+    if not report_path.is_file():
+        return ""
+    try:
+        import json
+
+        data = json.loads(report_path.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return ""
+    if data.get("status") != "blocked":
+        return ""
+    version = str(data.get("vllm_version", "")).strip()
+    if version and not data.get("install_success", True):
+        return version
+    blockers = " ".join(str(b) for b in data.get("blockers", []))
+    if "libcudart.so.13" in blockers or "libcudart.so.13" in str(data.get("import_error", "")):
+        return version
+    return ""
+
+
+def query_pip_vllm_versions(*, python_executable: str | Path = SYSTEM_PYTHON) -> list[str]:
+    """Return available vLLM versions from pip index (newest first)."""
+    import re
+    import subprocess
+
+    proc = subprocess.run(
+        [str(python_executable), "-m", "pip", "index", "versions", "vllm"],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        check=False,
+    )
+    text = (proc.stdout or "") + "\n" + (proc.stderr or "")
+    match = re.search(r"Available versions:\s*(.+)", text)
+    if not match:
+        return []
+    raw = match.group(1).strip().rstrip(".")
+    versions = [v.strip() for v in raw.split(",") if v.strip()]
+    return versions
+
+
+def select_sweep_candidates(
+    *,
+    explicit_versions: list[str] | None = None,
+    max_candidates: int = DEFAULT_SWEEP_MAX_CANDIDATES,
+    exclude_versions: list[str] | None = None,
+    include_known_bad: bool = False,
+    python_executable: str | Path = SYSTEM_PYTHON,
+) -> tuple[list[str], list[str]]:
+    """Select up to ``max_candidates`` vLLM versions for the sweep."""
+    excluded = list(exclude_versions or [])
+    known_bad = _read_known_bad_version_from_exp060()
+    if known_bad and known_bad not in excluded and not include_known_bad:
+        excluded.append(known_bad)
+
+    if explicit_versions:
+        chosen = [v.strip() for v in explicit_versions if v.strip()][:max_candidates]
+        return chosen, excluded
+
+    available = query_pip_vllm_versions(python_executable=python_executable)
+    if not available:
+        return [], excluded
+
+    latest = available[0]
+    if latest and latest not in excluded and not include_known_bad:
+        excluded.append(latest)
+
+    chosen: list[str] = []
+    for version in available:
+        if version in excluded:
+            continue
+        chosen.append(version)
+        if len(chosen) >= max_candidates:
+            break
+    return chosen, excluded
+
+
+def classify_candidate_result(candidate: dict[str, Any]) -> str:
+    """Classify one sweep candidate outcome."""
+    if not candidate.get("install_success"):
+        return "install_failed"
+    if not candidate.get("venv_cuda_available"):
+        return "cuda_failed"
+    functional = (
+        bool(candidate.get("import_success"))
+        and bool(candidate.get("llm_class_importable"))
+        and bool(candidate.get("sampling_params_importable"))
+    )
+    if not functional:
+        return "import_failed"
+    if candidate.get("generation_smoke_attempted") and not candidate.get("generation_smoke_passed"):
+        return "generation_failed"
+    if candidate.get("generation_smoke_passed"):
+        return "pass"
+    return "generation_failed"
+
+
+@dataclass
+class VllmCandidateResult:
+    """One vLLM version sweep candidate outcome."""
+
+    version: str
+    venv_path: str
+    python_version: str
+    install_success: bool
+    import_success: bool
+    llm_class_importable: bool
+    sampling_params_importable: bool
+    venv_torch_version: str
+    venv_cuda_available: bool
+    vllm_version: str
+    generation_smoke_attempted: bool
+    generation_smoke_passed: bool
+    generation_smoke_text: str
+    classification: str
+    error_summary: str
+    stdout_tail: str
+    stderr_tail: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+def build_candidate_result_from_probe(
+    *,
+    version: str,
+    venv_path: Path,
+    install_success: bool,
+    install_error: str = "",
+    env_meta: PythonEnvMetadata | None = None,
+    probe_payload: dict[str, Any] | None = None,
+    stdout: str = "",
+    stderr: str = "",
+) -> dict[str, Any]:
+    """Normalize install + probe data into one candidate result dict."""
+    meta = env_meta or PythonEnvMetadata(
+        python_executable=str(venv_path / "bin" / "python"),
+        python_version="",
+        torch_version="",
+        cuda_available=False,
+        gpu_name="",
+    )
+    probe = probe_payload or {}
+    import_success = bool(probe.get("vllm_importable"))
+    llm_importable = bool(probe.get("llm_class_importable"))
+    sampling_importable = bool(probe.get("sampling_params_importable"))
+    gen_attempted = bool(probe.get("generation_smoke_attempted"))
+    gen_passed = bool(probe.get("generation_smoke_passed"))
+    gen_error = str(probe.get("generation_smoke_error", ""))
+    import_error = str(probe.get("import_error", ""))
+
+    error_parts: list[str] = []
+    if install_error:
+        error_parts.append(install_error)
+    if probe.get("blockers"):
+        error_parts.extend(str(b) for b in probe["blockers"])
+    elif import_error:
+        error_parts.append(import_error)
+    if gen_error:
+        error_parts.append(gen_error)
+    if meta.error:
+        error_parts.append(meta.error)
+
+    candidate = {
+        "version": version,
+        "venv_path": str(venv_path),
+        "python_version": meta.python_version,
+        "install_success": install_success,
+        "import_success": import_success and llm_importable and sampling_importable,
+        "llm_class_importable": llm_importable,
+        "sampling_params_importable": sampling_importable,
+        "venv_torch_version": meta.torch_version,
+        "venv_cuda_available": meta.cuda_available,
+        "vllm_version": str(probe.get("vllm_version", "")),
+        "generation_smoke_attempted": gen_attempted,
+        "generation_smoke_passed": gen_passed,
+        "generation_smoke_text": str(probe.get("generation_smoke_text", "")),
+        "error_summary": "; ".join(error_parts),
+        "stdout_tail": tail_text(stdout),
+        "stderr_tail": tail_text(stderr),
+    }
+    candidate["classification"] = classify_candidate_result(candidate)
+    return candidate
+
+
+def build_install_failed_candidate(
+    *,
+    version: str,
+    venv_path: Path,
+    install_error: str,
+    stdout: str = "",
+    stderr: str = "",
+) -> dict[str, Any]:
+    """Build candidate result when pip install fails."""
+    candidate = {
+        "version": version,
+        "venv_path": str(venv_path),
+        "python_version": "",
+        "install_success": False,
+        "import_success": False,
+        "llm_class_importable": False,
+        "sampling_params_importable": False,
+        "venv_torch_version": "",
+        "venv_cuda_available": False,
+        "vllm_version": "",
+        "generation_smoke_attempted": False,
+        "generation_smoke_passed": False,
+        "generation_smoke_text": "",
+        "error_summary": install_error,
+        "stdout_tail": tail_text(stdout),
+        "stderr_tail": tail_text(stderr),
+    }
+    candidate["classification"] = classify_candidate_result(candidate)
+    return candidate
+
+
+def probe_sweep_candidate(
+    *,
+    version: str,
+    venv_python: Path,
+    log_dir: Path | None = None,
+    install_success: bool = True,
+    install_error: str = "",
+    run_generation_smoke: bool = True,
+) -> dict[str, Any]:
+    """Probe one installed sweep candidate and optionally write ``candidate_result.json``."""
+    import json
+
+    venv_path = venv_python.parent.parent
+    if not install_success:
+        result = build_install_failed_candidate(
+            version=version,
+            venv_path=venv_path,
+            install_error=install_error,
+        )
+    else:
+        env_meta = collect_python_env_metadata(venv_python)
+        probe_payload, stdout, stderr = probe_vllm_in_subprocess(
+            venv_python,
+            run_generation_smoke=run_generation_smoke,
+        )
+        result = build_candidate_result_from_probe(
+            version=version,
+            venv_path=venv_path,
+            install_success=True,
+            env_meta=env_meta,
+            probe_payload=probe_payload,
+            stdout=stdout,
+            stderr=stderr,
+        )
+    if log_dir is not None:
+        log_dir.mkdir(parents=True, exist_ok=True)
+        (log_dir / "candidate_result.json").write_text(
+            json.dumps(result, indent=2),
+            encoding="utf-8",
+        )
+    return result
+
+
+def load_sweep_manifest(manifest_path: Path | None = None) -> dict[str, Any]:
+    """Load sweep manifest written by the bash sweep script."""
+    import json
+
+    path = manifest_path or DEFAULT_SWEEP_MANIFEST
+    if not path.is_file():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_candidate_results(
+    *,
+    manifest: dict[str, Any] | None = None,
+    log_root: Path | None = None,
+) -> list[dict[str, Any]]:
+    """Load per-candidate results from manifest or sweep log directories."""
+    import json
+
+    root = log_root or DEFAULT_SWEEP_LOG_DIR
+    results: list[dict[str, Any]] = []
+    manifest = manifest or {}
+    candidates = manifest.get("candidates")
+    if isinstance(candidates, list) and candidates:
+        for version in candidates:
+            result_path = root / str(version) / "candidate_result.json"
+            if result_path.is_file():
+                results.append(json.loads(result_path.read_text(encoding="utf-8")))
+        return results
+    if root.is_dir():
+        for child in sorted(root.iterdir()):
+            result_path = child / "candidate_result.json"
+            if result_path.is_file():
+                results.append(json.loads(result_path.read_text(encoding="utf-8")))
+    return results
+
+
+def recommend_next_step_after_sweep(*, any_candidate_passed: bool) -> str:
+    if any_candidate_passed:
+        return (
+            "Phase 15C: vLLM API surface reconnaissance in the winning isolated venv — "
+            "still no ExactKV integration"
+        )
+    return (
+        "Separate environment phase: CUDA 13 base image, official vLLM container, "
+        "or source build — then re-run version sweep"
+    )
+
+
+def build_exp061_report(
+    *,
+    candidate_results: list[dict[str, Any]],
+    candidates: list[str] | None = None,
+    excluded_versions: list[str] | None = None,
+    system_python: Path | None = None,
+    manifest: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Build normalized Exp 061 report from sweep candidate results."""
+    sys_py = Path(system_python or SYSTEM_PYTHON)
+    system_meta = collect_python_env_metadata(sys_py)
+    blockers: list[str] = []
+
+    winning: str | None = None
+    any_passed = False
+    gen_passed = False
+    for candidate in candidate_results:
+        if candidate.get("classification") == "pass":
+            winning = str(candidate.get("version", ""))
+            any_passed = True
+            gen_passed = bool(candidate.get("generation_smoke_passed"))
+            break
+        summary = str(candidate.get("error_summary", "")).strip()
+        if summary:
+            blockers.append(f"{candidate.get('version')}: {summary}")
+
+    candidate_list = list(candidates or [])
+    if not candidate_list:
+        candidate_list = [str(c.get("version", "")) for c in candidate_results if c.get("version")]
+
+    excluded = list(excluded_versions or [])
+    if manifest:
+        excluded = list(manifest.get("excluded_versions") or excluded)
+        if not candidate_list:
+            candidate_list = list(manifest.get("candidates") or [])
+        if manifest.get("winning_candidate"):
+            winning = str(manifest["winning_candidate"])
+
+    if not candidate_results:
+        blockers.append("no sweep candidate results found — run sweep_vllm_versions_runpod.sh")
+
+    return {
+        "experiment_id": EXPERIMENT_061_ID,
+        "system_python": str(sys_py),
+        "system_torch_version": system_meta.torch_version,
+        "system_cuda_available": system_meta.cuda_available,
+        "gpu_name": system_meta.gpu_name,
+        "candidates": candidate_list,
+        "excluded_versions": excluded,
+        "candidate_results": candidate_results,
+        "winning_candidate": winning,
+        "any_candidate_passed": any_passed,
+        "generation_smoke_passed": gen_passed,
+        "blockers": blockers,
+        "recommended_next_step": recommend_next_step_after_sweep(any_candidate_passed=any_passed),
+        "claim_note": EXP061_CLAIM_NOTE,
+        "forbidden_claims": list(FORBIDDEN_CLAIMS),
+    }
+
+
+def validate_exp061_report(report: dict[str, Any]) -> list[str]:
+    """Validate Exp 061 JSON report schema."""
+    errors: list[str] = []
+    required_top = (
+        "experiment_id",
+        "system_python",
+        "system_torch_version",
+        "system_cuda_available",
+        "gpu_name",
+        "candidates",
+        "candidate_results",
+        "winning_candidate",
+        "any_candidate_passed",
+        "generation_smoke_passed",
+        "blockers",
+        "recommended_next_step",
+        "claim_note",
+        "forbidden_claims",
+    )
+    for key in required_top:
+        if key not in report:
+            errors.append(f"missing report field: {key}")
+    if report.get("experiment_id") != EXPERIMENT_061_ID:
+        errors.append("experiment_id must be exp061_vllm_version_sweep")
+    if not isinstance(report.get("candidates"), list):
+        errors.append("candidates must be a list")
+    if not isinstance(report.get("candidate_results"), list):
+        errors.append("candidate_results must be a list")
+    for flag in ("system_cuda_available", "any_candidate_passed", "generation_smoke_passed"):
+        if not isinstance(report.get(flag), bool):
+            errors.append(f"{flag} must be a bool")
+    if not isinstance(report.get("blockers"), list):
+        errors.append("blockers must be a list")
+    if not report.get("claim_note", "").strip():
+        errors.append("claim_note required")
+    forbidden = report.get("forbidden_claims", [])
+    for term in FORBIDDEN_CLAIMS:
+        if term not in forbidden:
+            errors.append(f"forbidden_claims must include: {term}")
+
+    required_candidate = (
+        "version",
+        "venv_path",
+        "install_success",
+        "import_success",
+        "llm_class_importable",
+        "sampling_params_importable",
+        "venv_torch_version",
+        "venv_cuda_available",
+        "vllm_version",
+        "generation_smoke_attempted",
+        "generation_smoke_passed",
+        "error_summary",
+        "stdout_tail",
+        "stderr_tail",
+    )
+    for idx, candidate in enumerate(report.get("candidate_results", [])):
+        if not isinstance(candidate, dict):
+            errors.append(f"candidate_results[{idx}] must be a dict")
+            continue
+        for key in required_candidate:
+            if key not in candidate:
+                errors.append(f"candidate_results[{idx}] missing field: {key}")
+        classification = candidate.get("classification")
+        if classification not in CANDIDATE_CLASSIFICATIONS:
+            errors.append(f"candidate_results[{idx}] invalid classification: {classification}")
+        for flag in (
+            "install_success",
+            "import_success",
+            "llm_class_importable",
+            "sampling_params_importable",
+            "venv_cuda_available",
+            "generation_smoke_attempted",
+            "generation_smoke_passed",
+        ):
+            if not isinstance(candidate.get(flag), bool):
+                errors.append(f"candidate_results[{idx}].{flag} must be a bool")
+
+    if report.get("any_candidate_passed") and not report.get("winning_candidate"):
+        errors.append("any_candidate_passed requires winning_candidate")
+    if report.get("winning_candidate") and not report.get("any_candidate_passed"):
+        errors.append("winning_candidate requires any_candidate_passed true")
+    return errors
+
+
 @dataclass
 class VllmProbeResult:
     """Result of a vLLM feasibility probe run."""
@@ -399,6 +901,7 @@ class VllmProbeResult:
     generation_smoke_error: str
     visible_integration_surfaces: dict[str, str]
     kv_cache_access_status: str
+    generation_smoke_text: str = ""
     blockers: list[str] = field(default_factory=list)
     claim_note: str = EXP059_CLAIM_NOTE
     forbidden_claims: list[str] = field(default_factory=lambda: list(FORBIDDEN_CLAIMS))
@@ -510,29 +1013,29 @@ def _attempt_generation_smoke(
     model_id: str = DEFAULT_SMOKE_MODEL,
     prompt: str = DEFAULT_SMOKE_PROMPT,
     max_tokens: int = DEFAULT_SMOKE_MAX_TOKENS,
-) -> tuple[bool, bool, str]:
+) -> tuple[bool, bool, str, str]:
     """Tiny greedy generation smoke when vLLM is already importable."""
     torch_version, cuda_available, _ = _torch_environment()
     if not cuda_available:
-        return False, False, "CUDA unavailable — generation smoke skipped"
+        return False, False, "CUDA unavailable — generation smoke skipped", ""
     if not torch_version:
-        return False, False, "torch unavailable — generation smoke skipped"
+        return False, False, "torch unavailable — generation smoke skipped", ""
 
     try:
         from vllm import LLM, SamplingParams
     except Exception as exc:  # noqa: BLE001
-        return False, False, f"LLM/SamplingParams import failed: {exc}"
+        return False, False, f"LLM/SamplingParams import failed: {exc}", ""
 
     try:
         llm = LLM(model=model_id, dtype="float16", max_model_len=256)
         params = SamplingParams(temperature=0.0, max_tokens=max_tokens, top_p=1.0)
         outputs = llm.generate([prompt], params)
         if not outputs or not outputs[0].outputs:
-            return True, False, "generation returned empty outputs"
-        _ = outputs[0].outputs[0].text
-        return True, True, ""
+            return True, False, "generation returned empty outputs", ""
+        text = outputs[0].outputs[0].text
+        return True, True, "", text
     except Exception as exc:  # noqa: BLE001
-        return True, False, f"{type(exc).__name__}: {exc}"
+        return True, False, f"{type(exc).__name__}: {exc}", ""
 
 
 def probe_vllm_availability(
@@ -571,6 +1074,7 @@ def probe_vllm_availability(
             generation_smoke_attempted=False,
             generation_smoke_passed=False,
             generation_smoke_error="",
+            generation_smoke_text="",
             visible_integration_surfaces=surfaces,
             kv_cache_access_status=_kv_cache_access_status(surfaces),
             blockers=blockers,
@@ -598,6 +1102,7 @@ def probe_vllm_availability(
             generation_smoke_attempted=False,
             generation_smoke_passed=False,
             generation_smoke_error="",
+            generation_smoke_text="",
             visible_integration_surfaces=surfaces,
             kv_cache_access_status=_kv_cache_access_status(surfaces),
             blockers=blockers,
@@ -621,9 +1126,10 @@ def probe_vllm_availability(
     gen_attempted = False
     gen_passed = False
     gen_error = ""
+    gen_text = ""
 
     if run_generation_smoke and llm_importable and sampling_importable:
-        gen_attempted, gen_passed, gen_error = _attempt_generation_smoke(
+        gen_attempted, gen_passed, gen_error, gen_text = _attempt_generation_smoke(
             model_id=smoke_model_id,
         )
         if gen_attempted and not gen_passed and gen_error:
@@ -651,6 +1157,7 @@ def probe_vllm_availability(
         generation_smoke_attempted=gen_attempted,
         generation_smoke_passed=gen_passed,
         generation_smoke_error=gen_error,
+        generation_smoke_text=gen_text,
         visible_integration_surfaces=surfaces,
         kv_cache_access_status=_kv_cache_access_status(surfaces),
         blockers=blockers,
@@ -681,6 +1188,7 @@ def build_vllm_blocked_report(
         generation_smoke_attempted=False,
         generation_smoke_passed=False,
         generation_smoke_error="",
+        generation_smoke_text="",
         visible_integration_surfaces=surfaces,
         kv_cache_access_status=_kv_cache_access_status(surfaces),
         blockers=blocker_list,
@@ -737,4 +1245,164 @@ def validate_exp059_report(report: dict[str, Any]) -> list[str]:
             errors.append(f"forbidden_claims must include: {term}")
     if report.get("status") == "pass" and not report.get("vllm_importable"):
         errors.append("status pass requires vllm_importable true")
+    return errors
+
+
+def _cuda_runtime_version() -> str:
+    try:
+        import torch
+
+        return str(getattr(torch.version, "cuda", "") or "")
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+def preview_generated_text(text: str, *, max_len: int = 200) -> str:
+    """Return a short preview of generation smoke output for reports."""
+    cleaned = text.strip()
+    if len(cleaned) <= max_len:
+        return cleaned
+    return cleaned[: max_len - 3] + "..."
+
+
+def build_exp062_report_from_probe(
+    result: VllmProbeResult,
+    *,
+    environment_label: str = "",
+    python_version: str = "",
+) -> dict[str, Any]:
+    """Build normalized Exp 062 report from a vLLM probe result."""
+    py_version = python_version or platform.python_version()
+    return {
+        "experiment_id": EXPERIMENT_062_ID,
+        "status": result.status,
+        "environment_label": environment_label,
+        "python_executable": result.python_executable,
+        "python_version": py_version,
+        "platform": result.platform_info,
+        "torch_version": result.torch_version,
+        "cuda_available": result.cuda_available,
+        "cuda_runtime": _cuda_runtime_version(),
+        "gpu_name": result.gpu_name,
+        "vllm_importable": result.vllm_importable,
+        "vllm_version": result.vllm_version,
+        "llm_class_importable": result.llm_class_importable,
+        "sampling_params_importable": result.sampling_params_importable,
+        "import_error": result.import_error,
+        "generation_smoke_attempted": result.generation_smoke_attempted,
+        "generation_smoke_passed": result.generation_smoke_passed,
+        "generation_smoke_error": result.generation_smoke_error,
+        "generated_text_preview": preview_generated_text(result.generation_smoke_text),
+        "visible_integration_surfaces": dict(result.visible_integration_surfaces),
+        "kv_cache_access_status": result.kv_cache_access_status,
+        "blockers": list(result.blockers),
+        "claim_note": EXP062_CLAIM_NOTE,
+        "forbidden_claims": list(FORBIDDEN_CLAIMS),
+    }
+
+
+def probe_vllm_container_feasibility(
+    *,
+    run_generation_smoke: bool = True,
+    smoke_model_id: str = DEFAULT_SMOKE_MODEL,
+    environment_label: str = "",
+) -> dict[str, Any]:
+    """Run Exp 062 vLLM container/CUDA-13 environment feasibility probe."""
+    result = probe_vllm_availability(
+        run_generation_smoke=run_generation_smoke,
+        smoke_model_id=smoke_model_id,
+    )
+    return build_exp062_report_from_probe(
+        result,
+        environment_label=environment_label,
+        python_version=platform.python_version(),
+    )
+
+
+def recommend_next_step_after_container_probe(*, status: str) -> str:
+    if status == "pass":
+        return (
+            "Phase 15C: vLLM API surface reconnaissance and KV cache visibility "
+            "mapping — still no ExactKV integration"
+        )
+    return (
+        "Resolve container/CUDA-13 environment blockers or choose another "
+        "vLLM-compatible image before integration design work"
+    )
+
+
+def validate_exp062_report(report: dict[str, Any]) -> list[str]:
+    """Validate Exp 062 JSON report schema."""
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "status",
+        "python_executable",
+        "python_version",
+        "platform",
+        "torch_version",
+        "cuda_available",
+        "gpu_name",
+        "vllm_importable",
+        "vllm_version",
+        "llm_class_importable",
+        "sampling_params_importable",
+        "generation_smoke_attempted",
+        "generation_smoke_passed",
+        "generation_smoke_error",
+        "generated_text_preview",
+        "visible_integration_surfaces",
+        "kv_cache_access_status",
+        "blockers",
+        "claim_note",
+        "forbidden_claims",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing report field: {key}")
+    if report.get("experiment_id") != EXPERIMENT_062_ID:
+        errors.append("experiment_id must be exp062_vllm_container_feasibility")
+    if report.get("status") not in ("pass", "blocked", "failed"):
+        errors.append("status must be pass, blocked, or failed")
+    for flag in (
+        "cuda_available",
+        "vllm_importable",
+        "llm_class_importable",
+        "sampling_params_importable",
+        "generation_smoke_attempted",
+        "generation_smoke_passed",
+    ):
+        if not isinstance(report.get(flag), bool):
+            errors.append(f"{flag} must be a bool")
+    if not isinstance(report.get("blockers"), list):
+        errors.append("blockers must be a list")
+    surfaces = report.get("visible_integration_surfaces")
+    if not isinstance(surfaces, dict):
+        errors.append("visible_integration_surfaces must be a dict")
+    else:
+        for key in (
+            "model_loading_surface",
+            "generation_call_surface",
+            "sampling_greedy_config_surface",
+            "kv_cache_access_surface",
+            "scheduler_cache_api_surface",
+            "restored_full_kv_verifier_path",
+        ):
+            if key not in surfaces:
+                errors.append(f"visible_integration_surfaces missing {key}")
+    if not report.get("claim_note", "").strip():
+        errors.append("claim_note required")
+    forbidden = report.get("forbidden_claims", [])
+    for term in FORBIDDEN_CLAIMS:
+        if term not in forbidden:
+            errors.append(f"forbidden_claims must include: {term}")
+    if report.get("status") == "pass":
+        if not report.get("vllm_importable"):
+            errors.append("status pass requires vllm_importable true")
+        if not report.get("llm_class_importable"):
+            errors.append("status pass requires llm_class_importable true")
+        if not report.get("sampling_params_importable"):
+            errors.append("status pass requires sampling_params_importable true")
+        if report.get("generation_smoke_attempted") and not report.get("generation_smoke_passed"):
+            errors.append("status pass requires generation_smoke_passed when attempted")
     return errors

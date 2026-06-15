@@ -167,6 +167,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **vLLM feasibility probe (install-safe)** | **Complete** | Phase 15A ✅ | [`EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md`](EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md); import probe only; **not** vLLM integration |
 | — | **Isolated vLLM venv feasibility** | **Complete** | Phase 15B ✅ | [`EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md`](EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md); venv install + import/smoke probe; **not** vLLM integration |
 | — | **vLLM version compatibility sweep** | **Complete** | Phase 15B-unblock ✅ | [`EXPERIMENT_061_VLLM_VERSION_SWEEP.md`](EXPERIMENT_061_VLLM_VERSION_SWEEP.md); versioned isolated venvs; **not** vLLM integration |
+| — | **vLLM container/CUDA-13 feasibility** | **Complete** | Phase 15C-env ✅ | [`EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md`](EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md); vLLM template probe; **not** vLLM integration |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

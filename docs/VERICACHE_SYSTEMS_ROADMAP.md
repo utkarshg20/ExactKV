@@ -213,8 +213,10 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 15B (isolated vLLM venv feasibility):** [`EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md`](EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md) — vLLM installed only in `.venv-vllm`; import + tiny generation smoke; **not** ExactKV integration or throughput.
 
-**Phase 15B-unblock (vLLM version sweep):** [`EXPERIMENT_061_VLLM_VERSION_SWEEP.md`](EXPERIMENT_061_VLLM_VERSION_SWEEP.md) — tests up to five vLLM versions in isolated venvs; **not** ExactKV integration.
+**Phase 15B-unblock (vLLM version sweep):** [`EXPERIMENT_061_VLLM_VERSION_SWEEP.md`](EXPERIMENT_061_VLLM_VERSION_SWEEP.md) — all five pip candidates failed `libcudart.so.13` on cu128 pod.
 
-**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock:** Phase 13B CLI flag; Phase 14A CUDA exactness gate; Phase 14B–14C diagnostic GPU memory accounting (no savings claim); Phase 15A–15B-unblock vLLM environment feasibility (no integration claim); default CLI/runtime unchanged. Independent human review remains required before any `full_parity_claim_allowed` upgrade.
+**Phase 15C-env (vLLM container feasibility):** [`EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md`](EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md) — RunPod vLLM template probe; **not** ExactKV integration.
+
+**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env:** vLLM environment feasibility track only (no integration claim); default CLI/runtime unchanged on cu128 pod.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

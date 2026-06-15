@@ -153,7 +153,17 @@ See [`EXPERIMENT_061_VLLM_VERSION_SWEEP.md`](EXPERIMENT_061_VLLM_VERSION_SWEEP.m
 
 ---
 
-## 14. How Stage 6+ build on this
+## 15. Phase 15C-env container feasibility
+
+Exp 062 probes the native Python of a RunPod vLLM template (CUDA 13). Passing means import + smoke work in that image — **not** ExactKV integration.
+
+Report: `scripts/research/run_exp062_vllm_container_feasibility.py`
+
+See [`EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md`](EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md).
+
+---
+
+## 16. How Stage 6+ build on this
 
 | Stage | Connection |
 |---|---|
@@ -162,6 +172,7 @@ See [`EXPERIMENT_061_VLLM_VERSION_SWEEP.md`](EXPERIMENT_061_VLLM_VERSION_SWEEP.m
 | **Phase 15A** | Install-safe vLLM feasibility probe — [`EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md`](EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md) |
 | **Phase 15B** | Isolated vLLM venv feasibility — [`EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md`](EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md) |
 | **Phase 15B-unblock** | vLLM version compatibility sweep — [`EXPERIMENT_061_VLLM_VERSION_SWEEP.md`](EXPERIMENT_061_VLLM_VERSION_SWEEP.md) |
+| **Phase 15C-env** | vLLM container/CUDA-13 feasibility — [`EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md`](EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md) |
 | **Prototype runtime** (future) | Implements `rollback_fallback_path`; may advance status toward `PROTOTYPE_READY` |
 
 ---
