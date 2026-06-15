@@ -47,6 +47,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | GPU memory accounting diagnostic | Phase 14B / Exp 057 | [`EXPERIMENT_057_GPU_MEMORY_ACCOUNTING.md`](EXPERIMENT_057_GPU_MEMORY_ACCOUNTING.md); diagnostic CUDA memory only; **not** memory savings claim |
 | Expanded GPU memory panel | Phase 14C / Exp 058 | [`EXPERIMENT_058_EXPANDED_GPU_MEMORY_PANEL.md`](EXPERIMENT_058_EXPANDED_GPU_MEMORY_PANEL.md); stability panel across prompts/draft/storage/dtype; **not** memory savings claim |
 | vLLM feasibility probe (install-safe) | Phase 15A / Exp 059 | [`EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md`](EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md); import probe only; **not** vLLM integration |
+| Isolated vLLM venv feasibility | Phase 15B / Exp 060 | [`EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md`](EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md); venv install + import/smoke probe only; **not** vLLM integration |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

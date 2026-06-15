@@ -165,6 +165,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **GPU memory accounting diagnostic** | **Complete** | Phase 14B ✅ | [`EXPERIMENT_057_GPU_MEMORY_ACCOUNTING.md`](EXPERIMENT_057_GPU_MEMORY_ACCOUNTING.md); diagnostic CUDA memory only; **not** memory savings claim |
 | — | **Expanded GPU memory panel** | **Complete** | Phase 14C ✅ | [`EXPERIMENT_058_EXPANDED_GPU_MEMORY_PANEL.md`](EXPERIMENT_058_EXPANDED_GPU_MEMORY_PANEL.md); broader exactness-gated memory panel; **not** memory savings claim |
 | — | **vLLM feasibility probe (install-safe)** | **Complete** | Phase 15A ✅ | [`EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md`](EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md); import probe only; **not** vLLM integration |
+| — | **Isolated vLLM venv feasibility** | **Complete** | Phase 15B ✅ | [`EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md`](EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md); venv install + import/smoke probe; **not** vLLM integration |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

@@ -154,7 +154,8 @@ VeriCache uses vLLM + LMCache for serving throughput panels. Phase 15A is the **
 
 ## 13. Next step
 
-- **Phase 15B:** Isolated vLLM install in a **separate venv** (not system Python) on RunPod, re-run Exp 059
+- **Phase 15B:** Isolated vLLM venv feasibility — [`EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md`](EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md)
+- **Phase 15C:** KV cache surface reconnaissance inside working vLLM venv — still no ExactKV integration
 - Do not wire ExactKV restored verifier until KV export surfaces are understood
 
 Default ExactKV generation behavior is unchanged.

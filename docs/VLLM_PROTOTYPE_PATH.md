@@ -133,13 +133,24 @@ See [`EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md`](EXPERIMENT_059_VLLM_FEASIBILITY
 
 ---
 
-## 12. How Stage 6+ build on this
+## 12. Phase 15B isolated vLLM venv
+
+Exp 060 installs vLLM only in `.venv-vllm` (not system Python) and reruns the feasibility probe via subprocess. Passing means a vLLM environment is available for **future integration work** — not that ExactKV is integrated with vLLM.
+
+Setup: `scripts/setup/setup_vllm_venv_runpod.sh` · Probe: `scripts/research/run_exp060_vllm_venv_feasibility.py`
+
+See [`EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md`](EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md).
+
+---
+
+## 13. How Stage 6+ build on this
 
 | Stage | Connection |
 |---|---|
 | **Stage 6** — LMCache | Verifier-tier backing; separate contract after vLLM gates clear |
 | **Stage 8** — Throughput harness | Required before speed/latency claims on any backend |
 | **Phase 15A** | Install-safe vLLM feasibility probe — [`EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md`](EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md) |
+| **Phase 15B** | Isolated vLLM venv feasibility — [`EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md`](EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md) |
 | **Prototype runtime** (future) | Implements `rollback_fallback_path`; may advance status toward `PROTOTYPE_READY` |
 
 ---
