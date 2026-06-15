@@ -157,5 +157,5 @@ VeriCache uses vLLM for serving throughput. Phase 15B establishes whether a **se
 
 ## 14. Next step
 
-- **Phase 15B-unblock (environment):** Pin vLLM to a **cu128-compatible** wheel set (or upgrade pod CUDA 13 runtime) and re-run Exp 060 — still no ExactKV integration
-- **Phase 15C:** KV cache surface reconnaissance — only after functional vLLM import + smoke pass
+- **Phase 15B-unblock:** vLLM version compatibility sweep — [`EXPERIMENT_061_VLLM_VERSION_SWEEP.md`](EXPERIMENT_061_VLLM_VERSION_SWEEP.md)
+- **Phase 15C:** KV cache surface reconnaissance — only after a winning vLLM candidate passes import + smoke

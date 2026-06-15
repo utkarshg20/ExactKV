@@ -143,7 +143,17 @@ See [`EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md`](EXPERIMENT_060_VLLM_VENV_FEASIBI
 
 ---
 
-## 13. How Stage 6+ build on this
+## 13. Phase 15B-unblock version sweep
+
+Exp 061 tests up to five vLLM versions in isolated venvs under `.venv-vllm-sweep/` to find a cu128-compatible wheel. Passing identifies a candidate environment for Phase 15C — **not** ExactKV integration.
+
+Setup: `scripts/setup/sweep_vllm_versions_runpod.sh` · Report: `scripts/research/run_exp061_vllm_version_sweep.py`
+
+See [`EXPERIMENT_061_VLLM_VERSION_SWEEP.md`](EXPERIMENT_061_VLLM_VERSION_SWEEP.md).
+
+---
+
+## 14. How Stage 6+ build on this
 
 | Stage | Connection |
 |---|---|
@@ -151,6 +161,7 @@ See [`EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md`](EXPERIMENT_060_VLLM_VENV_FEASIBI
 | **Stage 8** — Throughput harness | Required before speed/latency claims on any backend |
 | **Phase 15A** | Install-safe vLLM feasibility probe — [`EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md`](EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md) |
 | **Phase 15B** | Isolated vLLM venv feasibility — [`EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md`](EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md) |
+| **Phase 15B-unblock** | vLLM version compatibility sweep — [`EXPERIMENT_061_VLLM_VERSION_SWEEP.md`](EXPERIMENT_061_VLLM_VERSION_SWEEP.md) |
 | **Prototype runtime** (future) | Implements `rollback_fallback_path`; may advance status toward `PROTOTYPE_READY` |
 
 ---
