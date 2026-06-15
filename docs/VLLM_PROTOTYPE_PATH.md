@@ -125,17 +125,26 @@ Phase 11F answers: *What must be true before prototype code?* It does **not** wr
 
 ---
 
-## 9. How Stage 6+ build on this
+## 11. Phase 15A feasibility probe
+
+Exp 059 (`exactkv/integrations/vllm_probe.py`) performs an **install-safe** vLLM import probe on the target GPU environment. It does **not** install vLLM into system Python or advance integration status beyond `CONTRACT_ONLY` unless a future phase explicitly gates prototype work.
+
+See [`EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md`](EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md).
+
+---
+
+## 12. How Stage 6+ build on this
 
 | Stage | Connection |
 |---|---|
 | **Stage 6** — LMCache | Verifier-tier backing; separate contract after vLLM gates clear |
 | **Stage 8** — Throughput harness | Required before speed/latency claims on any backend |
+| **Phase 15A** | Install-safe vLLM feasibility probe — [`EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md`](EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md) |
 | **Prototype runtime** (future) | Implements `rollback_fallback_path`; may advance status toward `PROTOTYPE_READY` |
 
 ---
 
-## 10. Claims boundary
+## 13. Claims boundary
 
 | Allowed | Forbidden |
 |---|---|

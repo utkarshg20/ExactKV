@@ -209,6 +209,8 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 ## 5. Recommended next phase (after 11A)
 
-**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C:** Phase 13B CLI flag; Phase 14A CUDA exactness gate; Phase 14B–14C diagnostic GPU memory accounting (no savings claim); default CLI/runtime unchanged. Independent human review remains required before any `full_parity_claim_allowed` upgrade.
+**Phase 15A (vLLM feasibility probe):** [`EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md`](EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md) — install-safe import probe; **not** vLLM integration or throughput.
+
+**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A:** Phase 13B CLI flag; Phase 14A CUDA exactness gate; Phase 14B–14C diagnostic GPU memory accounting (no savings claim); Phase 15A vLLM feasibility probe; default CLI/runtime unchanged. Independent human review remains required before any `full_parity_claim_allowed` upgrade.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).
