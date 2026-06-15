@@ -44,6 +44,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Experimental restored-verifier runtime | Phase 13A / Exp 054 | [`EXPERIMENTAL_RESTORED_VERIFIER_RUNTIME.md`](EXPERIMENTAL_RESTORED_VERIFIER_RUNTIME.md); explicit opt-in only; **not** default runtime |
 | Explicit CLI experimental restored-verifier | Phase 13B / Exp 055 | [`EXPERIMENT_055_EXPERIMENTAL_RESTORED_VERIFIER_CLI.md`](EXPERIMENT_055_EXPERIMENTAL_RESTORED_VERIFIER_CLI.md); `--experimental-restored-verifier` only; **not** default CLI |
 | CUDA experimental restored-verifier runtime gate | Phase 14A / Exp 056 | [`EXPERIMENT_056_CUDA_RESTORED_VERIFIER_RUNTIME_GATE.md`](EXPERIMENT_056_CUDA_RESTORED_VERIFIER_RUNTIME_GATE.md); `run_experimental_restored_verifier()` on CUDA; exactness only; **not** default runtime |
+| GPU memory accounting diagnostic | Phase 14B / Exp 057 | [`EXPERIMENT_057_GPU_MEMORY_ACCOUNTING.md`](EXPERIMENT_057_GPU_MEMORY_ACCOUNTING.md); diagnostic CUDA memory only; **not** memory savings claim |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

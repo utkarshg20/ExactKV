@@ -123,22 +123,20 @@ For each cell: live full greedy reference on CUDA; experimental runtime verifies
 
 ## 9. Results
 
-Fill after running on CUDA hardware. When CUDA is unavailable locally, report status is `blocked` with `cuda_available: false`, `total_cells: 0`, `token_exact_match_count: 0`, `exactkv_failures: 0` (no cells ran — **not** a pass).
+**CUDA evidence collected on RunPod RTX A5000 (2026-06-15):**
 
-Key aggregate fields:
-
-| Field | Meaning |
+| Field | Result |
 |---|---|
-| `cuda_available` | Whether CUDA was present at run time |
-| `dtype_configs` | dtypes actually tested |
-| `dtype_supported` | Per-dtype hardware support map |
-| `skipped_configs` | Dtype configs not tested |
-| `total_cells` | Prompt × compressor cells per tested dtype |
-| `exactkv_failures` | Mismatches vs live full greedy |
-| `token_exact_match_count` | Cells with exact final output |
-| `draft_divergence_count` | Draft/verifier divergence events (expected under lossy draft) |
-| `mean_acceptance` | Mean accepted prefix length across cells |
-| `cuda_blockers` | CUDA/dtype/exactness blockers |
+| status | **pass** |
+| cuda_available | true |
+| dtypes tested | `float16`, `bfloat16` |
+| total_cells | 24 |
+| exactkv_failures | **0** |
+| token_exact_match | **24/24** |
+| draft_divergence_count | 29 |
+| blockers | none |
+
+Report (gitignored): `reports/experiment_056_cuda_restored_verifier_runtime_gate.json`
 
 ---
 
@@ -201,5 +199,6 @@ Phase 14A extends Phase 13A–13B experimental opt-in toward **CUDA exactness ev
 
 ## 16. Next step
 
-- **Phase 14B:** Optional `--experimental-restored-verifier --device cuda --dtype float16` on Exp 055 CLI helper; or expanded CUDA panel (more prompts/backends) — still non-default, no performance claims
+- Phase 14B: GPU memory accounting diagnostic — [`EXPERIMENT_057_GPU_MEMORY_ACCOUNTING.md`](EXPERIMENT_057_GPU_MEMORY_ACCOUNTING.md)
+- Phase 14C: expanded memory panel (more prompts/backends) — still diagnostic, no savings claims
 - Human-reviewed gate before any default-runtime discussion remains required
