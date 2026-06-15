@@ -124,8 +124,8 @@ VeriCache depends on a working vLLM stack. This phase validates the container/im
 
 ## 12. Next step
 
-- **Phase 15C:** vLLM API surface reconnaissance + KV cache visibility mapping on this image (still no ExactKV integration)
-- **Optional:** Re-run Exp 062 generation smoke with vLLM server stopped to confirm end-to-end generation on idle GPU
+- **Phase 15C:** vLLM API surface reconnaissance — [`EXPERIMENT_063_VLLM_API_SURFACE_RECON.md`](EXPERIMENT_063_VLLM_API_SURFACE_RECON.md)
+- **Phase 15D:** isolated KV export prototype spike on idle GPU — still no default-runtime integration
 
 ---
 

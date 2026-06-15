@@ -215,7 +215,9 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 15B-unblock (vLLM version sweep):** [`EXPERIMENT_061_VLLM_VERSION_SWEEP.md`](EXPERIMENT_061_VLLM_VERSION_SWEEP.md) — all five pip candidates failed `libcudart.so.13` on cu128 pod.
 
-**Phase 15C-env (vLLM container feasibility):** [`EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md`](EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md) — RunPod vLLM template probe; **not** ExactKV integration.
+**Phase 15C-env (vLLM container feasibility):** [`EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md`](EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md) — CUDA 13 template import pass; generation smoke OOM when server running.
+
+**Phase 15C (vLLM API surface recon):** [`EXPERIMENT_063_VLLM_API_SURFACE_RECON.md`](EXPERIMENT_063_VLLM_API_SURFACE_RECON.md) — import/object visibility; **not** ExactKV integration.
 
 **Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env:** vLLM environment feasibility track only (no integration claim); default CLI/runtime unchanged on cu128 pod.
 

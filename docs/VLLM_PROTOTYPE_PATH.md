@@ -163,7 +163,17 @@ See [`EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md`](EXPERIMENT_062_VLLM_CONTAIN
 
 ---
 
-## 16. How Stage 6+ build on this
+## 16. Phase 15C API surface recon
+
+Exp 063 (`exactkv/integrations/vllm_surface_recon.py`) inspects vLLM modules, config/engine/scheduler/cache symbols, and optional object-level attrs — **not** ExactKV integration.
+
+Report: `scripts/research/run_exp063_vllm_api_surface_recon.py`
+
+See [`EXPERIMENT_063_VLLM_API_SURFACE_RECON.md`](EXPERIMENT_063_VLLM_API_SURFACE_RECON.md).
+
+---
+
+## 17. How Stage 6+ build on this
 
 | Stage | Connection |
 |---|---|
@@ -173,6 +183,7 @@ See [`EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md`](EXPERIMENT_062_VLLM_CONTAIN
 | **Phase 15B** | Isolated vLLM venv feasibility — [`EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md`](EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md) |
 | **Phase 15B-unblock** | vLLM version compatibility sweep — [`EXPERIMENT_061_VLLM_VERSION_SWEEP.md`](EXPERIMENT_061_VLLM_VERSION_SWEEP.md) |
 | **Phase 15C-env** | vLLM container/CUDA-13 feasibility — [`EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md`](EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md) |
+| **Phase 15C** | vLLM API surface reconnaissance — [`EXPERIMENT_063_VLLM_API_SURFACE_RECON.md`](EXPERIMENT_063_VLLM_API_SURFACE_RECON.md) |
 | **Prototype runtime** (future) | Implements `rollback_fallback_path`; may advance status toward `PROTOTYPE_READY` |
 
 ---

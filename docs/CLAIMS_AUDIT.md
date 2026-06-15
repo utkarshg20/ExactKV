@@ -50,6 +50,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Isolated vLLM venv feasibility | Phase 15B / Exp 060 | [`EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md`](EXPERIMENT_060_VLLM_VENV_FEASIBILITY.md); venv install + import/smoke probe only; **not** vLLM integration |
 | vLLM version compatibility sweep | Phase 15B-unblock / Exp 061 | [`EXPERIMENT_061_VLLM_VERSION_SWEEP.md`](EXPERIMENT_061_VLLM_VERSION_SWEEP.md); versioned isolated venvs; **not** vLLM integration |
 | vLLM container/CUDA-13 feasibility | Phase 15C-env / Exp 062 | [`EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md`](EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md); vLLM template probe only; **not** vLLM integration |
+| vLLM API surface reconnaissance | Phase 15C / Exp 063 | [`EXPERIMENT_063_VLLM_API_SURFACE_RECON.md`](EXPERIMENT_063_VLLM_API_SURFACE_RECON.md); import/object visibility only; **not** vLLM integration |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |
