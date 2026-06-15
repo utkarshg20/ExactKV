@@ -55,6 +55,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Idle-GPU vLLM object KV probe | Phase 15E / Exp 065 | [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md); **deferred** on auto-serving RunPod template; **not** vLLM integration |
 | Streaming quantized-KV attention feasibility | Phase 16A / Exp 066 | [`EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md`](EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md); tensor-level reference only; **not** inference integration |
 | HF single-layer attention-drift probe | Phase 16B / Exp 067 | [`EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md`](EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md); offline HF Q/K/V drift only; **not** generation integration |
+| Qwen RoPE/GQA long-context attention probe | Phase 16C / Exp 068 | [`EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md`](EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md); RoPE/GQA + long-context chunking; **not** generation integration |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

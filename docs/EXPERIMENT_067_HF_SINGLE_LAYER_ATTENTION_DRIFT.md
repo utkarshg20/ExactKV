@@ -156,7 +156,9 @@ VeriCache serving stacks emphasize throughput and memory under vLLM/LMCache. Pha
 
 ## 14. Next step
 
-**Phase 16C (proposed):** multi-layer offline micro-benchmark comparing cumulative drift through several layers — still opt-in, no default runtime, no serving claims.
+**Phase 16C complete:** Qwen RoPE/GQA long-context probe — [`EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md`](EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md)
+
+**Phase 16D (proposed):** multi-layer offline accumulation micro-benchmark — still opt-in, no default runtime, no serving claims.
 
 ---
 

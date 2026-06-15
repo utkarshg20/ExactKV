@@ -91,6 +91,28 @@ def test_projection_only_status_recorded() -> None:
     assert extracted.extraction_mode == "projection_only"
 
 
+def test_rope_applied_with_mock_rotary() -> None:
+    class _MockRotaryEmb(nn.Module):
+        def forward(self, x: torch.Tensor, position_ids: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+            b, _, t, d = x.shape
+            cos = torch.ones(b, t, d, device=x.device, dtype=x.dtype)
+            sin = torch.zeros(b, t, d, device=x.device, dtype=x.dtype)
+            return cos, sin
+
+    layer = _DummyLayer()
+    hidden = torch.randn(1, 6, 64)
+    position_ids = torch.arange(6).unsqueeze(0)
+    extracted = extract_qkv_from_qwen2_layer(
+        hidden,
+        layer,
+        layer_idx=0,
+        rotary_emb=_MockRotaryEmb(),
+        position_ids=position_ids,
+    )
+    assert extracted.extraction_mode == "exact_qwen2_like"
+    assert extracted.rope_status == "applied"
+
+
 def test_run_exp067_with_mock_model() -> None:
     class _MockModel(nn.Module):
         def __init__(self) -> None:

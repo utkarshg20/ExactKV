@@ -173,6 +173,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Idle-GPU vLLM object KV probe** | **Deferred** | Phase 15E ⏸ | [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md); blocked on auto-serving RunPod vLLM template; **not** vLLM integration |
 | — | **Streaming quantized-KV attention feasibility** | **Complete** | Phase 16A ✅ | [`EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md`](EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md); tensor-level reference; **not** inference integration |
 | — | **HF single-layer attention-drift probe** | **Complete** | Phase 16B ✅ | [`EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md`](EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md); offline HF Q/K/V drift; **not** generation integration |
+| — | **Qwen RoPE/GQA long-context attention probe** | **Complete** | Phase 16C ✅ | [`EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md`](EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md); RoPE/GQA + long-context chunking; **not** generation integration |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

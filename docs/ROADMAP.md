@@ -819,6 +819,7 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 | 15E | Idle-GPU vLLM object KV probe | ⏸ deferred — [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md) (auto-serving template blocks idle pass) |
 | 16A | Streaming quantized-KV attention feasibility | ✅ [`EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md`](EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md) |
 | 16B | HF single-layer attention-drift probe | ✅ [`EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md`](EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md) |
+| 16C | Qwen RoPE/GQA long-context attention probe | ✅ [`EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md`](EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md) |
 | 10I | Benchmark gap analysis | ✅ [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md) |
 | 10C | Parallel work integration | ✅ [`PARALLEL_WORK_INTEGRATION_REPORT.md`](PARALLEL_WORK_INTEGRATION_REPORT.md) |
 | 9C | Launch validation & should-fix | Planned |
