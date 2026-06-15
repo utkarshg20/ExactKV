@@ -219,6 +219,10 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 15C (vLLM API surface recon):** [`EXPERIMENT_063_VLLM_API_SURFACE_RECON.md`](EXPERIMENT_063_VLLM_API_SURFACE_RECON.md) — import/object visibility; **not** ExactKV integration.
 
-**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env:** vLLM environment feasibility track only (no integration claim); default CLI/runtime unchanged on cu128 pod.
+**Phase 15D (vLLM KV/cache visibility probe):** [`EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md`](EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md) — metadata-only object inspection on idle GPU; **not** ExactKV integration.
+
+**Phase 15E (idle-GPU object KV probe):** [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md) — object-level probe requires idle GPU; **not** ExactKV integration.
+
+**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env / Post-15C / Post-15D / Post-15E:** vLLM environment feasibility track only (no integration claim); default CLI/runtime unchanged on cu128 pod.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

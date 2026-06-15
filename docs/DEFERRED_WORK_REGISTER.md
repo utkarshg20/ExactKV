@@ -169,6 +169,8 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **vLLM version compatibility sweep** | **Complete** | Phase 15B-unblock ✅ | [`EXPERIMENT_061_VLLM_VERSION_SWEEP.md`](EXPERIMENT_061_VLLM_VERSION_SWEEP.md); versioned isolated venvs; **not** vLLM integration |
 | — | **vLLM container/CUDA-13 feasibility** | **Complete** | Phase 15C-env ✅ | [`EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md`](EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md); vLLM template probe; **not** vLLM integration |
 | — | **vLLM API surface reconnaissance** | **Complete** | Phase 15C ✅ | [`EXPERIMENT_063_VLLM_API_SURFACE_RECON.md`](EXPERIMENT_063_VLLM_API_SURFACE_RECON.md); API/KV visibility only; **not** vLLM integration |
+| — | **vLLM KV/cache visibility probe** | **Complete** | Phase 15D ✅ | [`EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md`](EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md); metadata-only object inspection; **not** vLLM integration |
+| — | **Idle-GPU vLLM object KV probe** | **Complete** | Phase 15E ✅ | [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md); object-level probe on idle GPU; **not** vLLM integration |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

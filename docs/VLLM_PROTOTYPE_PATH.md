@@ -173,7 +173,25 @@ See [`EXPERIMENT_063_VLLM_API_SURFACE_RECON.md`](EXPERIMENT_063_VLLM_API_SURFACE
 
 ---
 
-## 17. How Stage 6+ build on this
+## 17. Phase 15D KV/cache visibility probe
+
+Exp 064 (`exactkv/integrations/vllm_kv_visibility.py`) runs metadata-only object inspection after optional tiny `LLM` init — **not** ExactKV integration.
+
+Report: `scripts/research/run_exp064_vllm_kv_visibility_probe.py`
+
+See [`EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md`](EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md).
+
+---
+
+## 18. Phase 15E idle-GPU object KV probe
+
+Exp 065 (`run_exp065_idle_vllm_object_kv_probe.py`) requires an idle GPU (no auto-started serve) for object-level cache/engine metadata inspection — **not** ExactKV integration.
+
+See [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md).
+
+---
+
+## 19. How Stage 6+ build on this
 
 | Stage | Connection |
 |---|---|
@@ -184,6 +202,8 @@ See [`EXPERIMENT_063_VLLM_API_SURFACE_RECON.md`](EXPERIMENT_063_VLLM_API_SURFACE
 | **Phase 15B-unblock** | vLLM version compatibility sweep — [`EXPERIMENT_061_VLLM_VERSION_SWEEP.md`](EXPERIMENT_061_VLLM_VERSION_SWEEP.md) |
 | **Phase 15C-env** | vLLM container/CUDA-13 feasibility — [`EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md`](EXPERIMENT_062_VLLM_CONTAINER_FEASIBILITY.md) |
 | **Phase 15C** | vLLM API surface reconnaissance — [`EXPERIMENT_063_VLLM_API_SURFACE_RECON.md`](EXPERIMENT_063_VLLM_API_SURFACE_RECON.md) |
+| **Phase 15D** | vLLM KV/cache visibility probe — [`EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md`](EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md) |
+| **Phase 15E** | Idle-GPU vLLM object KV probe — [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md) |
 | **Prototype runtime** (future) | Implements `rollback_fallback_path`; may advance status toward `PROTOTYPE_READY` |
 
 ---

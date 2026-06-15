@@ -121,7 +121,8 @@ Maps visible vLLM cache/engine surfaces against ExactKV compressed-draft + resto
 
 ## 13. Next step
 
-- **Phase 15D:** isolated KV export prototype spike on idle GPU — still no default-runtime integration
+- **Phase 15D complete:** object-level KV/cache visibility probe — [`EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md`](EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md)
+- **Phase 15E:** isolated KV export prototype spike with explicit private-API validation — still no default-runtime integration
 
 ---
 
