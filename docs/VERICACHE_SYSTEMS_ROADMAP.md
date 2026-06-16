@@ -239,6 +239,8 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 16H (Qwen-family divergence panel):** [`EXPERIMENT_073_QWEN_FAMILY_DIVERGENCE_PANEL.md`](EXPERIMENT_073_QWEN_FAMILY_DIVERGENCE_PANEL.md) — cross-model offline panel reusing 16G trace; **not** generation integration or throughput.
 
-**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env / Post-15C / Post-15D / Post-15E / Post-16A / Post-16B / Post-16C / Post-16D / Post-16E / Post-16F / Post-16G / Post-16H:** vLLM environment feasibility track deferred at 15E; Phase 16A–16H compressed-attention research; default CLI/runtime unchanged.
+**Phase 16I (Attention tolerance policy panel):** [`EXPERIMENT_074_ATTENTION_TOLERANCE_POLICY_PANEL.md`](EXPERIMENT_074_ATTENTION_TOLERANCE_POLICY_PANEL.md) — formalized offline tolerance/interpretation policy; **not** generation integration or throughput.
+
+**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env / Post-15C / Post-15D / Post-15E / Post-16A / Post-16B / Post-16C / Post-16D / Post-16E / Post-16F / Post-16G / Post-16H / Post-16I:** vLLM environment feasibility track deferred at 15E; Phase 16A–16I compressed-attention research; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

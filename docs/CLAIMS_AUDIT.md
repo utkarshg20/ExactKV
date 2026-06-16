@@ -61,6 +61,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Full-prefix logit drift smoke | Phase 16F / Exp 071 | [`EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md`](EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md); offline full-stack logit drift; **not** generation integration |
 | Full-depth divergence trace | Phase 16G / Exp 072 | [`EXPERIMENT_072_FULL_DEPTH_DIVERGENCE_TRACE.md`](EXPERIMENT_072_FULL_DEPTH_DIVERGENCE_TRACE.md); layer-by-layer trace; **not** generation integration |
 | Qwen-family divergence panel | Phase 16H / Exp 073 | [`EXPERIMENT_073_QWEN_FAMILY_DIVERGENCE_PANEL.md`](EXPERIMENT_073_QWEN_FAMILY_DIVERGENCE_PANEL.md); cross-model offline panel; **not** generation integration |
+| Attention tolerance policy panel | Phase 16I / Exp 074 | [`EXPERIMENT_074_ATTENTION_TOLERANCE_POLICY_PANEL.md`](EXPERIMENT_074_ATTENTION_TOLERANCE_POLICY_PANEL.md); offline interpretation policy; **not** generation integration |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

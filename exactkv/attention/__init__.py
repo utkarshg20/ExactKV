@@ -64,6 +64,16 @@ from exactkv.attention.hf_full_replay_probe import (
     validate_exp073_report,
 )
 
+from exactkv.attention.tolerance_policy import (
+    EXPERIMENT_074_ID,
+    EXP074_CLAIM_NOTE,
+    AttentionTolerancePolicy,
+    AttentionToleranceDecision,
+    OfflineAttentionStatus,
+    run_exp074_panel,
+    validate_exp074_report,
+)
+
 __all__ = [
     "EXPERIMENT_066_ID",
     "EXP066_CLAIM_NOTE",
@@ -87,6 +97,7 @@ __all__ = [
     "EXPERIMENT_071_ID",
     "EXPERIMENT_072_ID",
     "EXPERIMENT_073_ID",
+    "EXPERIMENT_074_ID",
     "EXP067_CLAIM_NOTE",
     "EXP068_CLAIM_NOTE",
     "EXP069_CLAIM_NOTE",
@@ -94,6 +105,10 @@ __all__ = [
     "EXP071_CLAIM_NOTE",
     "EXP072_CLAIM_NOTE",
     "EXP073_CLAIM_NOTE",
+    "EXP074_CLAIM_NOTE",
+    "AttentionTolerancePolicy",
+    "AttentionToleranceDecision",
+    "OfflineAttentionStatus",
     "PHASE16D_REGRESSION_CELL",
     "compute_drift_metrics",
     "extract_qkv_from_qwen2_layer",
@@ -106,6 +121,7 @@ __all__ = [
     "run_exp071_probe",
     "run_exp072_probe",
     "run_exp073_probe",
+    "run_exp074_panel",
     "run_hf_attention_drift_cell",
     "validate_exp067_report",
     "validate_exp068_report",
@@ -114,4 +130,5 @@ __all__ = [
     "validate_exp071_report",
     "validate_exp072_report",
     "validate_exp073_report",
+    "validate_exp074_report",
 ]

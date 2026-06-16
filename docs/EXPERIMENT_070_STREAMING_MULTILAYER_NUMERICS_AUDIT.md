@@ -157,7 +157,13 @@ VeriCache serving stacks emphasize throughput and memory under vLLM/LMCache. Pha
 
 **Phase 16F complete:** offline full-prefix logit drift smoke — [`EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md`](EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md)
 
-**Phase 16G (proposed):** broader model panel sweep — only after 16F report review; still no default runtime integration.
+**Phase 16G complete:** full-depth divergence trace — [`EXPERIMENT_072_FULL_DEPTH_DIVERGENCE_TRACE.md`](EXPERIMENT_072_FULL_DEPTH_DIVERGENCE_TRACE.md)
+
+**Phase 16H complete:** Qwen-family divergence panel — [`EXPERIMENT_073_QWEN_FAMILY_DIVERGENCE_PANEL.md`](EXPERIMENT_073_QWEN_FAMILY_DIVERGENCE_PANEL.md)
+
+**Phase 16I (complete):** attention tolerance policy panel — [`EXPERIMENT_074_ATTENTION_TOLERANCE_POLICY_PANEL.md`](EXPERIMENT_074_ATTENTION_TOLERANCE_POLICY_PANEL.md)
+
+**Phase 16J (proposed):** generation-shadow wiring review — still no default runtime integration.
 
 ---
 

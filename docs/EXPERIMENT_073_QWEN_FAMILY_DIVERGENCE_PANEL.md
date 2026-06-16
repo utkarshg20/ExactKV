@@ -134,7 +134,9 @@ Does not reproduce VeriCache throughput, serving, or memory panels.
 
 ## 14. Next step
 
-**Phase 16I (proposed):** depth-aware tolerance policy documentation / optional generation-shadow wiring review — only after panel review; still no default runtime integration without explicit approval.
+**Phase 16I (complete):** [`EXPERIMENT_074_ATTENTION_TOLERANCE_POLICY_PANEL.md`](EXPERIMENT_074_ATTENTION_TOLERANCE_POLICY_PANEL.md) — formalized offline tolerance/interpretation policy.
+
+**Phase 16J (proposed):** generation-shadow wiring review — only with explicit approval; still no default runtime integration.
 
 ---
 
