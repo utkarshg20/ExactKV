@@ -172,14 +172,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **vLLM KV/cache visibility probe** | **Complete** | Phase 15D ✅ | [`EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md`](EXPERIMENT_064_VLLM_KV_VISIBILITY_PROBE.md); metadata-only object inspection; **not** vLLM integration |
 | — | **Idle-GPU vLLM object KV probe** | **Deferred** | Phase 15E ⏸ | [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md); blocked on auto-serving RunPod vLLM template; **not** vLLM integration |
 | — | **Streaming quantized-KV attention feasibility** | **Complete** | Phase 16A ✅ | [`EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md`](EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md); tensor-level reference; **not** inference integration |
-| — | **HF single-layer attention-drift probe** | **Complete** | Phase 16B ✅ | [`EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md`](EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md); offline HF Q/K/V drift; **not** generation integration |
-| — | **Qwen RoPE/GQA long-context attention probe** | **Complete** | Phase 16C ✅ | [`EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md`](EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md); RoPE/GQA + long-context chunking; **not** generation integration |
-| — | **Multi-layer attention drift accumulation** | **Complete** | Phase 16D ✅ | [`EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md`](EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md); offline multi-layer replay; **not** generation integration |
-| — | **Streaming multi-layer numerics audit** | **Complete** | Phase 16E ✅ | [`EXPERIMENT_070_STREAMING_MULTILAYER_NUMERICS_AUDIT.md`](EXPERIMENT_070_STREAMING_MULTILAYER_NUMERICS_AUDIT.md); Phase 16D boundary diagnosis; **not** generation integration |
-| — | **Full-prefix logit drift smoke** | **Complete** | Phase 16F ✅ | [`EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md`](EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md); offline full-stack logit drift; **not** generation integration |
-| — | **Full-depth divergence trace** | **Complete** | Phase 16G ✅ | [`EXPERIMENT_072_FULL_DEPTH_DIVERGENCE_TRACE.md`](EXPERIMENT_072_FULL_DEPTH_DIVERGENCE_TRACE.md); layer-by-layer trace; **not** generation integration |
-| — | **Qwen-family divergence panel** | **Complete** | Phase 16H ✅ | [`EXPERIMENT_073_QWEN_FAMILY_DIVERGENCE_PANEL.md`](EXPERIMENT_073_QWEN_FAMILY_DIVERGENCE_PANEL.md); cross-model offline panel; **not** generation integration |
-| — | **Attention tolerance policy panel** | **Complete** | Phase 16I ✅ | [`EXPERIMENT_074_ATTENTION_TOLERANCE_POLICY_PANEL.md`](EXPERIMENT_074_ATTENTION_TOLERANCE_POLICY_PANEL.md); offline interpretation policy; **not** generation integration |
+| — | **Generation-shadow observer smoke** | **Complete** | Phase 16K ✅ | [`EXPERIMENT_076_GENERATION_SHADOW_OBSERVER_SMOKE.md`](EXPERIMENT_076_GENERATION_SHADOW_OBSERVER_SMOKE.md); external post-hoc observer; **not** generation integration |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

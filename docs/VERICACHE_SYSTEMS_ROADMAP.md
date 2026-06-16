@@ -225,22 +225,8 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 16A (streaming quantized-KV attention feasibility):** [`EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md`](EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md) — tensor-level reference; chunked dequantized attention; **not** inference integration or throughput.
 
-**Phase 16B (HF single-layer attention-drift probe):** [`EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md`](EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md) — offline HF Q/K/V drift; **not** generation integration or throughput.
+**Phase 16K (Generation-shadow observer smoke):** [`EXPERIMENT_076_GENERATION_SHADOW_OBSERVER_SMOKE.md`](EXPERIMENT_076_GENERATION_SHADOW_OBSERVER_SMOKE.md) — external L1 post-hoc observer; **not** generation integration or throughput.
 
-**Phase 16C (Qwen RoPE/GQA long-context probe):** [`EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md`](EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md) — RoPE/GQA extraction fix + long-context chunking; **not** generation integration or throughput.
-
-**Phase 16D (Multi-layer drift accumulation):** [`EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md`](EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md) — offline multi-layer compressed-path replay; **not** generation integration or throughput.
-
-**Phase 16E (Streaming numerics audit):** [`EXPERIMENT_070_STREAMING_MULTILAYER_NUMERICS_AUDIT.md`](EXPERIMENT_070_STREAMING_MULTILAYER_NUMERICS_AUDIT.md) — Phase 16D boundary failure diagnosis; **not** generation integration or throughput.
-
-**Phase 16F (Full-prefix logit drift smoke):** [`EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md`](EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md) — offline full-stack logit drift for fixed prompts; **not** generation integration or throughput.
-
-**Phase 16G (Full-depth divergence trace):** [`EXPERIMENT_072_FULL_DEPTH_DIVERGENCE_TRACE.md`](EXPERIMENT_072_FULL_DEPTH_DIVERGENCE_TRACE.md) — layer-by-layer streaming/materialized trace; **not** generation integration or throughput.
-
-**Phase 16H (Qwen-family divergence panel):** [`EXPERIMENT_073_QWEN_FAMILY_DIVERGENCE_PANEL.md`](EXPERIMENT_073_QWEN_FAMILY_DIVERGENCE_PANEL.md) — cross-model offline panel reusing 16G trace; **not** generation integration or throughput.
-
-**Phase 16I (Attention tolerance policy panel):** [`EXPERIMENT_074_ATTENTION_TOLERANCE_POLICY_PANEL.md`](EXPERIMENT_074_ATTENTION_TOLERANCE_POLICY_PANEL.md) — formalized offline tolerance/interpretation policy; **not** generation integration or throughput.
-
-**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env / Post-15C / Post-15D / Post-15E / Post-16A / Post-16B / Post-16C / Post-16D / Post-16E / Post-16F / Post-16G / Post-16H / Post-16I:** vLLM environment feasibility track deferred at 15E; Phase 16A–16I compressed-attention research; default CLI/runtime unchanged.
+**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env / Post-15C / Post-15D / Post-15E / Post-16A / Post-16K:** vLLM environment feasibility track deferred at 15E; Phase 16A–16K compressed-attention research; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

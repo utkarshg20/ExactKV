@@ -74,6 +74,27 @@ from exactkv.attention.tolerance_policy import (
     validate_exp074_report,
 )
 
+from exactkv.attention.generation_shadow_review import (
+    EXPERIMENT_075_ID,
+    EXP075_CLAIM_NOTE,
+    PROPOSED_SHADOW_CLI_FLAG,
+    ShadowLevelId,
+    run_exp075_generation_shadow_review,
+    validate_exp075_report,
+)
+
+from exactkv.attention.generation_shadow_observer import (
+    EXPERIMENT_076_ID,
+    EXP076_CLAIM_NOTE,
+    GenerationShadowObserverConfig,
+    GenerationShadowObserverResult,
+    GenerationShadowMetrics,
+    GenerationShadowStatus,
+    build_exp076_report,
+    run_generation_shadow_observer,
+    validate_exp076_report,
+)
+
 __all__ = [
     "EXPERIMENT_066_ID",
     "EXP066_CLAIM_NOTE",
@@ -98,6 +119,8 @@ __all__ = [
     "EXPERIMENT_072_ID",
     "EXPERIMENT_073_ID",
     "EXPERIMENT_074_ID",
+    "EXPERIMENT_075_ID",
+    "EXPERIMENT_076_ID",
     "EXP067_CLAIM_NOTE",
     "EXP068_CLAIM_NOTE",
     "EXP069_CLAIM_NOTE",
@@ -106,6 +129,14 @@ __all__ = [
     "EXP072_CLAIM_NOTE",
     "EXP073_CLAIM_NOTE",
     "EXP074_CLAIM_NOTE",
+    "EXP075_CLAIM_NOTE",
+    "EXP076_CLAIM_NOTE",
+    "PROPOSED_SHADOW_CLI_FLAG",
+    "ShadowLevelId",
+    "GenerationShadowObserverConfig",
+    "GenerationShadowObserverResult",
+    "GenerationShadowMetrics",
+    "GenerationShadowStatus",
     "AttentionTolerancePolicy",
     "AttentionToleranceDecision",
     "OfflineAttentionStatus",
@@ -122,6 +153,9 @@ __all__ = [
     "run_exp072_probe",
     "run_exp073_probe",
     "run_exp074_panel",
+    "run_exp075_generation_shadow_review",
+    "run_generation_shadow_observer",
+    "build_exp076_report",
     "run_hf_attention_drift_cell",
     "validate_exp067_report",
     "validate_exp068_report",
@@ -131,4 +165,6 @@ __all__ = [
     "validate_exp072_report",
     "validate_exp073_report",
     "validate_exp074_report",
+    "validate_exp075_report",
+    "validate_exp076_report",
 ]

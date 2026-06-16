@@ -130,7 +130,11 @@ Does not reproduce VeriCache throughput, serving, or memory panels.
 
 ## 14. Next step
 
-**Phase 16J (proposed):** generation-shadow wiring review or broader offline sweep — only with explicit approval; still no default runtime integration.
+**Phase 16J (complete):** [`EXPERIMENT_075_GENERATION_SHADOW_WIRING_REVIEW.md`](EXPERIMENT_075_GENERATION_SHADOW_WIRING_REVIEW.md) — generation-shadow wiring review.
+
+**Phase 16K (complete):** [`EXPERIMENT_076_GENERATION_SHADOW_OBSERVER_SMOKE.md`](EXPERIMENT_076_GENERATION_SHADOW_OBSERVER_SMOKE.md) — external L1 generation-shadow observer.
+
+**Phase 16L (proposed):** per-round decode observer — still no `ExactKVGenerator` modification.
 
 ---
 
