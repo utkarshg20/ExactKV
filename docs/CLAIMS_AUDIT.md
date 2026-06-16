@@ -58,6 +58,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Qwen RoPE/GQA long-context attention probe | Phase 16C / Exp 068 | [`EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md`](EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md); RoPE/GQA + long-context chunking; **not** generation integration |
 | Multi-layer attention drift accumulation | Phase 16D / Exp 069 | [`EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md`](EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md); offline multi-layer replay; **not** generation integration |
 | Streaming multi-layer numerics audit | Phase 16E / Exp 070 | [`EXPERIMENT_070_STREAMING_MULTILAYER_NUMERICS_AUDIT.md`](EXPERIMENT_070_STREAMING_MULTILAYER_NUMERICS_AUDIT.md); Phase 16D boundary diagnosis; **not** generation integration |
+| Full-prefix logit drift smoke | Phase 16F / Exp 071 | [`EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md`](EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md); offline full-stack logit drift; **not** generation integration |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

@@ -47,6 +47,13 @@ from exactkv.attention.hf_multilayer_probe import (
     validate_exp070_report,
 )
 
+from exactkv.attention.hf_full_replay_probe import (
+    EXPERIMENT_071_ID,
+    EXP071_CLAIM_NOTE,
+    run_exp071_probe,
+    validate_exp071_report,
+)
+
 __all__ = [
     "EXPERIMENT_066_ID",
     "EXP066_CLAIM_NOTE",
@@ -67,10 +74,12 @@ __all__ = [
     "EXPERIMENT_068_ID",
     "EXPERIMENT_069_ID",
     "EXPERIMENT_070_ID",
+    "EXPERIMENT_071_ID",
     "EXP067_CLAIM_NOTE",
     "EXP068_CLAIM_NOTE",
     "EXP069_CLAIM_NOTE",
     "EXP070_CLAIM_NOTE",
+    "EXP071_CLAIM_NOTE",
     "PHASE16D_REGRESSION_CELL",
     "compute_drift_metrics",
     "extract_qkv_from_qwen2_layer",
@@ -78,9 +87,11 @@ __all__ = [
     "run_exp068_probe",
     "run_exp069_probe",
     "run_exp070_probe",
+    "run_exp071_probe",
     "run_hf_attention_drift_cell",
     "validate_exp067_report",
     "validate_exp068_report",
     "validate_exp069_report",
     "validate_exp070_report",
+    "validate_exp071_report",
 ]

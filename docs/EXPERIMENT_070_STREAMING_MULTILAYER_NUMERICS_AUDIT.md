@@ -155,7 +155,9 @@ VeriCache serving stacks emphasize throughput and memory under vLLM/LMCache. Pha
 
 ## 14. Next step
 
-**Phase 16F (proposed):** broader model panel sweep — only after 16E tolerance/accumulator recommendation is reviewed; still opt-in, no default runtime integration.
+**Phase 16F complete:** offline full-prefix logit drift smoke — [`EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md`](EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md)
+
+**Phase 16G (proposed):** broader model panel sweep — only after 16F report review; still no default runtime integration.
 
 ---
 

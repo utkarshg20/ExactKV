@@ -176,6 +176,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Qwen RoPE/GQA long-context attention probe** | **Complete** | Phase 16C ✅ | [`EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md`](EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md); RoPE/GQA + long-context chunking; **not** generation integration |
 | — | **Multi-layer attention drift accumulation** | **Complete** | Phase 16D ✅ | [`EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md`](EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md); offline multi-layer replay; **not** generation integration |
 | — | **Streaming multi-layer numerics audit** | **Complete** | Phase 16E ✅ | [`EXPERIMENT_070_STREAMING_MULTILAYER_NUMERICS_AUDIT.md`](EXPERIMENT_070_STREAMING_MULTILAYER_NUMERICS_AUDIT.md); Phase 16D boundary diagnosis; **not** generation integration |
+| — | **Full-prefix logit drift smoke** | **Complete** | Phase 16F ✅ | [`EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md`](EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md); offline full-stack logit drift; **not** generation integration |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 
