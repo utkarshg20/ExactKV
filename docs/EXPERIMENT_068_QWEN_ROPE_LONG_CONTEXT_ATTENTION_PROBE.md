@@ -177,7 +177,9 @@ VeriCache serving stacks emphasize throughput and memory under vLLM/LMCache. Pha
 
 ## 14. Next step
 
-**Phase 16D (proposed):** multi-layer offline accumulation micro-benchmark — still opt-in, no default runtime, no serving claims. Do **not** proceed until Phase 16C RoPE/long-context report is captured.
+**Phase 16D complete:** multi-layer drift accumulation — [`EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md`](EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md)
+
+**Phase 16E (proposed):** broader panel or generation-adjacent offline smoke — still no default runtime integration.
 
 ---
 

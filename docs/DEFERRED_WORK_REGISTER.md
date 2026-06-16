@@ -174,6 +174,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Streaming quantized-KV attention feasibility** | **Complete** | Phase 16A ✅ | [`EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md`](EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md); tensor-level reference; **not** inference integration |
 | — | **HF single-layer attention-drift probe** | **Complete** | Phase 16B ✅ | [`EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md`](EXPERIMENT_067_HF_SINGLE_LAYER_ATTENTION_DRIFT.md); offline HF Q/K/V drift; **not** generation integration |
 | — | **Qwen RoPE/GQA long-context attention probe** | **Complete** | Phase 16C ✅ | [`EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md`](EXPERIMENT_068_QWEN_ROPE_LONG_CONTEXT_ATTENTION_PROBE.md); RoPE/GQA + long-context chunking; **not** generation integration |
+| — | **Multi-layer attention drift accumulation** | **Complete** | Phase 16D ✅ | [`EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md`](EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md); offline multi-layer replay; **not** generation integration |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

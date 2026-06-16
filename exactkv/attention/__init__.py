@@ -23,12 +23,23 @@ from exactkv.attention.streaming_quant_attention import (
 from exactkv.attention.hf_single_layer_probe import (
     DEFAULT_MODEL_ID,
     EXPERIMENT_067_ID,
+    EXPERIMENT_068_ID,
     EXP067_CLAIM_NOTE,
+    EXP068_CLAIM_NOTE,
     compute_drift_metrics,
     extract_qkv_from_qwen2_layer,
     run_exp067_probe,
+    run_exp068_probe,
     run_hf_attention_drift_cell,
     validate_exp067_report,
+    validate_exp068_report,
+)
+
+from exactkv.attention.hf_multilayer_probe import (
+    EXPERIMENT_069_ID,
+    EXP069_CLAIM_NOTE,
+    run_exp069_probe,
+    validate_exp069_report,
 )
 
 __all__ = [
@@ -48,10 +59,18 @@ __all__ = [
     "validate_exp066_report",
     "DEFAULT_MODEL_ID",
     "EXPERIMENT_067_ID",
+    "EXPERIMENT_068_ID",
+    "EXPERIMENT_069_ID",
     "EXP067_CLAIM_NOTE",
+    "EXP068_CLAIM_NOTE",
+    "EXP069_CLAIM_NOTE",
     "compute_drift_metrics",
     "extract_qkv_from_qwen2_layer",
     "run_exp067_probe",
+    "run_exp068_probe",
+    "run_exp069_probe",
     "run_hf_attention_drift_cell",
     "validate_exp067_report",
+    "validate_exp068_report",
+    "validate_exp069_report",
 ]
