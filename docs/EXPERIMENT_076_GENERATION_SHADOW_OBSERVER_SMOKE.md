@@ -52,6 +52,8 @@ The wrapper calls `ExactKVGenerator.generate` through the public API, captures o
 | `prompt_plus_generated_tokens` | Shadow on prompt + generated token IDs when available |
 | `blocked_missing_tokens` | Automatic when token IDs cannot be reconstructed |
 
+Phase 16L adds a dedicated panel comparing `prompt_prefix_only` vs `prompt_plus_generated_tokens` across multiple prompts: [`EXPERIMENT_077_GENERATION_SHADOW_PROMPT_PLUS_GENERATED_PANEL.md`](EXPERIMENT_077_GENERATION_SHADOW_PROMPT_PLUS_GENERATED_PANEL.md).
+
 ---
 
 ## 6. What the wrapper observes

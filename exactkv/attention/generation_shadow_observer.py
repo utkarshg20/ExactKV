@@ -60,6 +60,7 @@ class GenerationShadowObserverConfig:
     allow_parity_fail: bool = True
     skip_generation: bool = False
     local_files_only: bool = False
+    allow_generated_text_retokenize: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -101,6 +102,7 @@ class PromptShadowResult:
     prompt_preview: str
     generation_completed: bool
     generation_output_preview: str
+    generation_output_token_ids_available: bool
     generation_output_token_count: int
     shadow_observer_enabled: bool
     shadow_ran_after_generation: bool
@@ -165,6 +167,7 @@ def reconstruct_shadow_input_ids(
     shadow_mode: str,
     tokenizer_encode: Callable[[str], torch.Tensor] | None = None,
     prompt_text: str = "",
+    generated_text_retokenize_ok: bool = False,
 ) -> tuple[torch.Tensor | None, str, list[str]]:
     """Build fixed sequence for post-hoc shadow replay."""
     blockers: list[str] = []
@@ -182,13 +185,21 @@ def reconstruct_shadow_input_ids(
         return prompt_ids, "prompt_prefix_only", []
 
     if shadow_mode == "prompt_plus_generated_tokens":
-        if not gen_out.generation_output_token_ids:
+        gen_token_ids = gen_out.generation_output_token_ids
+        if not gen_token_ids and generated_text_retokenize_ok and tokenizer_encode is not None:
+            # Conservative fallback: only when explicitly enabled.
+            # Note: this is not guaranteed to reproduce the model's actual token IDs.
+            if gen_out.generation_output_text:
+                try:
+                    gen_ids = tokenizer_encode(gen_out.generation_output_text)
+                    gen_token_ids = gen_ids.squeeze(0).tolist()
+                    if isinstance(gen_token_ids, int):
+                        gen_token_ids = [gen_token_ids]
+                except Exception:  # noqa: BLE001
+                    gen_token_ids = None
+        if not gen_token_ids:
             return None, "blocked_missing_tokens", ["generated token IDs unavailable"]
-        gen_tensor = torch.tensor(
-            [gen_out.generation_output_token_ids],
-            dtype=prompt_ids.dtype,
-            device=prompt_ids.device,
-        )
+        gen_tensor = torch.tensor([gen_token_ids], dtype=prompt_ids.dtype, device=prompt_ids.device)
         return torch.cat([prompt_ids, gen_tensor], dim=1), "prompt_plus_generated_tokens", []
 
     return None, "blocked_missing_tokens", [f"unknown shadow_mode: {shadow_mode}"]
@@ -343,6 +354,7 @@ def observe_prompt(
             prompt_preview=_preview(prompt_text),
             generation_completed=False,
             generation_output_preview="",
+            generation_output_token_ids_available=False,
             generation_output_token_count=0,
             shadow_observer_enabled=False,
             shadow_ran_after_generation=False,
@@ -382,6 +394,7 @@ def observe_prompt(
             prompt_preview=_preview(prompt_text),
             generation_completed=False,
             generation_output_preview="",
+            generation_output_token_ids_available=False,
             generation_output_token_count=0,
             shadow_observer_enabled=True,
             shadow_ran_after_generation=False,
@@ -403,6 +416,7 @@ def observe_prompt(
             prompt_preview=_preview(prompt_text),
             generation_completed=False,
             generation_output_preview="",
+            generation_output_token_ids_available=False,
             generation_output_token_count=0,
             shadow_observer_enabled=True,
             shadow_ran_after_generation=False,
@@ -423,6 +437,7 @@ def observe_prompt(
         shadow_mode=config.shadow_mode,
         tokenizer_encode=tokenizer_encode,
         prompt_text=prompt_text,
+        generated_text_retokenize_ok=config.allow_generated_text_retokenize,
     )
     if input_ids is None:
         return PromptShadowResult(
@@ -430,6 +445,7 @@ def observe_prompt(
             prompt_preview=_preview(prompt_text),
             generation_completed=True,
             generation_output_preview=_preview(gen_out.generation_output_text),
+            generation_output_token_ids_available=bool(gen_out.generation_output_token_ids),
             generation_output_token_count=len(gen_out.generation_output_token_ids or []),
             shadow_observer_enabled=True,
             shadow_ran_after_generation=False,
@@ -455,6 +471,7 @@ def observe_prompt(
             prompt_preview=_preview(prompt_text),
             generation_completed=True,
             generation_output_preview=_preview(gen_out.generation_output_text),
+            generation_output_token_ids_available=bool(gen_out.generation_output_token_ids),
             generation_output_token_count=len(gen_out.generation_output_token_ids or []),
             shadow_observer_enabled=True,
             shadow_ran_after_generation=False,
@@ -507,6 +524,7 @@ def observe_prompt(
         prompt_preview=_preview(prompt_text),
         generation_completed=True,
         generation_output_preview=_preview(gen_out.generation_output_text),
+        generation_output_token_ids_available=bool(gen_out.generation_output_token_ids),
         generation_output_token_count=len(gen_out.generation_output_token_ids or []),
         shadow_observer_enabled=True,
         shadow_ran_after_generation=True,

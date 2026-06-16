@@ -56,6 +56,7 @@ def test_generation_output_unchanged() -> None:
         hf_model=object(),
     )
     assert result.generation_output_preview == "PARIS_TOKEN_OUTPUT"
+    assert result.generation_output_token_ids_available is True
     assert result.generation_completed is True
 
 
