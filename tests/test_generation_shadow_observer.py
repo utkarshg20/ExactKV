@@ -158,3 +158,17 @@ def test_no_forbidden_claim_fields() -> None:
         "production_memory_savings",
     ):
         assert term in blob
+
+
+def test_default_exp078_prompts_count() -> None:
+    from exactkv.attention.generation_shadow_observer import default_exp078_prompts
+
+    assert len(default_exp078_prompts()) == 8
+
+
+def test_resolve_panel_compressors_blocks_unknown() -> None:
+    from exactkv.attention.generation_shadow_observer import resolve_panel_compressors
+
+    runnable, blocked = resolve_panel_compressors(["noop", "missing_compressor_xyz"])
+    assert "noop" in runnable
+    assert any(b["reason"] == "blocked_compressor_api_missing" for b in blocked)

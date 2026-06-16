@@ -85,14 +85,20 @@ from exactkv.attention.generation_shadow_review import (
 
 from exactkv.attention.generation_shadow_observer import (
     EXPERIMENT_076_ID,
+    EXPERIMENT_078_ID,
     EXP076_CLAIM_NOTE,
+    EXP078_CLAIM_NOTE,
     GenerationShadowObserverConfig,
     GenerationShadowObserverResult,
     GenerationShadowMetrics,
     GenerationShadowStatus,
     build_exp076_report,
+    default_exp078_prompts,
+    resolve_panel_compressors,
+    run_exp078_expanded_panel,
     run_generation_shadow_observer,
     validate_exp076_report,
+    validate_exp078_report,
 )
 
 __all__ = [
@@ -156,6 +162,10 @@ __all__ = [
     "run_exp075_generation_shadow_review",
     "run_generation_shadow_observer",
     "build_exp076_report",
+    "run_exp078_expanded_panel",
+    "default_exp078_prompts",
+    "resolve_panel_compressors",
+    "validate_exp078_report",
     "run_hf_attention_drift_cell",
     "validate_exp067_report",
     "validate_exp068_report",

@@ -173,6 +173,8 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Idle-GPU vLLM object KV probe** | **Deferred** | Phase 15E ⏸ | [`EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md`](EXPERIMENT_065_IDLE_VLLM_OBJECT_KV_PROBE.md); blocked on auto-serving RunPod vLLM template; **not** vLLM integration |
 | — | **Streaming quantized-KV attention feasibility** | **Complete** | Phase 16A ✅ | [`EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md`](EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md); tensor-level reference; **not** inference integration |
 | — | **Generation-shadow observer smoke** | **Complete** | Phase 16K ✅ | [`EXPERIMENT_076_GENERATION_SHADOW_OBSERVER_SMOKE.md`](EXPERIMENT_076_GENERATION_SHADOW_OBSERVER_SMOKE.md); external post-hoc observer; **not** generation integration |
+| — | **Prompt+generated generation-shadow panel** | **Complete** | Phase 16L ✅ | [`EXPERIMENT_077_GENERATION_SHADOW_PROMPT_PLUS_GENERATED_PANEL.md`](EXPERIMENT_077_GENERATION_SHADOW_PROMPT_PLUS_GENERATED_PANEL.md); fixed-sequence post-hoc replay |
+| — | **Expanded generation-shadow panel** | **Complete** | Phase 16M ✅ | [`EXPERIMENT_078_GENERATION_SHADOW_EXPANDED_PANEL.md`](EXPERIMENT_078_GENERATION_SHADOW_EXPANDED_PANEL.md); prompts × lengths × compressors when API exposes them |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

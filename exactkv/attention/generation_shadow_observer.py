@@ -75,6 +75,10 @@ class GenerationOutput:
     generation_output_token_ids: list[int] | None
     prompt_ids: torch.Tensor | None = None
     full_sequence_ids: torch.Tensor | None = None
+    exactkv_failures: int | None = None
+    token_exact_match: bool | None = None
+    compressor_name: str | None = None
+    exactkv_traces: list[Any] | None = None
     blockers: list[str] = field(default_factory=list)
 
 
@@ -230,6 +234,7 @@ def default_exactkv_generation(
             generation_output_token_ids=list(token_ids),
             prompt_ids=result.prompt_ids,
             full_sequence_ids=result.full_sequence_ids,
+            exactkv_traces=list(result.traces) if getattr(result, "traces", None) else None,
         )
     except Exception as exc:  # noqa: BLE001
         return GenerationOutput(
@@ -756,5 +761,568 @@ def validate_exp076_report(report: dict[str, Any]) -> list[str]:
         ):
             if ck not in pr:
                 errors.append(f"prompt_results[{idx}] missing {ck}")
+
+    return errors
+
+
+# --- Phase 16M: expanded generation-shadow panel ---
+
+EXPERIMENT_078_ID = "exp078_generation_shadow_expanded_panel"
+DEFAULT_EXP078_REPORT = Path("reports/experiment_078_generation_shadow_expanded_panel.json")
+DEFAULT_EXP078_COMPRESSORS: tuple[str, ...] = ("noop", "int8", "int4_sim", "k8_v4_sim")
+DEFAULT_EXP078_MAX_NEW_TOKENS: tuple[int, ...] = (4, 8)
+DEFAULT_EXP078_SHADOW_MODES: tuple[str, ...] = (
+    "prompt_prefix_only",
+    "prompt_plus_generated_tokens",
+)
+
+EXP078_CLAIM_NOTE = (
+    "External expanded generation-shadow panel (Phase 16M). Runs ExactKV generation "
+    "unchanged across prompts, max_new_tokens, and compressors when cleanly exposed, "
+    "then post-hoc shadow diagnostics. Not generation integration, vLLM, CUDA/Triton "
+    "kernels, or default runtime change. Compressor results reported only when APIs "
+    "expose them cleanly. Shadow logits/top-k are diagnostic only."
+)
+
+
+def default_exp078_prompts() -> list[tuple[str, str]]:
+    """Eight deterministic CPU-friendly prompts for expanded panel."""
+    long_ctx = (
+        "ExactKV offline generation-shadow panel long-context filler. "
+        "Deterministic text for fixed-sequence post-hoc replay. " * 4
+    )
+    return [
+        ("p0_capital_france", "The capital of France is"),
+        ("p1_simple_math", "Two plus two equals"),
+        ("p2_json_like", '{"name": "ExactKV", "mode": "shadow", "tokens": 4}'),
+        ("p3_code_like", "def add(a, b):\n    return a + b\n\n# call:"),
+        ("p4_arithmetic_text", "If you multiply 7 by 8 you get"),
+        ("p5_short_story", "Write one sentence about a cat:"),
+        ("p6_structured_list", "List three colors separated by commas:"),
+        ("p7_long_context", long_ctx),
+    ]
+
+
+def resolve_panel_compressors(
+    requested: Sequence[str],
+) -> tuple[list[str], list[dict[str, str]]]:
+    """Return compressors that can be instantiated via get_compressor."""
+    try:
+        # Pre-import breaks compressors ↔ cache circular import on fresh interpreters.
+        from exactkv.runtime.exactkv_generator import ExactKVGenerator  # noqa: F401
+        from exactkv.compressors import get_compressor, list_compressors
+    except ImportError:
+        return [], [
+            {"compressor": name, "reason": "blocked_compressor_api_missing"}
+            for name in requested
+        ]
+
+    available = set(list_compressors())
+    runnable: list[str] = []
+    blocked: list[dict[str, str]] = []
+    for name in requested:
+        if name not in available:
+            blocked.append({
+                "compressor": name,
+                "reason": "blocked_compressor_api_missing",
+            })
+            continue
+        try:
+            get_compressor(name)
+            runnable.append(name)
+        except Exception as exc:  # noqa: BLE001
+            blocked.append({
+                "compressor": name,
+                "reason": f"compressor init failed: {type(exc).__name__}: {exc}",
+            })
+    return runnable, blocked
+
+
+def run_exactkv_generation_with_baseline(
+    *,
+    runtime: Any,
+    prompt: str,
+    max_new_tokens: int,
+    compressor_name: str,
+    draft_len: int = 4,
+    full_baseline_ids: list[int] | None = None,
+) -> GenerationOutput:
+    """Run ExactKVGenerator unchanged and compare to full greedy baseline."""
+    from exactkv.metrics.exactness import token_exact_match
+    from exactkv.runtime.generation import generate_full_greedy
+
+    gen_out = default_exactkv_generation(
+        runtime=runtime,
+        prompt=prompt,
+        max_new_tokens=max_new_tokens,
+        draft_len=draft_len,
+        compressor_name=compressor_name,
+    )
+    gen_out.compressor_name = compressor_name
+    if not gen_out.generation_completed:
+        gen_out.exactkv_failures = None
+        gen_out.token_exact_match = None
+        return gen_out
+
+    try:
+        if full_baseline_ids is None:
+            full_res = generate_full_greedy(runtime, prompt, max_new_tokens)
+            full_baseline_ids = full_res.generated_ids.squeeze().tolist()
+            if isinstance(full_baseline_ids, int):
+                full_baseline_ids = [full_baseline_ids]
+        ekv_ids = gen_out.generation_output_token_ids or []
+        match = bool(
+            token_exact_match(
+                torch.tensor([full_baseline_ids], dtype=torch.long),
+                torch.tensor([ekv_ids], dtype=torch.long),
+            )
+        )
+        gen_out.token_exact_match = match
+        gen_out.exactkv_failures = 0 if match else 1
+    except Exception as exc:  # noqa: BLE001
+        gen_out.exactkv_failures = None
+        gen_out.token_exact_match = None
+        gen_out.blockers.append(f"baseline compare failed: {type(exc).__name__}: {exc}")
+    return gen_out
+
+
+def run_shadow_cells_for_generation(
+    *,
+    gen_out: GenerationOutput,
+    prompt_id: str,
+    shadow_modes: Sequence[str],
+    hf_model: Any | None,
+    shadow_replay_fn: Callable[..., dict[str, Any]] | None,
+    chunk_size: int,
+    accumulator_mode: str,
+    allow_parity_fail: bool,
+    allow_shadow_fail: bool,
+) -> list[dict[str, Any]]:
+    """Run post-hoc shadow for each shadow mode on one generation output."""
+    cells: list[dict[str, Any]] = []
+    for mode in shadow_modes:
+        input_ids, seq_mode, recon_blockers = reconstruct_shadow_input_ids(
+            gen_out,
+            shadow_mode=mode,
+            generated_text_retokenize_ok=False,
+        )
+        if input_ids is None:
+            tol = (
+                "blocked_missing_generated_token_ids"
+                if mode == "prompt_plus_generated_tokens"
+                else "blocked"
+            )
+            cells.append({
+                "shadow_sequence_mode": seq_mode,
+                "shadow_mode_requested": mode,
+                "shadow_sequence_length": 0,
+                "shadow_status": GenerationShadowStatus.SHADOW_BLOCKED.value,
+                "tolerance_policy_status": tol,
+                "streaming_vs_materialized_metrics": None,
+                "full_vs_streaming_metrics": None,
+                "topk_agreement_metrics": None,
+                "interpretation_note": "Could not reconstruct shadow sequence.",
+                "blockers": recon_blockers,
+            })
+            continue
+
+        if hf_model is None and shadow_replay_fn is None:
+            cells.append({
+                "shadow_sequence_mode": seq_mode,
+                "shadow_mode_requested": mode,
+                "shadow_sequence_length": int(input_ids.shape[-1]),
+                "shadow_status": GenerationShadowStatus.SHADOW_BLOCKED.value,
+                "tolerance_policy_status": "blocked",
+                "streaming_vs_materialized_metrics": None,
+                "full_vs_streaming_metrics": None,
+                "topk_agreement_metrics": None,
+                "interpretation_note": "HF model unavailable for shadow replay.",
+                "blockers": ["hf model missing for shadow replay"],
+            })
+            continue
+
+        replay = shadow_replay_fn or default_offline_shadow_replay
+        try:
+            shadow_cell = replay(
+                model=hf_model,
+                input_ids=input_ids,
+                prompt_id=prompt_id,
+                chunk_size=chunk_size,
+                accumulator_mode=accumulator_mode,
+                allow_parity_fail=allow_parity_fail,
+            )
+        except Exception as exc:  # noqa: BLE001
+            shadow_cell = {"blockers": [f"shadow replay failed: {type(exc).__name__}: {exc}"]}
+
+        if shadow_cell.get("blockers") and not allow_shadow_fail:
+            shadow_status = GenerationShadowStatus.SHADOW_BLOCKED.value
+        elif shadow_cell.get("blockers"):
+            shadow_status = GenerationShadowStatus.SHADOW_BLOCKED.value
+        else:
+            shadow_status = GenerationShadowStatus.SHADOW_COMPLETE.value
+
+        num_layers = int(shadow_cell.get("num_layers_replayed") or 24)
+        tol_status, interp = apply_tolerance_policy_to_shadow_cell(
+            shadow_cell, num_layers=num_layers,
+        )
+        sm = shadow_cell.get("streaming_vs_materialized_logit_metrics") or {}
+        fs = shadow_cell.get("full_vs_streaming_logit_metrics") or {}
+        topk = {
+            "top1_agreement": sm.get("top1_agreement"),
+            "top5_overlap": sm.get("top5_overlap"),
+            "top10_overlap": sm.get("top10_overlap"),
+        }
+        cells.append({
+            "shadow_sequence_mode": seq_mode,
+            "shadow_mode_requested": mode,
+            "shadow_sequence_length": int(input_ids.shape[-1]),
+            "shadow_status": shadow_status,
+            "tolerance_policy_status": tol_status,
+            "streaming_vs_materialized_metrics": sm,
+            "full_vs_streaming_metrics": fs,
+            "topk_agreement_metrics": topk,
+            "interpretation_note": interp,
+            "blockers": list(shadow_cell.get("blockers") or []),
+        })
+    return cells
+
+
+def _summarize_exactkv_failures(cells: Sequence[dict[str, Any]]) -> dict[str, Any]:
+    failures = 0
+    matches = 0
+    unknown = 0
+    for cell in cells:
+        ef = cell.get("exactkv_failures")
+        if ef is None:
+            unknown += 1
+        elif int(ef) > 0:
+            failures += 1
+        tem = cell.get("token_exact_match")
+        if tem is True:
+            matches += 1
+    return {
+        "cells_with_exactkv_failures": failures,
+        "cells_with_token_exact_match": matches,
+        "cells_with_unknown_exactkv_status": unknown,
+        "total_generation_cells": len(cells),
+    }
+
+
+def run_exp078_expanded_panel(
+    *,
+    model_id: str = DEFAULT_MODEL_ID,
+    device: str = "cpu",
+    dtype: str = "float32",
+    prompts: Sequence[tuple[str, str]] | None = None,
+    max_new_tokens_values: Sequence[int] = DEFAULT_EXP078_MAX_NEW_TOKENS,
+    shadow_modes: Sequence[str] = DEFAULT_EXP078_SHADOW_MODES,
+    compressors_requested: Sequence[str] = DEFAULT_EXP078_COMPRESSORS,
+    draft_len: int = 4,
+    chunk_size: int = DEFAULT_CHUNK_SIZE,
+    accumulator_mode: str = "float32",
+    allow_shadow_fail: bool = True,
+    allow_parity_fail: bool = True,
+    local_files_only: bool = False,
+    generation_fn: Callable[..., GenerationOutput] | None = None,
+    shadow_replay_fn: Callable[..., dict[str, Any]] | None = None,
+    runtime_loader: Callable[..., tuple[Any, Any]] | None = None,
+) -> dict[str, Any]:
+    """Run Experiment 078 expanded external generation-shadow panel."""
+    prompt_panel = list(prompts) if prompts is not None else default_exp078_prompts()
+    runnable_compressors, blocked_compressors = resolve_panel_compressors(compressors_requested)
+
+    blockers: list[str] = []
+    if not runnable_compressors:
+        blockers.append("no compressors runnable via get_compressor API")
+
+    runtime: Any | None = None
+    if generation_fn is None:
+        if runtime_loader is not None:
+            try:
+                runtime, _tokenizer = runtime_loader(
+                    model_id=model_id,
+                    device=device,
+                    dtype=dtype,
+                    local_files_only=local_files_only,
+                )
+            except Exception as exc:  # noqa: BLE001
+                blockers.append(f"runtime load failed: {type(exc).__name__}: {exc}")
+        else:
+            try:
+                from exactkv.runtime.model_runtime import ModelRuntime
+
+                runtime = ModelRuntime(model_id, device=device, dtype=dtype)
+            except Exception as exc:  # noqa: BLE001
+                blockers.append(f"runtime load failed: {type(exc).__name__}: {exc}")
+
+    hf_model = getattr(runtime, "model", None) if runtime is not None else None
+    baseline_cache: dict[tuple[str, int], list[int]] = {}
+
+    generation_cells: list[dict[str, Any]] = []
+    gen_success = 0
+    gen_blocked = 0
+    shadow_success = 0
+    shadow_blocked = 0
+    ppg_success = 0
+    ppg_blocked = 0
+    token_ids_available = 0
+    tol_summary: dict[str, int] = {}
+    topk_top1 = 0
+
+    for prompt_id, prompt_text in prompt_panel:
+        preview = _preview(prompt_text)
+        for max_new in max_new_tokens_values:
+            baseline_key = (prompt_id, max_new)
+            for compressor in runnable_compressors:
+                cell_blockers: list[str] = []
+                if runtime is None and generation_fn is None:
+                    gen_blocked += 1
+                    generation_cells.append({
+                        "prompt_id": prompt_id,
+                        "prompt_preview": preview,
+                        "compressor": compressor,
+                        "max_new_tokens": max_new,
+                        "generation_completed": False,
+                        "exactkv_failures": None,
+                        "token_exact_match": None,
+                        "generation_output_preview": "",
+                        "generation_output_token_ids_available": False,
+                        "generation_output_token_count": 0,
+                        "generation_modified_by_shadow": False,
+                        "shadow_used_for_token_commit": False,
+                        "shadow_cells": [],
+                        "blockers": list(blockers),
+                    })
+                    continue
+
+                if generation_fn is not None:
+                    gen_out = generation_fn(
+                        prompt=prompt_text,
+                        max_new_tokens=max_new,
+                        compressor_name=compressor,
+                    )
+                else:
+                    full_ids = baseline_cache.get(baseline_key)
+                    gen_out = run_exactkv_generation_with_baseline(
+                        runtime=runtime,
+                        prompt=prompt_text,
+                        max_new_tokens=max_new,
+                        compressor_name=compressor,
+                        draft_len=draft_len,
+                        full_baseline_ids=full_ids,
+                    )
+                    if full_ids is None and gen_out.generation_completed:
+                        try:
+                            from exactkv.runtime.generation import generate_full_greedy
+
+                            full_res = generate_full_greedy(runtime, prompt_text, max_new)
+                            full_ids = full_res.generated_ids.squeeze().tolist()
+                            if isinstance(full_ids, int):
+                                full_ids = [full_ids]
+                            baseline_cache[baseline_key] = full_ids
+                        except Exception:  # noqa: BLE001
+                            pass
+
+                if not gen_out.generation_completed:
+                    gen_blocked += 1
+                    cell_blockers.extend(gen_out.blockers)
+                else:
+                    gen_success += 1
+
+                if gen_out.generation_output_token_ids:
+                    token_ids_available += 1
+
+                shadow_cells = []
+                if gen_out.generation_completed:
+                    shadow_cells = run_shadow_cells_for_generation(
+                        gen_out=gen_out,
+                        prompt_id=prompt_id,
+                        shadow_modes=shadow_modes,
+                        hf_model=hf_model,
+                        shadow_replay_fn=shadow_replay_fn,
+                        chunk_size=chunk_size,
+                        accumulator_mode=accumulator_mode,
+                        allow_parity_fail=allow_parity_fail,
+                        allow_shadow_fail=allow_shadow_fail,
+                    )
+                elif gen_out.generation_completed and shadow_replay_fn is None and hf_model is None:
+                    for mode in shadow_modes:
+                        shadow_blocked += 1
+                        if mode == "prompt_plus_generated_tokens":
+                            ppg_blocked += 1
+                        shadow_cells.append({
+                            "shadow_sequence_mode": mode,
+                            "shadow_mode_requested": mode,
+                            "shadow_sequence_length": 0,
+                            "shadow_status": GenerationShadowStatus.SHADOW_BLOCKED.value,
+                            "tolerance_policy_status": "blocked",
+                            "streaming_vs_materialized_metrics": None,
+                            "full_vs_streaming_metrics": None,
+                            "topk_agreement_metrics": None,
+                            "interpretation_note": "HF model unavailable.",
+                            "blockers": ["hf model missing"],
+                        })
+
+                for sc in shadow_cells:
+                    if sc.get("shadow_status") == GenerationShadowStatus.SHADOW_COMPLETE.value:
+                        shadow_success += 1
+                        if sc.get("shadow_mode_requested") == "prompt_plus_generated_tokens":
+                            ppg_success += 1
+                        tol = sc.get("tolerance_policy_status")
+                        if tol:
+                            tol_summary[tol] = tol_summary.get(tol, 0) + 1
+                        if sc.get("topk_agreement_metrics", {}).get("top1_agreement"):
+                            topk_top1 += 1
+                    else:
+                        shadow_blocked += 1
+                        if sc.get("shadow_mode_requested") == "prompt_plus_generated_tokens":
+                            ppg_blocked += 1
+
+                generation_cells.append({
+                    "prompt_id": prompt_id,
+                    "prompt_preview": preview,
+                    "compressor": compressor,
+                    "max_new_tokens": max_new,
+                    "generation_completed": bool(gen_out.generation_completed),
+                    "exactkv_failures": gen_out.exactkv_failures,
+                    "token_exact_match": gen_out.token_exact_match,
+                    "generation_output_preview": _preview(gen_out.generation_output_text),
+                    "generation_output_token_ids_available": bool(gen_out.generation_output_token_ids),
+                    "generation_output_token_count": len(gen_out.generation_output_token_ids or []),
+                    "generation_modified_by_shadow": False,
+                    "shadow_used_for_token_commit": False,
+                    "shadow_cells": shadow_cells,
+                    "blockers": cell_blockers,
+                })
+
+    total_gen = len(generation_cells)
+    total_shadow = shadow_success + shadow_blocked
+    if gen_success == 0:
+        status = "blocked"
+    elif shadow_success == total_shadow and total_shadow > 0:
+        status = "diagnostic_complete"
+    elif shadow_success > 0:
+        status = "diagnostic_partial"
+    else:
+        status = "blocked"
+
+    return {
+        "experiment_id": EXPERIMENT_078_ID,
+        "status": status,
+        "model_id": model_id,
+        "device": device,
+        "dtype": dtype,
+        "prompts_requested": len(prompt_panel),
+        "compressors_requested": list(compressors_requested),
+        "compressors_run": runnable_compressors,
+        "compressors_blocked": blocked_compressors,
+        "max_new_tokens_values": list(max_new_tokens_values),
+        "shadow_modes": list(shadow_modes),
+        "total_generation_cells": total_gen,
+        "generation_successful_cells": gen_success,
+        "generation_blocked_cells": gen_blocked,
+        "total_shadow_cells": total_shadow,
+        "shadow_successful_cells": shadow_success,
+        "shadow_blocked_cells": shadow_blocked,
+        "prompt_plus_generated_successful_cells": ppg_success,
+        "prompt_plus_generated_blocked_cells": ppg_blocked,
+        "generated_token_ids_available_cells": token_ids_available,
+        "generation_modified_by_shadow": False,
+        "shadow_used_for_token_commit": False,
+        "default_runtime_changed": False,
+        "exactkv_failure_summary": _summarize_exactkv_failures(generation_cells),
+        "tolerance_policy_summary": tol_summary,
+        "topk_agreement_summary": {
+            "top1_agreement_cells": topk_top1,
+            "cell_count": shadow_success,
+        },
+        "generation_cells": generation_cells,
+        "blockers": blockers,
+        "limitations": [
+            "External expanded post-hoc observer panel; not generation integration.",
+            "Compressor results only when get_compressor API exposes them cleanly.",
+            "Prompt+generated replay is fixed-sequence analysis, not token generation.",
+            "Top-k agreement is supplementary; not exactness.",
+            "No per-round decode observer.",
+            "No CUDA/Triton/vLLM/serving integration.",
+        ],
+        "no_performance_claims_note": (
+            "No speed, throughput, latency, serving, measured active GPU memory, "
+            "or production-memory claim is made."
+        ),
+        "claim_note": EXP078_CLAIM_NOTE,
+        "forbidden_claims": list(SHADOW_FORBIDDEN_CLAIMS),
+        "cli_flag": PROPOSED_SHADOW_CLI_FLAG,
+    }
+
+
+def validate_exp078_report(report: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "status",
+        "model_id",
+        "prompts_requested",
+        "compressors_requested",
+        "compressors_run",
+        "compressors_blocked",
+        "max_new_tokens_values",
+        "shadow_modes",
+        "total_generation_cells",
+        "generation_successful_cells",
+        "generation_blocked_cells",
+        "total_shadow_cells",
+        "shadow_successful_cells",
+        "shadow_blocked_cells",
+        "prompt_plus_generated_successful_cells",
+        "prompt_plus_generated_blocked_cells",
+        "generated_token_ids_available_cells",
+        "generation_modified_by_shadow",
+        "shadow_used_for_token_commit",
+        "default_runtime_changed",
+        "exactkv_failure_summary",
+        "tolerance_policy_summary",
+        "topk_agreement_summary",
+        "generation_cells",
+        "blockers",
+        "limitations",
+        "no_performance_claims_note",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing key: {key}")
+
+    if report.get("experiment_id") != EXPERIMENT_078_ID:
+        errors.append("experiment_id mismatch")
+
+    for flag in (
+        "generation_modified_by_shadow",
+        "shadow_used_for_token_commit",
+        "default_runtime_changed",
+    ):
+        if report.get(flag) is not False:
+            errors.append(f"{flag} must be false")
+
+    for idx, cell in enumerate(report.get("generation_cells", [])):
+        if not isinstance(cell, dict):
+            errors.append(f"generation_cells[{idx}] not dict")
+            continue
+        for ck in (
+            "prompt_id",
+            "compressor",
+            "max_new_tokens",
+            "generation_completed",
+            "generation_output_token_ids_available",
+            "generation_modified_by_shadow",
+            "shadow_used_for_token_commit",
+            "shadow_cells",
+            "blockers",
+        ):
+            if ck not in cell:
+                errors.append(f"generation_cells[{idx}] missing {ck}")
+        if cell.get("generation_modified_by_shadow") is not False:
+            errors.append(f"generation_cells[{idx}].generation_modified_by_shadow must be false")
+        if cell.get("shadow_used_for_token_commit") is not False:
+            errors.append(f"generation_cells[{idx}].shadow_used_for_token_commit must be false")
 
     return errors

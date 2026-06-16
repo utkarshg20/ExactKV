@@ -115,5 +115,7 @@ Does not reproduce VeriCache throughput, serving, or memory panels.
 
 ## 12. Next step
 
-**Phase 16M (proposed):** expand panel (more prompts / compressors) or add a per-round decode observer — only with explicit approval; still no `ExactKVGenerator` modification.
+**Phase 16M (complete):** expanded external panel across prompts, `max_new_tokens`, and compressors — see [`EXPERIMENT_078_GENERATION_SHADOW_EXPANDED_PANEL.md`](EXPERIMENT_078_GENERATION_SHADOW_EXPANDED_PANEL.md).
+
+**Phase 16N (proposed):** per-round decode observer — only with explicit approval; still no `ExactKVGenerator` modification.
 
