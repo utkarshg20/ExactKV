@@ -172,3 +172,17 @@ def test_resolve_panel_compressors_blocks_unknown() -> None:
     runnable, blocked = resolve_panel_compressors(["noop", "missing_compressor_xyz"])
     assert "noop" in runnable
     assert any(b["reason"] == "blocked_compressor_api_missing" for b in blocked)
+
+
+def test_build_decode_prefix_ladder_includes_k0() -> None:
+    from exactkv.attention.generation_shadow_observer import build_decode_prefix_ladder
+
+    gen = GenerationOutput(
+        generation_completed=True,
+        generation_output_text="x",
+        generation_output_token_ids=[10, 11],
+        prompt_ids=torch.tensor([[1, 2, 3]]),
+    )
+    ladder, blockers = build_decode_prefix_ladder(gen)
+    assert blockers == []
+    assert [k for k, _ in ladder] == [0, 1, 2]

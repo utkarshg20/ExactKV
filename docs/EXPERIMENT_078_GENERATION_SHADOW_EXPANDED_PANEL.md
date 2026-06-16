@@ -146,4 +146,6 @@ Does not reproduce VeriCache throughput, serving, or memory panels.
 
 ## 16. Next step
 
-**Phase 16N (proposed):** per-round decode observer — opt-in only; still no `ExactKVGenerator` modification.
+**Phase 16N (complete):** post-hoc decode-prefix ladder observer — see [`EXPERIMENT_079_DECODE_PREFIX_LADDER_SHADOW_OBSERVER.md`](EXPERIMENT_079_DECODE_PREFIX_LADDER_SHADOW_OBSERVER.md).
+
+**Phase 16O (proposed):** live per-round decode hooks — opt-in only; still no `ExactKVGenerator` modification.
