@@ -235,6 +235,10 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 16F (Full-prefix logit drift smoke):** [`EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md`](EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md) — offline full-stack logit drift for fixed prompts; **not** generation integration or throughput.
 
-**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env / Post-15C / Post-15D / Post-15E / Post-16A / Post-16B / Post-16C / Post-16D / Post-16E / Post-16F:** vLLM environment feasibility track deferred at 15E; Phase 16A–16F compressed-attention research; default CLI/runtime unchanged.
+**Phase 16G (Full-depth divergence trace):** [`EXPERIMENT_072_FULL_DEPTH_DIVERGENCE_TRACE.md`](EXPERIMENT_072_FULL_DEPTH_DIVERGENCE_TRACE.md) — layer-by-layer streaming/materialized trace; **not** generation integration or throughput.
+
+**Phase 16H (Qwen-family divergence panel):** [`EXPERIMENT_073_QWEN_FAMILY_DIVERGENCE_PANEL.md`](EXPERIMENT_073_QWEN_FAMILY_DIVERGENCE_PANEL.md) — cross-model offline panel reusing 16G trace; **not** generation integration or throughput.
+
+**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env / Post-15C / Post-15D / Post-15E / Post-16A / Post-16B / Post-16C / Post-16D / Post-16E / Post-16F / Post-16G / Post-16H:** vLLM environment feasibility track deferred at 15E; Phase 16A–16H compressed-attention research; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

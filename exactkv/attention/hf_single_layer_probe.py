@@ -534,6 +534,64 @@ def resolve_layer_indices(num_layers: int, layers: Sequence[int] | None) -> list
     return sorted({i for i in layers if 0 <= i < num_layers})
 
 
+def extract_qwen_model_architecture(model: Any) -> dict[str, int | None]:
+    """Read Qwen2/Qwen2.5-like architecture fields from a loaded HF model."""
+    config = getattr(model, "config", None)
+    inner = getattr(model, "model", model)
+    layers = getattr(inner, "layers", None)
+    num_layers = len(layers) if layers is not None else 0
+    if config is None:
+        return {
+            "num_layers": num_layers,
+            "num_attention_heads": None,
+            "num_key_value_heads": None,
+            "hidden_size": None,
+        }
+    return {
+        "num_layers": int(getattr(config, "num_hidden_layers", num_layers) or num_layers),
+        "num_attention_heads": int(config.num_attention_heads)
+        if getattr(config, "num_attention_heads", None) is not None
+        else None,
+        "num_key_value_heads": int(config.num_key_value_heads)
+        if getattr(config, "num_key_value_heads", None) is not None
+        else None,
+        "hidden_size": int(config.hidden_size)
+        if getattr(config, "hidden_size", None) is not None
+        else None,
+    }
+
+
+def probe_qwen_architecture_support(
+    model: Any,
+    *,
+    rotary_emb: Any | None = None,
+) -> tuple[bool, list[str], dict[str, int | None]]:
+    """Check whether layer-0 QKV extraction works for this model."""
+    arch = extract_qwen_model_architecture(model)
+    inner = getattr(model, "model", model)
+    layers = getattr(inner, "layers", None)
+    if layers is None or len(layers) == 0:
+        return False, ["model has no decoder layers"], arch
+
+    hidden_size = arch.get("hidden_size") or 64
+    dummy = torch.zeros(1, 4, hidden_size)
+    position_ids = torch.arange(4).unsqueeze(0)
+    if rotary_emb is None:
+        rotary_emb = resolve_model_rotary_emb(model)
+
+    extracted = extract_qkv_from_qwen2_layer(
+        dummy,
+        layers[0],
+        layer_idx=0,
+        rotary_emb=rotary_emb,
+        position_ids=position_ids,
+        allow_projection_only=True,
+    )
+    if extracted.extraction_mode == "blocked" or extracted.q.numel() == 0:
+        return False, list(extracted.blockers), arch
+    return True, [], arch
+
+
 def extract_qkv_cells_from_model(
     model: Any,
     tokenizer: Any,

@@ -177,6 +177,8 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Multi-layer attention drift accumulation** | **Complete** | Phase 16D ✅ | [`EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md`](EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md); offline multi-layer replay; **not** generation integration |
 | — | **Streaming multi-layer numerics audit** | **Complete** | Phase 16E ✅ | [`EXPERIMENT_070_STREAMING_MULTILAYER_NUMERICS_AUDIT.md`](EXPERIMENT_070_STREAMING_MULTILAYER_NUMERICS_AUDIT.md); Phase 16D boundary diagnosis; **not** generation integration |
 | — | **Full-prefix logit drift smoke** | **Complete** | Phase 16F ✅ | [`EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md`](EXPERIMENT_071_FULL_PREFIX_LOGIT_DRIFT_SMOKE.md); offline full-stack logit drift; **not** generation integration |
+| — | **Full-depth divergence trace** | **Complete** | Phase 16G ✅ | [`EXPERIMENT_072_FULL_DEPTH_DIVERGENCE_TRACE.md`](EXPERIMENT_072_FULL_DEPTH_DIVERGENCE_TRACE.md); layer-by-layer trace; **not** generation integration |
+| — | **Qwen-family divergence panel** | **Complete** | Phase 16H ✅ | [`EXPERIMENT_073_QWEN_FAMILY_DIVERGENCE_PANEL.md`](EXPERIMENT_073_QWEN_FAMILY_DIVERGENCE_PANEL.md); cross-model offline panel; **not** generation integration |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

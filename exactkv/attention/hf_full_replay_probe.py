@@ -6,7 +6,6 @@ next-token logits. **Not** wired into ExactKV generation.
 """
 from __future__ import annotations
 
-import math
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable, Sequence
@@ -655,5 +654,1190 @@ def validate_exp071_report(report: dict[str, Any]) -> list[str]:
         ):
             if ck not in cell:
                 errors.append(f"cell {idx} missing {ck}")
+
+    return errors
+
+
+# --- Phase 16G: full-depth divergence trace ---
+
+EXPERIMENT_072_ID = "exp072_full_depth_divergence_trace"
+DEFAULT_EXP072_REPORT = Path("reports/experiment_072_full_depth_divergence_trace.json")
+DEFAULT_TARGET_TOKEN_LENGTHS_072: tuple[int, ...] = (32, 64)
+DEFAULT_CHUNK_SIZES_072: tuple[int, ...] = (16, 32, 64)
+TRACE_MODES: tuple[str, ...] = ("free_running", "teacher_forced_layer_inputs")
+TRACE_CHECKPOINTS: tuple[str, ...] = (
+    "layer_input",
+    "attn_context",
+    "attn_output",
+    "post_attention_hidden",
+    "post_mlp_hidden",
+)
+PHASE16F_LOGIT_TOLERANCE_REF = 0.002449489742783178
+
+EXP072_CLAIM_NOTE = (
+    "Offline full-depth streaming/materialized divergence trace (Phase 16G). "
+    "Layer-by-layer diagnostic trace for fixed prompts. Not model generation "
+    "integration, vLLM, CUDA/Triton kernels, or ExactKV default runtime. "
+    "Top-k agreement is supplementary only. Theoretical memory accounting only; "
+    "no measured active GPU memory, speed, throughput, latency, or serving claim."
+)
+
+
+def _checkpoint_metrics(
+    materialized: torch.Tensor,
+    streaming: torch.Tensor,
+) -> dict[str, float]:
+    m = compute_drift_metrics(materialized, streaming)
+    return {
+        "max_abs_error": m.max_abs_error,
+        "mean_abs_error": m.mean_abs_error,
+        "relative_l2_error": m.relative_l2_error,
+        "cosine_similarity": m.cosine_similarity,
+    }
+
+
+def _first_layer_exceeding(
+    per_layer_trace: Sequence[dict[str, Any]],
+    threshold: float,
+    *,
+    checkpoint: str = "post_mlp_hidden",
+) -> int | None:
+    for entry in per_layer_trace:
+        metrics = entry.get("streaming_vs_materialized", {}).get(checkpoint)
+        if metrics is None:
+            continue
+        if metrics["max_abs_error"] > threshold:
+            return int(entry["layer_idx"])
+    return None
+
+
+def classify_divergence_root_cause(
+    *,
+    teacher_forced_trace: Sequence[dict[str, Any]],
+    free_running_trace: Sequence[dict[str, Any]],
+    final_logit_max_abs: float,
+    depth_aware_tolerance: float,
+    final_top1_agreement: bool,
+) -> str:
+    """Data-driven root cause classification for one prompt/chunk pair."""
+
+    def _max_at(trace: Sequence[dict[str, Any]], ckpt: str) -> float:
+        vals = [
+            e["streaming_vs_materialized"][ckpt]["max_abs_error"]
+            for e in trace
+            if ckpt in e.get("streaming_vs_materialized", {})
+        ]
+        return max(vals) if vals else 0.0
+
+    tf_attn = _max_at(teacher_forced_trace, "attn_context")
+    tf_attn_out = _max_at(teacher_forced_trace, "attn_output")
+    tf_post_attn = _max_at(teacher_forced_trace, "post_attention_hidden")
+    tf_post_mlp = _max_at(teacher_forced_trace, "post_mlp_hidden")
+    fr_post_mlp = _max_at(free_running_trace, "post_mlp_hidden")
+
+    if tf_attn > 1e-3:
+        return "local_attention_mismatch"
+    if tf_attn <= 1e-4 and tf_post_attn > 1e-2 and tf_post_attn > tf_attn_out * 10:
+        return "post_attention_amplification"
+    if tf_attn <= 1e-4 and tf_post_mlp > 1e-2 and tf_post_mlp > tf_attn * 100:
+        return "mlp_residual_amplification"
+    if tf_post_mlp < 1e-3 and fr_post_mlp > 1e-2 and fr_post_mlp > tf_post_mlp * 10:
+        return "free_running_accumulation"
+    if (
+        final_logit_max_abs > depth_aware_tolerance
+        and final_top1_agreement
+        and tf_attn < 1e-3
+    ):
+        return "tolerance_policy_issue"
+    if tf_attn > 1e-4:
+        return "local_attention_mismatch"
+    if fr_post_mlp > tf_post_mlp * 5 and tf_post_mlp < 1e-3:
+        return "free_running_accumulation"
+    return "unknown"
+
+
+def trace_mat_vs_stream_full_depth(
+    model: Any,
+    input_ids: torch.Tensor,
+    *,
+    chunk_size: int,
+    trace_mode: str,
+    streaming_accumulator_dtype: str | None = "float32",
+) -> dict[str, Any]:
+    """Run layer-by-layer materialized vs streaming divergence trace."""
+    if trace_mode not in TRACE_MODES:
+        raise ValueError(f"unknown trace_mode: {trace_mode}")
+
+    from exactkv.attention.hf_multilayer_probe import run_qwen_decoder_block_traced
+
+    inner = getattr(model, "model", model)
+    layers = getattr(inner, "layers", None)
+    embed = getattr(inner, "embed_tokens", None)
+    norm = _resolve_final_norm(model)
+    lm_head = _resolve_lm_head(model)
+    if layers is None or embed is None or norm is None or lm_head is None:
+        raise RuntimeError("model missing layers, embed_tokens, norm, or lm_head")
+
+    rotary_emb = resolve_model_rotary_emb(model)
+    seq_len = input_ids.shape[-1]
+    position_ids = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
+    num_layers = len(layers)
+
+    with torch.no_grad():
+        mat_hidden = embed(input_ids)
+        stream_hidden = embed(input_ids)
+        per_layer: list[dict[str, Any]] = []
+
+        for idx, layer in enumerate(layers):
+            if trace_mode == "teacher_forced_layer_inputs":
+                shared_input = mat_hidden
+                mat_hidden, mat_cp = run_qwen_decoder_block_traced(
+                    shared_input,
+                    layer,
+                    layer_idx=idx,
+                    attention_path="materialized_compressed",
+                    chunk_size=chunk_size,
+                    rotary_emb=rotary_emb,
+                    position_ids=position_ids,
+                )
+                _, stream_cp = run_qwen_decoder_block_traced(
+                    shared_input,
+                    layer,
+                    layer_idx=idx,
+                    attention_path="streaming_compressed",
+                    chunk_size=chunk_size,
+                    rotary_emb=rotary_emb,
+                    position_ids=position_ids,
+                    streaming_accumulator_dtype=streaming_accumulator_dtype,
+                )
+            else:
+                mat_hidden, mat_cp = run_qwen_decoder_block_traced(
+                    mat_hidden,
+                    layer,
+                    layer_idx=idx,
+                    attention_path="materialized_compressed",
+                    chunk_size=chunk_size,
+                    rotary_emb=rotary_emb,
+                    position_ids=position_ids,
+                )
+                stream_hidden, stream_cp = run_qwen_decoder_block_traced(
+                    stream_hidden,
+                    layer,
+                    layer_idx=idx,
+                    attention_path="streaming_compressed",
+                    chunk_size=chunk_size,
+                    rotary_emb=rotary_emb,
+                    position_ids=position_ids,
+                    streaming_accumulator_dtype=streaming_accumulator_dtype,
+                )
+
+            layer_metrics: dict[str, dict[str, float]] = {}
+            for ckpt in TRACE_CHECKPOINTS:
+                layer_metrics[ckpt] = _checkpoint_metrics(mat_cp[ckpt], stream_cp[ckpt])
+
+            per_layer.append({
+                "layer_idx": idx,
+                "streaming_vs_materialized": layer_metrics,
+            })
+
+        mat_logits = _last_position_logits(mat_hidden, norm, lm_head)
+        stream_logits = _last_position_logits(stream_hidden, norm, lm_head)
+
+    final_hidden_metrics = _checkpoint_metrics(mat_hidden, stream_hidden)
+    final_logit_metrics = compute_logit_drift_metrics(mat_logits, stream_logits)
+
+    return {
+        "trace_mode": trace_mode,
+        "per_layer_trace": per_layer,
+        "final_hidden_metrics": final_hidden_metrics,
+        "final_logit_metrics": final_logit_metrics.to_dict(),
+        "final_top1_agreement": final_logit_metrics.top1_agreement,
+        "final_top5_overlap": final_logit_metrics.top5_overlap,
+        "final_top10_overlap": final_logit_metrics.top10_overlap,
+        "num_layers": num_layers,
+    }
+
+
+def run_exp072_trace_cell(
+    *,
+    model: Any,
+    input_ids: torch.Tensor,
+    prompt_id: str,
+    target_token_length: int,
+    actual_token_length: int,
+    chunk_size: int,
+    trace_mode: str,
+    accumulator_mode: str = DEFAULT_ACCUMULATOR_MODE_071,
+    teacher_forced_trace: Sequence[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Run one divergence trace cell."""
+    acc_arg = None if accumulator_mode == "default" else accumulator_mode
+    num_layers = _num_decoder_layers(model)
+    depth_tol = layer_depth_aware_streaming_tolerance(torch.float32, num_layers)
+
+    try:
+        trace = trace_mat_vs_stream_full_depth(
+            model,
+            input_ids,
+            chunk_size=chunk_size,
+            trace_mode=trace_mode,
+            streaming_accumulator_dtype=acc_arg,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return {
+            "prompt_id": prompt_id,
+            "target_token_length": target_token_length,
+            "actual_token_length": actual_token_length,
+            "chunk_size": chunk_size,
+            "trace_mode": trace_mode,
+            "per_layer_trace": None,
+            "first_layer_exceeding_1e_4": None,
+            "first_layer_exceeding_1e_3": None,
+            "first_layer_exceeding_1e_2": None,
+            "first_layer_exceeding_1e_1": None,
+            "final_hidden_metrics": None,
+            "final_logit_metrics": None,
+            "final_top1_agreement": None,
+            "final_top5_overlap": None,
+            "final_top10_overlap": None,
+            "root_cause_classification": "unknown",
+            "passed": False,
+            "blockers": [f"trace failed: {type(exc).__name__}: {exc}"],
+        }
+
+    per_layer = trace["per_layer_trace"]
+    final_logit = trace["final_logit_metrics"]
+    final_logit_max = float(final_logit["max_abs_error"])
+
+    thresholds = {
+        "1e_4": _first_layer_exceeding(per_layer, 1e-4),
+        "1e_3": _first_layer_exceeding(per_layer, 1e-3),
+        "1e_2": _first_layer_exceeding(per_layer, 1e-2),
+        "1e_1": _first_layer_exceeding(per_layer, 1e-1),
+    }
+
+    root_cause = "unknown"
+    if trace_mode == "free_running" and teacher_forced_trace is not None:
+        root_cause = classify_divergence_root_cause(
+            teacher_forced_trace=teacher_forced_trace,
+            free_running_trace=per_layer,
+            final_logit_max_abs=final_logit_max,
+            depth_aware_tolerance=depth_tol,
+            final_top1_agreement=bool(trace["final_top1_agreement"]),
+        )
+    elif trace_mode == "teacher_forced_layer_inputs":
+        root_cause = classify_divergence_root_cause(
+            teacher_forced_trace=per_layer,
+            free_running_trace=per_layer,
+            final_logit_max_abs=final_logit_max,
+            depth_aware_tolerance=depth_tol,
+            final_top1_agreement=bool(trace["final_top1_agreement"]),
+        )
+
+    streaming_pass = final_logit_max <= depth_tol
+
+    return {
+        "prompt_id": prompt_id,
+        "target_token_length": target_token_length,
+        "actual_token_length": actual_token_length,
+        "chunk_size": chunk_size,
+        "trace_mode": trace_mode,
+        "per_layer_trace": per_layer,
+        "first_layer_exceeding_1e_4": thresholds["1e_4"],
+        "first_layer_exceeding_1e_3": thresholds["1e_3"],
+        "first_layer_exceeding_1e_2": thresholds["1e_2"],
+        "first_layer_exceeding_1e_1": thresholds["1e_1"],
+        "final_hidden_metrics": trace["final_hidden_metrics"],
+        "final_logit_metrics": final_logit,
+        "final_top1_agreement": trace["final_top1_agreement"],
+        "final_top5_overlap": trace["final_top5_overlap"],
+        "final_top10_overlap": trace["final_top10_overlap"],
+        "depth_aware_tolerance": depth_tol,
+        "root_cause_classification": root_cause,
+        "streaming_passed": streaming_pass,
+        "passed": streaming_pass,
+        "blockers": [],
+    }
+
+
+def run_exp072_probe(
+    *,
+    model_id: str = DEFAULT_MODEL_ID,
+    device: str = "cpu",
+    dtype: str = "float32",
+    target_token_lengths: Sequence[int] = DEFAULT_TARGET_TOKEN_LENGTHS_072,
+    chunk_sizes: Sequence[int] = DEFAULT_CHUNK_SIZES_072,
+    max_prompts: int = 2,
+    accumulator_mode: str = DEFAULT_ACCUMULATOR_MODE_071,
+    local_files_only: bool = False,
+    model_loader: Callable[..., tuple[Any, Any]] | None = None,
+    prompt_provider: Callable[[Any, Sequence[int], int], list[tuple[str, str, int, int]]] | None = None,
+) -> dict[str, Any]:
+    """Run Experiment 072 full-depth divergence trace."""
+    torch_dtype = getattr(torch, dtype, torch.float32)
+    blockers: list[str] = []
+    cells: list[dict[str, Any]] = []
+    prompts: list[tuple[str, str, int, int]] = []
+
+    try:
+        if model_loader is not None:
+            model, tokenizer = model_loader(
+                model_id=model_id, device=device, dtype=torch_dtype,
+                local_files_only=local_files_only,
+            )
+        else:
+            from transformers import AutoModelForCausalLM, AutoTokenizer
+
+            tokenizer = AutoTokenizer.from_pretrained(
+                model_id, local_files_only=local_files_only,
+            )
+            model = AutoModelForCausalLM.from_pretrained(
+                model_id,
+                torch_dtype=torch_dtype,
+                local_files_only=local_files_only,
+            )
+            model.to(device)
+        load_ok = True
+    except Exception as exc:  # noqa: BLE001
+        load_ok = False
+        blockers.append(f"model load failed: {type(exc).__name__}: {exc}")
+        model = None
+        tokenizer = None
+
+    if load_ok and model is not None and tokenizer is not None:
+        model.eval()
+        if prompt_provider is not None:
+            prompts = prompt_provider(tokenizer, target_token_lengths, max_prompts)
+        else:
+            prompts = long_context_prompts(
+                tokenizer, target_token_lengths, max_prompts=max_prompts,
+            )
+
+        for prompt_id, text, target_len, actual_len in prompts:
+            input_ids = tokenizer(text, return_tensors="pt")["input_ids"].to(device)
+            for chunk_size in chunk_sizes:
+                tf_cell = run_exp072_trace_cell(
+                    model=model,
+                    input_ids=input_ids,
+                    prompt_id=prompt_id,
+                    target_token_length=target_len,
+                    actual_token_length=actual_len,
+                    chunk_size=chunk_size,
+                    trace_mode="teacher_forced_layer_inputs",
+                    accumulator_mode=accumulator_mode,
+                )
+                tf_cell["model_id"] = model_id
+                cells.append(tf_cell)
+
+                fr_cell = run_exp072_trace_cell(
+                    model=model,
+                    input_ids=input_ids,
+                    prompt_id=prompt_id,
+                    target_token_length=target_len,
+                    actual_token_length=actual_len,
+                    chunk_size=chunk_size,
+                    trace_mode="free_running",
+                    accumulator_mode=accumulator_mode,
+                    teacher_forced_trace=tf_cell.get("per_layer_trace"),
+                )
+                fr_cell["model_id"] = model_id
+                cells.append(fr_cell)
+
+    successful = [c for c in cells if c.get("per_layer_trace") is not None]
+    blocked = [c for c in cells if c.get("per_layer_trace") is None]
+
+    def _summarize_mode(mode: str) -> dict[str, float]:
+        mode_cells = [c for c in successful if c.get("trace_mode") == mode]
+        if not mode_cells:
+            return {"max_post_mlp_error": 0.0, "max_attn_context_error": 0.0, "cell_count": 0}
+        post_mlp_max = 0.0
+        attn_max = 0.0
+        for c in mode_cells:
+            for layer in c["per_layer_trace"]:
+                sm = layer["streaming_vs_materialized"]
+                post_mlp_max = max(post_mlp_max, sm["post_mlp_hidden"]["max_abs_error"])
+                attn_max = max(attn_max, sm["attn_context"]["max_abs_error"])
+        return {
+            "max_post_mlp_error": post_mlp_max,
+            "max_attn_context_error": attn_max,
+            "cell_count": len(mode_cells),
+        }
+
+    tf_summary = _summarize_mode("teacher_forced_layer_inputs")
+    fr_summary = _summarize_mode("free_running")
+
+    fr_cells = [c for c in successful if c.get("trace_mode") == "free_running"]
+    phase16f_reproduced = any(
+        c.get("final_logit_metrics", {}).get("max_abs_error", 0) > PHASE16F_LOGIT_TOLERANCE_REF
+        for c in fr_cells
+    )
+
+    threshold_summary: dict[str, Any] = {}
+    for label, key in (
+        ("1e_4", "first_layer_exceeding_1e_4"),
+        ("1e_3", "first_layer_exceeding_1e_3"),
+        ("1e_2", "first_layer_exceeding_1e_2"),
+        ("1e_1", "first_layer_exceeding_1e_1"),
+    ):
+        vals = [c.get(key) for c in fr_cells if c.get(key) is not None]
+        threshold_summary[label] = {
+            "cells_with_crossing": len(vals),
+            "earliest_layer_min": min(vals) if vals else None,
+            "earliest_layer_max": max(vals) if vals else None,
+        }
+
+    final_logit_errors = [
+        c["final_logit_metrics"]["max_abs_error"]
+        for c in fr_cells
+        if c.get("final_logit_metrics")
+    ]
+    final_logit_summary = {
+        "max_abs_error": max(final_logit_errors) if final_logit_errors else 0.0,
+        "mean_abs_error": (
+            sum(c["final_logit_metrics"]["mean_abs_error"] for c in fr_cells) / len(fr_cells)
+            if fr_cells
+            else 0.0
+        ),
+        "cell_count": len(fr_cells),
+    }
+
+    top1_agree = sum(1 for c in fr_cells if c.get("final_top1_agreement"))
+    topk_summary = {
+        "free_running_top1_agreement_cells": top1_agree,
+        "free_running_top5_overlap_mean": (
+            sum(c.get("final_top5_overlap", 0) for c in fr_cells) / len(fr_cells)
+            if fr_cells
+            else 0.0
+        ),
+        "free_running_top10_overlap_mean": (
+            sum(c.get("final_top10_overlap", 0) for c in fr_cells) / len(fr_cells)
+            if fr_cells
+            else 0.0
+        ),
+        "cell_count": len(fr_cells),
+    }
+
+    root_cause_counts: dict[str, int] = {}
+    for c in fr_cells:
+        rc = c.get("root_cause_classification", "unknown")
+        root_cause_counts[rc] = root_cause_counts.get(rc, 0) + 1
+
+    if not load_ok:
+        status = "blocked"
+    elif successful and all(c.get("passed") for c in successful):
+        status = "pass"
+    elif successful:
+        status = "diagnostic_complete"
+    else:
+        status = "blocked"
+
+    return {
+        "experiment_id": EXPERIMENT_072_ID,
+        "status": status,
+        "model_id": model_id,
+        "device": device,
+        "dtype": dtype,
+        "model_load_succeeded": load_ok,
+        "target_token_lengths": list(target_token_lengths)[:max_prompts],
+        "chunk_sizes": list(chunk_sizes),
+        "accumulator_mode": accumulator_mode,
+        "total_cells": len(cells),
+        "successful_cells": len(successful),
+        "blocked_cells": len(blocked),
+        "phase16f_failure_reproduced": phase16f_reproduced,
+        "teacher_forced_local_error_summary": tf_summary,
+        "free_running_error_summary": fr_summary,
+        "first_threshold_crossing_summary": threshold_summary,
+        "final_logit_error_summary": final_logit_summary,
+        "final_topk_agreement_summary": topk_summary,
+        "root_cause_counts": root_cause_counts,
+        "extraction_blockers": blockers,
+        "cells": cells,
+        "claim_note": EXP072_CLAIM_NOTE,
+        "forbidden_claims": list(FORBIDDEN_ATTENTION_CLAIMS),
+        "limitations": [
+            "Offline divergence trace; not token generation integration.",
+            "Top-k agreement is supplementary; not exact generation preservation.",
+            "Root cause classification is heuristic and diagnostic only.",
+            "No CUDA/Triton/vLLM/serving integration.",
+        ],
+        "no_performance_claims_note": (
+            "No speed, throughput, latency, serving, measured active GPU memory, "
+            "or production-memory claim is made."
+        ),
+        "prompt_count": len(prompts),
+    }
+
+
+def validate_exp072_report(report: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "status",
+        "model_id",
+        "device",
+        "dtype",
+        "target_token_lengths",
+        "chunk_sizes",
+        "total_cells",
+        "successful_cells",
+        "blocked_cells",
+        "phase16f_failure_reproduced",
+        "teacher_forced_local_error_summary",
+        "free_running_error_summary",
+        "first_threshold_crossing_summary",
+        "final_logit_error_summary",
+        "final_topk_agreement_summary",
+        "root_cause_counts",
+        "limitations",
+        "no_performance_claims_note",
+        "claim_note",
+        "forbidden_claims",
+        "cells",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing key: {key}")
+
+    if report.get("experiment_id") != EXPERIMENT_072_ID:
+        errors.append("experiment_id mismatch")
+
+    cells = report.get("cells")
+    if not isinstance(cells, list):
+        errors.append("cells must be a list")
+        return errors
+
+    for idx, cell in enumerate(cells):
+        if not isinstance(cell, dict):
+            errors.append(f"cell {idx} not dict")
+            continue
+        for ck in (
+            "prompt_id",
+            "target_token_length",
+            "chunk_size",
+            "trace_mode",
+            "root_cause_classification",
+            "passed",
+            "blockers",
+        ):
+            if ck not in cell:
+                errors.append(f"cell {idx} missing {ck}")
+
+    return errors
+
+
+# --- Phase 16H: Qwen-family divergence panel ---
+
+EXPERIMENT_073_ID = "exp073_qwen_family_divergence_panel"
+DEFAULT_EXP073_REPORT = Path("reports/experiment_073_qwen_family_divergence_panel.json")
+DEFAULT_MODEL_IDS_073: tuple[str, ...] = (
+    "Qwen/Qwen2.5-0.5B",
+    "Qwen/Qwen2.5-0.5B-Instruct",
+)
+OPTIONAL_MODEL_IDS_073: tuple[str, ...] = (
+    "Qwen/Qwen2.5-1.5B",
+    "Qwen/Qwen2.5-1.5B-Instruct",
+)
+DEFAULT_CHUNK_SIZES_073: tuple[int, ...] = (16, 64)
+MODEL_PANEL_CLASSIFICATIONS: tuple[str, ...] = (
+    "free_running_accumulation_confirmed",
+    "local_attention_mismatch_detected",
+    "parity_failure",
+    "unsupported_architecture",
+    "model_load_blocked",
+    "unknown",
+)
+LOCAL_ATTENTION_MISMATCH_THRESHOLD = 1e-3
+LOCAL_ATTENTION_TINY_THRESHOLD = 1e-4
+FREE_RUNNING_TINY_THRESHOLD = 1e-3
+
+EXP073_CLAIM_NOTE = (
+    "Offline Qwen-family streaming/materialized divergence panel (Phase 16H). "
+    "Reuses Phase 16G layer-by-layer trace across a small model panel. "
+    "Not model generation integration, vLLM, CUDA/Triton kernels, or ExactKV "
+    "default runtime. Unsupported or blocked models are reported explicitly. "
+    "Top-k agreement is supplementary only. Theoretical memory accounting only; "
+    "no measured active GPU memory, speed, throughput, latency, or serving claim."
+)
+
+
+def _summarize_trace_mode_cells(
+    cells: Sequence[dict[str, Any]],
+    *,
+    trace_mode: str,
+) -> dict[str, float]:
+    mode_cells = [c for c in cells if c.get("trace_mode") == trace_mode and c.get("per_layer_trace")]
+    if not mode_cells:
+        return {"max_post_mlp_error": 0.0, "max_attn_context_error": 0.0, "cell_count": 0}
+    post_mlp_max = 0.0
+    attn_max = 0.0
+    for cell in mode_cells:
+        for layer in cell["per_layer_trace"]:
+            sm = layer["streaming_vs_materialized"]
+            post_mlp_max = max(post_mlp_max, sm["post_mlp_hidden"]["max_abs_error"])
+            attn_max = max(attn_max, sm["attn_context"]["max_abs_error"])
+    return {
+        "max_post_mlp_error": post_mlp_max,
+        "max_attn_context_error": attn_max,
+        "cell_count": len(mode_cells),
+    }
+
+
+def _summarize_free_running_final_metrics(
+    cells: Sequence[dict[str, Any]],
+) -> dict[str, Any]:
+    fr_cells = [
+        c for c in cells
+        if c.get("trace_mode") == "free_running" and c.get("final_logit_metrics")
+    ]
+    if not fr_cells:
+        return {
+            "max_final_hidden_error": 0.0,
+            "max_final_logit_error": 0.0,
+            "top1_agreement_cells": 0,
+            "top5_overlap_mean": 0.0,
+            "top10_overlap_mean": 0.0,
+            "cell_count": 0,
+        }
+    hidden_errors = [
+        c["final_hidden_metrics"]["max_abs_error"]
+        for c in fr_cells
+        if c.get("final_hidden_metrics")
+    ]
+    logit_errors = [c["final_logit_metrics"]["max_abs_error"] for c in fr_cells]
+    top1_agree = sum(1 for c in fr_cells if c.get("final_top1_agreement"))
+    return {
+        "max_final_hidden_error": max(hidden_errors) if hidden_errors else 0.0,
+        "max_final_logit_error": max(logit_errors) if logit_errors else 0.0,
+        "top1_agreement_cells": top1_agree,
+        "top5_overlap_mean": sum(c.get("final_top5_overlap", 0) for c in fr_cells) / len(fr_cells),
+        "top10_overlap_mean": sum(c.get("final_top10_overlap", 0) for c in fr_cells) / len(fr_cells),
+        "cell_count": len(fr_cells),
+    }
+
+
+def classify_model_panel_entry(
+    *,
+    model_load_succeeded: bool,
+    architecture_supported: bool,
+    parity_passed: bool,
+    teacher_forced_max_attn: float,
+    teacher_forced_max_post_mlp: float,
+    free_running_max_post_mlp: float,
+    free_running_root_cause_counts: dict[str, int],
+) -> str:
+    """Classify one model panel entry from aggregate trace metrics."""
+    if not model_load_succeeded:
+        return "model_load_blocked"
+    if not architecture_supported:
+        return "unsupported_architecture"
+    if not parity_passed:
+        return "parity_failure"
+    if teacher_forced_max_attn > LOCAL_ATTENTION_MISMATCH_THRESHOLD:
+        return "local_attention_mismatch_detected"
+    accumulation_cells = free_running_root_cause_counts.get("free_running_accumulation", 0)
+    if (
+        accumulation_cells > 0
+        and teacher_forced_max_attn <= LOCAL_ATTENTION_TINY_THRESHOLD
+        and teacher_forced_max_post_mlp < FREE_RUNNING_TINY_THRESHOLD
+        and free_running_max_post_mlp > FREE_RUNNING_TINY_THRESHOLD
+    ):
+        return "free_running_accumulation_confirmed"
+    if teacher_forced_max_attn > LOCAL_ATTENTION_TINY_THRESHOLD:
+        return "local_attention_mismatch_detected"
+    if (
+        free_running_max_post_mlp > FREE_RUNNING_TINY_THRESHOLD
+        and teacher_forced_max_post_mlp < FREE_RUNNING_TINY_THRESHOLD
+    ):
+        return "free_running_accumulation_confirmed"
+    return "unknown"
+
+
+def _compute_trace_cell_memory_accounting(
+    model: Any,
+    input_ids: torch.Tensor,
+    *,
+    chunk_size: int,
+    actual_token_length: int,
+    accumulator_mode: str,
+) -> dict[str, Any] | None:
+    acc_arg = None if accumulator_mode == "default" else accumulator_mode
+    try:
+        _, _, mem_records = replay_full_decoder_stack(
+            model,
+            input_ids,
+            attention_path="streaming_compressed",
+            chunk_size=chunk_size,
+            streaming_accumulator_dtype=acc_arg,
+        )
+    except Exception:  # noqa: BLE001
+        return None
+    return aggregate_full_stack_memory(mem_records, context_length=actual_token_length)
+
+
+def run_model_full_parity_smoke(
+    model: Any,
+    input_ids: torch.Tensor,
+    *,
+    chunk_size: int,
+) -> dict[str, Any]:
+    """Run one full-stack parity smoke for a model panel entry."""
+    with torch.no_grad():
+        hf_out = model(input_ids, output_hidden_states=True, use_cache=False)
+    hf_logits = hf_out.logits[:, -1, :]
+    hf_hidden = hf_out.hidden_states[-1] if hf_out.hidden_states else None
+    if hf_hidden is None:
+        return {
+            "full_model_parity_status": "failed",
+            "parity_passed": False,
+            "blockers": ["HF forward missing hidden_states"],
+        }
+
+    full_hidden, full_logits, _ = replay_full_decoder_stack(
+        model, input_ids, attention_path="full", chunk_size=chunk_size,
+    )
+    norm = _resolve_final_norm(model)
+    manual_hidden_parity = norm(full_hidden[:, -1:, :]) if norm is not None else full_hidden[:, -1:, :]
+    parity = check_full_model_parity(
+        full_logits,
+        hf_logits,
+        manual_hidden_parity,
+        hf_hidden[:, -1:, :],
+    )
+    return {
+        **parity,
+        "parity_passed": parity["full_model_parity_status"] == "passed",
+    }
+
+
+def run_exp073_trace_cell(
+    *,
+    model: Any,
+    model_id: str,
+    input_ids: torch.Tensor,
+    prompt_id: str,
+    target_token_length: int,
+    actual_token_length: int,
+    chunk_size: int,
+    trace_mode: str,
+    accumulator_mode: str = DEFAULT_ACCUMULATOR_MODE_071,
+    teacher_forced_trace: Sequence[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Run one panel trace cell with memory accounting."""
+    cell = run_exp072_trace_cell(
+        model=model,
+        input_ids=input_ids,
+        prompt_id=prompt_id,
+        target_token_length=target_token_length,
+        actual_token_length=actual_token_length,
+        chunk_size=chunk_size,
+        trace_mode=trace_mode,
+        accumulator_mode=accumulator_mode,
+        teacher_forced_trace=teacher_forced_trace,
+    )
+    cell["model_id"] = model_id
+    if cell.get("per_layer_trace") is not None:
+        cell["memory_accounting"] = _compute_trace_cell_memory_accounting(
+            model,
+            input_ids,
+            chunk_size=chunk_size,
+            actual_token_length=actual_token_length,
+            accumulator_mode=accumulator_mode,
+        )
+    else:
+        cell["memory_accounting"] = None
+    return cell
+
+
+def run_exp073_probe_for_model(
+    *,
+    model_id: str,
+    model: Any,
+    tokenizer: Any,
+    device: str,
+    target_token_lengths: Sequence[int],
+    chunk_sizes: Sequence[int],
+    max_prompts: int,
+    accumulator_mode: str,
+    prompt_provider: Callable[[Any, Sequence[int], int], list[tuple[str, str, int, int]]] | None = None,
+) -> dict[str, Any]:
+    """Run divergence panel trace for one loaded model."""
+    from exactkv.attention.hf_single_layer_probe import probe_qwen_architecture_support
+
+    arch_supported, arch_blockers, arch = probe_qwen_architecture_support(model)
+    cells: list[dict[str, Any]] = []
+    blockers: list[str] = list(arch_blockers)
+    parity_passed = False
+    parity_status = "blocked"
+
+    if not arch_supported:
+        return {
+            "model_id": model_id,
+            "model_load_succeeded": True,
+            "architecture_supported": False,
+            "num_layers": arch.get("num_layers"),
+            "num_attention_heads": arch.get("num_attention_heads"),
+            "num_key_value_heads": arch.get("num_key_value_heads"),
+            "hidden_size": arch.get("hidden_size"),
+            "classification": "unsupported_architecture",
+            "full_parity_passed": False,
+            "full_model_parity_status": "blocked",
+            "blockers": blockers,
+            "cells": cells,
+        }
+
+    model.eval()
+    if prompt_provider is not None:
+        prompts = prompt_provider(tokenizer, target_token_lengths, max_prompts)
+    else:
+        prompts = long_context_prompts(
+            tokenizer, target_token_lengths, max_prompts=max_prompts,
+        )
+
+    if prompts:
+        first_prompt = prompts[0]
+        first_ids = tokenizer(first_prompt[1], return_tensors="pt")["input_ids"].to(device)
+        parity_info = run_model_full_parity_smoke(
+            model, first_ids, chunk_size=chunk_sizes[0],
+        )
+        parity_passed = bool(parity_info.get("parity_passed"))
+        parity_status = parity_info.get("full_model_parity_status", "failed")
+        if not parity_passed:
+            blockers.extend(parity_info.get("parity_failures", []) or parity_info.get("blockers", []))
+
+    for prompt_id, text, target_len, actual_len in prompts:
+        input_ids = tokenizer(text, return_tensors="pt")["input_ids"].to(device)
+        for chunk_size in chunk_sizes:
+            tf_cell = run_exp073_trace_cell(
+                model=model,
+                model_id=model_id,
+                input_ids=input_ids,
+                prompt_id=prompt_id,
+                target_token_length=target_len,
+                actual_token_length=actual_len,
+                chunk_size=chunk_size,
+                trace_mode="teacher_forced_layer_inputs",
+                accumulator_mode=accumulator_mode,
+            )
+            cells.append(tf_cell)
+
+            fr_cell = run_exp073_trace_cell(
+                model=model,
+                model_id=model_id,
+                input_ids=input_ids,
+                prompt_id=prompt_id,
+                target_token_length=target_len,
+                actual_token_length=actual_len,
+                chunk_size=chunk_size,
+                trace_mode="free_running",
+                accumulator_mode=accumulator_mode,
+                teacher_forced_trace=tf_cell.get("per_layer_trace"),
+            )
+            cells.append(fr_cell)
+
+    tf_summary = _summarize_trace_mode_cells(cells, trace_mode="teacher_forced_layer_inputs")
+    fr_summary = _summarize_trace_mode_cells(cells, trace_mode="free_running")
+    fr_cells = [c for c in cells if c.get("trace_mode") == "free_running" and c.get("per_layer_trace")]
+    root_cause_counts: dict[str, int] = {}
+    for cell in fr_cells:
+        rc = cell.get("root_cause_classification", "unknown")
+        root_cause_counts[rc] = root_cause_counts.get(rc, 0) + 1
+
+    classification = classify_model_panel_entry(
+        model_load_succeeded=True,
+        architecture_supported=True,
+        parity_passed=parity_passed,
+        teacher_forced_max_attn=tf_summary["max_attn_context_error"],
+        teacher_forced_max_post_mlp=tf_summary["max_post_mlp_error"],
+        free_running_max_post_mlp=fr_summary["max_post_mlp_error"],
+        free_running_root_cause_counts=root_cause_counts,
+    )
+
+    return {
+        "model_id": model_id,
+        "model_load_succeeded": True,
+        "architecture_supported": True,
+        "num_layers": arch.get("num_layers"),
+        "num_attention_heads": arch.get("num_attention_heads"),
+        "num_key_value_heads": arch.get("num_key_value_heads"),
+        "hidden_size": arch.get("hidden_size"),
+        "classification": classification,
+        "full_parity_passed": parity_passed,
+        "full_model_parity_status": parity_status,
+        "blockers": blockers,
+        "cells": cells,
+    }
+
+
+def run_exp073_probe(
+    *,
+    model_ids: Sequence[str] | None = None,
+    include_optional_models: bool = False,
+    device: str = "cpu",
+    dtype: str = "float32",
+    target_token_lengths: Sequence[int] = DEFAULT_TARGET_TOKEN_LENGTHS_072,
+    chunk_sizes: Sequence[int] = DEFAULT_CHUNK_SIZES_073,
+    max_prompts: int = 2,
+    accumulator_mode: str = DEFAULT_ACCUMULATOR_MODE_071,
+    local_files_only: bool = False,
+    model_loader: Callable[..., tuple[Any, Any]] | None = None,
+    prompt_provider: Callable[[Any, Sequence[int], int], list[tuple[str, str, int, int]]] | None = None,
+) -> dict[str, Any]:
+    """Run Experiment 073 Qwen-family divergence panel."""
+    if model_ids is None:
+        panel = list(DEFAULT_MODEL_IDS_073)
+        if include_optional_models:
+            panel.extend(OPTIONAL_MODEL_IDS_073)
+        model_ids = panel
+
+    torch_dtype = getattr(torch, dtype, torch.float32)
+    model_entries: list[dict[str, Any]] = []
+    loaded_models: list[str] = []
+    blocked_models: list[dict[str, Any]] = []
+    all_cells: list[dict[str, Any]] = []
+
+    for model_id in model_ids:
+        try:
+            if model_loader is not None:
+                model, tokenizer = model_loader(
+                    model_id=model_id, device=device, dtype=torch_dtype,
+                    local_files_only=local_files_only,
+                )
+            else:
+                from transformers import AutoModelForCausalLM, AutoTokenizer
+
+                tokenizer = AutoTokenizer.from_pretrained(
+                    model_id, local_files_only=local_files_only,
+                )
+                model = AutoModelForCausalLM.from_pretrained(
+                    model_id,
+                    torch_dtype=torch_dtype,
+                    local_files_only=local_files_only,
+                )
+                model.to(device)
+            load_ok = True
+            load_blockers: list[str] = []
+        except Exception as exc:  # noqa: BLE001
+            load_ok = False
+            model = None
+            tokenizer = None
+            load_blockers = [f"model load failed: {type(exc).__name__}: {exc}"]
+
+        if not load_ok or model is None or tokenizer is None:
+            entry = {
+                "model_id": model_id,
+                "model_load_succeeded": False,
+                "architecture_supported": False,
+                "num_layers": None,
+                "num_attention_heads": None,
+                "num_key_value_heads": None,
+                "hidden_size": None,
+                "classification": "model_load_blocked",
+                "full_parity_passed": False,
+                "full_model_parity_status": "blocked",
+                "blockers": load_blockers,
+                "cells": [],
+            }
+            model_entries.append(entry)
+            blocked_models.append({
+                "model_id": model_id,
+                "classification": "model_load_blocked",
+                "blockers": load_blockers,
+            })
+            continue
+
+        loaded_models.append(model_id)
+        entry = run_exp073_probe_for_model(
+            model_id=model_id,
+            model=model,
+            tokenizer=tokenizer,
+            device=device,
+            target_token_lengths=target_token_lengths,
+            chunk_sizes=chunk_sizes,
+            max_prompts=max_prompts,
+            accumulator_mode=accumulator_mode,
+            prompt_provider=prompt_provider,
+        )
+        model_entries.append(entry)
+        all_cells.extend(entry.get("cells", []))
+        if entry["classification"] in ("unsupported_architecture",):
+            blocked_models.append({
+                "model_id": model_id,
+                "classification": entry["classification"],
+                "blockers": entry.get("blockers", []),
+            })
+
+    successful_cells = [c for c in all_cells if c.get("per_layer_trace") is not None]
+    blocked_cells = [c for c in all_cells if c.get("per_layer_trace") is None]
+
+    model_level_classifications = {
+        entry["model_id"]: entry["classification"] for entry in model_entries
+    }
+
+    teacher_forced_by_model: dict[str, dict[str, float]] = {}
+    free_running_by_model: dict[str, dict[str, float]] = {}
+    topk_by_model: dict[str, dict[str, Any]] = {}
+    root_cause_by_model: dict[str, dict[str, int]] = {}
+    memory_by_model: dict[str, dict[str, Any]] = {}
+
+    for entry in model_entries:
+        mid = entry["model_id"]
+        cells = entry.get("cells", [])
+        teacher_forced_by_model[mid] = _summarize_trace_mode_cells(
+            cells, trace_mode="teacher_forced_layer_inputs",
+        )
+        free_running_by_model[mid] = _summarize_trace_mode_cells(
+            cells, trace_mode="free_running",
+        )
+        topk_by_model[mid] = _summarize_free_running_final_metrics(cells)
+        rc_counts: dict[str, int] = {}
+        for cell in cells:
+            if cell.get("trace_mode") != "free_running":
+                continue
+            rc = cell.get("root_cause_classification", "unknown")
+            rc_counts[rc] = rc_counts.get(rc, 0) + 1
+        root_cause_by_model[mid] = rc_counts
+
+        reductions = [
+            c["memory_accounting"]["best_theoretical_streaming_reduction"]
+            for c in cells
+            if c.get("memory_accounting")
+        ]
+        memory_by_model[mid] = {
+            "best_theoretical_streaming_reduction_max": max(reductions) if reductions else 0.0,
+            "best_theoretical_streaming_reduction_mean": (
+                sum(reductions) / len(reductions) if reductions else 0.0
+            ),
+            "cell_count": len([c for c in cells if c.get("memory_accounting")]),
+        }
+
+    panel_summary = {
+        "models_requested": len(model_ids),
+        "models_loaded": len(loaded_models),
+        "models_blocked": len(model_ids) - len(loaded_models) + sum(
+            1 for e in model_entries
+            if e.get("model_load_succeeded") and e.get("classification") == "unsupported_architecture"
+        ),
+        "models_parity_pass": sum(1 for e in model_entries if e.get("full_parity_passed")),
+        "models_free_running_accumulation": sum(
+            1 for e in model_entries
+            if e.get("classification") == "free_running_accumulation_confirmed"
+        ),
+    }
+
+    if not loaded_models:
+        status = "blocked"
+    elif successful_cells:
+        status = "diagnostic_complete"
+    else:
+        status = "blocked"
+
+    return {
+        "experiment_id": EXPERIMENT_073_ID,
+        "status": status,
+        "model_ids": list(model_ids),
+        "loaded_models": loaded_models,
+        "blocked_models": blocked_models,
+        "device": device,
+        "dtype": dtype,
+        "target_token_lengths": list(target_token_lengths),
+        "chunk_sizes": list(chunk_sizes),
+        "accumulator_mode": accumulator_mode,
+        "total_cells": len(all_cells),
+        "successful_cells": len(successful_cells),
+        "blocked_cells": len(blocked_cells),
+        "panel_summary": panel_summary,
+        "model_level_classifications": model_level_classifications,
+        "model_entries": model_entries,
+        "teacher_forced_local_error_summary_by_model": teacher_forced_by_model,
+        "free_running_error_summary_by_model": free_running_by_model,
+        "final_topk_agreement_summary_by_model": topk_by_model,
+        "root_cause_counts_by_model": root_cause_by_model,
+        "memory_accounting_summary_by_model": memory_by_model,
+        "limitations": [
+            "Offline Qwen-family divergence panel; not token generation integration.",
+            "Top-k agreement is supplementary; not exact generation preservation.",
+            "Blocked or unsupported models are reported explicitly.",
+            "No CUDA/Triton/vLLM/serving integration.",
+        ],
+        "no_performance_claims_note": (
+            "No speed, throughput, latency, serving, measured active GPU memory, "
+            "or production-memory claim is made."
+        ),
+        "claim_note": EXP073_CLAIM_NOTE,
+        "forbidden_claims": list(FORBIDDEN_ATTENTION_CLAIMS),
+    }
+
+
+def validate_exp073_report(report: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "status",
+        "model_ids",
+        "loaded_models",
+        "blocked_models",
+        "device",
+        "dtype",
+        "target_token_lengths",
+        "chunk_sizes",
+        "total_cells",
+        "successful_cells",
+        "blocked_cells",
+        "model_level_classifications",
+        "teacher_forced_local_error_summary_by_model",
+        "free_running_error_summary_by_model",
+        "final_topk_agreement_summary_by_model",
+        "root_cause_counts_by_model",
+        "memory_accounting_summary_by_model",
+        "limitations",
+        "no_performance_claims_note",
+        "claim_note",
+        "forbidden_claims",
+        "model_entries",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing key: {key}")
+
+    if report.get("experiment_id") != EXPERIMENT_073_ID:
+        errors.append("experiment_id mismatch")
+
+    entries = report.get("model_entries")
+    if not isinstance(entries, list):
+        errors.append("model_entries must be a list")
+        return errors
+
+    for idx, entry in enumerate(entries):
+        if not isinstance(entry, dict):
+            errors.append(f"model entry {idx} not dict")
+            continue
+        for key in (
+            "model_id",
+            "model_load_succeeded",
+            "architecture_supported",
+            "classification",
+            "blockers",
+            "cells",
+        ):
+            if key not in entry:
+                errors.append(f"model entry {idx} missing {key}")
+
+        for cidx, cell in enumerate(entry.get("cells", [])):
+            if not isinstance(cell, dict):
+                errors.append(f"model entry {idx} cell {cidx} not dict")
+                continue
+            for ck in (
+                "model_id",
+                "prompt_id",
+                "target_token_length",
+                "chunk_size",
+                "trace_mode",
+                "root_cause_classification",
+                "passed",
+                "blockers",
+            ):
+                if ck not in cell:
+                    errors.append(f"model entry {idx} cell {cidx} missing {ck}")
 
     return errors
