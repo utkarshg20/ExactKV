@@ -1958,3 +1958,806 @@ def validate_exp079_report(report: dict[str, Any]) -> list[str]:
             errors.append(f"generation_cells[{idx}].safety_gates.default_runtime_changed must be false")
 
     return errors
+
+
+# --- Phase 16O: ExactKV round-log shadow observer ---
+
+EXPERIMENT_080_ID = "exp080_round_log_shadow_observer"
+DEFAULT_EXP080_REPORT = Path("reports/experiment_080_round_log_shadow_observer.json")
+DEFAULT_EXP080_COMPRESSORS: tuple[str, ...] = DEFAULT_EXP079_COMPRESSORS
+DEFAULT_EXP080_MAX_NEW_TOKENS = DEFAULT_EXP079_MAX_NEW_TOKENS
+BLOCKED_MISSING_ROUND_LOG = "blocked_missing_round_log"
+
+EXP080_CLAIM_NOTE = (
+    "Post-hoc ExactKV round-log shadow observer (Phase 16O). Uses existing "
+    "ExactKVResult round traces when available, then offline shadow diagnostics "
+    "at round boundaries. Not live decode integration, vLLM, CUDA/Triton kernels, "
+    "or default runtime change. Shadow logits/top-k are diagnostic only."
+)
+
+
+def default_exp080_prompts() -> list[tuple[str, str]]:
+    """Four deterministic prompts for round-log shadow panel."""
+    return default_exp079_prompts()
+
+
+def _trace_value(trace: Any, key: str, default: Any = None) -> Any:
+    if isinstance(trace, dict):
+        return trace.get(key, default)
+    return getattr(trace, key, default)
+
+
+def _acceptance_value(acceptance: Any, key: str, default: Any = None) -> Any:
+    if acceptance is None:
+        return default
+    if isinstance(acceptance, dict):
+        return acceptance.get(key, default)
+    return getattr(acceptance, key, default)
+
+
+def extract_round_log_entries(
+    gen_out: GenerationOutput,
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Extract round-boundary metadata from existing ExactKVResult traces."""
+    blockers: list[str] = []
+    traces = gen_out.exactkv_traces
+    if not traces:
+        return [], ["missing ExactKV round log"]
+
+    prompt_ids = gen_out.prompt_ids
+    if prompt_ids is None:
+        return [], ["prompt token IDs unavailable"]
+
+    prompt_len = int(prompt_ids.shape[-1])
+    final_gen_ids = list(gen_out.generation_output_token_ids or [])
+    entries: list[dict[str, Any]] = []
+
+    for trace in traces:
+        round_idx = _trace_value(trace, "round_idx")
+        draft_tokens = _trace_value(trace, "draft_tokens")
+        acceptance = _trace_value(trace, "acceptance")
+        full_before = _trace_value(trace, "full_seq_len_before")
+        full_after = _trace_value(trace, "full_seq_len_after")
+
+        draft_length: int | None
+        if draft_tokens is None:
+            draft_length = None
+        else:
+            draft_length = len(list(draft_tokens))
+
+        accepted_count = _acceptance_value(acceptance, "num_accepted")
+        rejected_count = _acceptance_value(acceptance, "num_rejected")
+        correction = _acceptance_value(acceptance, "correction_token")
+        rejected_or_corrected: int | None
+        if rejected_count is None and correction is None:
+            rejected_or_corrected = None
+        else:
+            rejected_or_corrected = int(rejected_count or 0) + (
+                1 if correction is not None else 0
+            )
+
+        gen_len_after: int | None = None
+        gen_ids_up_to: list[int] | None = None
+        if full_after is not None:
+            gen_len_after = int(full_after) - prompt_len
+            if gen_len_after >= 0:
+                gen_ids_up_to = final_gen_ids[:gen_len_after]
+
+        entries.append({
+            "round_index": round_idx,
+            "prefix_length_before_round": full_before,
+            "prefix_length_after_round": full_after,
+            "draft_length": draft_length,
+            "accepted_token_count": accepted_count,
+            "rejected_or_corrected_token_count": rejected_or_corrected,
+            "generated_token_ids_up_to_round": gen_ids_up_to,
+            "final_generated_token_ids": final_gen_ids if final_gen_ids else None,
+        })
+
+    if not entries:
+        blockers.append("round log contained no entries")
+    return entries, blockers
+
+
+def build_round_boundary_input_ids(
+    gen_out: GenerationOutput,
+    entry: dict[str, Any],
+) -> tuple[torch.Tensor | None, list[str]]:
+    """Build fixed sequence at an ExactKV round boundary (post-commit)."""
+    plen_after = entry.get("prefix_length_after_round")
+    if plen_after is None:
+        return None, ["prefix_length_after_round unknown"]
+
+    if gen_out.full_sequence_ids is not None:
+        return gen_out.full_sequence_ids[:, : int(plen_after)], []
+
+    prompt_ids = gen_out.prompt_ids
+    gen_ids = entry.get("generated_token_ids_up_to_round")
+    if prompt_ids is None:
+        return None, ["prompt token IDs unavailable"]
+    if gen_ids is None:
+        return None, ["generated token IDs up to round unavailable"]
+
+    gen_tensor = torch.tensor([gen_ids], dtype=prompt_ids.dtype, device=prompt_ids.device)
+    return torch.cat([prompt_ids, gen_tensor], dim=1), []
+
+
+def _shadow_round_cell(
+    *,
+    entry: dict[str, Any],
+    input_ids: torch.Tensor,
+    prompt_id: str,
+    hf_model: Any | None,
+    shadow_replay_fn: Callable[..., dict[str, Any]] | None,
+    chunk_size: int,
+    accumulator_mode: str,
+    allow_parity_fail: bool,
+    allow_shadow_fail: bool,
+) -> dict[str, Any]:
+    """Run offline shadow at one ExactKV round boundary."""
+    base = {
+        "round_index": entry.get("round_index"),
+        "prefix_length_before_round": entry.get("prefix_length_before_round"),
+        "prefix_length_after_round": entry.get("prefix_length_after_round"),
+        "draft_length": entry.get("draft_length"),
+        "accepted_token_count": entry.get("accepted_token_count"),
+        "rejected_or_corrected_token_count": entry.get("rejected_or_corrected_token_count"),
+    }
+
+    if hf_model is None and shadow_replay_fn is None:
+        return {
+            **base,
+            "shadow_sequence_length": int(input_ids.shape[-1]),
+            "shadow_status": GenerationShadowStatus.SHADOW_BLOCKED.value,
+            "tolerance_policy_status": "blocked",
+            "streaming_vs_materialized_metrics": None,
+            "full_vs_streaming_metrics": None,
+            "topk_agreement_metrics": None,
+            "interpretation_note": "HF model unavailable for shadow replay.",
+            "blockers": ["hf model missing for shadow replay"],
+        }
+
+    replay = shadow_replay_fn or default_offline_shadow_replay
+    try:
+        shadow_cell = replay(
+            model=hf_model,
+            input_ids=input_ids,
+            prompt_id=prompt_id,
+            chunk_size=chunk_size,
+            accumulator_mode=accumulator_mode,
+            allow_parity_fail=allow_parity_fail,
+        )
+    except Exception as exc:  # noqa: BLE001
+        shadow_cell = {"blockers": [f"shadow replay failed: {type(exc).__name__}: {exc}"]}
+
+    if shadow_cell.get("blockers") and not allow_shadow_fail:
+        shadow_status = GenerationShadowStatus.SHADOW_BLOCKED.value
+    elif shadow_cell.get("blockers"):
+        shadow_status = GenerationShadowStatus.SHADOW_BLOCKED.value
+    else:
+        shadow_status = GenerationShadowStatus.SHADOW_COMPLETE.value
+
+    num_layers = int(shadow_cell.get("num_layers_replayed") or 24)
+    tol_status, interp = apply_tolerance_policy_to_shadow_cell(
+        shadow_cell, num_layers=num_layers,
+    )
+    sm = shadow_cell.get("streaming_vs_materialized_logit_metrics") or {}
+    fs = shadow_cell.get("full_vs_streaming_logit_metrics") or {}
+    topk = {
+        "top1_agreement": sm.get("top1_agreement"),
+        "top5_overlap": sm.get("top5_overlap"),
+        "top10_overlap": sm.get("top10_overlap"),
+    }
+    return {
+        **base,
+        "shadow_sequence_length": int(input_ids.shape[-1]),
+        "shadow_status": shadow_status,
+        "tolerance_policy_status": tol_status,
+        "streaming_vs_materialized_metrics": sm,
+        "full_vs_streaming_metrics": fs,
+        "topk_agreement_metrics": topk,
+        "interpretation_note": interp,
+        "blockers": list(shadow_cell.get("blockers") or []),
+    }
+
+
+def run_round_log_shadow_for_generation(
+    *,
+    gen_out: GenerationOutput,
+    prompt_id: str,
+    hf_model: Any | None,
+    shadow_replay_fn: Callable[..., dict[str, Any]] | None,
+    chunk_size: int,
+    accumulator_mode: str,
+    allow_parity_fail: bool,
+    allow_shadow_fail: bool,
+    fallback_prefix_ladder: bool = False,
+    ladder_stride: int = 1,
+) -> tuple[list[dict[str, Any]], bool, bool, list[str]]:
+    """Run post-hoc round-log shadow; optional prefix-ladder fallback."""
+    entries, blockers = extract_round_log_entries(gen_out)
+    had_round_log = bool(entries)
+    used_fallback = False
+
+    if not entries:
+        if not fallback_prefix_ladder:
+            return [], False, False, blockers
+        ladder, ladder_blockers = build_decode_prefix_ladder(
+            gen_out, ladder_stride=ladder_stride,
+        )
+        if not ladder:
+            return [], False, False, blockers + ladder_blockers
+        used_fallback = True
+        prompt_len = int(gen_out.prompt_ids.shape[-1]) if gen_out.prompt_ids is not None else 0
+        entries = []
+        for k, input_ids in ladder:
+            entries.append({
+                "round_index": k,
+                "prefix_length_before_round": prompt_len + max(0, k - 1) if k > 0 else prompt_len,
+                "prefix_length_after_round": int(input_ids.shape[-1]),
+                "draft_length": None,
+                "accepted_token_count": None,
+                "rejected_or_corrected_token_count": None,
+                "generated_token_ids_up_to_round": (
+                    gen_out.generation_output_token_ids[:k] if k > 0 else []
+                ),
+                "_fallback_input_ids": input_ids,
+            })
+        blockers = ladder_blockers
+
+    round_cells: list[dict[str, Any]] = []
+    for entry in entries:
+        fallback_ids = entry.pop("_fallback_input_ids", None)
+        if fallback_ids is not None:
+            input_ids = fallback_ids
+            seq_blockers: list[str] = []
+        else:
+            input_ids, seq_blockers = build_round_boundary_input_ids(gen_out, entry)
+        if input_ids is None:
+            round_cells.append({
+                "round_index": entry.get("round_index"),
+                "prefix_length_before_round": entry.get("prefix_length_before_round"),
+                "prefix_length_after_round": entry.get("prefix_length_after_round"),
+                "draft_length": entry.get("draft_length"),
+                "accepted_token_count": entry.get("accepted_token_count"),
+                "rejected_or_corrected_token_count": entry.get(
+                    "rejected_or_corrected_token_count",
+                ),
+                "shadow_sequence_length": 0,
+                "shadow_status": GenerationShadowStatus.SHADOW_BLOCKED.value,
+                "tolerance_policy_status": "blocked",
+                "streaming_vs_materialized_metrics": None,
+                "full_vs_streaming_metrics": None,
+                "topk_agreement_metrics": None,
+                "interpretation_note": "Could not build round-boundary sequence.",
+                "blockers": seq_blockers,
+            })
+            continue
+        round_cells.append(
+            _shadow_round_cell(
+                entry=entry,
+                input_ids=input_ids,
+                prompt_id=prompt_id,
+                hf_model=hf_model,
+                shadow_replay_fn=shadow_replay_fn,
+                chunk_size=chunk_size,
+                accumulator_mode=accumulator_mode,
+                allow_parity_fail=allow_parity_fail,
+                allow_shadow_fail=allow_shadow_fail,
+            )
+        )
+    return round_cells, had_round_log, used_fallback, blockers
+
+
+def _aggregate_tolerance_by_round(
+    round_cells: Sequence[dict[str, Any]],
+) -> dict[str, dict[str, int]]:
+    by_round: dict[str, dict[str, int]] = {}
+    for cell in round_cells:
+        rnd = str(cell.get("round_index", ""))
+        status = cell.get("tolerance_policy_status")
+        if status is None:
+            continue
+        by_round.setdefault(rnd, {})
+        by_round[rnd][status] = by_round[rnd].get(status, 0) + 1
+    return by_round
+
+
+def _aggregate_topk_by_round(
+    round_cells: Sequence[dict[str, Any]],
+) -> dict[str, dict[str, int]]:
+    by_round: dict[str, dict[str, int]] = {}
+    for cell in round_cells:
+        rnd = str(cell.get("round_index", ""))
+        topk = cell.get("topk_agreement_metrics") or {}
+        by_round.setdefault(
+            rnd, {"top1_agreement_true": 0, "top1_agreement_false": 0, "top1_agreement_unknown": 0},
+        )
+        agree = topk.get("top1_agreement")
+        if agree is True:
+            by_round[rnd]["top1_agreement_true"] += 1
+        elif agree is False:
+            by_round[rnd]["top1_agreement_false"] += 1
+        else:
+            by_round[rnd]["top1_agreement_unknown"] += 1
+    return by_round
+
+
+def _first_status_change_for_round_cells(
+    round_cells: Sequence[dict[str, Any]],
+) -> dict[str, Any] | None:
+    if not round_cells:
+        return None
+    base = round_cells[0].get("tolerance_policy_status")
+    for cell in round_cells[1:]:
+        status = cell.get("tolerance_policy_status")
+        if status != base:
+            return {
+                "first_change_at_round_index": cell.get("round_index"),
+                "from_status": base,
+                "to_status": status,
+            }
+    return None
+
+
+def _first_top1_mismatch_for_round_cells(
+    round_cells: Sequence[dict[str, Any]],
+) -> dict[str, Any] | None:
+    for cell in round_cells:
+        topk = cell.get("topk_agreement_metrics") or {}
+        if topk.get("top1_agreement") is False:
+            return {
+                "first_mismatch_at_round_index": cell.get("round_index"),
+                "accepted_token_count": cell.get("accepted_token_count"),
+                "prefix_length_after_round": cell.get("prefix_length_after_round"),
+            }
+    return None
+
+
+def _aggregate_first_status_changes_by_round(
+    generation_cells: Sequence[dict[str, Any]],
+) -> dict[str, Any]:
+    changes: list[dict[str, Any]] = []
+    stable = 0
+    for gc in generation_cells:
+        rcs = gc.get("round_shadow_cells") or []
+        change = _first_status_change_for_round_cells(rcs)
+        if change is None:
+            stable += 1
+        else:
+            changes.append({
+                "prompt_id": gc.get("prompt_id"),
+                "compressor": gc.get("compressor"),
+                **change,
+            })
+    return {
+        "cells_with_status_change": len(changes),
+        "cells_all_stable": stable,
+        "changes": changes,
+    }
+
+
+def _aggregate_first_top1_mismatches_by_round(
+    generation_cells: Sequence[dict[str, Any]],
+) -> dict[str, Any]:
+    mismatches: list[dict[str, Any]] = []
+    all_agree = 0
+    for gc in generation_cells:
+        rcs = gc.get("round_shadow_cells") or []
+        mismatch = _first_top1_mismatch_for_round_cells(rcs)
+        if mismatch is None:
+            all_agree += 1
+        else:
+            mismatches.append({
+                "prompt_id": gc.get("prompt_id"),
+                "compressor": gc.get("compressor"),
+                **mismatch,
+            })
+    return {
+        "cells_with_top1_mismatch": len(mismatches),
+        "cells_all_top1_agree": all_agree,
+        "mismatches": mismatches,
+    }
+
+
+def _aggregate_accepted_prefix_correlation_summary(
+    generation_cells: Sequence[dict[str, Any]],
+) -> dict[str, Any]:
+    """Descriptive correlation fields only; no causality claims."""
+    mismatch_rounds: list[dict[str, Any]] = []
+    partial_acceptance_rounds: list[dict[str, Any]] = []
+    overlap: list[dict[str, Any]] = []
+
+    for gc in generation_cells:
+        for rc in gc.get("round_shadow_cells") or []:
+            accepted = rc.get("accepted_token_count")
+            draft_len = rc.get("draft_length")
+            topk = rc.get("topk_agreement_metrics") or {}
+            mismatch = topk.get("top1_agreement") is False
+            round_idx = rc.get("round_index")
+
+            if mismatch:
+                mismatch_rounds.append({
+                    "prompt_id": gc.get("prompt_id"),
+                    "compressor": gc.get("compressor"),
+                    "round_index": round_idx,
+                    "accepted_token_count": accepted,
+                    "prefix_length_after_round": rc.get("prefix_length_after_round"),
+                })
+
+            partial = (
+                accepted is not None
+                and draft_len is not None
+                and int(accepted) < int(draft_len)
+            )
+            if partial:
+                partial_acceptance_rounds.append({
+                    "prompt_id": gc.get("prompt_id"),
+                    "compressor": gc.get("compressor"),
+                    "round_index": round_idx,
+                    "accepted_token_count": accepted,
+                    "draft_length": draft_len,
+                })
+                if mismatch:
+                    overlap.append({
+                        "prompt_id": gc.get("prompt_id"),
+                        "compressor": gc.get("compressor"),
+                        "round_index": round_idx,
+                        "accepted_token_count": accepted,
+                        "draft_length": draft_len,
+                    })
+
+    return {
+        "description": (
+            "Descriptive overlap between top-1 mismatch rounds and partial-acceptance "
+            "rounds; not a causality claim."
+        ),
+        "mismatch_round_count": len(mismatch_rounds),
+        "partial_acceptance_round_count": len(partial_acceptance_rounds),
+        "overlap_mismatch_and_partial_acceptance_count": len(overlap),
+        "mismatch_rounds": mismatch_rounds,
+        "partial_acceptance_rounds": partial_acceptance_rounds,
+        "overlap_rounds": overlap,
+    }
+
+
+def run_exp080_round_log_shadow_panel(
+    *,
+    model_id: str = DEFAULT_MODEL_ID,
+    device: str = "cpu",
+    dtype: str = "float32",
+    prompts: Sequence[tuple[str, str]] | None = None,
+    max_new_tokens: int = DEFAULT_EXP080_MAX_NEW_TOKENS,
+    compressors_requested: Sequence[str] = DEFAULT_EXP080_COMPRESSORS,
+    draft_len: int = 4,
+    chunk_size: int = DEFAULT_CHUNK_SIZE,
+    accumulator_mode: str = "float32",
+    fallback_prefix_ladder: bool = False,
+    ladder_stride: int = 1,
+    allow_shadow_fail: bool = True,
+    allow_parity_fail: bool = True,
+    local_files_only: bool = False,
+    generation_fn: Callable[..., GenerationOutput] | None = None,
+    shadow_replay_fn: Callable[..., dict[str, Any]] | None = None,
+    runtime_loader: Callable[..., tuple[Any, Any]] | None = None,
+) -> dict[str, Any]:
+    """Run Experiment 080 post-hoc ExactKV round-log shadow observer."""
+    prompt_panel = list(prompts) if prompts is not None else default_exp080_prompts()
+    runnable_compressors, _blocked_compressors = resolve_panel_compressors(compressors_requested)
+
+    blockers: list[str] = []
+    if not runnable_compressors:
+        blockers.append("no compressors runnable via get_compressor API")
+
+    runtime: Any | None = None
+    if generation_fn is None:
+        if runtime_loader is not None:
+            try:
+                runtime, _tokenizer = runtime_loader(
+                    model_id=model_id,
+                    device=device,
+                    dtype=dtype,
+                    local_files_only=local_files_only,
+                )
+            except Exception as exc:  # noqa: BLE001
+                blockers.append(f"runtime load failed: {type(exc).__name__}: {exc}")
+        else:
+            try:
+                from exactkv.runtime.model_runtime import ModelRuntime
+
+                runtime = ModelRuntime(model_id, device=device, dtype=dtype)
+            except Exception as exc:  # noqa: BLE001
+                blockers.append(f"runtime load failed: {type(exc).__name__}: {exc}")
+
+    hf_model = getattr(runtime, "model", None) if runtime is not None else None
+    baseline_cache: dict[str, list[int]] = {}
+
+    generation_cells: list[dict[str, Any]] = []
+    all_round_cells: list[dict[str, Any]] = []
+    gen_success = 0
+    gen_blocked = 0
+    round_success = 0
+    round_blocked = 0
+    round_log_available = 0
+    round_log_missing = 0
+    fallback_used = 0
+    max_rounds = 0
+
+    for prompt_id, prompt_text in prompt_panel:
+        preview = _preview(prompt_text)
+        for compressor in runnable_compressors:
+            cell_blockers: list[str] = []
+            if runtime is None and generation_fn is None:
+                gen_blocked += 1
+                generation_cells.append({
+                    "prompt_id": prompt_id,
+                    "prompt_preview": preview,
+                    "compressor": compressor,
+                    "max_new_tokens": max_new_tokens,
+                    "generation_completed": False,
+                    "exactkv_failures": None,
+                    "token_exact_match": None,
+                    "generation_output_preview": "",
+                    "generation_output_token_count": 0,
+                    "round_log_available": False,
+                    "round_count": 0,
+                    "fallback_prefix_ladder_used": False,
+                    "round_shadow_cells": [],
+                    "safety_gates": _generation_safety_gates(
+                        generation_completed=False, shadow_ran=False,
+                    ),
+                    "blockers": list(blockers),
+                })
+                continue
+
+            if generation_fn is not None:
+                gen_out = generation_fn(
+                    prompt=prompt_text,
+                    max_new_tokens=max_new_tokens,
+                    compressor_name=compressor,
+                )
+            else:
+                full_ids = baseline_cache.get(prompt_id)
+                gen_out = run_exactkv_generation_with_baseline(
+                    runtime=runtime,
+                    prompt=prompt_text,
+                    max_new_tokens=max_new_tokens,
+                    compressor_name=compressor,
+                    draft_len=draft_len,
+                    full_baseline_ids=full_ids,
+                )
+                if full_ids is None and gen_out.generation_completed:
+                    try:
+                        from exactkv.runtime.generation import generate_full_greedy
+
+                        full_res = generate_full_greedy(runtime, prompt_text, max_new_tokens)
+                        full_ids = full_res.generated_ids.squeeze().tolist()
+                        if isinstance(full_ids, int):
+                            full_ids = [full_ids]
+                        baseline_cache[prompt_id] = full_ids
+                    except Exception:  # noqa: BLE001
+                        pass
+
+            generation_completed = bool(gen_out.generation_completed)
+            if generation_completed:
+                gen_success += 1
+            else:
+                gen_blocked += 1
+                cell_blockers.extend(gen_out.blockers)
+
+            round_cells: list[dict[str, Any]] = []
+            log_available = False
+            used_fallback = False
+            shadow_ran = False
+
+            if generation_completed:
+                round_cells, log_available, used_fallback, extract_blockers = (
+                    run_round_log_shadow_for_generation(
+                        gen_out=gen_out,
+                        prompt_id=prompt_id,
+                        hf_model=hf_model,
+                        shadow_replay_fn=shadow_replay_fn,
+                        chunk_size=chunk_size,
+                        accumulator_mode=accumulator_mode,
+                        allow_parity_fail=allow_parity_fail,
+                        allow_shadow_fail=allow_shadow_fail,
+                        fallback_prefix_ladder=fallback_prefix_ladder,
+                        ladder_stride=ladder_stride,
+                    )
+                )
+                cell_blockers.extend(extract_blockers)
+                shadow_ran = bool(round_cells)
+                if log_available:
+                    round_log_available += 1
+                elif not used_fallback:
+                    round_log_missing += 1
+                    cell_blockers.append(BLOCKED_MISSING_ROUND_LOG)
+                if used_fallback:
+                    fallback_used += 1
+
+            round_count = len(round_cells)
+            if round_count > max_rounds:
+                max_rounds = round_count
+
+            for rc in round_cells:
+                all_round_cells.append(rc)
+                if rc.get("shadow_status") == GenerationShadowStatus.SHADOW_COMPLETE.value:
+                    round_success += 1
+                else:
+                    round_blocked += 1
+
+            safety = _generation_safety_gates(
+                generation_completed=generation_completed,
+                shadow_ran=shadow_ran,
+            )
+
+            generation_cells.append({
+                "prompt_id": prompt_id,
+                "prompt_preview": preview,
+                "compressor": compressor,
+                "max_new_tokens": max_new_tokens,
+                "generation_completed": generation_completed,
+                "exactkv_failures": gen_out.exactkv_failures,
+                "token_exact_match": gen_out.token_exact_match,
+                "generation_output_preview": _preview(gen_out.generation_output_text),
+                "generation_output_token_count": len(gen_out.generation_output_token_ids or []),
+                "round_log_available": log_available,
+                "round_count": round_count,
+                "fallback_prefix_ladder_used": used_fallback,
+                "round_shadow_cells": round_cells,
+                "safety_gates": safety,
+                "blockers": cell_blockers,
+            })
+
+    total_round = round_success + round_blocked
+    safety_ok = all(
+        gc.get("safety_gates", {}).get("shadow_used_for_token_commit") is False
+        and gc.get("safety_gates", {}).get("generation_modified_by_shadow") is False
+        and gc.get("safety_gates", {}).get("default_runtime_changed") is False
+        for gc in generation_cells
+    )
+
+    if not safety_ok:
+        status = "failed"
+    elif gen_success == 0:
+        status = "blocked"
+    elif round_success == total_round and total_round > 0:
+        status = "diagnostic_complete"
+    elif round_success > 0:
+        status = "diagnostic_partial"
+    else:
+        status = "blocked"
+
+    return {
+        "experiment_id": EXPERIMENT_080_ID,
+        "status": status,
+        "model_id": model_id,
+        "device": device,
+        "dtype": dtype,
+        "max_new_tokens": max_new_tokens,
+        "fallback_prefix_ladder": fallback_prefix_ladder,
+        "compressors_requested": list(compressors_requested),
+        "compressors_run": runnable_compressors,
+        "total_generation_cells": len(generation_cells),
+        "generation_successful_cells": gen_success,
+        "generation_blocked_cells": gen_blocked,
+        "total_round_shadow_cells": total_round,
+        "round_shadow_successful_cells": round_success,
+        "round_shadow_blocked_cells": round_blocked,
+        "round_log_available_cells": round_log_available,
+        "round_log_missing_cells": round_log_missing,
+        "fallback_prefix_ladder_used_cells": fallback_used,
+        "max_rounds_observed": max_rounds,
+        "exactkv_failure_summary": _summarize_exactkv_failures(generation_cells),
+        "tolerance_policy_summary_by_round": _aggregate_tolerance_by_round(all_round_cells),
+        "topk_agreement_summary_by_round": _aggregate_topk_by_round(all_round_cells),
+        "first_status_change_summary": _aggregate_first_status_changes_by_round(generation_cells),
+        "first_top1_mismatch_summary": _aggregate_first_top1_mismatches_by_round(generation_cells),
+        "accepted_prefix_correlation_summary": _aggregate_accepted_prefix_correlation_summary(
+            generation_cells,
+        ),
+        "generation_modified_by_shadow": False,
+        "shadow_used_for_token_commit": False,
+        "default_runtime_changed": False,
+        "generation_cells": generation_cells,
+        "blockers": blockers,
+        "limitations": [
+            "Post-hoc ExactKV round-log observer; not live decode integration.",
+            "Uses existing ExactKVResult traces when available.",
+            "Round-boundary replay is fixed-sequence analysis, not token generation.",
+            "Top-k agreement is supplementary; not exactness.",
+            "No live per-round decode hooks.",
+            "No CUDA/Triton/vLLM/serving integration.",
+        ],
+        "no_performance_claims_note": (
+            "No speed, throughput, latency, serving, measured active GPU memory, "
+            "or production-memory claim is made."
+        ),
+        "claim_note": EXP080_CLAIM_NOTE,
+        "forbidden_claims": list(SHADOW_FORBIDDEN_CLAIMS),
+        "cli_flag": PROPOSED_SHADOW_CLI_FLAG,
+    }
+
+
+def validate_exp080_report(report: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "status",
+        "model_id",
+        "device",
+        "dtype",
+        "max_new_tokens",
+        "compressors_requested",
+        "compressors_run",
+        "total_generation_cells",
+        "generation_successful_cells",
+        "generation_blocked_cells",
+        "total_round_shadow_cells",
+        "round_shadow_successful_cells",
+        "round_shadow_blocked_cells",
+        "round_log_available_cells",
+        "round_log_missing_cells",
+        "fallback_prefix_ladder_used_cells",
+        "max_rounds_observed",
+        "exactkv_failure_summary",
+        "tolerance_policy_summary_by_round",
+        "topk_agreement_summary_by_round",
+        "first_status_change_summary",
+        "first_top1_mismatch_summary",
+        "accepted_prefix_correlation_summary",
+        "generation_modified_by_shadow",
+        "shadow_used_for_token_commit",
+        "default_runtime_changed",
+        "generation_cells",
+        "blockers",
+        "limitations",
+        "no_performance_claims_note",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing key: {key}")
+
+    if report.get("experiment_id") != EXPERIMENT_080_ID:
+        errors.append("experiment_id mismatch")
+
+    for flag in (
+        "generation_modified_by_shadow",
+        "shadow_used_for_token_commit",
+        "default_runtime_changed",
+    ):
+        if report.get(flag) is not False:
+            errors.append(f"{flag} must be false")
+
+    for idx, cell in enumerate(report.get("generation_cells", [])):
+        if not isinstance(cell, dict):
+            errors.append(f"generation_cells[{idx}] not dict")
+            continue
+        for ck in (
+            "prompt_id",
+            "compressor",
+            "max_new_tokens",
+            "generation_completed",
+            "round_log_available",
+            "round_count",
+            "round_shadow_cells",
+            "safety_gates",
+            "blockers",
+        ):
+            if ck not in cell:
+                errors.append(f"generation_cells[{idx}] missing {ck}")
+        gates = cell.get("safety_gates") or {}
+        if gates.get("shadow_used_for_token_commit") is not False:
+            errors.append(
+                f"generation_cells[{idx}].safety_gates.shadow_used_for_token_commit must be false",
+            )
+        if gates.get("generation_modified_by_shadow") is not False:
+            errors.append(
+                f"generation_cells[{idx}].safety_gates.generation_modified_by_shadow must be false",
+            )
+        if gates.get("default_runtime_changed") is not False:
+            errors.append(
+                f"generation_cells[{idx}].safety_gates.default_runtime_changed must be false",
+            )
+
+    return errors

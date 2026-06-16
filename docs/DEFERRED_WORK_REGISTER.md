@@ -176,6 +176,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Prompt+generated generation-shadow panel** | **Complete** | Phase 16L ✅ | [`EXPERIMENT_077_GENERATION_SHADOW_PROMPT_PLUS_GENERATED_PANEL.md`](EXPERIMENT_077_GENERATION_SHADOW_PROMPT_PLUS_GENERATED_PANEL.md); fixed-sequence post-hoc replay |
 | — | **Expanded generation-shadow panel** | **Complete** | Phase 16M ✅ | [`EXPERIMENT_078_GENERATION_SHADOW_EXPANDED_PANEL.md`](EXPERIMENT_078_GENERATION_SHADOW_EXPANDED_PANEL.md); prompts × lengths × compressors when API exposes them |
 | — | **Decode-prefix ladder shadow observer** | **Complete** | Phase 16N ✅ | [`EXPERIMENT_079_DECODE_PREFIX_LADDER_SHADOW_OBSERVER.md`](EXPERIMENT_079_DECODE_PREFIX_LADDER_SHADOW_OBSERVER.md); post-hoc prefix ladder; **not** live decode integration |
+| — | **ExactKV round-log shadow observer** | **Complete** | Phase 16O ✅ | [`EXPERIMENT_080_ROUND_LOG_SHADOW_OBSERVER.md`](EXPERIMENT_080_ROUND_LOG_SHADOW_OBSERVER.md); post-hoc round-log replay; **not** live decode integration |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

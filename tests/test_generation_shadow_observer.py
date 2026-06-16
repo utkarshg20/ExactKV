@@ -186,3 +186,40 @@ def test_build_decode_prefix_ladder_includes_k0() -> None:
     ladder, blockers = build_decode_prefix_ladder(gen)
     assert blockers == []
     assert [k for k, _ in ladder] == [0, 1, 2]
+
+
+def test_extract_round_log_entries_from_traces() -> None:
+    from exactkv.attention.generation_shadow_observer import extract_round_log_entries
+    from exactkv.verification.acceptance import AcceptanceResult, VerificationTrace
+
+    acc = AcceptanceResult(
+        draft_tokens=[10, 11],
+        verifier_tokens=[10, 11],
+        accepted_tokens=[10, 11],
+        correction_token=None,
+        rejected_tokens=[],
+        bonus_token=None,
+        all_matched=True,
+        num_accepted=2,
+        num_rejected=0,
+    )
+    gen = GenerationOutput(
+        generation_completed=True,
+        generation_output_text="x",
+        generation_output_token_ids=[10, 11],
+        prompt_ids=torch.tensor([[1, 2, 3]]),
+        exactkv_traces=[
+            VerificationTrace(
+                round_idx=0,
+                draft_tokens=[10, 11],
+                acceptance=acc,
+                full_seq_len_before=3,
+                full_seq_len_after=5,
+                compressed_seq_len_after=5,
+            ),
+        ],
+    )
+    entries, blockers = extract_round_log_entries(gen)
+    assert blockers == []
+    assert entries[0]["round_index"] == 0
+    assert entries[0]["accepted_token_count"] == 2

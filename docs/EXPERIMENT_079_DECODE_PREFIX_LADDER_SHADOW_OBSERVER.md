@@ -145,4 +145,6 @@ Does not reproduce VeriCache throughput, serving, or memory panels.
 
 ## 14. Next step
 
-**Phase 16O (proposed):** live per-round decode hooks — only with explicit approval; still no unapproved `ExactKVGenerator` modification.
+**Phase 16O (complete):** ExactKV round-log shadow observer — see [`EXPERIMENT_080_ROUND_LOG_SHADOW_OBSERVER.md`](EXPERIMENT_080_ROUND_LOG_SHADOW_OBSERVER.md).
+
+**Phase 16P (proposed):** live per-round decode hooks — only with explicit approval.
