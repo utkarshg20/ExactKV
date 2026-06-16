@@ -27,14 +27,45 @@ from exactkv.attention.streaming_quant_attention import (
     attention_full,
     attention_materialized_compressed,
     attention_streaming_compressed,
+    compute_candidate_tolerances,
     estimate_attention_memory_bytes,
+    layer_depth_aware_streaming_tolerance,
     quantize_kv_int8_reference,
+    reference_high_precision_tolerance,
+    strict_streaming_tolerance,
 )
 
 EXPERIMENT_069_ID = "exp069_multilayer_attention_drift_accumulation"
 DEFAULT_EXP069_REPORT = Path("reports/experiment_069_multilayer_attention_drift_accumulation.json")
 DEFAULT_PREFIX_LAYER_COUNTS: tuple[int, ...] = (1, 2, 4)
 DEFAULT_TARGET_TOKEN_LENGTHS_069: tuple[int, ...] = (64, 128)
+
+EXPERIMENT_070_ID = "exp070_streaming_multilayer_numerics_audit"
+DEFAULT_EXP070_REPORT = Path("reports/experiment_070_streaming_multilayer_numerics_audit.json")
+DEFAULT_TARGET_TOKEN_LENGTHS_070: tuple[int, ...] = (64, 128, 256)
+DEFAULT_CHUNK_SIZES_070: tuple[int, ...] = (8, 16, 32, 64)
+DEFAULT_ACCUMULATOR_MODES: tuple[str, ...] = ("default", "float32", "float64")
+
+PHASE16D_REGRESSION_CELL: dict[str, Any] = {
+    "prompt_id": "long_128",
+    "target_token_length": 128,
+    "prefix_layer_count": 4,
+    "chunk_size": 32,
+    "accumulator_mode": "default",
+    "model_id": DEFAULT_MODEL_ID,
+    "dtype": "float32",
+    "device": "cpu",
+    "phase16d_observed_error": 5.79e-4,
+    "phase16d_tolerance": DEFAULT_STREAMING_TOLERANCE_FP32,
+}
+
+EXP070_CLAIM_NOTE = (
+    "Numerical audit of offline streaming compressed attention under multi-layer "
+    "accumulation (Phase 16E). Not model generation integration, vLLM, CUDA/Triton "
+    "kernels, or ExactKV default runtime. Tolerance recommendations are diagnostic "
+    "only. Theoretical memory accounting only; no measured active GPU memory, speed, "
+    "throughput, latency, or serving claim."
+)
 
 EXP069_CLAIM_NOTE = (
     "Offline multi-layer drift accumulation probe (Phase 16D). Replays consecutive "
@@ -128,14 +159,27 @@ def _attention_context(
     *,
     path: AttentionPath,
     chunk_size: int,
-) -> torch.Tensor:
+    accumulator_dtype: str | None = None,
+    collect_streaming_diagnostics: bool = False,
+) -> torch.Tensor | tuple[torch.Tensor, dict[str, Any] | None]:
     q, k, v = extracted_qkv.q, extracted_qkv.k, extracted_qkv.v
     if path == "full":
         return attention_full(q, k, v, causal=True)
     qkv = quantize_kv_int8_reference(k, v)
     if path == "materialized_compressed":
         return attention_materialized_compressed(q, qkv, causal=True)
-    return attention_streaming_compressed(q, qkv, chunk_size, causal=True)
+    result = attention_streaming_compressed(
+        q,
+        qkv,
+        chunk_size,
+        causal=True,
+        accumulator_dtype=accumulator_dtype,
+        return_diagnostics=collect_streaming_diagnostics,
+    )
+    if collect_streaming_diagnostics:
+        out, diag = result
+        return out, diag
+    return result
 
 
 def run_qwen_decoder_block(
@@ -147,7 +191,9 @@ def run_qwen_decoder_block(
     chunk_size: int,
     rotary_emb: Any | None,
     position_ids: torch.Tensor,
-) -> tuple[torch.Tensor, LayerMemoryRecord | None]:
+    streaming_accumulator_dtype: str | None = None,
+    collect_streaming_diagnostics: bool = False,
+) -> tuple[torch.Tensor, LayerMemoryRecord | None, dict[str, Any] | None]:
     """Replay one Qwen2/Qwen2.5 decoder block with chosen attention path."""
     residual = hidden
     normed = layer.input_layernorm(hidden)
@@ -164,7 +210,19 @@ def run_qwen_decoder_block(
             f"layer {layer_idx} QKV extraction blocked: {extracted.blockers}"
         )
 
-    attn_ctx = _attention_context(extracted, path=attention_path, chunk_size=chunk_size)
+    layer_diag: dict[str, Any] | None = None
+    attn_result = _attention_context(
+        extracted,
+        path=attention_path,
+        chunk_size=chunk_size,
+        accumulator_dtype=streaming_accumulator_dtype,
+        collect_streaming_diagnostics=collect_streaming_diagnostics,
+    )
+    if collect_streaming_diagnostics and attention_path == "streaming_compressed":
+        attn_ctx, layer_diag = attn_result
+    else:
+        attn_ctx = attn_result  # type: ignore[assignment]
+
     o_proj = extracted.o_proj
     if o_proj is None:
         raise RuntimeError(f"layer {layer_idx} missing o_proj")
@@ -180,7 +238,7 @@ def run_qwen_decoder_block(
     hidden = residual2 + mlp_out
 
     mem = _layer_memory_from_qkv(extracted.q, chunk_size=chunk_size, layer_idx=layer_idx)
-    return hidden, mem
+    return hidden, mem, layer_diag
 
 
 def replay_prefix_layers(
@@ -192,11 +250,14 @@ def replay_prefix_layers(
     chunk_size: int,
     rotary_emb: Any | None,
     position_ids: torch.Tensor,
-) -> tuple[torch.Tensor, list[LayerMemoryRecord]]:
+    streaming_accumulator_dtype: str | None = None,
+    collect_streaming_diagnostics: bool = False,
+) -> tuple[torch.Tensor, list[LayerMemoryRecord], list[dict[str, Any]]]:
     """Run the first ``prefix_layer_count`` decoder layers."""
     mem_records: list[LayerMemoryRecord] = []
+    diagnostics: list[dict[str, Any]] = []
     for idx in range(prefix_layer_count):
-        hidden, mem = run_qwen_decoder_block(
+        hidden, mem, layer_diag = run_qwen_decoder_block(
             hidden,
             layers[idx],
             layer_idx=idx,
@@ -204,9 +265,14 @@ def replay_prefix_layers(
             chunk_size=chunk_size,
             rotary_emb=rotary_emb,
             position_ids=position_ids,
+            streaming_accumulator_dtype=streaming_accumulator_dtype,
+            collect_streaming_diagnostics=collect_streaming_diagnostics,
         )
         mem_records.append(mem)
-    return hidden, mem_records
+        if layer_diag is not None:
+            layer_diag = {**layer_diag, "layer_idx": idx}
+            diagnostics.append(layer_diag)
+    return hidden, mem_records, diagnostics
 
 
 def check_full_block_parity(
@@ -293,7 +359,7 @@ def run_multilayer_drift_cell(
         hidden0 = embed(input_ids)
 
         try:
-            full_hidden, full_mem = replay_prefix_layers(
+            full_hidden, full_mem, _ = replay_prefix_layers(
                 hidden0,
                 layers,
                 prefix_layer_count=prefix_layer_count,
@@ -302,7 +368,7 @@ def run_multilayer_drift_cell(
                 rotary_emb=rotary_emb,
                 position_ids=position_ids,
             )
-            mat_hidden, mat_mem = replay_prefix_layers(
+            mat_hidden, mat_mem, _ = replay_prefix_layers(
                 hidden0,
                 layers,
                 prefix_layer_count=prefix_layer_count,
@@ -311,7 +377,7 @@ def run_multilayer_drift_cell(
                 rotary_emb=rotary_emb,
                 position_ids=position_ids,
             )
-            stream_hidden, stream_mem = replay_prefix_layers(
+            stream_hidden, stream_mem, _ = replay_prefix_layers(
                 hidden0,
                 layers,
                 prefix_layer_count=prefix_layer_count,
@@ -681,5 +747,542 @@ def validate_exp069_report(report: dict[str, Any]) -> list[str]:
             agg = cell.get("aggregate_memory_accounting")
             if not isinstance(agg, dict):
                 errors.append(f"cell {idx} missing aggregate_memory_accounting")
+
+    return errors
+
+
+def _is_phase16d_regression_cell(cell: dict[str, Any]) -> bool:
+    return (
+        cell.get("prompt_id") == PHASE16D_REGRESSION_CELL["prompt_id"]
+        and cell.get("target_token_length") == PHASE16D_REGRESSION_CELL["target_token_length"]
+        and cell.get("prefix_layer_count") == PHASE16D_REGRESSION_CELL["prefix_layer_count"]
+        and cell.get("chunk_size") == PHASE16D_REGRESSION_CELL["chunk_size"]
+        and cell.get("accumulator_mode") == PHASE16D_REGRESSION_CELL["accumulator_mode"]
+    )
+
+
+def recommend_tolerance_policy(
+    cells: Sequence[dict[str, Any]],
+    *,
+    dtype: torch.dtype,
+) -> dict[str, Any]:
+    """Recommend a tolerance policy from measured audit cells (diagnostic only)."""
+    successful = [
+        c for c in cells if c.get("streaming_vs_materialized_hidden_metrics") is not None
+    ]
+    if not successful:
+        return {
+            "policy": "insufficient_data",
+            "rationale": "No successful audit cells to analyze.",
+            "strict_tolerance": strict_streaming_tolerance(dtype),
+        }
+
+    strict_fails = [c for c in successful if not c.get("strict_tolerance_pass")]
+    default_fails = [
+        c for c in successful
+        if c.get("accumulator_mode") == "default" and not c.get("strict_tolerance_pass")
+    ]
+    fp32_pass_strict = all(
+        c.get("strict_tolerance_pass")
+        for c in successful
+        if c.get("accumulator_mode") == "float32"
+    )
+    fp64_pass_strict = all(
+        c.get("strict_tolerance_pass")
+        for c in successful
+        if c.get("accumulator_mode") == "float64"
+    )
+
+    if not strict_fails:
+        return {
+            "policy": "keep_strict_tolerance",
+            "rationale": (
+                "All audited cells pass the Phase 16D strict tolerance under tested "
+                "accumulator modes."
+            ),
+            "strict_tolerance": strict_streaming_tolerance(dtype),
+            "recommended_tolerance_formula": "strict_16d",
+        }
+
+    if default_fails and fp32_pass_strict and fp64_pass_strict:
+        return {
+            "policy": "keep_strict_tolerance_use_float32_accumulator",
+            "rationale": (
+                "Default accumulator fails strict tolerance at multi-layer boundaries, "
+                "but explicit float32/float64 accumulators pass. This indicates expected "
+                "floating-point accumulation error, not an online-softmax algorithm bug."
+            ),
+            "strict_tolerance": strict_streaming_tolerance(dtype),
+            "recommended_tolerance_formula": "strict_16d",
+            "accumulator_recommendation": "float32",
+        }
+
+    depth_aware_would_pass = all(
+        c["streaming_vs_materialized_hidden_metrics"]["max_abs_error"]
+        <= layer_depth_aware_streaming_tolerance(dtype, int(c["prefix_layer_count"]))
+        for c in strict_fails
+    )
+    if depth_aware_would_pass:
+        return {
+            "policy": "documented_layer_depth_aware_tolerance",
+            "rationale": (
+                "Strict tolerance failures correlate with prefix depth; a sqrt(depth)-scaled "
+                "tolerance explains measured errors without loosening single-layer gates."
+            ),
+            "strict_tolerance": strict_streaming_tolerance(dtype),
+            "recommended_tolerance_formula": "layer_depth_aware",
+        }
+
+    return {
+        "policy": "keep_strict_tolerance_report_boundary_fail",
+        "rationale": (
+            "One or more cells fail strict tolerance without a clear accumulator-precision "
+            "remedy; keep strict tolerance and report boundary failures explicitly."
+        ),
+        "strict_tolerance": strict_streaming_tolerance(dtype),
+        "recommended_tolerance_formula": "strict_16d",
+    }
+
+
+def _recommended_tolerance_for_cell(
+    cell: dict[str, Any],
+    *,
+    dtype: torch.dtype,
+    policy_info: dict[str, Any],
+    fp64_reference_error: float | None,
+) -> float:
+    formula = policy_info.get("recommended_tolerance_formula", "strict_16d")
+    if formula == "layer_depth_aware":
+        return layer_depth_aware_streaming_tolerance(
+            dtype, int(cell["prefix_layer_count"])
+        )
+    if formula == "reference_high_precision" and fp64_reference_error is not None:
+        return reference_high_precision_tolerance(fp64_reference_error)
+    return strict_streaming_tolerance(dtype)
+
+
+def run_exp070_numerics_cell(
+    *,
+    model: Any,
+    input_ids: torch.Tensor,
+    prompt_id: str,
+    target_token_length: int,
+    actual_token_length: int,
+    prefix_layer_count: int,
+    chunk_size: int,
+    accumulator_mode: str,
+    fp64_reference_error: float | None = None,
+) -> dict[str, Any]:
+    """Run one Experiment 070 numerics audit cell."""
+    layers = getattr(getattr(model, "model", model), "layers", None)
+    if layers is None:
+        return _exp070_blocked_cell(
+            prompt_id, target_token_length, prefix_layer_count, chunk_size,
+            accumulator_mode, ["model has no decoder layers"],
+        )
+    if prefix_layer_count > len(layers):
+        return _exp070_blocked_cell(
+            prompt_id, target_token_length, prefix_layer_count, chunk_size,
+            accumulator_mode,
+            [f"prefix_layer_count {prefix_layer_count} exceeds model depth"],
+        )
+
+    rotary_emb = resolve_model_rotary_emb(model)
+    seq_len = input_ids.shape[-1]
+    position_ids = torch.arange(seq_len, device=input_ids.device).unsqueeze(0)
+    embed = getattr(getattr(model, "model", model), "embed_tokens", None)
+    if embed is None:
+        return _exp070_blocked_cell(
+            prompt_id, target_token_length, prefix_layer_count, chunk_size,
+            accumulator_mode, ["model missing embed_tokens"],
+        )
+
+    acc_arg = None if accumulator_mode == "default" else accumulator_mode
+    with torch.no_grad():
+        hidden0 = embed(input_ids)
+        try:
+            mat_hidden, _, _ = replay_prefix_layers(
+                hidden0,
+                layers,
+                prefix_layer_count=prefix_layer_count,
+                attention_path="materialized_compressed",
+                chunk_size=chunk_size,
+                rotary_emb=rotary_emb,
+                position_ids=position_ids,
+            )
+            stream_hidden, _, layer_diags = replay_prefix_layers(
+                hidden0,
+                layers,
+                prefix_layer_count=prefix_layer_count,
+                attention_path="streaming_compressed",
+                chunk_size=chunk_size,
+                rotary_emb=rotary_emb,
+                position_ids=position_ids,
+                streaming_accumulator_dtype=acc_arg,
+                collect_streaming_diagnostics=True,
+            )
+        except Exception as exc:  # noqa: BLE001
+            return _exp070_blocked_cell(
+                prompt_id, target_token_length, prefix_layer_count, chunk_size,
+                accumulator_mode, [f"replay failed: {type(exc).__name__}: {exc}"],
+            )
+
+    metrics = compute_drift_metrics(mat_hidden, stream_hidden)
+    dtype = hidden0.dtype
+    candidate_tols = compute_candidate_tolerances(
+        dtype=dtype,
+        prefix_layer_count=prefix_layer_count,
+        fp64_max_abs_error=fp64_reference_error,
+    )
+    strict_tol = candidate_tols["strict_16d"]
+    strict_pass = metrics.max_abs_error <= strict_tol
+
+    diagnostics: dict[str, Any] = {
+        "layer_diagnostics": layer_diags,
+        "any_layer_nan": any(d.get("has_nan") for d in layer_diags),
+        "any_layer_inf": any(d.get("has_inf") for d in layer_diags),
+        "candidate_tolerances": candidate_tols,
+    }
+    if fp64_reference_error is not None:
+        diagnostics["fp64_reference_max_abs_error"] = fp64_reference_error
+
+    return {
+        "prompt_id": prompt_id,
+        "target_token_length": target_token_length,
+        "actual_token_length": actual_token_length,
+        "prefix_layer_count": prefix_layer_count,
+        "chunk_size": chunk_size,
+        "accumulator_mode": accumulator_mode,
+        "streaming_vs_materialized_hidden_metrics": metrics.to_dict(),
+        "strict_tolerance": strict_tol,
+        "strict_tolerance_pass": strict_pass,
+        "recommended_tolerance_pass": None,
+        "diagnostics": diagnostics,
+        "blockers": [],
+        "phase16d_regression_target": _is_phase16d_regression_cell(
+            {
+                "prompt_id": prompt_id,
+                "target_token_length": target_token_length,
+                "prefix_layer_count": prefix_layer_count,
+                "chunk_size": chunk_size,
+                "accumulator_mode": accumulator_mode,
+            }
+        ),
+        "fp64_reference_max_abs_error": fp64_reference_error,
+    }
+
+
+def _exp070_blocked_cell(
+    prompt_id: str,
+    target_token_length: int,
+    prefix_layer_count: int,
+    chunk_size: int,
+    accumulator_mode: str,
+    blockers: list[str],
+) -> dict[str, Any]:
+    return {
+        "prompt_id": prompt_id,
+        "target_token_length": target_token_length,
+        "actual_token_length": 0,
+        "prefix_layer_count": prefix_layer_count,
+        "chunk_size": chunk_size,
+        "accumulator_mode": accumulator_mode,
+        "streaming_vs_materialized_hidden_metrics": None,
+        "strict_tolerance_pass": False,
+        "recommended_tolerance_pass": False,
+        "diagnostics": None,
+        "blockers": blockers,
+        "phase16d_regression_target": _is_phase16d_regression_cell(
+            {
+                "prompt_id": prompt_id,
+                "target_token_length": target_token_length,
+                "prefix_layer_count": prefix_layer_count,
+                "chunk_size": chunk_size,
+                "accumulator_mode": accumulator_mode,
+            }
+        ),
+    }
+
+
+def run_exp070_probe(
+    *,
+    model_id: str = DEFAULT_MODEL_ID,
+    device: str = "cpu",
+    dtype: str = "float32",
+    target_token_lengths: Sequence[int] = DEFAULT_TARGET_TOKEN_LENGTHS_070,
+    prefix_layer_counts: Sequence[int] = DEFAULT_PREFIX_LAYER_COUNTS,
+    chunk_sizes: Sequence[int] = DEFAULT_CHUNK_SIZES_070,
+    accumulator_modes: Sequence[str] = DEFAULT_ACCUMULATOR_MODES,
+    max_prompts: int = 2,
+    local_files_only: bool = False,
+    model_loader: Callable[..., tuple[Any, Any]] | None = None,
+    prompt_provider: Callable[[Any, Sequence[int], int], list[tuple[str, str, int, int]]] | None = None,
+) -> dict[str, Any]:
+    """Run Experiment 070 streaming multi-layer numerics audit."""
+    torch_dtype = getattr(torch, dtype, torch.float32)
+    blockers: list[str] = []
+    cells: list[dict[str, Any]] = []
+    prompts: list[tuple[str, str, int, int]] = []
+    fp64_refs: dict[tuple[str, int, int, int], float] = {}
+
+    try:
+        if model_loader is not None:
+            model, tokenizer = model_loader(
+                model_id=model_id, device=device, dtype=torch_dtype,
+                local_files_only=local_files_only,
+            )
+        else:
+            from transformers import AutoModelForCausalLM, AutoTokenizer
+
+            tokenizer = AutoTokenizer.from_pretrained(
+                model_id, local_files_only=local_files_only
+            )
+            model = AutoModelForCausalLM.from_pretrained(
+                model_id,
+                torch_dtype=torch_dtype,
+                local_files_only=local_files_only,
+            )
+            model.to(device)
+        load_ok = True
+    except Exception as exc:  # noqa: BLE001
+        load_ok = False
+        blockers.append(f"model load failed: {type(exc).__name__}: {exc}")
+        model = None
+        tokenizer = None
+
+    algorithm_change_made = False
+
+    if load_ok and model is not None and tokenizer is not None:
+        model.eval()
+        if prompt_provider is not None:
+            prompts = prompt_provider(tokenizer, target_token_lengths, max_prompts)
+        else:
+            prompts = long_context_prompts(
+                tokenizer, target_token_lengths, max_prompts=max_prompts
+            )
+
+        layers = getattr(getattr(model, "model", model), "layers", None)
+        rotary_emb = resolve_model_rotary_emb(model)
+        embed = getattr(getattr(model, "model", model), "embed_tokens", None)
+
+        if layers is not None and embed is not None:
+            for prompt_id, text, target_len, _actual in prompts:
+                input_ids = tokenizer(text, return_tensors="pt")["input_ids"].to(device)
+                position_ids = torch.arange(input_ids.shape[-1], device=device).unsqueeze(0)
+                with torch.no_grad():
+                    hidden0 = embed(input_ids)
+                    for prefix_layer_count in prefix_layer_counts:
+                        for chunk_size in chunk_sizes:
+                            try:
+                                mat_hidden, _, _ = replay_prefix_layers(
+                                    hidden0,
+                                    layers,
+                                    prefix_layer_count=prefix_layer_count,
+                                    attention_path="materialized_compressed",
+                                    chunk_size=chunk_size,
+                                    rotary_emb=rotary_emb,
+                                    position_ids=position_ids,
+                                )
+                                fp64_hidden, _, _ = replay_prefix_layers(
+                                    hidden0,
+                                    layers,
+                                    prefix_layer_count=prefix_layer_count,
+                                    attention_path="streaming_compressed",
+                                    chunk_size=chunk_size,
+                                    rotary_emb=rotary_emb,
+                                    position_ids=position_ids,
+                                    streaming_accumulator_dtype="float64",
+                                )
+                                err = float((mat_hidden - fp64_hidden).abs().max().item())
+                                fp64_refs[
+                                    (prompt_id, target_len, prefix_layer_count, chunk_size)
+                                ] = err
+                            except Exception:  # noqa: BLE001
+                                continue
+
+        for prompt_id, text, target_len, actual_len in prompts:
+            input_ids = tokenizer(text, return_tensors="pt")["input_ids"].to(device)
+            for prefix_layer_count in prefix_layer_counts:
+                for chunk_size in chunk_sizes:
+                    ref_key = (prompt_id, target_len, prefix_layer_count, chunk_size)
+                    fp64_ref = fp64_refs.get(ref_key)
+                    for acc_mode in accumulator_modes:
+                        cell = run_exp070_numerics_cell(
+                            model=model,
+                            input_ids=input_ids,
+                            prompt_id=prompt_id,
+                            target_token_length=target_len,
+                            actual_token_length=actual_len,
+                            prefix_layer_count=prefix_layer_count,
+                            chunk_size=chunk_size,
+                            accumulator_mode=acc_mode,
+                            fp64_reference_error=fp64_ref,
+                        )
+                        cell["model_id"] = model_id
+                        cells.append(cell)
+
+    successful = [c for c in cells if c.get("streaming_vs_materialized_hidden_metrics")]
+    blocked = [c for c in cells if c.get("streaming_vs_materialized_hidden_metrics") is None]
+
+    policy_info = recommend_tolerance_policy(successful, dtype=torch_dtype)
+    for cell in successful:
+        rec_tol = _recommended_tolerance_for_cell(
+            cell,
+            dtype=torch_dtype,
+            policy_info=policy_info,
+            fp64_reference_error=cell.get("fp64_reference_max_abs_error"),
+        )
+        max_err = cell["streaming_vs_materialized_hidden_metrics"]["max_abs_error"]
+        cell["recommended_tolerance"] = rec_tol
+        cell["recommended_tolerance_pass"] = max_err <= rec_tol
+
+    strict_pass = sum(1 for c in successful if c.get("strict_tolerance_pass"))
+    strict_fail = len(successful) - strict_pass
+    rec_pass = sum(1 for c in successful if c.get("recommended_tolerance_pass"))
+    rec_fail = len(successful) - rec_pass
+
+    max_by_mode: dict[str, float] = {}
+    max_by_depth: dict[str, float] = {}
+    max_by_chunk: dict[str, float] = {}
+    for c in successful:
+        mode = str(c["accumulator_mode"])
+        depth = str(c["prefix_layer_count"])
+        chunk = str(c["chunk_size"])
+        err = c["streaming_vs_materialized_hidden_metrics"]["max_abs_error"]
+        max_by_mode[mode] = max(max_by_mode.get(mode, 0.0), err)
+        max_by_depth[depth] = max(max_by_depth.get(depth, 0.0), err)
+        max_by_chunk[chunk] = max(max_by_chunk.get(chunk, 0.0), err)
+
+    regression_cells = [c for c in successful if c.get("phase16d_regression_target")]
+    phase16d_reproduced = False
+    phase16d_status = "not_run"
+    if regression_cells:
+        reg = regression_cells[0]
+        err = reg["streaming_vs_materialized_hidden_metrics"]["max_abs_error"]
+        old_err = PHASE16D_REGRESSION_CELL["phase16d_observed_error"]
+        tol = PHASE16D_REGRESSION_CELL["phase16d_tolerance"]
+        phase16d_reproduced = err > tol or abs(err - old_err) < old_err * 0.5
+        if reg.get("strict_tolerance_pass"):
+            phase16d_status = "passed_after_audit"
+        elif err > tol:
+            phase16d_status = "reproduced_failure"
+        else:
+            phase16d_status = "reproduced_within_tolerance"
+
+    if not load_ok:
+        status = "blocked"
+    elif strict_fail == 0:
+        status = "pass"
+    elif rec_fail == 0:
+        status = "pass_with_recommended_tolerance"
+    else:
+        status = "failed"
+
+    return {
+        "experiment_id": EXPERIMENT_070_ID,
+        "status": status,
+        "model_id": model_id,
+        "device": device,
+        "dtype": dtype,
+        "model_load_succeeded": load_ok,
+        "target_token_lengths": list(target_token_lengths),
+        "prefix_layer_counts": list(prefix_layer_counts),
+        "chunk_sizes": list(chunk_sizes),
+        "accumulator_modes": list(accumulator_modes),
+        "total_cells": len(cells),
+        "successful_cells": len(successful),
+        "blocked_cells": len(blocked),
+        "failed_cells_under_strict_tolerance": strict_fail,
+        "failed_cells_under_recommended_tolerance": rec_fail,
+        "phase16d_regression_target": PHASE16D_REGRESSION_CELL,
+        "phase16d_failure_reproduced": phase16d_reproduced,
+        "phase16d_failure_status_after_audit": phase16d_status,
+        "max_error_by_accumulator_mode": max_by_mode,
+        "max_error_by_prefix_depth": max_by_depth,
+        "max_error_by_chunk_size": max_by_chunk,
+        "tolerance_policy_recommendation": policy_info,
+        "algorithm_change_made": algorithm_change_made,
+        "extraction_blockers": blockers,
+        "cells": cells,
+        "claim_note": EXP070_CLAIM_NOTE,
+        "forbidden_claims": list(FORBIDDEN_ATTENTION_CLAIMS),
+        "limitations": [
+            "Numerical audit of offline streaming attention; not generation integration.",
+            "Tolerance recommendations are diagnostic only.",
+            "float64 accumulator mode is for CPU audit reference, not production runtime.",
+            "No CUDA/Triton/vLLM/serving integration.",
+        ],
+        "no_performance_claims_note": (
+            "No speed, throughput, latency, serving, measured active GPU memory, "
+            "or production-memory claim is made."
+        ),
+        "prompt_count": len(prompts),
+    }
+
+
+def validate_exp070_report(report: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "status",
+        "model_id",
+        "device",
+        "dtype",
+        "target_token_lengths",
+        "prefix_layer_counts",
+        "chunk_sizes",
+        "accumulator_modes",
+        "total_cells",
+        "successful_cells",
+        "failed_cells_under_strict_tolerance",
+        "failed_cells_under_recommended_tolerance",
+        "phase16d_failure_reproduced",
+        "phase16d_failure_status_after_audit",
+        "max_error_by_accumulator_mode",
+        "max_error_by_prefix_depth",
+        "max_error_by_chunk_size",
+        "tolerance_policy_recommendation",
+        "algorithm_change_made",
+        "limitations",
+        "no_performance_claims_note",
+        "claim_note",
+        "forbidden_claims",
+        "cells",
+        "phase16d_regression_target",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing key: {key}")
+
+    if report.get("experiment_id") != EXPERIMENT_070_ID:
+        errors.append("experiment_id mismatch")
+
+    cells = report.get("cells")
+    if not isinstance(cells, list):
+        errors.append("cells must be a list")
+        return errors
+
+    has_regression_marker = any(
+        isinstance(c, dict) and c.get("phase16d_regression_target") for c in cells
+    )
+    if not has_regression_marker:
+        errors.append("missing phase16d_regression_target cell marker")
+
+    for idx, cell in enumerate(cells):
+        if not isinstance(cell, dict):
+            errors.append(f"cell {idx} not dict")
+            continue
+        for ck in (
+            "prompt_id",
+            "target_token_length",
+            "prefix_layer_count",
+            "chunk_size",
+            "accumulator_mode",
+            "strict_tolerance_pass",
+            "recommended_tolerance_pass",
+            "blockers",
+        ):
+            if ck not in cell:
+                errors.append(f"cell {idx} missing {ck}")
 
     return errors

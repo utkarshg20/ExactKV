@@ -231,6 +231,8 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 16D (Multi-layer drift accumulation):** [`EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md`](EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md) — offline multi-layer compressed-path replay; **not** generation integration or throughput.
 
-**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env / Post-15C / Post-15D / Post-15E / Post-16A / Post-16B / Post-16C / Post-16D:** vLLM environment feasibility track deferred at 15E; Phase 16A–16D compressed-attention research; default CLI/runtime unchanged.
+**Phase 16E (Streaming numerics audit):** [`EXPERIMENT_070_STREAMING_MULTILAYER_NUMERICS_AUDIT.md`](EXPERIMENT_070_STREAMING_MULTILAYER_NUMERICS_AUDIT.md) — Phase 16D boundary failure diagnosis; **not** generation integration or throughput.
+
+**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env / Post-15C / Post-15D / Post-15E / Post-16A / Post-16B / Post-16C / Post-16D / Post-16E:** vLLM environment feasibility track deferred at 15E; Phase 16A–16E compressed-attention research; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

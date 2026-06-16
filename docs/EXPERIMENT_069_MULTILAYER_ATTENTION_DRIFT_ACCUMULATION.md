@@ -188,7 +188,9 @@ VeriCache serving stacks emphasize throughput and memory under vLLM/LMCache. Pha
 
 ## 14. Next step
 
-**Phase 16E (proposed):** broader model/panel sweep or generation-adjacent offline smoke — only after 16D report review; still no default runtime integration.
+**Phase 16E complete:** streaming multi-layer numerics audit — [`EXPERIMENT_070_STREAMING_MULTILAYER_NUMERICS_AUDIT.md`](EXPERIMENT_070_STREAMING_MULTILAYER_NUMERICS_AUDIT.md)
+
+**Phase 16F (proposed):** broader model panel sweep — only after 16E recommendation review; still no default runtime integration.
 
 ---
 

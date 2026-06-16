@@ -7,10 +7,14 @@ from exactkv.attention.streaming_quant_attention import (
     attention_full,
     attention_materialized_compressed,
     attention_streaming_compressed,
+    compute_candidate_tolerances,
     dequantize_kv_materialized,
     estimate_attention_memory_bytes,
+    layer_depth_aware_streaming_tolerance,
     quantize_kv_int8_reference,
+    resolve_accumulator_dtype,
     run_attention_feasibility_cell,
+    strict_streaming_tolerance,
 )
 
 
@@ -133,3 +137,79 @@ def test_full_attention_reference_shape() -> None:
     q, k, v = _tensors(q=2, t=32)
     out = attention_full(q, k, v)
     assert out.shape == q.shape
+
+
+def test_accumulator_dtype_option_accepted() -> None:
+    q, k, v = _tensors(t=64, q=4)
+    qkv = quantize_kv_int8_reference(k, v)
+    for mode in ("default", "float32", "float64"):
+        out = attention_streaming_compressed(
+            q, qkv, chunk_size=16, accumulator_dtype=mode
+        )
+        assert out.shape == (1, 2, 4, 32)
+
+
+def test_float64_accumulator_on_cpu() -> None:
+    q, k, v = _tensors(t=128, q=8)
+    qkv = quantize_kv_int8_reference(k, v)
+    mat = attention_materialized_compressed(q, qkv, causal=True)
+    stream = attention_streaming_compressed(
+        q, qkv, chunk_size=32, causal=True, accumulator_dtype="float64"
+    )
+    assert (stream - mat).abs().max().item() < 5e-4
+
+
+def test_return_diagnostics_schema() -> None:
+    q, k, v = _tensors(t=64, q=4)
+    qkv = quantize_kv_int8_reference(k, v)
+    out, diag = attention_streaming_compressed(
+        q, qkv, chunk_size=16, return_diagnostics=True
+    )
+    assert out.shape == (1, 2, 4, 32)
+    for key in (
+        "num_chunks",
+        "chunk_size",
+        "accumulator_dtype",
+        "running_max_min",
+        "running_max_max",
+        "running_den_min",
+        "running_den_max",
+        "has_nan",
+        "has_inf",
+    ):
+        assert key in diag
+    assert diag["has_nan"] is False
+    assert diag["has_inf"] is False
+
+
+def test_higher_precision_reduces_streaming_error_monotonically() -> None:
+    q, k, v = _tensors(t=256, q=16, seed=7)
+    qkv = quantize_kv_int8_reference(k, v)
+    mat = attention_materialized_compressed(q, qkv, causal=True)
+    errs: list[float] = []
+    for mode in ("default", "float32", "float64"):
+        stream = attention_streaming_compressed(
+            q, qkv, chunk_size=32, causal=True, accumulator_dtype=mode
+        )
+        errs.append(float((stream - mat).abs().max().item()))
+    # default and float32 are identical on fp32 tensors; float64 should not exceed default
+    assert errs[2] <= errs[0] + 1e-6
+    assert max(errs) < 5e-4
+
+
+def test_tolerance_policy_computation() -> None:
+    strict = strict_streaming_tolerance(torch.float32)
+    assert strict == 5e-4
+    depth = layer_depth_aware_streaming_tolerance(torch.float32, 4)
+    assert depth > strict
+    policies = compute_candidate_tolerances(
+        dtype=torch.float32, prefix_layer_count=4, fp64_max_abs_error=1e-6
+    )
+    assert "strict_16d" in policies
+    assert "layer_depth_aware" in policies
+    assert "reference_high_precision" in policies
+
+
+def test_resolve_accumulator_dtype() -> None:
+    assert resolve_accumulator_dtype("default", torch.float32) == torch.float32
+    assert resolve_accumulator_dtype("float64", torch.float32) == torch.float64

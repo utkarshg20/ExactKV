@@ -38,6 +38,87 @@ FORBIDDEN_ATTENTION_CLAIMS = (
 DEFAULT_STREAMING_TOLERANCE_FP32 = 5e-4
 DEFAULT_STREAMING_TOLERANCE_FP16 = 2e-2
 
+AccumulatorMode = str  # "default" | "float32" | "float64"
+
+
+@dataclass
+class StreamingAttentionDiagnostics:
+    """Optional research diagnostics for chunked online-softmax attention."""
+
+    num_chunks: int
+    chunk_size: int
+    accumulator_dtype: str
+    running_max_min: float
+    running_max_max: float
+    running_den_min: float
+    running_den_max: float
+    has_nan: bool
+    has_inf: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+def resolve_accumulator_dtype(
+    accumulator_dtype: AccumulatorMode | torch.dtype | None,
+    query_dtype: torch.dtype,
+) -> torch.dtype:
+    """Map research accumulator mode to a torch dtype."""
+    if accumulator_dtype is None or accumulator_dtype == "default":
+        return query_dtype
+    if accumulator_dtype == "float32":
+        return torch.float32
+    if accumulator_dtype == "float64":
+        return torch.float64
+    if isinstance(accumulator_dtype, torch.dtype):
+        return accumulator_dtype
+    raise ValueError(f"unsupported accumulator_dtype: {accumulator_dtype!r}")
+
+
+def strict_streaming_tolerance(dtype: torch.dtype) -> float:
+    """Fixed Phase 16D strict tolerance."""
+    return _scale_from_dtype(dtype)
+
+
+def dtype_aware_streaming_tolerance(dtype: torch.dtype) -> float:
+    """Dtype-scaled tolerance (fp32 strict, fp16 relaxed)."""
+    return _scale_from_dtype(dtype)
+
+
+def layer_depth_aware_streaming_tolerance(
+    dtype: torch.dtype,
+    prefix_layer_count: int,
+) -> float:
+    """Scale strict tolerance by sqrt(prefix depth) for accumulated drift."""
+    base = _scale_from_dtype(dtype)
+    depth = max(1, prefix_layer_count)
+    return base * math.sqrt(depth)
+
+
+def reference_high_precision_tolerance(fp64_max_abs_error: float) -> float:
+    """Tolerance anchored to float64 accumulator reference error."""
+    ref = max(0.0, fp64_max_abs_error)
+    return max(ref * 10.0, ref + 1e-6, DEFAULT_STREAMING_TOLERANCE_FP32)
+
+
+def compute_candidate_tolerances(
+    *,
+    dtype: torch.dtype,
+    prefix_layer_count: int,
+    fp64_max_abs_error: float | None,
+) -> dict[str, float]:
+    """Return named candidate tolerance policies for audit reporting."""
+    policies = {
+        "strict_16d": strict_streaming_tolerance(dtype),
+        "dtype_aware": dtype_aware_streaming_tolerance(dtype),
+        "layer_depth_aware": layer_depth_aware_streaming_tolerance(dtype, prefix_layer_count),
+    }
+    if fp64_max_abs_error is not None:
+        policies["reference_high_precision"] = reference_high_precision_tolerance(
+            fp64_max_abs_error
+        )
+    return policies
+
 
 @dataclass
 class QuantizedKV:
@@ -251,7 +332,9 @@ def attention_streaming_compressed(
     chunk_size: int,
     *,
     causal: bool = False,
-) -> torch.Tensor:
+    accumulator_dtype: AccumulatorMode | torch.dtype | None = None,
+    return_diagnostics: bool = False,
+) -> torch.Tensor | tuple[torch.Tensor, dict[str, Any]]:
     """Chunked dequantized attention without full K/V materialization."""
     if chunk_size <= 0:
         raise ValueError("chunk_size must be positive")
@@ -263,11 +346,15 @@ def attention_streaming_compressed(
     if qkv.shape != (b, h, total_len, d):
         raise ValueError("q batch/heads/dim must match quantized KV")
 
+    acc_dtype = resolve_accumulator_dtype(accumulator_dtype, q.dtype)
     scale = d**-0.5
-    running_max = torch.full((b, h, query_len, 1), float("-inf"), device=q.device, dtype=q.dtype)
-    running_den = torch.zeros((b, h, query_len, 1), device=q.device, dtype=q.dtype)
-    running_num = torch.zeros((b, h, query_len, d), device=q.device, dtype=q.dtype)
+    running_max = torch.full(
+        (b, h, query_len, 1), float("-inf"), device=q.device, dtype=acc_dtype
+    )
+    running_den = torch.zeros((b, h, query_len, 1), device=q.device, dtype=acc_dtype)
+    running_num = torch.zeros((b, h, query_len, d), device=q.device, dtype=acc_dtype)
 
+    num_chunks = math.ceil(total_len / chunk_size)
     for key_start in range(0, total_len, chunk_size):
         key_end = min(key_start + chunk_size, total_len)
         k_chunk = _dequantize_tensor(
@@ -290,17 +377,36 @@ def attention_streaming_compressed(
                 total_len=total_len,
             )
 
-        chunk_max = scores.max(dim=-1, keepdim=True).values
+        scores_acc = scores.to(acc_dtype)
+        chunk_max = scores_acc.max(dim=-1, keepdim=True).values
         new_max = torch.maximum(running_max, chunk_max)
         exp_old = torch.exp(running_max - new_max)
-        exp_scores = torch.exp(scores - new_max)
+        exp_scores = torch.exp(scores_acc - new_max)
+        v_acc = v_chunk.to(acc_dtype)
 
         running_den = running_den * exp_old + exp_scores.sum(dim=-1, keepdim=True)
-        running_num = running_num * exp_old + torch.matmul(exp_scores, v_chunk)
+        running_num = running_num * exp_old + torch.matmul(exp_scores, v_acc)
         running_max = new_max
 
     output = running_num / running_den.clamp(min=1e-12)
-    return torch.nan_to_num(output, nan=0.0)
+    output = output.to(q.dtype)
+    output = torch.nan_to_num(output, nan=0.0)
+
+    if not return_diagnostics:
+        return output
+
+    diag = StreamingAttentionDiagnostics(
+        num_chunks=num_chunks,
+        chunk_size=chunk_size,
+        accumulator_dtype=str(acc_dtype).replace("torch.", ""),
+        running_max_min=float(running_max.min().item()),
+        running_max_max=float(running_max.max().item()),
+        running_den_min=float(running_den.min().item()),
+        running_den_max=float(running_den.max().item()),
+        has_nan=bool(torch.isnan(output).any().item()),
+        has_inf=bool(torch.isinf(output).any().item()),
+    )
+    return output, diag.to_dict()
 
 
 def estimate_attention_memory_bytes(

@@ -179,7 +179,7 @@ VeriCache serving stacks emphasize throughput and memory under vLLM/LMCache. Pha
 
 **Phase 16D complete:** multi-layer drift accumulation — [`EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md`](EXPERIMENT_069_MULTILAYER_ATTENTION_DRIFT_ACCUMULATION.md)
 
-**Phase 16E (proposed):** broader panel or generation-adjacent offline smoke — still no default runtime integration.
+**Phase 16E (proposed):** streaming multi-layer numerics audit — [`EXPERIMENT_070_STREAMING_MULTILAYER_NUMERICS_AUDIT.md`](EXPERIMENT_070_STREAMING_MULTILAYER_NUMERICS_AUDIT.md)
 
 ---
 

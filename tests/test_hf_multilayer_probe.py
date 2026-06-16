@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 
 from exactkv.attention.hf_multilayer_probe import (
+    PHASE16D_REGRESSION_CELL,
     aggregate_layer_memory,
     check_full_block_parity,
     replay_prefix_layers,
@@ -61,7 +62,7 @@ def test_run_qwen_decoder_block_shape() -> None:
     layer = _DummyDecoderLayer()
     hidden = torch.randn(1, 32, 64)
     position_ids = torch.arange(32).unsqueeze(0)
-    out, mem = run_qwen_decoder_block(
+    out, mem, _ = run_qwen_decoder_block(
         hidden,
         layer,
         layer_idx=0,
@@ -79,11 +80,11 @@ def test_materialized_and_streaming_paths_shape() -> None:
     hidden = torch.randn(1, 64, 64)
     position_ids = torch.arange(64).unsqueeze(0)
     rotary = _MockRotaryEmb()
-    mat, _ = run_qwen_decoder_block(
+    mat, _, _ = run_qwen_decoder_block(
         hidden, layer, layer_idx=0, attention_path="materialized_compressed",
         chunk_size=16, rotary_emb=rotary, position_ids=position_ids,
     )
-    stream, _ = run_qwen_decoder_block(
+    stream, _, _ = run_qwen_decoder_block(
         hidden, layer, layer_idx=0, attention_path="streaming_compressed",
         chunk_size=16, rotary_emb=rotary, position_ids=position_ids,
     )
@@ -94,7 +95,7 @@ def test_replay_prefix_layers_multi_layer() -> None:
     layers = [_DummyDecoderLayer(), _DummyDecoderLayer()]
     hidden = torch.randn(1, 48, 64)
     position_ids = torch.arange(48).unsqueeze(0)
-    out, mems = replay_prefix_layers(
+    out, mems, _ = replay_prefix_layers(
         hidden,
         layers,
         prefix_layer_count=2,
@@ -112,11 +113,11 @@ def test_streaming_matches_materialized_multilayer() -> None:
     hidden = torch.randn(1, 64, 64)
     position_ids = torch.arange(64).unsqueeze(0)
     rotary = _MockRotaryEmb()
-    mat, _ = replay_prefix_layers(
+    mat, _, _ = replay_prefix_layers(
         hidden, layers, prefix_layer_count=2, attention_path="materialized_compressed",
         chunk_size=16, rotary_emb=rotary, position_ids=position_ids,
     )
-    stream, _ = replay_prefix_layers(
+    stream, _, _ = replay_prefix_layers(
         hidden, layers, prefix_layer_count=2, attention_path="streaming_compressed",
         chunk_size=16, rotary_emb=rotary, position_ids=position_ids,
     )
@@ -146,13 +147,13 @@ def test_causal_attention_no_future_leak() -> None:
     layer = _DummyDecoderLayer()
     hidden = torch.randn(1, 8, 64)
     position_ids = torch.arange(8).unsqueeze(0)
-    out_full, _ = run_qwen_decoder_block(
+    out_full, _, _ = run_qwen_decoder_block(
         hidden, layer, layer_idx=0, attention_path="full",
         chunk_size=4, rotary_emb=None, position_ids=position_ids,
     )
     hidden2 = hidden.clone()
     hidden2[:, 4:, :] = 0.0
-    out_trunc, _ = run_qwen_decoder_block(
+    out_trunc, _, _ = run_qwen_decoder_block(
         hidden2, layer, layer_idx=0, attention_path="full",
         chunk_size=4, rotary_emb=None, position_ids=position_ids,
     )
@@ -178,7 +179,7 @@ def test_run_multilayer_cell_with_mock_model() -> None:
     hf_hs = (hidden0,)
     h = hidden0
     for layer in model.model.layers:
-        h, _ = run_qwen_decoder_block(
+        h, _, _ = run_qwen_decoder_block(
             h, layer, layer_idx=0, attention_path="full",
             chunk_size=16, rotary_emb=model.model.rotary_emb,
             position_ids=torch.arange(32).unsqueeze(0),
@@ -203,6 +204,13 @@ def test_run_multilayer_cell_with_mock_model() -> None:
     assert cell["aggregate_memory_accounting"] is not None
 
 
+def test_phase16d_regression_marker_exists() -> None:
+    assert PHASE16D_REGRESSION_CELL["prompt_id"] == "long_128"
+    assert PHASE16D_REGRESSION_CELL["prefix_layer_count"] == 4
+    assert PHASE16D_REGRESSION_CELL["chunk_size"] == 32
+    assert PHASE16D_REGRESSION_CELL["accumulator_mode"] == "default"
+
+
 def test_run_exp069_mock_end_to_end() -> None:
     class _MockModel(nn.Module):
         def __init__(self) -> None:
@@ -225,7 +233,7 @@ def test_run_exp069_mock_end_to_end() -> None:
             h = h0
             pos = torch.arange(t).unsqueeze(0)
             for i, layer in enumerate(self.model.layers):
-                h, _ = run_qwen_decoder_block(
+                h, _, _ = run_qwen_decoder_block(
                     h, layer, layer_idx=i, attention_path="full",
                     chunk_size=16, rotary_emb=self.model.rotary_emb, position_ids=pos,
                 )
