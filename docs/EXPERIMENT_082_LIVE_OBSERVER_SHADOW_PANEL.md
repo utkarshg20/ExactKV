@@ -120,4 +120,6 @@ Does not reproduce VeriCache throughput, serving, or memory panels.
 
 ## 13. Next step
 
-**Phase 16R (proposed):** broader live-observer shadow panels or guarded decode-time shadow research — only with explicit approval.
+**Phase 16R (complete):** guarded decode-time shadow observer dry-run — see [`EXPERIMENT_083_GUARDED_DECODE_TIME_SHADOW_SMOKE.md`](EXPERIMENT_083_GUARDED_DECODE_TIME_SHADOW_SMOKE.md).
+
+**Phase 16S (proposed):** broader guarded decode-time shadow panels.

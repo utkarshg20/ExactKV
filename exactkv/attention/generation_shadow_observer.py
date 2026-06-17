@@ -2225,6 +2225,7 @@ def run_posthoc_shadow_from_live_snapshots(
         cells.append({
             "round_index": round_index,
             "shadow_sequence_length": raw.get("shadow_sequence_length", 0),
+            "shadow_status": raw.get("shadow_status"),
             "tolerance_policy_status": raw.get("tolerance_policy_status"),
             "streaming_vs_materialized_metrics": raw.get("streaming_vs_materialized_metrics"),
             "full_vs_streaming_metrics": raw.get("full_vs_streaming_metrics"),

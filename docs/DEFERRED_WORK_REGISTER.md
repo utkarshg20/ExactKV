@@ -179,6 +179,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **ExactKV round-log shadow observer** | **Complete** | Phase 16O ✅ | [`EXPERIMENT_080_ROUND_LOG_SHADOW_OBSERVER.md`](EXPERIMENT_080_ROUND_LOG_SHADOW_OBSERVER.md); post-hoc round-log replay; **not** live decode integration |
 | — | **Live round observer smoke** | **Complete** | Phase 16P ✅ | [`EXPERIMENT_081_LIVE_ROUND_OBSERVER_SMOKE.md`](EXPERIMENT_081_LIVE_ROUND_OBSERVER_SMOKE.md); opt-in `round_observer`; default path unchanged |
 | — | **Live observer + post-hoc shadow panel** | **Complete** | Phase 16Q ✅ | [`EXPERIMENT_082_LIVE_OBSERVER_SHADOW_PANEL.md`](EXPERIMENT_082_LIVE_OBSERVER_SHADOW_PANEL.md); live snapshots + post-hoc shadow |
+| — | **Guarded decode-time shadow observer dry-run** | **Complete** | Phase 16R ✅ | [`EXPERIMENT_083_GUARDED_DECODE_TIME_SHADOW_SMOKE.md`](EXPERIMENT_083_GUARDED_DECODE_TIME_SHADOW_SMOKE.md); callback-time shadow dry-run |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 
