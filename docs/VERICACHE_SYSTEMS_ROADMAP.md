@@ -243,6 +243,8 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 16S (Expanded guarded decode-time shadow panel):** [`EXPERIMENT_084_GUARDED_DECODE_TIME_SHADOW_PANEL.md`](EXPERIMENT_084_GUARDED_DECODE_TIME_SHADOW_PANEL.md) — broader panel; **diagnostic-only**.
 
-**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env / Post-15C / Post-15D / Post-15E / Post-16A / Post-16K / Post-16M / Post-16N / Post-16O / Post-16P / Post-16Q / Post-16R / Post-16S:** vLLM environment feasibility track deferred at 15E; Phase 16A–16S compressed-attention research; default CLI/runtime unchanged.
+**Phase 16T (Closeout):** [`PHASE_16_CLOSEOUT.md`](PHASE_16_CLOSEOUT.md) — Phase 16 complete; claim freeze; **recommended stop** before Phase 17.
+
+**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env / Post-15C / Post-15D / Post-15E / Post-16A / Post-16K / Post-16M / Post-16N / Post-16O / Post-16P / Post-16Q / Post-16R / Post-16S / Post-16T:** vLLM environment feasibility track deferred at 15E; Phase 16A–16T compressed-attention research **complete**; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

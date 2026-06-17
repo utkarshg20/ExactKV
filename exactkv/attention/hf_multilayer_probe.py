@@ -241,6 +241,64 @@ def run_qwen_decoder_block(
     return hidden, mem, layer_diag
 
 
+def run_qwen_decoder_block_traced(
+    hidden: torch.Tensor,
+    layer: Any,
+    *,
+    layer_idx: int,
+    attention_path: AttentionPath,
+    chunk_size: int,
+    rotary_emb: Any | None,
+    position_ids: torch.Tensor,
+    streaming_accumulator_dtype: str | None = None,
+) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
+    """Replay one decoder block and return post-MLP hidden plus per-stage checkpoints."""
+    residual = hidden
+    layer_input = hidden
+    normed = layer.input_layernorm(hidden)
+    extracted = extract_qkv_from_qwen2_layer(
+        normed,
+        layer,
+        layer_idx=layer_idx,
+        rotary_emb=rotary_emb,
+        position_ids=position_ids,
+        allow_projection_only=True,
+    )
+    if extracted.extraction_mode == "blocked" or extracted.q.numel() == 0:
+        raise RuntimeError(
+            f"layer {layer_idx} QKV extraction blocked: {extracted.blockers}"
+        )
+
+    attn_ctx = _attention_context(
+        extracted,
+        path=attention_path,
+        chunk_size=chunk_size,
+        accumulator_dtype=streaming_accumulator_dtype,
+    )
+    o_proj = extracted.o_proj
+    if o_proj is None:
+        raise RuntimeError(f"layer {layer_idx} missing o_proj")
+
+    b, h, t, d = attn_ctx.shape
+    merged = attn_ctx.transpose(1, 2).reshape(b, t, h * d)
+    attn_out = o_proj(merged)
+    post_attention_hidden = residual + attn_out
+
+    residual2 = post_attention_hidden
+    normed2 = layer.post_attention_layernorm(post_attention_hidden)
+    mlp_out = layer.mlp(normed2)
+    post_mlp_hidden = residual2 + mlp_out
+
+    checkpoints = {
+        "layer_input": layer_input.detach(),
+        "attn_context": merged.detach(),
+        "attn_output": attn_out.detach(),
+        "post_attention_hidden": post_attention_hidden.detach(),
+        "post_mlp_hidden": post_mlp_hidden.detach(),
+    }
+    return post_mlp_hidden, checkpoints
+
+
 def replay_prefix_layers(
     hidden: torch.Tensor,
     layers: Sequence[Any],

@@ -123,4 +123,6 @@ Does not reproduce VeriCache throughput, serving, or memory panels.
 
 ## 14. Next step
 
-**Phase 16T (proposed):** deeper integration research only with explicit approval.
+**Phase 16T (complete):** Phase 16 closeout and claim freeze — see [`PHASE_16_CLOSEOUT.md`](PHASE_16_CLOSEOUT.md).
+
+**Phase 17 (proposed):** claim-safe demo packaging.

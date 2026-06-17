@@ -163,7 +163,9 @@ VeriCache serving stacks emphasize throughput and memory under vLLM/LMCache. Pha
 
 ## 15. Next step
 
-**Phase 16G (proposed):** broader model panel sweep — only after 16F report review; still opt-in, no default runtime integration.
+**Phase 16G complete:** full-depth divergence trace — [`EXPERIMENT_072_FULL_DEPTH_DIVERGENCE_TRACE.md`](EXPERIMENT_072_FULL_DEPTH_DIVERGENCE_TRACE.md)
+
+**Phase 16H (proposed):** broader model panel sweep — only after 16G root-cause review; still opt-in.
 
 ---
 

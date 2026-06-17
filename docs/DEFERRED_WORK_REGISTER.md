@@ -181,6 +181,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Live observer + post-hoc shadow panel** | **Complete** | Phase 16Q ✅ | [`EXPERIMENT_082_LIVE_OBSERVER_SHADOW_PANEL.md`](EXPERIMENT_082_LIVE_OBSERVER_SHADOW_PANEL.md); live snapshots + post-hoc shadow |
 | — | **Guarded decode-time shadow observer dry-run** | **Complete** | Phase 16R ✅ | [`EXPERIMENT_083_GUARDED_DECODE_TIME_SHADOW_SMOKE.md`](EXPERIMENT_083_GUARDED_DECODE_TIME_SHADOW_SMOKE.md); callback-time shadow dry-run |
 | — | **Expanded guarded decode-time shadow panel** | **Complete** | Phase 16S ✅ | [`EXPERIMENT_084_GUARDED_DECODE_TIME_SHADOW_PANEL.md`](EXPERIMENT_084_GUARDED_DECODE_TIME_SHADOW_PANEL.md); 32-cell panel |
+| — | **Phase 16 closeout & claim freeze** | **Complete** | Phase 16T ✅ | [`PHASE_16_CLOSEOUT.md`](PHASE_16_CLOSEOUT.md); Phase 16 stopped; Phase 17 demo packaging recommended |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

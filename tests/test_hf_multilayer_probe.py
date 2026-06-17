@@ -11,6 +11,7 @@ from exactkv.attention.hf_multilayer_probe import (
     replay_prefix_layers,
     run_multilayer_drift_cell,
     run_qwen_decoder_block,
+    run_qwen_decoder_block_traced,
     run_exp069_probe,
     LayerMemoryRecord,
 )
@@ -202,6 +203,20 @@ def test_run_multilayer_cell_with_mock_model() -> None:
     assert cell["full_block_parity_status"] == "passed"
     assert cell["passed"] is True
     assert cell["aggregate_memory_accounting"] is not None
+
+
+def test_run_qwen_decoder_block_traced_checkpoints() -> None:
+    layer = _DummyDecoderLayer()
+    hidden = torch.randn(1, 32, 64)
+    position_ids = torch.arange(32).unsqueeze(0)
+    out, cp = run_qwen_decoder_block_traced(
+        hidden, layer, layer_idx=0, attention_path="full",
+        chunk_size=16, rotary_emb=_MockRotaryEmb(), position_ids=position_ids,
+    )
+    assert out.shape == (1, 32, 64)
+    for key in ("layer_input", "attn_context", "attn_output", "post_attention_hidden", "post_mlp_hidden"):
+        assert key in cp
+        assert cp[key].shape[0] == 1
 
 
 def test_phase16d_regression_marker_exists() -> None:
