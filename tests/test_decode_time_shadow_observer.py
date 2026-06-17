@@ -5,6 +5,8 @@ import json
 
 from exactkv.attention.decode_time_shadow_observer import (
     GuardedDecodeTimeShadowObserver,
+    _aggregate_safety_gate_summary,
+    _cell_safety_gates,
     compare_decode_time_vs_posthoc_shadow,
     decode_time_shadow_cell_matches_posthoc,
     run_shadow_diagnostic_for_snapshot,
@@ -157,3 +159,10 @@ def test_run_shadow_diagnostic_with_fake_fn() -> None:
     )
     assert result["shadow_status"] == "shadow_complete"
     assert result["topk_agreement_metrics"]["top1_agreement"] is True
+
+
+def test_safety_gate_summary_aggregation() -> None:
+    cells = [{"safety_gates": _cell_safety_gates()} for _ in range(3)]
+    summary = _aggregate_safety_gate_summary(cells)
+    assert summary["cells_all_gates_ok"] == 3
+    assert summary["cells_with_gate_failure"] == 0

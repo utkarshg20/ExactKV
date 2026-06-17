@@ -62,6 +62,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Live round observer smoke | Phase 16P / Exp 081 | [`EXPERIMENT_081_LIVE_ROUND_OBSERVER_SMOKE.md`](EXPERIMENT_081_LIVE_ROUND_OBSERVER_SMOKE.md); opt-in instrumentation; **default runtime unchanged** |
 | Live observer + post-hoc shadow panel | Phase 16Q / Exp 082 | [`EXPERIMENT_082_LIVE_OBSERVER_SHADOW_PANEL.md`](EXPERIMENT_082_LIVE_OBSERVER_SHADOW_PANEL.md); live snapshots + post-hoc shadow; **not decode-time integration** |
 | Guarded decode-time shadow observer dry-run | Phase 16R / Exp 083 | [`EXPERIMENT_083_GUARDED_DECODE_TIME_SHADOW_SMOKE.md`](EXPERIMENT_083_GUARDED_DECODE_TIME_SHADOW_SMOKE.md); callback-time shadow; **not streaming-attention integration** |
+| Expanded guarded decode-time shadow panel | Phase 16S / Exp 084 | [`EXPERIMENT_084_GUARDED_DECODE_TIME_SHADOW_PANEL.md`](EXPERIMENT_084_GUARDED_DECODE_TIME_SHADOW_PANEL.md); broader panel; **diagnostic-only** |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

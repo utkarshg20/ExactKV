@@ -125,4 +125,6 @@ Does not reproduce VeriCache throughput, serving, or memory panels.
 
 ## 14. Next step
 
-**Phase 16S (proposed):** broader guarded decode-time shadow panels or explicit approval for deeper integration research.
+**Phase 16S (complete):** expanded guarded decode-time shadow panel — see [`EXPERIMENT_084_GUARDED_DECODE_TIME_SHADOW_PANEL.md`](EXPERIMENT_084_GUARDED_DECODE_TIME_SHADOW_PANEL.md).
+
+**Phase 16T (proposed):** deeper integration research only with explicit approval.

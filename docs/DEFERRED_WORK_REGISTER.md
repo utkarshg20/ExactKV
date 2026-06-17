@@ -180,6 +180,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Live round observer smoke** | **Complete** | Phase 16P ✅ | [`EXPERIMENT_081_LIVE_ROUND_OBSERVER_SMOKE.md`](EXPERIMENT_081_LIVE_ROUND_OBSERVER_SMOKE.md); opt-in `round_observer`; default path unchanged |
 | — | **Live observer + post-hoc shadow panel** | **Complete** | Phase 16Q ✅ | [`EXPERIMENT_082_LIVE_OBSERVER_SHADOW_PANEL.md`](EXPERIMENT_082_LIVE_OBSERVER_SHADOW_PANEL.md); live snapshots + post-hoc shadow |
 | — | **Guarded decode-time shadow observer dry-run** | **Complete** | Phase 16R ✅ | [`EXPERIMENT_083_GUARDED_DECODE_TIME_SHADOW_SMOKE.md`](EXPERIMENT_083_GUARDED_DECODE_TIME_SHADOW_SMOKE.md); callback-time shadow dry-run |
+| — | **Expanded guarded decode-time shadow panel** | **Complete** | Phase 16S ✅ | [`EXPERIMENT_084_GUARDED_DECODE_TIME_SHADOW_PANEL.md`](EXPERIMENT_084_GUARDED_DECODE_TIME_SHADOW_PANEL.md); 32-cell panel |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

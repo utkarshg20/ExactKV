@@ -245,26 +245,44 @@ class GuardedDecodeTimeShadowObserver:
         self.shadow_callback_exceptions.clear()
 
 
-def _exp083_cell_safety_gates() -> dict[str, bool]:
+def _cell_safety_gates() -> dict[str, bool]:
     return {
         "decode_time_shadow_used_for_token_commit": False,
         "generation_modified_by_decode_time_shadow": False,
         "default_runtime_changed": False,
         "observer_return_value_ignored": True,
         "shadow_exception_affects_generation": False,
+        "shadow_result_exposed_to_generator": False,
     }
 
 
-def _exp083_safety_gates_ok(gates: dict[str, bool]) -> bool:
+def _safety_gates_ok(gates: dict[str, bool]) -> bool:
     for key in (
         "decode_time_shadow_used_for_token_commit",
         "generation_modified_by_decode_time_shadow",
         "default_runtime_changed",
         "shadow_exception_affects_generation",
+        "shadow_result_exposed_to_generator",
     ):
         if gates.get(key) is not False:
             return False
     return gates.get("observer_return_value_ignored") is True
+
+
+def _aggregate_safety_gate_summary(cells: Sequence[dict[str, Any]]) -> dict[str, int]:
+    ok = sum(1 for c in cells if _safety_gates_ok(c.get("safety_gates") or {}))
+    return {
+        "cells_all_gates_ok": ok,
+        "cells_with_gate_failure": len(cells) - ok,
+    }
+
+
+def _exp083_cell_safety_gates() -> dict[str, bool]:
+    return _cell_safety_gates()
+
+
+def _exp083_safety_gates_ok(gates: dict[str, bool]) -> bool:
+    return _safety_gates_ok(gates)
 
 
 def _run_guarded_shadow_generation(
@@ -488,8 +506,8 @@ def run_exp083_guarded_decode_time_shadow_smoke(
                     else:
                         cell_blockers.append("decode_time_vs_posthoc_shadow_mismatch")
 
-            safety = _exp083_cell_safety_gates()
-            if not _exp083_safety_gates_ok(safety):
+            safety = _cell_safety_gates()
+            if not _safety_gates_ok(safety):
                 cell_blockers.append("safety_gate_failed")
                 failed_cells += 1
             if not tok_match or not txt_match:
@@ -635,6 +653,10 @@ def validate_exp083_report(report: dict[str, Any]) -> list[str]:
             errors.append(
                 f"cells[{idx}].safety_gates.shadow_exception_affects_generation must be false",
             )
+        if gates.get("shadow_result_exposed_to_generator") is not False:
+            errors.append(
+                f"cells[{idx}].safety_gates.shadow_result_exposed_to_generator must be false",
+            )
         for ck in ("decode_time_shadow_cells", "posthoc_comparison_summary", "safety_gates"):
             if ck not in cell:
                 errors.append(f"cells[{idx}] missing {ck}")
@@ -643,5 +665,413 @@ def validate_exp083_report(report: dict[str, Any]) -> list[str]:
                 errors.append(
                     f"cells[{idx}] decode_time shadow_result_used_for_token_commit must be false",
                 )
+
+    return errors
+
+
+# --- Phase 16S: expanded guarded decode-time shadow panel ---
+
+EXPERIMENT_084_ID = "exp084_guarded_decode_time_shadow_panel"
+DEFAULT_EXP084_REPORT = Path("reports/experiment_084_guarded_decode_time_shadow_panel.json")
+DEFAULT_EXP084_MAX_NEW_TOKENS_VALUES: tuple[int, ...] = (4, 8)
+DEFAULT_EXP084_COMPRESSORS: tuple[str, ...] = ("noop", "int8", "int4_sim", "k8_v4_sim")
+
+EXP084_CLAIM_NOTE = (
+    "Expanded guarded decode-time shadow panel (Phase 16S). Broader prompt/compressor/"
+    "max_new_tokens sweep with callback-time shadow diagnostics. Not streaming-attention "
+    "generation integration, vLLM, CUDA/Triton kernels, or default runtime change."
+)
+
+
+def default_exp084_prompts() -> list[tuple[str, str]]:
+    """Four deterministic prompts for expanded guarded decode-time shadow panel."""
+    from exactkv.attention.generation_shadow_observer import default_exp080_prompts
+
+    return default_exp080_prompts()[:4]
+
+
+def _build_guarded_panel_cell(
+    *,
+    prompt_id: str,
+    prompt_preview: str,
+    compressor: str,
+    max_new_tokens: int,
+    runtime: Any | None,
+    draft_len: int,
+    global_blockers: list[str],
+    baseline_generation_fn: Callable[..., dict[str, Any]] | None,
+    guarded_generation_fn: Callable[..., dict[str, Any]] | None,
+    shadow_diagnostic_fn: Callable[..., dict[str, Any]] | None,
+    allow_shadow_fail: bool,
+) -> tuple[dict[str, Any], bool, list[dict[str, Any]]]:
+    """Run one baseline vs guarded-shadow panel cell; return cell, failed, shadow cells."""
+    from exactkv.attention.generation_shadow_observer import run_posthoc_shadow_from_live_snapshots
+
+    cell_blockers: list[str] = []
+
+    if baseline_generation_fn is not None:
+        baseline = baseline_generation_fn(
+            prompt=prompt_preview,
+            prompt_id=prompt_id,
+            max_new_tokens=max_new_tokens,
+            compressor_name=compressor,
+        )
+    elif runtime is not None:
+        baseline = _run_baseline_generation(
+            runtime, prompt_preview, max_new_tokens, compressor, draft_len,
+        )
+    else:
+        baseline = {"generation_completed": False, "blockers": list(global_blockers)}
+
+    if guarded_generation_fn is not None:
+        guarded = guarded_generation_fn(
+            prompt=prompt_preview,
+            prompt_id=prompt_id,
+            max_new_tokens=max_new_tokens,
+            compressor_name=compressor,
+        )
+    elif runtime is not None:
+        guarded = _run_guarded_shadow_generation(
+            runtime,
+            prompt_preview,
+            prompt_id,
+            max_new_tokens,
+            compressor,
+            draft_len,
+            shadow_diagnostic_fn=shadow_diagnostic_fn,
+            allow_shadow_fail=allow_shadow_fail,
+        )
+    else:
+        guarded = {"generation_completed": False, "blockers": list(global_blockers)}
+
+    baseline_completed = bool(baseline.get("generation_completed"))
+    guarded_completed = bool(guarded.get("generation_completed"))
+
+    b_ids = baseline.get("generated_token_ids")
+    g_ids = guarded.get("generated_token_ids")
+    tok_match = _token_lists_match(b_ids, g_ids)
+    txt_match = baseline.get("generated_text") == guarded.get("generated_text")
+    if not tok_match:
+        cell_blockers.append("baseline_vs_guarded_token_mismatch")
+    if not txt_match:
+        cell_blockers.append("baseline_vs_guarded_text_mismatch")
+
+    dt_cells = list(guarded.get("decode_time_shadow_cells") or [])
+    dt_callback_count = int(guarded.get("decode_time_shadow_callback_count", len(dt_cells)))
+    dt_success = int(guarded.get("decode_time_shadow_successful_callbacks", 0))
+    dt_exceptions = int(guarded.get("decode_time_shadow_exception_callbacks", 0))
+
+    posthoc_summary: dict[str, Any] = {
+        "status": "skipped",
+        "all_match": False,
+        "matching_rounds": 0,
+        "total_rounds": 0,
+    }
+    if guarded_completed and dt_cells:
+        snaps = guarded.get("live_snapshots") or []
+        if not snaps:
+            cell_blockers.append("blocked_missing_live_snapshots")
+        elif not all(snapshot_is_post_commit(s) for s in snaps):
+            cell_blockers.append("blocked_snapshot_not_post_commit")
+        else:
+            hf_model = getattr(runtime, "model", None) if runtime else None
+            posthoc_cells, ph_blockers = run_posthoc_shadow_from_live_snapshots(
+                snapshots=snaps,
+                prompt_id=prompt_id,
+                hf_model=hf_model,
+                shadow_replay_fn=shadow_diagnostic_fn,
+                allow_shadow_fail=allow_shadow_fail,
+            )
+            cell_blockers.extend(ph_blockers)
+            posthoc_summary = compare_decode_time_vs_posthoc_shadow(dt_cells, posthoc_cells)
+            posthoc_summary["status"] = (
+                "complete" if posthoc_summary.get("all_match") else "mismatch"
+            )
+            for dt_cell, ph_cell in zip(dt_cells, posthoc_cells, strict=False):
+                if dt_cell.get("round_index") == ph_cell.get("round_index"):
+                    dt_cell["posthoc_shadow_match"] = decode_time_shadow_cell_matches_posthoc(
+                        dt_cell, ph_cell,
+                    )
+            if not posthoc_summary.get("all_match"):
+                cell_blockers.append("decode_time_vs_posthoc_shadow_mismatch")
+
+    safety = _cell_safety_gates()
+    failed = not _safety_gates_ok(safety) or not tok_match or not txt_match
+    if not _safety_gates_ok(safety):
+        cell_blockers.append("safety_gate_failed")
+
+    cell = {
+        "prompt_id": prompt_id,
+        "prompt_preview": prompt_preview,
+        "compressor": compressor,
+        "max_new_tokens": max_new_tokens,
+        "baseline_generation_completed": baseline_completed,
+        "guarded_shadow_generation_completed": guarded_completed,
+        "baseline_generated_token_ids": b_ids,
+        "guarded_shadow_generated_token_ids": g_ids,
+        "baseline_vs_guarded_token_match": tok_match,
+        "baseline_vs_guarded_text_match": txt_match,
+        "decode_time_shadow_callback_count": dt_callback_count,
+        "decode_time_shadow_successful_callbacks": dt_success,
+        "decode_time_shadow_exception_callbacks": dt_exceptions,
+        "decode_time_shadow_cells": dt_cells,
+        "posthoc_comparison_summary": posthoc_summary,
+        "exactkv_failures_baseline": baseline.get("exactkv_failures"),
+        "exactkv_failures_guarded": guarded.get("exactkv_failures"),
+        "token_exact_match_baseline": baseline.get("token_exact_match"),
+        "token_exact_match_guarded": guarded.get("token_exact_match"),
+        "safety_gates": safety,
+        "blockers": cell_blockers,
+    }
+    return cell, failed, dt_cells
+
+
+def run_exp084_guarded_decode_time_shadow_panel(
+    *,
+    model_id: str = "Qwen/Qwen2.5-0.5B",
+    device: str = "cpu",
+    dtype: str = "float32",
+    prompts: Sequence[tuple[str, str]] | None = None,
+    max_new_tokens_values: Sequence[int] = DEFAULT_EXP084_MAX_NEW_TOKENS_VALUES,
+    compressors_requested: Sequence[str] = DEFAULT_EXP084_COMPRESSORS,
+    draft_len: int = 4,
+    local_files_only: bool = False,
+    allow_shadow_fail: bool = True,
+    baseline_generation_fn: Callable[..., dict[str, Any]] | None = None,
+    guarded_generation_fn: Callable[..., dict[str, Any]] | None = None,
+    shadow_diagnostic_fn: Callable[..., dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Run Experiment 084 expanded guarded decode-time shadow panel."""
+    from exactkv.attention.generation_shadow_observer import (
+        DEFAULT_MODEL_ID,
+        _aggregate_tolerance_by_round,
+        _aggregate_topk_by_round,
+        resolve_panel_compressors,
+    )
+
+    del local_files_only
+
+    if model_id == "Qwen/Qwen2.5-0.5B":
+        model_id = DEFAULT_MODEL_ID
+
+    prompt_panel = list(prompts) if prompts is not None else default_exp084_prompts()
+    max_nt_values = list(max_new_tokens_values)
+    runnable, _blocked = resolve_panel_compressors(compressors_requested)
+
+    blockers: list[str] = []
+    if not runnable:
+        blockers.append("no compressors runnable via get_compressor API")
+    if not max_nt_values:
+        blockers.append("no max_new_tokens_values provided")
+
+    runtime: Any | None = None
+    if baseline_generation_fn is None or guarded_generation_fn is None:
+        try:
+            from exactkv.runtime.exactkv_generator import ExactKVGenerator  # noqa: F401
+            from exactkv.runtime.model_runtime import ModelRuntime
+
+            runtime = ModelRuntime(model_id, device=device, dtype=dtype)
+        except Exception as exc:  # noqa: BLE001
+            blockers.append(f"runtime load failed: {type(exc).__name__}: {exc}")
+
+    cells: list[dict[str, Any]] = []
+    all_shadow_cells: list[dict[str, Any]] = []
+    baseline_ok = 0
+    guarded_ok = 0
+    token_match = 0
+    text_match = 0
+    decode_callback_total = 0
+    decode_success_total = 0
+    decode_exception_total = 0
+    posthoc_comparison_cells = 0
+    decode_vs_posthoc_match_cells = 0
+    failed_cells = 0
+
+    for prompt_id, prompt_text in prompt_panel:
+        preview = prompt_text if len(prompt_text) <= 80 else prompt_text[:77] + "..."
+        for compressor in runnable:
+            for max_new_tokens in max_nt_values:
+                cell, failed, dt_cells = _build_guarded_panel_cell(
+                    prompt_id=prompt_id,
+                    prompt_preview=preview,
+                    compressor=compressor,
+                    max_new_tokens=max_new_tokens,
+                    runtime=runtime,
+                    draft_len=draft_len,
+                    global_blockers=blockers,
+                    baseline_generation_fn=baseline_generation_fn,
+                    guarded_generation_fn=guarded_generation_fn,
+                    shadow_diagnostic_fn=shadow_diagnostic_fn,
+                    allow_shadow_fail=allow_shadow_fail,
+                )
+                cells.append(cell)
+                all_shadow_cells.extend(dt_cells)
+
+                if cell["baseline_generation_completed"]:
+                    baseline_ok += 1
+                if cell["guarded_shadow_generation_completed"]:
+                    guarded_ok += 1
+                if cell["baseline_vs_guarded_token_match"]:
+                    token_match += 1
+                if cell["baseline_vs_guarded_text_match"]:
+                    text_match += 1
+
+                decode_callback_total += cell["decode_time_shadow_callback_count"]
+                decode_success_total += cell["decode_time_shadow_successful_callbacks"]
+                decode_exception_total += cell["decode_time_shadow_exception_callbacks"]
+
+                if cell["guarded_shadow_generation_completed"] and dt_cells:
+                    posthoc_comparison_cells += 1
+                    if cell["posthoc_comparison_summary"].get("all_match"):
+                        decode_vs_posthoc_match_cells += 1
+
+                if failed:
+                    failed_cells += 1
+
+    total = len(cells)
+    token_mismatch = total - token_match
+    text_mismatch = total - text_match
+    posthoc_mismatch = posthoc_comparison_cells - decode_vs_posthoc_match_cells
+    parity_ok = token_match == total and text_match == total and total > 0
+
+    if failed_cells > 0 or (total > 0 and not parity_ok):
+        status = "failed"
+    elif baseline_ok == 0:
+        status = "blocked"
+    elif parity_ok and decode_vs_posthoc_match_cells == posthoc_comparison_cells:
+        status = "diagnostic_complete"
+    elif parity_ok:
+        status = "diagnostic_partial"
+    else:
+        status = "blocked"
+
+    return {
+        "experiment_id": EXPERIMENT_084_ID,
+        "status": status,
+        "model_id": model_id,
+        "device": device,
+        "dtype": dtype,
+        "compressors_requested": list(compressors_requested),
+        "compressors_run": runnable,
+        "max_new_tokens_values": max_nt_values,
+        "total_cells": total,
+        "baseline_generation_successful_cells": baseline_ok,
+        "guarded_shadow_generation_successful_cells": guarded_ok,
+        "baseline_vs_guarded_token_match_cells": token_match,
+        "baseline_vs_guarded_text_match_cells": text_match,
+        "baseline_vs_guarded_token_mismatch_cells": token_mismatch,
+        "baseline_vs_guarded_text_mismatch_cells": text_mismatch,
+        "decode_time_shadow_callback_count": decode_callback_total,
+        "decode_time_shadow_successful_callbacks": decode_success_total,
+        "decode_time_shadow_exception_callbacks": decode_exception_total,
+        "posthoc_shadow_comparison_cells": posthoc_comparison_cells,
+        "decode_time_vs_posthoc_shadow_match_cells": decode_vs_posthoc_match_cells,
+        "decode_time_vs_posthoc_shadow_mismatch_cells": posthoc_mismatch,
+        "exactkv_failure_summary": {
+            "baseline_failures": sum(
+                1 for c in cells if (c.get("exactkv_failures_baseline") or 0) > 0
+            ),
+            "guarded_failures": sum(
+                1 for c in cells if (c.get("exactkv_failures_guarded") or 0) > 0
+            ),
+        },
+        "tolerance_policy_summary_by_round": _aggregate_tolerance_by_round(all_shadow_cells),
+        "topk_agreement_summary_by_round": _aggregate_topk_by_round(all_shadow_cells),
+        "safety_gate_summary": _aggregate_safety_gate_summary(cells),
+        "generation_modified_by_decode_time_shadow": False,
+        "decode_time_shadow_used_for_token_commit": False,
+        "default_runtime_changed": False,
+        "cells": cells,
+        "blockers": blockers,
+        "limitations": [
+            "Expanded guarded decode-time shadow panel; not streaming-attention integration.",
+            "Shadow runs inside opt-in observer callback only.",
+            "Shadow results cannot affect token commits.",
+            "Observer return values are ignored.",
+            "No CUDA/Triton/vLLM/serving integration.",
+        ],
+        "no_performance_claims_note": (
+            "No speed, throughput, latency, serving, measured active GPU memory, "
+            "or production-memory claim is made."
+        ),
+        "claim_note": EXP084_CLAIM_NOTE,
+        "forbidden_claims": list(SHADOW_FORBIDDEN_CLAIMS),
+        "guarded_decode_time_shadow_cli_flag": PROPOSED_GUARDED_DECODE_TIME_SHADOW_CLI_FLAG,
+    }
+
+
+def validate_exp084_report(report: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "status",
+        "model_id",
+        "device",
+        "dtype",
+        "compressors_requested",
+        "compressors_run",
+        "max_new_tokens_values",
+        "total_cells",
+        "baseline_generation_successful_cells",
+        "guarded_shadow_generation_successful_cells",
+        "baseline_vs_guarded_token_match_cells",
+        "baseline_vs_guarded_text_match_cells",
+        "baseline_vs_guarded_token_mismatch_cells",
+        "baseline_vs_guarded_text_mismatch_cells",
+        "decode_time_shadow_callback_count",
+        "decode_time_shadow_successful_callbacks",
+        "decode_time_shadow_exception_callbacks",
+        "posthoc_shadow_comparison_cells",
+        "decode_time_vs_posthoc_shadow_match_cells",
+        "decode_time_vs_posthoc_shadow_mismatch_cells",
+        "exactkv_failure_summary",
+        "tolerance_policy_summary_by_round",
+        "topk_agreement_summary_by_round",
+        "safety_gate_summary",
+        "generation_modified_by_decode_time_shadow",
+        "decode_time_shadow_used_for_token_commit",
+        "default_runtime_changed",
+        "cells",
+        "blockers",
+        "limitations",
+        "no_performance_claims_note",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing key: {key}")
+
+    if report.get("experiment_id") != EXPERIMENT_084_ID:
+        errors.append("experiment_id mismatch")
+
+    for flag in (
+        "generation_modified_by_decode_time_shadow",
+        "decode_time_shadow_used_for_token_commit",
+        "default_runtime_changed",
+    ):
+        if report.get(flag) is not False:
+            errors.append(f"{flag} must be false")
+
+    for idx, cell in enumerate(report.get("cells", [])):
+        gates = cell.get("safety_gates") or {}
+        if gates.get("decode_time_shadow_used_for_token_commit") is not False:
+            errors.append(
+                f"cells[{idx}].safety_gates.decode_time_shadow_used_for_token_commit must be false",
+            )
+        if gates.get("shadow_exception_affects_generation") is not False:
+            errors.append(
+                f"cells[{idx}].safety_gates.shadow_exception_affects_generation must be false",
+            )
+        if gates.get("shadow_result_exposed_to_generator") is not False:
+            errors.append(
+                f"cells[{idx}].safety_gates.shadow_result_exposed_to_generator must be false",
+            )
+        for ck in (
+            "max_new_tokens",
+            "decode_time_shadow_cells",
+            "posthoc_comparison_summary",
+            "safety_gates",
+        ):
+            if ck not in cell:
+                errors.append(f"cells[{idx}] missing {ck}")
 
     return errors

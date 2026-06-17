@@ -103,6 +103,11 @@ from exactkv.attention.decode_time_shadow_observer import (
     PROPOSED_GUARDED_DECODE_TIME_SHADOW_CLI_FLAG,
     run_exp083_guarded_decode_time_shadow_smoke,
     validate_exp083_report,
+    EXPERIMENT_084_ID,
+    EXP084_CLAIM_NOTE,
+    DEFAULT_EXP084_MAX_NEW_TOKENS_VALUES,
+    run_exp084_guarded_decode_time_shadow_panel,
+    validate_exp084_report,
 )
 
 from exactkv.attention.generation_shadow_observer import (
@@ -228,6 +233,10 @@ __all__ = [
     "PROPOSED_GUARDED_DECODE_TIME_SHADOW_CLI_FLAG",
     "run_exp083_guarded_decode_time_shadow_smoke",
     "validate_exp083_report",
+    "EXPERIMENT_084_ID",
+    "EXP084_CLAIM_NOTE",
+    "run_exp084_guarded_decode_time_shadow_panel",
+    "validate_exp084_report",
     "run_posthoc_shadow_from_live_snapshots",
     "run_hf_attention_drift_cell",
     "validate_exp067_report",
