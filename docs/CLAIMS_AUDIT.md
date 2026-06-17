@@ -64,6 +64,8 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Guarded decode-time shadow observer dry-run | Phase 16R / Exp 083 | [`EXPERIMENT_083_GUARDED_DECODE_TIME_SHADOW_SMOKE.md`](EXPERIMENT_083_GUARDED_DECODE_TIME_SHADOW_SMOKE.md); callback-time shadow; **not streaming-attention integration** |
 | Expanded guarded decode-time shadow panel | Phase 16S / Exp 084 | [`EXPERIMENT_084_GUARDED_DECODE_TIME_SHADOW_PANEL.md`](EXPERIMENT_084_GUARDED_DECODE_TIME_SHADOW_PANEL.md); broader panel; **diagnostic-only** |
 | Phase 16 closeout & claim freeze | Phase 16T / Exp 085 | [`PHASE_16_CLOSEOUT.md`](PHASE_16_CLOSEOUT.md); **Phase 16 complete**; claim freeze before Phase 17 |
+| Claim-safe demo packaging | Phase 17A / Exp 086 | [`PHASE_17_CLAIM_SAFE_DEMO.md`](PHASE_17_CLAIM_SAFE_DEMO.md); demo narrative + cards; **not new runtime** |
+| Broader model validation panel | Phase 17B / Exp 087 | [`PHASE_17B_BROADER_MODEL_VALIDATION.md`](PHASE_17B_BROADER_MODEL_VALIDATION.md); **panel-scoped**; not model-family claim |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

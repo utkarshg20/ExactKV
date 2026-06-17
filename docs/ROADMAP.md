@@ -833,6 +833,8 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 | 16R | Guarded decode-time shadow observer dry-run | ✅ [`EXPERIMENT_083_GUARDED_DECODE_TIME_SHADOW_SMOKE.md`](EXPERIMENT_083_GUARDED_DECODE_TIME_SHADOW_SMOKE.md) |
 | 16S | Expanded guarded decode-time shadow panel | ✅ [`EXPERIMENT_084_GUARDED_DECODE_TIME_SHADOW_PANEL.md`](EXPERIMENT_084_GUARDED_DECODE_TIME_SHADOW_PANEL.md) |
 | 16T | Phase 16 closeout & claim freeze | ✅ [`PHASE_16_CLOSEOUT.md`](PHASE_16_CLOSEOUT.md) |
+| 17A | Claim-safe demo packaging | ✅ [`PHASE_17_CLAIM_SAFE_DEMO.md`](PHASE_17_CLAIM_SAFE_DEMO.md) |
+| 17B | Broader model validation panel | ✅ [`PHASE_17B_BROADER_MODEL_VALIDATION.md`](PHASE_17B_BROADER_MODEL_VALIDATION.md) |
 | 10I | Benchmark gap analysis | ✅ [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md) |
 | 10C | Parallel work integration | ✅ [`PARALLEL_WORK_INTEGRATION_REPORT.md`](PARALLEL_WORK_INTEGRATION_REPORT.md) |
 | 9C | Launch validation & should-fix | Planned |

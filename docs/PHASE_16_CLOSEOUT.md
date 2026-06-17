@@ -116,4 +116,6 @@ CUDA/Triton kernels, vLLM, LMCache, measured active GPU memory savings, producti
 
 ## 13. Recommended Phase 17
 
-**`phase17_claim_safe_demo_packaging`** — package Phase 16 diagnostics into a claim-safe demo narrative and documentation without new runtime integration. Phase 17 should begin only after this claim freeze is committed.
+**Phase 17A (complete):** claim-safe demo packaging — see [`PHASE_17_CLAIM_SAFE_DEMO.md`](PHASE_17_CLAIM_SAFE_DEMO.md).
+
+**Phase 17B (proposed):** broader model validation — only with explicit approval and unchanged claim boundaries.
