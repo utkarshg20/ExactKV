@@ -60,6 +60,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Decode-prefix ladder shadow observer | Phase 16N / Exp 079 | [`EXPERIMENT_079_DECODE_PREFIX_LADDER_SHADOW_OBSERVER.md`](EXPERIMENT_079_DECODE_PREFIX_LADDER_SHADOW_OBSERVER.md); post-hoc prefix ladder; **not** live decode integration |
 | ExactKV round-log shadow observer | Phase 16O / Exp 080 | [`EXPERIMENT_080_ROUND_LOG_SHADOW_OBSERVER.md`](EXPERIMENT_080_ROUND_LOG_SHADOW_OBSERVER.md); post-hoc round-log replay; **not** live decode integration |
 | Live round observer smoke | Phase 16P / Exp 081 | [`EXPERIMENT_081_LIVE_ROUND_OBSERVER_SMOKE.md`](EXPERIMENT_081_LIVE_ROUND_OBSERVER_SMOKE.md); opt-in instrumentation; **default runtime unchanged** |
+| Live observer + post-hoc shadow panel | Phase 16Q / Exp 082 | [`EXPERIMENT_082_LIVE_OBSERVER_SHADOW_PANEL.md`](EXPERIMENT_082_LIVE_OBSERVER_SHADOW_PANEL.md); live snapshots + post-hoc shadow; **not decode-time integration** |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

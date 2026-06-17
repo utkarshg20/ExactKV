@@ -223,3 +223,65 @@ def test_extract_round_log_entries_from_traces() -> None:
     assert blockers == []
     assert entries[0]["round_index"] == 0
     assert entries[0]["accepted_token_count"] == 2
+
+
+def test_run_posthoc_shadow_from_live_snapshots_requires_snapshots() -> None:
+    from exactkv.attention.generation_shadow_observer import run_posthoc_shadow_from_live_snapshots
+
+    cells, blockers = run_posthoc_shadow_from_live_snapshots(
+        snapshots=[],
+        prompt_id="p0",
+        hf_model=None,
+        shadow_replay_fn=None,
+    )
+    assert cells == []
+    assert "missing live round observer snapshots" in blockers
+
+
+def test_run_posthoc_shadow_from_live_snapshots_uses_replay_fn() -> None:
+    from exactkv.attention.generation_shadow_observer import run_posthoc_shadow_from_live_snapshots
+    from exactkv.attention.live_round_observer import build_live_round_snapshot
+    from exactkv.verification.acceptance import AcceptanceResult
+
+    acc = AcceptanceResult(
+        draft_tokens=[10, 11],
+        verifier_tokens=[10, 11],
+        accepted_tokens=[10, 11],
+        correction_token=None,
+        rejected_tokens=[],
+        bonus_token=None,
+        all_matched=True,
+        num_accepted=2,
+        num_rejected=0,
+    )
+    snap = build_live_round_snapshot(
+        round_index=0,
+        prompt_token_ids=(1, 2, 3),
+        generated_token_ids_before=(),
+        generated_token_ids_after=(10, 11),
+        draft_token_ids=[10, 11],
+        acceptance=acc,
+        compressor_name="noop",
+        max_new_tokens=8,
+        full_seq_len_before=3,
+        full_seq_len_after=5,
+    )
+
+    def _replay(**kwargs: object) -> dict:
+        del kwargs
+        return {
+            "num_layers_replayed": 1,
+            "streaming_vs_materialized_logit_metrics": {"top1_agreement": True},
+            "full_vs_streaming_logit_metrics": {},
+            "blockers": [],
+        }
+
+    cells, blockers = run_posthoc_shadow_from_live_snapshots(
+        snapshots=[snap],
+        prompt_id="p0",
+        hf_model=None,
+        shadow_replay_fn=_replay,
+    )
+    assert blockers == []
+    assert len(cells) == 1
+    assert cells[0]["round_index"] == 0

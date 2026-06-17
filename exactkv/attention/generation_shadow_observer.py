@@ -2162,6 +2162,130 @@ def _shadow_round_cell(
     }
 
 
+def run_posthoc_shadow_from_live_snapshots(
+    *,
+    snapshots: Sequence[Any],
+    prompt_id: str,
+    hf_model: Any | None,
+    shadow_replay_fn: Callable[..., dict[str, Any]] | None,
+    chunk_size: int = DEFAULT_CHUNK_SIZE,
+    accumulator_mode: str = "float32",
+    allow_parity_fail: bool = True,
+    allow_shadow_fail: bool = True,
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Run post-hoc shadow at live observer snapshot round boundaries."""
+    if not snapshots:
+        return [], ["missing live round observer snapshots"]
+
+    blockers: list[str] = []
+    cells: list[dict[str, Any]] = []
+    for snap in snapshots:
+        round_index = getattr(snap, "round_index", None)
+        prefix_after = getattr(snap, "prefix_token_ids_after", None)
+        if prefix_after is None:
+            cells.append({
+                "round_index": round_index,
+                "shadow_sequence_length": 0,
+                "tolerance_policy_status": "blocked",
+                "streaming_vs_materialized_metrics": None,
+                "full_vs_streaming_metrics": None,
+                "topk_agreement_metrics": None,
+                "interpretation_note": "Missing prefix_token_ids_after on live snapshot.",
+                "blockers": ["live snapshot missing prefix_token_ids_after"],
+            })
+            continue
+
+        input_ids = torch.tensor([list(prefix_after)], dtype=torch.long)
+        meta = dict(getattr(snap, "metadata", ()) or ())
+        entry = {
+            "round_index": round_index,
+            "prefix_length_before_round": meta.get("full_seq_len_before")
+            or len(getattr(snap, "prefix_token_ids_before", ()) or ()),
+            "prefix_length_after_round": meta.get("full_seq_len_after")
+            or len(prefix_after),
+            "draft_length": (
+                len(snap.draft_token_ids) if getattr(snap, "draft_token_ids", None) else None
+            ),
+            "accepted_token_count": getattr(snap, "accepted_token_count", None),
+            "rejected_or_corrected_token_count": getattr(
+                snap, "rejected_or_corrected_token_count", None,
+            ),
+        }
+        raw = _shadow_round_cell(
+            entry=entry,
+            input_ids=input_ids,
+            prompt_id=prompt_id,
+            hf_model=hf_model,
+            shadow_replay_fn=shadow_replay_fn,
+            chunk_size=chunk_size,
+            accumulator_mode=accumulator_mode,
+            allow_parity_fail=allow_parity_fail,
+            allow_shadow_fail=allow_shadow_fail,
+        )
+        cells.append({
+            "round_index": round_index,
+            "shadow_sequence_length": raw.get("shadow_sequence_length", 0),
+            "tolerance_policy_status": raw.get("tolerance_policy_status"),
+            "streaming_vs_materialized_metrics": raw.get("streaming_vs_materialized_metrics"),
+            "full_vs_streaming_metrics": raw.get("full_vs_streaming_metrics"),
+            "topk_agreement_metrics": raw.get("topk_agreement_metrics"),
+            "interpretation_note": raw.get("interpretation_note", ""),
+            "blockers": list(raw.get("blockers") or []),
+        })
+    return cells, blockers
+
+
+def aggregate_first_status_changes_from_shadow_cells(
+    generation_cells: Sequence[dict[str, Any]],
+    *,
+    shadow_cells_key: str = "posthoc_shadow_cells",
+) -> dict[str, Any]:
+    """Aggregate first tolerance status change across shadow cell lists."""
+    changes: list[dict[str, Any]] = []
+    stable = 0
+    for gc in generation_cells:
+        scs = gc.get(shadow_cells_key) or []
+        change = _first_status_change_for_round_cells(scs)
+        if change is None:
+            stable += 1
+        else:
+            changes.append({
+                "prompt_id": gc.get("prompt_id"),
+                "compressor": gc.get("compressor"),
+                **change,
+            })
+    return {
+        "cells_with_status_change": len(changes),
+        "cells_all_stable": stable,
+        "changes": changes,
+    }
+
+
+def aggregate_first_top1_mismatches_from_shadow_cells(
+    generation_cells: Sequence[dict[str, Any]],
+    *,
+    shadow_cells_key: str = "posthoc_shadow_cells",
+) -> dict[str, Any]:
+    mismatches: list[dict[str, Any]] = []
+    all_agree = 0
+    for gc in generation_cells:
+        scs = gc.get(shadow_cells_key) or []
+        mismatch = _first_top1_mismatch_for_round_cells(scs)
+        if mismatch is None:
+            all_agree += 1
+        else:
+            mismatches.append({
+                "prompt_id": gc.get("prompt_id"),
+                "compressor": gc.get("compressor"),
+                **mismatch,
+            })
+    return {
+        "cells_with_top1_mismatch": len(mismatches),
+        "cells_all_top1_agree": all_agree,
+        "mismatches": mismatches,
+    }
+
+
 def run_round_log_shadow_for_generation(
     *,
     gen_out: GenerationOutput,

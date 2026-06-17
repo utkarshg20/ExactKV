@@ -237,6 +237,8 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 16P (Live observer smoke):** [`EXPERIMENT_081_LIVE_ROUND_OBSERVER_SMOKE.md`](EXPERIMENT_081_LIVE_ROUND_OBSERVER_SMOKE.md) — opt-in `round_observer`; default generation unchanged.
 
-**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env / Post-15C / Post-15D / Post-15E / Post-16A / Post-16K / Post-16M / Post-16N / Post-16O / Post-16P:** vLLM environment feasibility track deferred at 15E; Phase 16A–16P compressed-attention research; default CLI/runtime unchanged.
+**Phase 16Q (Live observer + shadow panel):** [`EXPERIMENT_082_LIVE_OBSERVER_SHADOW_PANEL.md`](EXPERIMENT_082_LIVE_OBSERVER_SHADOW_PANEL.md) — live snapshots + post-hoc shadow; **not decode-time integration**.
+
+**Post-11K / Post-13B / Post-14A / Post-14B / Post-14C / Post-15A / Post-15B / Post-15B-unblock / Post-15C-env / Post-15C / Post-15D / Post-15E / Post-16A / Post-16K / Post-16M / Post-16N / Post-16O / Post-16P / Post-16Q:** vLLM environment feasibility track deferred at 15E; Phase 16A–16Q compressed-attention research; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

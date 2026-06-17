@@ -649,3 +649,389 @@ def validate_exp081_report(report: dict[str, Any]) -> list[str]:
             errors.append(f"cells[{idx}].safety_gates.default_runtime_changed must be false")
 
     return errors
+
+
+# --- Phase 16Q: live observer + post-hoc shadow panel ---
+
+EXPERIMENT_082_ID = "exp082_live_observer_shadow_panel"
+DEFAULT_EXP082_REPORT = Path("reports/experiment_082_live_observer_shadow_panel.json")
+SHADOW_SOURCE_LIVE_OBSERVER = "live_round_observer"
+
+EXP082_CLAIM_NOTE = (
+    "Live observer plus post-hoc shadow panel (Phase 16Q). Collects live round "
+    "snapshots during opt-in generation, then runs round-boundary shadow diagnostics "
+    "after generation completes. Not decode-time shadow integration, vLLM, CUDA/Triton "
+    "kernels, or default runtime change."
+)
+
+
+def _exp082_cell_safety_gates(
+    *,
+    baseline_completed: bool,
+    observer_completed: bool,
+    tok_match: bool,
+    txt_match: bool,
+) -> dict[str, bool]:
+    return {
+        "baseline_generation_completed": baseline_completed,
+        "observer_generation_completed": observer_completed,
+        "baseline_vs_observer_token_match": tok_match,
+        "baseline_vs_observer_text_match": txt_match,
+        "observer_used_for_token_commit": False,
+        "shadow_used_for_token_commit": False,
+        "generation_modified_by_observer": False,
+        "generation_modified_by_shadow": False,
+        "default_runtime_changed": False,
+        "observer_return_value_ignored": True,
+    }
+
+
+def _exp082_safety_gates_ok(gates: dict[str, bool]) -> bool:
+    if not gates.get("baseline_generation_completed"):
+        return False
+    if not gates.get("observer_generation_completed"):
+        return False
+    if not gates.get("baseline_vs_observer_token_match"):
+        return False
+    if not gates.get("baseline_vs_observer_text_match"):
+        return False
+    for key in (
+        "observer_used_for_token_commit",
+        "shadow_used_for_token_commit",
+        "generation_modified_by_observer",
+        "generation_modified_by_shadow",
+        "default_runtime_changed",
+    ):
+        if gates.get(key) is not False:
+            return False
+    if gates.get("observer_return_value_ignored") is not True:
+        return False
+    return True
+
+
+def run_exp082_live_observer_shadow_panel(
+    *,
+    model_id: str = "Qwen/Qwen2.5-0.5B",
+    device: str = "cpu",
+    dtype: str = "float32",
+    prompts: Sequence[tuple[str, str]] | None = None,
+    max_new_tokens: int = 8,
+    compressors_requested: Sequence[str] = ("noop", "int8", "int4_sim", "k8_v4_sim"),
+    draft_len: int = 4,
+    local_files_only: bool = False,
+    allow_shadow_fail: bool = True,
+    shadow_source: str = SHADOW_SOURCE_LIVE_OBSERVER,
+    baseline_generation_fn: Callable[..., dict[str, Any]] | None = None,
+    observer_generation_fn: Callable[..., dict[str, Any]] | None = None,
+    shadow_replay_fn: Callable[..., dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Run Experiment 082 live observer + post-hoc shadow panel."""
+    from exactkv.attention.generation_shadow_observer import (
+        DEFAULT_MODEL_ID,
+        GenerationShadowStatus,
+        _aggregate_tolerance_by_round,
+        _aggregate_topk_by_round,
+        aggregate_first_status_changes_from_shadow_cells,
+        aggregate_first_top1_mismatches_from_shadow_cells,
+        default_exp080_prompts,
+        resolve_panel_compressors,
+        run_posthoc_shadow_from_live_snapshots,
+    )
+
+    if model_id == "Qwen/Qwen2.5-0.5B":
+        model_id = DEFAULT_MODEL_ID
+
+    prompt_panel = list(prompts) if prompts is not None else default_exp080_prompts()
+    runnable, _blocked = resolve_panel_compressors(compressors_requested)
+
+    blockers: list[str] = []
+    if not runnable:
+        blockers.append("no compressors runnable via get_compressor API")
+    if shadow_source != SHADOW_SOURCE_LIVE_OBSERVER:
+        blockers.append(f"unsupported shadow_source: {shadow_source}")
+
+    runtime: Any | None = None
+    if baseline_generation_fn is None or observer_generation_fn is None:
+        try:
+            from exactkv.runtime.exactkv_generator import ExactKVGenerator  # noqa: F401
+            from exactkv.runtime.model_runtime import ModelRuntime
+
+            runtime = ModelRuntime(model_id, device=device, dtype=dtype)
+        except Exception as exc:  # noqa: BLE001
+            blockers.append(f"runtime load failed: {type(exc).__name__}: {exc}")
+
+    cells: list[dict[str, Any]] = []
+    all_shadow_cells: list[dict[str, Any]] = []
+    baseline_ok = 0
+    observer_ok = 0
+    token_match = 0
+    text_match = 0
+    live_snapshot_total = 0
+    snapshot_match_cells = 0
+    exception_cells = 0
+    shadow_success = 0
+    shadow_blocked = 0
+    failed_cells = 0
+
+    for prompt_id, prompt_text in prompt_panel:
+        preview = prompt_text if len(prompt_text) <= 80 else prompt_text[:77] + "..."
+        for compressor in runnable:
+            cell_blockers: list[str] = []
+
+            if baseline_generation_fn is not None:
+                baseline = baseline_generation_fn(
+                    prompt=prompt_text, max_new_tokens=max_new_tokens, compressor_name=compressor,
+                )
+            elif runtime is not None:
+                baseline = _run_baseline_generation(
+                    runtime, prompt_text, max_new_tokens, compressor, draft_len,
+                )
+            else:
+                baseline = {"generation_completed": False, "blockers": list(blockers)}
+
+            if observer_generation_fn is not None:
+                observed = observer_generation_fn(
+                    prompt=prompt_text, max_new_tokens=max_new_tokens, compressor_name=compressor,
+                )
+            elif runtime is not None:
+                observed = _run_observer_generation(
+                    runtime, prompt_text, max_new_tokens, compressor, draft_len,
+                )
+            else:
+                observed = {"generation_completed": False, "blockers": list(blockers)}
+
+            baseline_completed = bool(baseline.get("generation_completed"))
+            observer_completed = bool(observed.get("generation_completed"))
+            if baseline_completed:
+                baseline_ok += 1
+            if observer_completed:
+                observer_ok += 1
+
+            b_ids = baseline.get("generated_token_ids")
+            o_ids = observed.get("generated_token_ids")
+            tok_match = _token_lists_match(b_ids, o_ids)
+            txt_match = baseline.get("generated_text") == observed.get("generated_text")
+            if tok_match:
+                token_match += 1
+            if txt_match:
+                text_match += 1
+            if not tok_match:
+                cell_blockers.append("baseline_vs_observer_token_mismatch")
+            if not txt_match:
+                cell_blockers.append("baseline_vs_observer_text_mismatch")
+
+            live_snaps = observed.get("live_snapshots") or []
+            snap_cmp = observed.get("snapshot_comparison") or compare_snapshots_to_traces(
+                live_snaps,
+                observed.get("result_traces") or [],
+            )
+            live_snapshot_total += int(snap_cmp.get("live_snapshot_count", 0))
+            if snap_cmp.get("snapshot_vs_result_round_log_match"):
+                snapshot_match_cells += 1
+            elif observer_completed:
+                cell_blockers.append("snapshot_vs_result_round_log_mismatch")
+
+            if observed.get("observer_exceptions"):
+                exception_cells += 1
+                cell_blockers.append("observer_exception_recorded")
+
+            posthoc_shadow_cells: list[dict[str, Any]] = []
+            if observer_completed:
+                if not live_snaps:
+                    cell_blockers.append("blocked_missing_live_snapshots")
+                else:
+                    hf_model = getattr(runtime, "model", None) if runtime else None
+                    posthoc_shadow_cells, shadow_blockers = run_posthoc_shadow_from_live_snapshots(
+                        snapshots=live_snaps,
+                        prompt_id=prompt_id,
+                        hf_model=hf_model,
+                        shadow_replay_fn=shadow_replay_fn,
+                        allow_shadow_fail=allow_shadow_fail,
+                    )
+                    cell_blockers.extend(shadow_blockers)
+                    for sc in posthoc_shadow_cells:
+                        all_shadow_cells.append(sc)
+                        if sc.get("blockers"):
+                            shadow_blocked += 1
+                        else:
+                            shadow_success += 1
+
+            safety = _exp082_cell_safety_gates(
+                baseline_completed=baseline_completed,
+                observer_completed=observer_completed,
+                tok_match=tok_match,
+                txt_match=txt_match,
+            )
+            if not _exp082_safety_gates_ok(safety):
+                failed_cells += 1
+                cell_blockers.append("safety_gate_failed")
+            if not live_snaps and observer_completed:
+                failed_cells += 1
+
+            cells.append({
+                "prompt_id": prompt_id,
+                "prompt_preview": preview,
+                "compressor": compressor,
+                "shadow_source": shadow_source,
+                "baseline_generation_completed": baseline_completed,
+                "observer_generation_completed": observer_completed,
+                "baseline_generated_token_ids": b_ids,
+                "observer_generated_token_ids": o_ids,
+                "baseline_vs_observer_token_match": tok_match,
+                "baseline_vs_observer_text_match": txt_match,
+                "live_snapshot_count": snap_cmp.get("live_snapshot_count", 0),
+                "result_round_log_count": snap_cmp.get("result_round_log_count", 0),
+                "snapshot_vs_result_round_log_match": snap_cmp.get(
+                    "snapshot_vs_result_round_log_match", False,
+                ),
+                "observer_exceptions": list(observed.get("observer_exceptions") or []),
+                "exactkv_failures_baseline": baseline.get("exactkv_failures"),
+                "exactkv_failures_observer": observed.get("exactkv_failures"),
+                "token_exact_match_baseline": baseline.get("token_exact_match"),
+                "token_exact_match_observer": observed.get("token_exact_match"),
+                "posthoc_shadow_cells": posthoc_shadow_cells,
+                "safety_gates": safety,
+                "blockers": cell_blockers,
+            })
+
+    total = len(cells)
+    parity_ok = token_match == total and text_match == total and total > 0
+    if failed_cells > 0 or (total > 0 and not parity_ok):
+        status = "failed"
+    elif baseline_ok == 0:
+        status = "blocked"
+    elif shadow_success > 0 and shadow_blocked == 0:
+        status = "diagnostic_complete"
+    elif shadow_success > 0:
+        status = "diagnostic_partial"
+    else:
+        status = "blocked"
+
+    return {
+        "experiment_id": EXPERIMENT_082_ID,
+        "status": status,
+        "model_id": model_id,
+        "device": device,
+        "dtype": dtype,
+        "shadow_source": shadow_source,
+        "compressors_requested": list(compressors_requested),
+        "compressors_run": runnable,
+        "max_new_tokens": max_new_tokens,
+        "total_cells": total,
+        "baseline_generation_successful_cells": baseline_ok,
+        "observer_generation_successful_cells": observer_ok,
+        "baseline_vs_observer_token_match_cells": token_match,
+        "baseline_vs_observer_text_match_cells": text_match,
+        "live_snapshot_total": live_snapshot_total,
+        "live_snapshot_cells": total,
+        "observer_exception_cells": exception_cells,
+        "posthoc_shadow_successful_cells": shadow_success,
+        "posthoc_shadow_blocked_cells": shadow_blocked,
+        "snapshot_vs_result_round_log_match_cells": snapshot_match_cells,
+        "exactkv_failure_summary": {
+            "baseline_failures": sum(
+                1 for c in cells if (c.get("exactkv_failures_baseline") or 0) > 0
+            ),
+            "observer_failures": sum(
+                1 for c in cells if (c.get("exactkv_failures_observer") or 0) > 0
+            ),
+        },
+        "tolerance_policy_summary_by_round": _aggregate_tolerance_by_round(all_shadow_cells),
+        "topk_agreement_summary_by_round": _aggregate_topk_by_round(all_shadow_cells),
+        "first_status_change_summary": aggregate_first_status_changes_from_shadow_cells(cells),
+        "first_top1_mismatch_summary": aggregate_first_top1_mismatches_from_shadow_cells(cells),
+        "observer_used_for_token_commit": False,
+        "shadow_used_for_token_commit": False,
+        "generation_modified_by_observer": False,
+        "generation_modified_by_shadow": False,
+        "default_runtime_changed": False,
+        "cells": cells,
+        "blockers": blockers,
+        "limitations": [
+            "Live observer plus post-hoc shadow panel; not decode-time shadow integration.",
+            "Shadow runs after generation; cannot affect token commits.",
+            "Live snapshots required; no silent fallback.",
+            "No CUDA/Triton/vLLM/serving integration.",
+        ],
+        "no_performance_claims_note": (
+            "No speed, throughput, latency, serving, measured active GPU memory, "
+            "or production-memory claim is made."
+        ),
+        "claim_note": EXP082_CLAIM_NOTE,
+        "forbidden_claims": list(SHADOW_FORBIDDEN_CLAIMS),
+        "live_observer_cli_flag": PROPOSED_LIVE_OBSERVER_CLI_FLAG,
+        "shadow_cli_flag": PROPOSED_SHADOW_CLI_FLAG,
+    }
+
+
+def validate_exp082_report(report: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "status",
+        "model_id",
+        "device",
+        "dtype",
+        "compressors_requested",
+        "compressors_run",
+        "max_new_tokens",
+        "total_cells",
+        "baseline_generation_successful_cells",
+        "observer_generation_successful_cells",
+        "baseline_vs_observer_token_match_cells",
+        "baseline_vs_observer_text_match_cells",
+        "live_snapshot_total",
+        "live_snapshot_cells",
+        "observer_exception_cells",
+        "posthoc_shadow_successful_cells",
+        "posthoc_shadow_blocked_cells",
+        "snapshot_vs_result_round_log_match_cells",
+        "exactkv_failure_summary",
+        "tolerance_policy_summary_by_round",
+        "topk_agreement_summary_by_round",
+        "first_status_change_summary",
+        "first_top1_mismatch_summary",
+        "observer_used_for_token_commit",
+        "shadow_used_for_token_commit",
+        "generation_modified_by_observer",
+        "generation_modified_by_shadow",
+        "default_runtime_changed",
+        "cells",
+        "blockers",
+        "limitations",
+        "no_performance_claims_note",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing key: {key}")
+
+    if report.get("experiment_id") != EXPERIMENT_082_ID:
+        errors.append("experiment_id mismatch")
+
+    for flag in (
+        "observer_used_for_token_commit",
+        "shadow_used_for_token_commit",
+        "generation_modified_by_observer",
+        "generation_modified_by_shadow",
+        "default_runtime_changed",
+    ):
+        if report.get(flag) is not False:
+            errors.append(f"{flag} must be false")
+
+    for idx, cell in enumerate(report.get("cells", [])):
+        gates = cell.get("safety_gates") or {}
+        if gates.get("observer_used_for_token_commit") is not False:
+            errors.append(f"cells[{idx}].safety_gates.observer_used_for_token_commit must be false")
+        if gates.get("shadow_used_for_token_commit") is not False:
+            errors.append(f"cells[{idx}].safety_gates.shadow_used_for_token_commit must be false")
+        if gates.get("generation_modified_by_observer") is not False:
+            errors.append(f"cells[{idx}].safety_gates.generation_modified_by_observer must be false")
+        if gates.get("generation_modified_by_shadow") is not False:
+            errors.append(f"cells[{idx}].safety_gates.generation_modified_by_shadow must be false")
+        if gates.get("default_runtime_changed") is not False:
+            errors.append(f"cells[{idx}].safety_gates.default_runtime_changed must be false")
+        for ck in ("posthoc_shadow_cells", "safety_gates", "blockers"):
+            if ck not in cell:
+                errors.append(f"cells[{idx}] missing {ck}")
+
+    return errors

@@ -125,4 +125,6 @@ Does not reproduce VeriCache throughput, serving, or memory panels.
 
 ## 15. Next step
 
-**Phase 16Q (proposed):** broader live-observer panels or guarded decode-time shadow wiring — only with explicit approval.
+**Phase 16Q (complete):** live observer + post-hoc shadow panel — see [`EXPERIMENT_082_LIVE_OBSERVER_SHADOW_PANEL.md`](EXPERIMENT_082_LIVE_OBSERVER_SHADOW_PANEL.md).
+
+**Phase 16R (proposed):** broader panels or guarded decode-time shadow research.

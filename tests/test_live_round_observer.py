@@ -168,3 +168,47 @@ def test_compare_snapshot_to_trace_match() -> None:
 def test_compare_snapshots_to_traces_count_mismatch() -> None:
     result = compare_snapshots_to_traces([], [object()])
     assert result["snapshot_vs_result_round_log_match"] is False
+
+
+def test_validate_exp082_report_minimal_schema() -> None:
+    from exactkv.attention.live_round_observer import (
+        EXPERIMENT_082_ID,
+        validate_exp082_report,
+    )
+
+    report = {
+        "experiment_id": EXPERIMENT_082_ID,
+        "status": "blocked",
+        "model_id": "mock",
+        "device": "cpu",
+        "dtype": "float32",
+        "compressors_requested": ["noop"],
+        "compressors_run": ["noop"],
+        "max_new_tokens": 8,
+        "total_cells": 0,
+        "baseline_generation_successful_cells": 0,
+        "observer_generation_successful_cells": 0,
+        "baseline_vs_observer_token_match_cells": 0,
+        "baseline_vs_observer_text_match_cells": 0,
+        "live_snapshot_total": 0,
+        "live_snapshot_cells": 0,
+        "observer_exception_cells": 0,
+        "posthoc_shadow_successful_cells": 0,
+        "posthoc_shadow_blocked_cells": 0,
+        "snapshot_vs_result_round_log_match_cells": 0,
+        "exactkv_failure_summary": {"baseline_failures": 0, "observer_failures": 0},
+        "tolerance_policy_summary_by_round": {},
+        "topk_agreement_summary_by_round": {},
+        "first_status_change_summary": {},
+        "first_top1_mismatch_summary": {},
+        "observer_used_for_token_commit": False,
+        "shadow_used_for_token_commit": False,
+        "generation_modified_by_observer": False,
+        "generation_modified_by_shadow": False,
+        "default_runtime_changed": False,
+        "cells": [],
+        "blockers": [],
+        "limitations": [],
+        "no_performance_claims_note": "none",
+    }
+    assert validate_exp082_report(report) == []

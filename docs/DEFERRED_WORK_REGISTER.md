@@ -178,6 +178,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Decode-prefix ladder shadow observer** | **Complete** | Phase 16N ✅ | [`EXPERIMENT_079_DECODE_PREFIX_LADDER_SHADOW_OBSERVER.md`](EXPERIMENT_079_DECODE_PREFIX_LADDER_SHADOW_OBSERVER.md); post-hoc prefix ladder; **not** live decode integration |
 | — | **ExactKV round-log shadow observer** | **Complete** | Phase 16O ✅ | [`EXPERIMENT_080_ROUND_LOG_SHADOW_OBSERVER.md`](EXPERIMENT_080_ROUND_LOG_SHADOW_OBSERVER.md); post-hoc round-log replay; **not** live decode integration |
 | — | **Live round observer smoke** | **Complete** | Phase 16P ✅ | [`EXPERIMENT_081_LIVE_ROUND_OBSERVER_SMOKE.md`](EXPERIMENT_081_LIVE_ROUND_OBSERVER_SMOKE.md); opt-in `round_observer`; default path unchanged |
+| — | **Live observer + post-hoc shadow panel** | **Complete** | Phase 16Q ✅ | [`EXPERIMENT_082_LIVE_OBSERVER_SHADOW_PANEL.md`](EXPERIMENT_082_LIVE_OBSERVER_SHADOW_PANEL.md); live snapshots + post-hoc shadow |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 
