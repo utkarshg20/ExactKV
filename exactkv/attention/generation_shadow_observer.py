@@ -1334,6 +1334,7 @@ EXPERIMENT_079_ID = "exp079_decode_prefix_ladder_shadow_observer"
 DEFAULT_EXP079_REPORT = Path("reports/experiment_079_decode_prefix_ladder_shadow_observer.json")
 DEFAULT_EXP079_COMPRESSORS: tuple[str, ...] = DEFAULT_EXP078_COMPRESSORS
 DEFAULT_EXP079_MAX_NEW_TOKENS = 8
+ROUND_SOURCE_LIVE = "live_round_observer"
 ROUND_SOURCE_POSTHOC = "posthoc_prefix_ladder"
 ROUND_SOURCE_ROUND_LOG = "exactkv_round_log"
 ROUND_SOURCE_BLOCKED = "blocked_no_round_data"

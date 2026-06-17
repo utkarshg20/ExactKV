@@ -129,4 +129,6 @@ Does not reproduce VeriCache throughput, serving, or memory panels.
 
 ## 13. Next step
 
-**Phase 16P (proposed):** live per-round decode hooks — only with explicit approval; still no unapproved `ExactKVGenerator` modification.
+**Phase 16P (complete):** opt-in live round observer instrumentation — see [`EXPERIMENT_081_LIVE_ROUND_OBSERVER_SMOKE.md`](EXPERIMENT_081_LIVE_ROUND_OBSERVER_SMOKE.md).
+
+**Phase 16Q (proposed):** broader live-observer panels or guarded decode-time shadow wiring.

@@ -83,6 +83,16 @@ from exactkv.attention.generation_shadow_review import (
     validate_exp075_report,
 )
 
+from exactkv.attention.live_round_observer import (
+    EXPERIMENT_081_ID,
+    EXP081_CLAIM_NOTE,
+    LiveRoundObserver,
+    LiveRoundSnapshot,
+    PROPOSED_LIVE_OBSERVER_CLI_FLAG,
+    run_exp081_live_round_observer_panel,
+    validate_exp081_report,
+)
+
 from exactkv.attention.generation_shadow_observer import (
     EXPERIMENT_076_ID,
     EXPERIMENT_078_ID,
@@ -188,6 +198,13 @@ __all__ = [
     "validate_exp078_report",
     "validate_exp079_report",
     "validate_exp080_report",
+    "EXPERIMENT_081_ID",
+    "EXP081_CLAIM_NOTE",
+    "LiveRoundObserver",
+    "LiveRoundSnapshot",
+    "PROPOSED_LIVE_OBSERVER_CLI_FLAG",
+    "run_exp081_live_round_observer_panel",
+    "validate_exp081_report",
     "run_hf_attention_drift_cell",
     "validate_exp067_report",
     "validate_exp068_report",

@@ -74,6 +74,7 @@ class ExactKVGenerator:
         compressor: KVCompressor,
         draft_len: int = 8,
         verification_method: VerificationMethod = "sequential",
+        round_observer: Any | None = None,
     ) -> None:
         if verification_method not in _VALID_VERIFICATION_METHODS:
             raise ValueError(
@@ -85,6 +86,7 @@ class ExactKVGenerator:
         self.draft_len = draft_len
         self.verification_method: VerificationMethod = verification_method
         self.engine = VerificationEngine(runtime)
+        self.round_observer = round_observer
 
     # ------------------------------------------------------------------
     # Public API
@@ -145,6 +147,8 @@ class ExactKVGenerator:
                 done = True
                 break
 
+            gen_tokens_before = tuple(all_generated)
+
             # 4. Commit: update authoritative full state
             full_state = self._commit(full_state, committed)
 
@@ -166,6 +170,16 @@ class ExactKVGenerator:
                     full_seq_len_after=full_state.seq_len,
                     compressed_seq_len_after=compressed.logical_seq_len,
                 )
+            )
+            self._notify_round_observer(
+                round_idx=round_idx,
+                seq_len_before=seq_len_before,
+                full_state=full_state,
+                draft_tokens=draft_result.token_ids,
+                acceptance=acceptance,
+                gen_tokens_before=gen_tokens_before,
+                gen_tokens_after=tuple(all_generated),
+                max_new_tokens=max_new_tokens,
             )
             round_idx += 1
 
@@ -303,6 +317,44 @@ class ExactKVGenerator:
                 eos_found = True
                 break
         return result, eos_found
+
+    def _notify_round_observer(
+        self,
+        *,
+        round_idx: int,
+        seq_len_before: int,
+        full_state: FullKVState,
+        draft_tokens: list[int],
+        acceptance: AcceptanceResult,
+        gen_tokens_before: tuple[int, ...],
+        gen_tokens_after: tuple[int, ...],
+        max_new_tokens: int,
+    ) -> None:
+        """Best-effort live observer callback after round commit; never affects generation."""
+        observer = self.round_observer
+        if observer is None:
+            return
+        from exactkv.attention.live_round_observer import build_live_round_snapshot
+
+        prompt_tuple = tuple(full_state.prompt_ids.squeeze().tolist())
+        compressor_name = getattr(self.compressor, "name", None)
+        snapshot = build_live_round_snapshot(
+            round_index=round_idx,
+            prompt_token_ids=prompt_tuple,
+            generated_token_ids_before=gen_tokens_before,
+            generated_token_ids_after=gen_tokens_after,
+            draft_token_ids=draft_tokens,
+            acceptance=acceptance,
+            compressor_name=compressor_name,
+            max_new_tokens=max_new_tokens,
+            full_seq_len_before=seq_len_before,
+            full_seq_len_after=full_state.seq_len,
+        )
+        observe = getattr(observer, "observe", None)
+        if callable(observe):
+            observe(snapshot)
+        elif callable(observer):
+            observer(snapshot)
 
     def _assert_alignment(
         self,
