@@ -70,6 +70,61 @@ DEFAULT_EXP093_REPORT = Path(
 PHASE_18D = "18D"
 RECOMMENDED_NEXT_PHASE_18D = "phase18e_l3_shadow_proposal_provenance_audit"
 
+EXPERIMENT_094_ID = "exp094_shadow_proposal_provenance_audit"
+DEFAULT_EXP094_REPORT = Path(
+    "reports/experiment_094_shadow_proposal_provenance_audit.json",
+)
+PHASE_18E = "18E"
+RECOMMENDED_NEXT_PHASE_18E = "phase19a_alternative_l3_proposal_source_scaffold"
+
+AUDIT_CATEGORY_SAFE_SHADOW_TOP1_AVAILABLE = "safe_shadow_top1_available"
+AUDIT_CATEGORY_MISSING_SHADOW_TOP1_FIELD = "missing_shadow_top1_field"
+AUDIT_CATEGORY_SHADOW_TOP1_MISMATCHES_COMMITTED = "shadow_top1_mismatches_committed"
+AUDIT_CATEGORY_SHADOW_TOP1_MATCHES_COMMITTED = "shadow_top1_matches_committed"
+AUDIT_CATEGORY_ROUND_ALIGNMENT_UNKNOWN = "round_alignment_unknown"
+AUDIT_CATEGORY_ROUND_ALIGNMENT_MISMATCH = "round_alignment_mismatch"
+AUDIT_CATEGORY_NON_COMPARABLE_ROUND = "non_comparable_round"
+AUDIT_CATEGORY_BLOCKED_NO_SAFE_EXTRACTION = "blocked_no_safe_extraction"
+AUDIT_CATEGORY_UNSAFE_SOURCE_REJECTED = "unsafe_source_rejected"
+
+AUDIT_CATEGORIES: tuple[str, ...] = (
+    AUDIT_CATEGORY_SAFE_SHADOW_TOP1_AVAILABLE,
+    AUDIT_CATEGORY_MISSING_SHADOW_TOP1_FIELD,
+    AUDIT_CATEGORY_SHADOW_TOP1_MISMATCHES_COMMITTED,
+    AUDIT_CATEGORY_SHADOW_TOP1_MATCHES_COMMITTED,
+    AUDIT_CATEGORY_ROUND_ALIGNMENT_UNKNOWN,
+    AUDIT_CATEGORY_ROUND_ALIGNMENT_MISMATCH,
+    AUDIT_CATEGORY_NON_COMPARABLE_ROUND,
+    AUDIT_CATEGORY_BLOCKED_NO_SAFE_EXTRACTION,
+    AUDIT_CATEGORY_UNSAFE_SOURCE_REJECTED,
+)
+
+DECISION_CONTINUE_WITH_DECODE_TOP1 = "continue_with_decode_time_shadow_top1"
+DECISION_REPLACE_PROPOSAL_SOURCE = "replace_proposal_source"
+DECISION_STOP_L3_TOP1_PATH = "stop_l3_top1_path"
+DECISION_NEEDS_MORE_EVIDENCE = "needs_more_evidence"
+
+DECISION_VALUES: tuple[str, ...] = (
+    DECISION_CONTINUE_WITH_DECODE_TOP1,
+    DECISION_REPLACE_PROPOSAL_SOURCE,
+    DECISION_STOP_L3_TOP1_PATH,
+    DECISION_NEEDS_MORE_EVIDENCE,
+)
+
+DECISION_LOW_COVERAGE_THRESHOLD = 0.5
+DECISION_MEANINGFUL_MATCH_RATE_THRESHOLD = 0.1
+DECISION_UNSAFE_DOMINANCE_RATIO = 0.1
+
+COMMITTED_COMPARISON_ONLY_NOTE = (
+    "committed_token_id_for_comparison is for diagnostic match comparison only; "
+    "never used as proposal source."
+)
+
+PROPOSAL_SOURCE_VS_COMMITTED_SEPARATION_NOTE = (
+    "Proposal tokens are extracted from shadow diagnostics only. "
+    "Committed tokens are recorded for supplementary match comparison only."
+)
+
 EXTRACTION_SOURCES_ALLOWED: tuple[str, ...] = (
     "shadow_top1_token_id",
     "diagnostic_proposal_token_id",
@@ -574,6 +629,8 @@ def proposal_to_report_dict(
     return {
         **proposal.to_dict(),
         **extraction_fields,
+        "committed_token_id_for_comparison": committed_token_id,
+        "committed_token_text_for_comparison": None,
         "matched_committed_token": matched,
         "proposal_used_for_token_commit": safety.proposal_used_for_token_commit,
         "proposal_exposed_to_generator": safety.proposal_exposed_to_generator,
@@ -781,24 +838,36 @@ def _as_int_list(value: Any) -> list[int]:
     return [int(x) for x in list(value)]
 
 
-def extract_proposals(
+@dataclass(frozen=True)
+class ProposalExtractionContext:
+    proposals: tuple[GuardedDraftShadowProposal, ...]
+    posthoc_shadow_cells: tuple[dict[str, Any], ...]
+    generated_token_ids: tuple[int, ...]
+
+
+def extract_proposals_with_context(
     *,
     proposal_source: str,
     prompt_id: str,
     compressor: str,
     draft_shadow_out: dict[str, Any],
     allow_provider_blocked: bool = True,
-) -> tuple[GuardedDraftShadowProposal, ...]:
-    gen_ids = _as_int_list(draft_shadow_out.get("generated_token_ids"))
+) -> ProposalExtractionContext:
+    """Extract proposals plus audit context (post-hoc cells, generated token IDs)."""
+    gen_ids = tuple(_as_int_list(draft_shadow_out.get("generated_token_ids")))
     prompt_ids = _as_int_list(draft_shadow_out.get("prompt_ids"))
     prefix = prompt_ids if prompt_ids else []
 
     if proposal_source == PROPOSAL_SOURCE_SYNTHETIC:
-        return build_synthetic_proposals(
-            prompt_id=prompt_id,
-            compressor=compressor,
+        return ProposalExtractionContext(
+            proposals=build_synthetic_proposals(
+                prompt_id=prompt_id,
+                compressor=compressor,
+                generated_token_ids=gen_ids,
+                prefix_token_ids=prefix,
+            ),
+            posthoc_shadow_cells=(),
             generated_token_ids=gen_ids,
-            prefix_token_ids=prefix,
         )
 
     if proposal_source == PROPOSAL_SOURCE_DECODE_TOP1:
@@ -810,12 +879,16 @@ def extract_proposals(
         hf_model = draft_shadow_out.get("_hf_model")
         if not snaps or hf_model is None:
             if allow_provider_blocked:
-                return build_blocked_proposals(
-                    prompt_id=prompt_id,
-                    compressor=compressor,
-                    reason="missing snapshots or model for decode_time_shadow_top1",
+                return ProposalExtractionContext(
+                    proposals=build_blocked_proposals(
+                        prompt_id=prompt_id,
+                        compressor=compressor,
+                        reason="missing snapshots or model for decode_time_shadow_top1",
+                    ),
+                    posthoc_shadow_cells=(),
+                    generated_token_ids=gen_ids,
                 )
-            return ()
+            return ProposalExtractionContext((), (), gen_ids)
         posthoc_cells, _blockers = run_posthoc_shadow_from_live_snapshots(
             snapshots=snaps,
             prompt_id=prompt_id,
@@ -825,25 +898,54 @@ def extract_proposals(
         )
         if not posthoc_cells:
             if allow_provider_blocked:
-                return build_blocked_proposals(
-                    prompt_id=prompt_id,
-                    compressor=compressor,
-                    reason="post-hoc shadow produced no cells for top1 extraction",
+                return ProposalExtractionContext(
+                    proposals=build_blocked_proposals(
+                        prompt_id=prompt_id,
+                        compressor=compressor,
+                        reason="post-hoc shadow produced no cells for top1 extraction",
+                    ),
+                    posthoc_shadow_cells=(),
+                    generated_token_ids=gen_ids,
                 )
-            return ()
-        return build_decode_time_shadow_top1_proposals(
-            prompt_id=prompt_id,
-            compressor=compressor,
+            return ProposalExtractionContext((), (), gen_ids)
+        return ProposalExtractionContext(
+            proposals=build_decode_time_shadow_top1_proposals(
+                prompt_id=prompt_id,
+                compressor=compressor,
+                generated_token_ids=gen_ids,
+                prefix_token_ids=prefix,
+                posthoc_shadow_cells=posthoc_cells,
+            ),
+            posthoc_shadow_cells=tuple(posthoc_cells),
             generated_token_ids=gen_ids,
-            prefix_token_ids=prefix,
-            posthoc_shadow_cells=posthoc_cells,
         )
 
-    return build_blocked_proposals(
+    return ProposalExtractionContext(
+        proposals=build_blocked_proposals(
+            prompt_id=prompt_id,
+            compressor=compressor,
+            reason=f"unknown proposal source: {proposal_source}",
+        ),
+        posthoc_shadow_cells=(),
+        generated_token_ids=gen_ids,
+    )
+
+
+def extract_proposals(
+    *,
+    proposal_source: str,
+    prompt_id: str,
+    compressor: str,
+    draft_shadow_out: dict[str, Any],
+    allow_provider_blocked: bool = True,
+) -> tuple[GuardedDraftShadowProposal, ...]:
+    return extract_proposals_with_context(
+        proposal_source=proposal_source,
         prompt_id=prompt_id,
         compressor=compressor,
-        reason=f"unknown proposal source: {proposal_source}",
-    )
+        draft_shadow_out=draft_shadow_out,
+        allow_provider_blocked=allow_provider_blocked,
+    ).proposals
 
 
 def _run_draft_shadow_no_commit_generation(
@@ -934,13 +1036,14 @@ def _build_panel_cell(
     if not txt_match:
         blockers.append("baseline_vs_draft_shadow_text_mismatch")
 
-    proposals = extract_proposals(
+    proposals_ctx = extract_proposals_with_context(
         proposal_source=proposal_source,
         prompt_id=prompt_id,
         compressor=compressor,
         draft_shadow_out=draft_shadow,
         allow_provider_blocked=allow_provider_blocked,
     )
+    proposals = proposals_ctx.proposals
     decisions = tuple(default_no_commit_decision(p.round_index) for p in proposals)
     safety_results = tuple(default_no_commit_safety_result() for _ in proposals)
 
@@ -980,6 +1083,8 @@ def _build_panel_cell(
         proposal_to_report_dict(p, committed_token_id=cid)
         for p, cid in zip(proposals, committed_ids, strict=False)
     ]
+    cell["posthoc_shadow_cells"] = list(proposals_ctx.posthoc_shadow_cells)
+    cell["generated_token_ids_for_audit"] = list(proposals_ctx.generated_token_ids)
 
     gates = cell["safety_gates"]
     failed = not _cell_safety_gates_ok(gates)
@@ -1881,5 +1986,529 @@ def validate_exp093_report(report: dict[str, Any]) -> list[str]:
             ):
                 if pk not in prop:
                     errors.append(f"proposal missing extraction field: {pk}")
+
+    return errors
+
+
+@dataclass(frozen=True)
+class ShadowProposalAuditRecord:
+    prompt_id: str
+    compressor: str
+    max_new_tokens: int
+    round_index: int
+    proposal_source: str
+    extraction_status: str | None
+    extraction_source_field: str | None
+    proposed_token_id: int | None
+    proposed_token_text: str | None
+    committed_token_id_for_comparison: int | None
+    committed_token_text_for_comparison: str | None
+    matched_committed_token: bool | None
+    block_reason: str | None
+    audit_categories: tuple[str, ...]
+    interpretation_note: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+def _missing_top1_block_reason(block_reason: str | None) -> bool:
+    if not block_reason:
+        return False
+    lowered = block_reason.lower()
+    return (
+        "no explicit shadow top-1" in lowered
+        or "no safe top1 extraction" in lowered
+        or "other_top1_token_id unavailable" in lowered
+        or "missing shadow" in lowered
+    )
+
+
+def classify_proposal_audit_categories(
+    *,
+    proposal_source: str,
+    extraction_status: str | None,
+    proposal_status: str | None,
+    block_reason: str | None,
+    proposed_token_id: int | None,
+    committed_token_id: int | None,
+    round_index: int,
+    posthoc_shadow_cells: Sequence[dict[str, Any]],
+    generated_token_ids: Sequence[int],
+) -> tuple[str, ...]:
+    """Assign provenance audit categories for one proposal round."""
+    categories: list[str] = []
+    posthoc_len = len(posthoc_shadow_cells)
+    gen_len = len(generated_token_ids)
+
+    if proposal_source == PROPOSAL_SOURCE_DECODE_TOP1:
+        if posthoc_len == 0 and gen_len > 0:
+            categories.append(AUDIT_CATEGORY_ROUND_ALIGNMENT_UNKNOWN)
+        elif round_index >= posthoc_len and gen_len > 0:
+            categories.append(AUDIT_CATEGORY_ROUND_ALIGNMENT_MISMATCH)
+        elif round_index < posthoc_len:
+            cell_round = posthoc_shadow_cells[round_index].get("round_index")
+            if cell_round is not None and int(cell_round) != round_index:
+                categories.append(AUDIT_CATEGORY_ROUND_ALIGNMENT_MISMATCH)
+        if posthoc_len != gen_len and gen_len > 0 and posthoc_len > 0:
+            categories.append(AUDIT_CATEGORY_ROUND_ALIGNMENT_MISMATCH)
+
+    if extraction_status == "unsafe_rejected":
+        categories.append(AUDIT_CATEGORY_UNSAFE_SOURCE_REJECTED)
+        categories.append(AUDIT_CATEGORY_BLOCKED_NO_SAFE_EXTRACTION)
+    elif extraction_status == "success":
+        categories.append(AUDIT_CATEGORY_SAFE_SHADOW_TOP1_AVAILABLE)
+        if committed_token_id is not None and proposed_token_id is not None:
+            if proposed_token_id == committed_token_id:
+                categories.append(AUDIT_CATEGORY_SHADOW_TOP1_MATCHES_COMMITTED)
+            else:
+                categories.append(AUDIT_CATEGORY_SHADOW_TOP1_MISMATCHES_COMMITTED)
+        else:
+            categories.append(AUDIT_CATEGORY_NON_COMPARABLE_ROUND)
+    elif extraction_status == "blocked" or proposal_status == "blocked":
+        if _missing_top1_block_reason(block_reason):
+            categories.append(AUDIT_CATEGORY_MISSING_SHADOW_TOP1_FIELD)
+        categories.append(AUDIT_CATEGORY_BLOCKED_NO_SAFE_EXTRACTION)
+        if committed_token_id is None:
+            categories.append(AUDIT_CATEGORY_NON_COMPARABLE_ROUND)
+    else:
+        categories.append(AUDIT_CATEGORY_NON_COMPARABLE_ROUND)
+
+    return tuple(dict.fromkeys(categories))
+
+
+def build_proposal_audit_record(
+    *,
+    prompt_id: str,
+    compressor: str,
+    max_new_tokens: int,
+    proposal: Mapping[str, Any],
+    posthoc_shadow_cells: Sequence[dict[str, Any]],
+    generated_token_ids: Sequence[int],
+) -> ShadowProposalAuditRecord:
+    """Build one immutable provenance audit record for a proposal round."""
+    round_index = int(proposal.get("round_index", 0))
+    proposal_source = str(proposal.get("proposal_source", ""))
+    extraction_status = proposal.get("extraction_status")
+    proposal_status = proposal.get("proposal_status")
+    block_reason = proposal.get("block_reason") or proposal.get("exception")
+
+    proposed_ids = proposal.get("proposed_token_ids") or []
+    proposed_token_id = proposal.get("proposed_token_id")
+    if proposed_token_id is None and proposed_ids:
+        proposed_token_id = int(proposed_ids[0])
+
+    committed_token_id = proposal.get("committed_token_id_for_comparison")
+    if committed_token_id is None:
+        for key, val in (proposal.get("metadata") or {}).items():
+            if key == "committed_token_id" and val not in (None, ""):
+                committed_token_id = int(val)
+
+    matched = proposal.get("matched_committed_token")
+    if matched is None and committed_token_id is not None and proposed_token_id is not None:
+        matched = proposed_token_id == committed_token_id
+
+    categories = classify_proposal_audit_categories(
+        proposal_source=proposal_source,
+        extraction_status=extraction_status,
+        proposal_status=proposal_status,
+        block_reason=block_reason,
+        proposed_token_id=proposed_token_id,
+        committed_token_id=committed_token_id,
+        round_index=round_index,
+        posthoc_shadow_cells=posthoc_shadow_cells,
+        generated_token_ids=generated_token_ids,
+    )
+
+    return ShadowProposalAuditRecord(
+        prompt_id=prompt_id,
+        compressor=compressor,
+        max_new_tokens=max_new_tokens,
+        round_index=round_index,
+        proposal_source=proposal_source,
+        extraction_status=extraction_status,
+        extraction_source_field=proposal.get("extraction_source_field"),
+        proposed_token_id=proposed_token_id,
+        proposed_token_text=proposal.get("proposed_token_text"),
+        committed_token_id_for_comparison=committed_token_id,
+        committed_token_text_for_comparison=proposal.get(
+            "committed_token_text_for_comparison",
+        ),
+        matched_committed_token=matched,
+        block_reason=block_reason,
+        audit_categories=categories,
+        interpretation_note=(
+            f"{PROPOSAL_INTERPRETATION_NOTE} {COMMITTED_COMPARISON_ONLY_NOTE} "
+            f"{PROPOSAL_SOURCE_VS_COMMITTED_SEPARATION_NOTE}"
+        ),
+    )
+
+
+def build_audit_records_from_cell(cell: Mapping[str, Any]) -> tuple[ShadowProposalAuditRecord, ...]:
+    """Build audit records for all proposals in one panel cell."""
+    posthoc = cell.get("posthoc_shadow_cells") or []
+    gen_ids = cell.get("generated_token_ids_for_audit") or []
+    records: list[ShadowProposalAuditRecord] = []
+    for proposal in cell.get("proposals") or []:
+        records.append(
+            build_proposal_audit_record(
+                prompt_id=str(cell.get("prompt_id", "")),
+                compressor=str(cell.get("compressor", "")),
+                max_new_tokens=int(cell.get("max_new_tokens", 0)),
+                proposal=proposal,
+                posthoc_shadow_cells=posthoc,
+                generated_token_ids=gen_ids,
+            ),
+        )
+    return tuple(records)
+
+
+def _count_audit_categories(
+    records: Sequence[ShadowProposalAuditRecord],
+) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for rec in records:
+        for cat in rec.audit_categories:
+            counts[cat] = counts.get(cat, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _category_summary_by_field(
+    records: Sequence[ShadowProposalAuditRecord],
+    field_name: str,
+) -> dict[str, dict[str, int]]:
+    grouped: dict[str, dict[str, int]] = {}
+    for rec in records:
+        key = str(getattr(rec, field_name))
+        if key not in grouped:
+            grouped[key] = {}
+        for cat in rec.audit_categories:
+            grouped[key][cat] = grouped[key].get(cat, 0) + 1
+    return dict(sorted(grouped.items()))
+
+
+def aggregate_provenance_audit(
+    records: Sequence[ShadowProposalAuditRecord],
+) -> dict[str, Any]:
+    """Aggregate provenance audit diagnostics across all audited rounds."""
+    total = len(records)
+    safe = 0
+    missing_top1 = 0
+    unsafe = 0
+    matched = 0
+    mismatched = 0
+    blocked = 0
+
+    for rec in records:
+        cats = set(rec.audit_categories)
+        if AUDIT_CATEGORY_SAFE_SHADOW_TOP1_AVAILABLE in cats:
+            safe += 1
+        if AUDIT_CATEGORY_MISSING_SHADOW_TOP1_FIELD in cats:
+            missing_top1 += 1
+        if AUDIT_CATEGORY_UNSAFE_SOURCE_REJECTED in cats:
+            unsafe += 1
+        if AUDIT_CATEGORY_SHADOW_TOP1_MATCHES_COMMITTED in cats:
+            matched += 1
+        if AUDIT_CATEGORY_SHADOW_TOP1_MISMATCHES_COMMITTED in cats:
+            mismatched += 1
+        if AUDIT_CATEGORY_BLOCKED_NO_SAFE_EXTRACTION in cats:
+            blocked += 1
+
+    match_rate_successful = matched / safe if safe else 0.0
+    match_rate_total = matched / total if total else 0.0
+    coverage_rate = safe / total if total else 0.0
+
+    return {
+        "audit_records": [r.to_dict() for r in records],
+        "total_audited_rounds": total,
+        "safe_extraction_count": safe,
+        "missing_top1_field_count": missing_top1,
+        "unsafe_rejected_count": unsafe,
+        "matched_committed_count": matched,
+        "mismatched_committed_count": mismatched,
+        "blocked_count": blocked,
+        "match_rate_successful_extractions": match_rate_successful,
+        "match_rate_total_rounds": match_rate_total,
+        "coverage_rate": coverage_rate,
+        "category_summary": _count_audit_categories(records),
+        "category_summary_by_compressor": _category_summary_by_field(records, "compressor"),
+        "category_summary_by_prompt": _category_summary_by_field(records, "prompt_id"),
+        "category_summary_by_max_new_tokens": _category_summary_by_field(
+            records, "max_new_tokens",
+        ),
+        "category_summary_by_round_index": _category_summary_by_field(
+            records, "round_index",
+        ),
+    }
+
+
+def compute_decision_recommendation(
+    *,
+    total_audited_rounds: int,
+    safe_extraction_count: int,
+    unsafe_rejected_count: int,
+    match_rate_successful_extractions: float,
+) -> tuple[str, str]:
+    """Recommend whether decode_time_shadow_top1 remains viable for future L3 work."""
+    if total_audited_rounds == 0:
+        return (
+            DECISION_NEEDS_MORE_EVIDENCE,
+            "no audited proposal rounds available",
+        )
+
+    coverage_rate = safe_extraction_count / total_audited_rounds
+    if (
+        unsafe_rejected_count > 0
+        and unsafe_rejected_count
+        >= max(1, int(safe_extraction_count * DECISION_UNSAFE_DOMINANCE_RATIO))
+        and coverage_rate < DECISION_LOW_COVERAGE_THRESHOLD
+    ):
+        return (
+            DECISION_STOP_L3_TOP1_PATH,
+            "unsafe extraction sources would be required to improve coverage",
+        )
+
+    if (
+        coverage_rate >= DECISION_LOW_COVERAGE_THRESHOLD
+        and match_rate_successful_extractions >= DECISION_MEANINGFUL_MATCH_RATE_THRESHOLD
+    ):
+        return (
+            DECISION_CONTINUE_WITH_DECODE_TOP1,
+            "safe extraction coverage and match rate are meaningfully non-zero",
+        )
+
+    if (
+        coverage_rate < DECISION_LOW_COVERAGE_THRESHOLD
+        and match_rate_successful_extractions < DECISION_MEANINGFUL_MATCH_RATE_THRESHOLD
+    ):
+        return (
+            DECISION_REPLACE_PROPOSAL_SOURCE,
+            "low coverage and zero/near-zero match rate among successful extractions; "
+            "decode_time_shadow_top1 should be replaced rather than promoted",
+        )
+
+    if coverage_rate < DECISION_LOW_COVERAGE_THRESHOLD:
+        return (
+            DECISION_REPLACE_PROPOSAL_SOURCE,
+            "coverage remains below threshold for viable decode_time_shadow_top1",
+        )
+
+    return (
+        DECISION_NEEDS_MORE_EVIDENCE,
+        "match diagnostics inconclusive; additional panel evidence required",
+    )
+
+
+def run_exp094_shadow_proposal_provenance_audit(
+    *,
+    model_id: str = DEFAULT_MODEL_ID,
+    device: str = "cpu",
+    dtype: str = "float32",
+    prompts: Sequence[tuple[str, str]] | None = None,
+    max_prompts: int = DEFAULT_PANEL_PROMPTS,
+    max_new_tokens_values: Sequence[int] = DEFAULT_MAX_NEW_TOKENS_VALUES,
+    compressors_requested: Sequence[str] = DEFAULT_PANEL_COMPRESSORS,
+    proposal_source: str = PROPOSAL_SOURCE_DECODE_TOP1,
+    draft_len: int = 4,
+    local_files_only: bool = False,
+    allow_provider_blocked: bool = True,
+    baseline_generation_fn: Callable[..., dict[str, Any]] | None = None,
+    draft_shadow_generation_fn: Callable[..., dict[str, Any]] | None = None,
+    runtime_loader: Callable[..., Any] | None = None,
+) -> dict[str, Any]:
+    """Run Experiment 094 L3 shadow proposal provenance audit panel."""
+    panel = run_exp092_guarded_draft_shadow_panel_validation(
+        model_id=model_id,
+        device=device,
+        dtype=dtype,
+        prompts=prompts,
+        max_prompts=max_prompts,
+        max_new_tokens_values=max_new_tokens_values,
+        compressors_requested=compressors_requested,
+        proposal_source=proposal_source,
+        draft_len=draft_len,
+        local_files_only=local_files_only,
+        allow_provider_blocked=allow_provider_blocked,
+        baseline_generation_fn=baseline_generation_fn,
+        draft_shadow_generation_fn=draft_shadow_generation_fn,
+        runtime_loader=runtime_loader,
+    )
+
+    all_records: list[ShadowProposalAuditRecord] = []
+    for cell in panel.get("cells") or []:
+        all_records.extend(build_audit_records_from_cell(cell))
+
+    audit_agg = aggregate_provenance_audit(all_records)
+    decision, decision_reason = compute_decision_recommendation(
+        total_audited_rounds=audit_agg["total_audited_rounds"],
+        safe_extraction_count=audit_agg["safe_extraction_count"],
+        unsafe_rejected_count=audit_agg["unsafe_rejected_count"],
+        match_rate_successful_extractions=audit_agg["match_rate_successful_extractions"],
+    )
+
+    safety_top = default_no_commit_safety_result()
+    status = panel.get("status", "blocked")
+    if status == "panel_complete":
+        status = "audit_complete"
+    elif status == "panel_partial":
+        status = "audit_partial"
+
+    return {
+        "experiment_id": EXPERIMENT_094_ID,
+        "status": status,
+        "phase": PHASE_18E,
+        "safety_level": SAFETY_LEVEL,
+        "safety_spec_validation": panel.get("safety_spec_validation"),
+        "model_id": panel.get("model_id"),
+        "device": panel.get("device"),
+        "dtype": panel.get("dtype"),
+        "compressors_requested": panel.get("compressors_requested"),
+        "compressors_run": panel.get("compressors_run"),
+        "max_new_tokens_values": panel.get("max_new_tokens_values"),
+        "proposal_source": panel.get("proposal_source"),
+        "total_audited_rounds": audit_agg["total_audited_rounds"],
+        "safe_extraction_count": audit_agg["safe_extraction_count"],
+        "missing_top1_field_count": audit_agg["missing_top1_field_count"],
+        "unsafe_rejected_count": audit_agg["unsafe_rejected_count"],
+        "matched_committed_count": audit_agg["matched_committed_count"],
+        "mismatched_committed_count": audit_agg["mismatched_committed_count"],
+        "blocked_count": audit_agg["blocked_count"],
+        "match_rate_successful_extractions": audit_agg["match_rate_successful_extractions"],
+        "match_rate_total_rounds": audit_agg["match_rate_total_rounds"],
+        "category_summary": audit_agg["category_summary"],
+        "category_summary_by_compressor": audit_agg["category_summary_by_compressor"],
+        "category_summary_by_prompt": audit_agg["category_summary_by_prompt"],
+        "category_summary_by_max_new_tokens": audit_agg[
+            "category_summary_by_max_new_tokens"
+        ],
+        "category_summary_by_round_index": audit_agg["category_summary_by_round_index"],
+        "decision_recommendation": decision,
+        "decision_reason": decision_reason,
+        "audit_records": audit_agg["audit_records"],
+        "total_cells": panel.get("total_cells"),
+        "baseline_generation_successful_cells": panel.get(
+            "baseline_generation_successful_cells",
+        ),
+        "draft_shadow_generation_successful_cells": panel.get(
+            "draft_shadow_generation_successful_cells",
+        ),
+        "baseline_vs_draft_shadow_token_match_cells": panel.get(
+            "baseline_vs_draft_shadow_token_match_cells",
+        ),
+        "baseline_vs_draft_shadow_text_match_cells": panel.get(
+            "baseline_vs_draft_shadow_text_match_cells",
+        ),
+        "exactkv_failure_summary": panel.get("exactkv_failure_summary"),
+        "safety_gate_summary": panel.get("safety_gate_summary"),
+        "proposal_used_for_token_commit": safety_top.proposal_used_for_token_commit,
+        "proposal_exposed_to_generator": safety_top.proposal_exposed_to_generator,
+        "generated_output_modified_by_proposal": (
+            safety_top.generated_output_modified_by_proposal
+        ),
+        "default_runtime_changed": safety_top.default_runtime_changed,
+        "cells": panel.get("cells"),
+        "topk_interpretation_note": panel.get("topk_interpretation_note"),
+        "recommended_next_phase": RECOMMENDED_NEXT_PHASE_18E,
+        "claim_note": (
+            "L3 shadow proposal provenance audit. Proposals are diagnostic only."
+        ),
+        "forbidden_claims": list(SHADOW_FORBIDDEN_CLAIMS),
+        "blockers": panel.get("blockers"),
+        "limitations": [
+            "L3 provenance audit only; not L4 verifier-mediated compressed draft.",
+            "Committed tokens used for comparison only; never as proposal sources.",
+            "Proposal match rate supplementary; not exactness.",
+            "decode_time_shadow_top1 viability is diagnostic; not production approval.",
+            "ExactKVGenerator and default runtime unchanged.",
+        ],
+        "no_performance_claims_note": NO_PERFORMANCE_CLAIMS_NOTE,
+    }
+
+
+def validate_exp094_report(report: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "status",
+        "safety_level",
+        "safety_spec_validation",
+        "model_id",
+        "device",
+        "dtype",
+        "compressors_requested",
+        "compressors_run",
+        "max_new_tokens_values",
+        "proposal_source",
+        "total_audited_rounds",
+        "safe_extraction_count",
+        "missing_top1_field_count",
+        "unsafe_rejected_count",
+        "matched_committed_count",
+        "mismatched_committed_count",
+        "blocked_count",
+        "match_rate_successful_extractions",
+        "match_rate_total_rounds",
+        "category_summary",
+        "category_summary_by_compressor",
+        "category_summary_by_prompt",
+        "category_summary_by_max_new_tokens",
+        "category_summary_by_round_index",
+        "decision_recommendation",
+        "decision_reason",
+        "exactkv_failure_summary",
+        "safety_gate_summary",
+        "proposal_used_for_token_commit",
+        "proposal_exposed_to_generator",
+        "generated_output_modified_by_proposal",
+        "default_runtime_changed",
+        "blockers",
+        "limitations",
+        "no_performance_claims_note",
+        "audit_records",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing key: {key}")
+
+    if report.get("experiment_id") != EXPERIMENT_094_ID:
+        errors.append("experiment_id mismatch")
+
+    if report.get("safety_level") != SAFETY_LEVEL:
+        errors.append("safety_level mismatch")
+
+    if report.get("decision_recommendation") not in DECISION_VALUES:
+        errors.append("invalid decision_recommendation")
+
+    if report.get("proposal_used_for_token_commit") is not False:
+        errors.append("proposal_used_for_token_commit must be false")
+
+    if report.get("proposal_exposed_to_generator") is not False:
+        errors.append("proposal_exposed_to_generator must be false")
+
+    spec_val = report.get("safety_spec_validation") or {}
+    if spec_val.get("pass") is not True:
+        errors.append("safety_spec_validation must pass")
+
+    record_keys = (
+        "prompt_id",
+        "compressor",
+        "max_new_tokens",
+        "round_index",
+        "proposal_source",
+        "extraction_status",
+        "extraction_source_field",
+        "proposed_token_id",
+        "proposed_token_text",
+        "committed_token_id_for_comparison",
+        "committed_token_text_for_comparison",
+        "matched_committed_token",
+        "block_reason",
+        "audit_categories",
+        "interpretation_note",
+    )
+    for idx, rec in enumerate(report.get("audit_records") or []):
+        for rk in record_keys:
+            if rk not in rec:
+                errors.append(f"audit_records[{idx}] missing {rk}")
 
     return errors

@@ -261,6 +261,8 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 18D (Shadow top-1 extraction hardening):** [`PHASE_18D_SHADOW_TOP1_EXTRACTION_HARDENING.md`](PHASE_18D_SHADOW_TOP1_EXTRACTION_HARDENING.md) — provenance-aware extraction; coverage comparison vs Exp092.
 
-**Post-11K / ... / Post-18B / Post-18C / Post-18D:** Phase 16 complete; Phase 17–18D safety spec and L3 scaffold/panel/extraction; default CLI/runtime unchanged.
+**Phase 18E (Shadow proposal provenance audit):** [`PHASE_18E_SHADOW_PROPOSAL_PROVENANCE_AUDIT.md`](PHASE_18E_SHADOW_PROPOSAL_PROVENANCE_AUDIT.md) — taxonomy, match/block diagnostics, decision gate.
+
+**Post-11K / ... / Post-18D / Post-18E:** Phase 16 complete; Phase 17–18E safety spec and L3 scaffold/panel/extraction/audit; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

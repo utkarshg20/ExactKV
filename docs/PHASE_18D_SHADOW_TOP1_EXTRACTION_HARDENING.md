@@ -129,7 +129,7 @@ Self-validates against Phase 18A `validate_integration_proposal()` as `L3_GUARDE
 
 ## 13. Recommended next phase
 
-**Phase 18E:** L3 shadow proposal provenance audit — expand provenance logging and match diagnostics across additional panel dimensions without L4 commit integration.
+**Phase 18E (complete):** L3 shadow proposal provenance audit — see [`PHASE_18E_SHADOW_PROPOSAL_PROVENANCE_AUDIT.md`](PHASE_18E_SHADOW_PROPOSAL_PROVENANCE_AUDIT.md).
 
 ---
 
