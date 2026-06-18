@@ -57,6 +57,8 @@ Use the 2-minute script, then add:
 
 **Phase 17B:** Add optional 30-second line: "We validated the guarded shadow path on Qwen2.5 base and instruct — panel-scoped, not a benchmark."
 
+**Phase 17C:** Add optional line: "We extended that panel to longer deterministic prompts at ~128–512 tokens — context-length-scoped, not long-context production support."
+
 ---
 
 ## Technical walkthrough version

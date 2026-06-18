@@ -249,6 +249,8 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 17B (Broader model validation):** [`PHASE_17B_BROADER_MODEL_VALIDATION.md`](PHASE_17B_BROADER_MODEL_VALIDATION.md) — small Qwen panel; **panel-scoped only**.
 
-**Post-11K / ... / Post-16T / Post-17A / Post-17B:** Phase 16 complete; Phase 17A–17B claim-safe packaging and validation; default CLI/runtime unchanged.
+**Phase 17C (Longer-context validation):** [`PHASE_17C_LONG_CONTEXT_VALIDATION.md`](PHASE_17C_LONG_CONTEXT_VALIDATION.md) — ~128–512 token panel; **context-length-scoped only**.
+
+**Post-11K / ... / Post-16T / Post-17A / Post-17B / Post-17C:** Phase 16 complete; Phase 17A–17C claim-safe packaging and validation; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

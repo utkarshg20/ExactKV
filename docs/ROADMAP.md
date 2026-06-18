@@ -835,6 +835,7 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 | 16T | Phase 16 closeout & claim freeze | ✅ [`PHASE_16_CLOSEOUT.md`](PHASE_16_CLOSEOUT.md) |
 | 17A | Claim-safe demo packaging | ✅ [`PHASE_17_CLAIM_SAFE_DEMO.md`](PHASE_17_CLAIM_SAFE_DEMO.md) |
 | 17B | Broader model validation panel | ✅ [`PHASE_17B_BROADER_MODEL_VALIDATION.md`](PHASE_17B_BROADER_MODEL_VALIDATION.md) |
+| 17C | Longer-context validation panel | ✅ [`PHASE_17C_LONG_CONTEXT_VALIDATION.md`](PHASE_17C_LONG_CONTEXT_VALIDATION.md) |
 | 10I | Benchmark gap analysis | ✅ [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md) |
 | 10C | Parallel work integration | ✅ [`PARALLEL_WORK_INTEGRATION_REPORT.md`](PARALLEL_WORK_INTEGRATION_REPORT.md) |
 | 9C | Launch validation & should-fix | Planned |

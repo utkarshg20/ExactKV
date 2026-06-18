@@ -8,6 +8,13 @@ from exactkv.demo.broader_model_validation import (
     run_exp087_broader_model_validation_panel,
     validate_exp087_report,
 )
+from exactkv.demo.long_context_validation import (
+    CLAIM_SCOPE_NOTE as LONG_CONTEXT_CLAIM_SCOPE_NOTE,
+    DEFAULT_MODEL_ID,
+    EXPERIMENT_088_ID,
+    run_exp088_long_context_validation_panel,
+    validate_exp088_report,
+)
 from exactkv.demo.phase17_claim_safe_demo import (
     BENCHMARK_GAP_LINE,
     DEMO_HOOK,
@@ -26,7 +33,10 @@ __all__ = [
     "DEMO_PROBLEM_STATEMENT",
     "EXPERIMENT_086_ID",
     "EXPERIMENT_087_ID",
+    "EXPERIMENT_088_ID",
     "CLAIM_SCOPE_NOTE",
+    "LONG_CONTEXT_CLAIM_SCOPE_NOTE",
+    "DEFAULT_MODEL_ID",
     "DEFAULT_MODEL_IDS",
     "OPTIONAL_MODEL_IDS",
     "build_demo_cards",
@@ -36,4 +46,6 @@ __all__ = [
     "validate_exp086_report",
     "run_exp087_broader_model_validation_panel",
     "validate_exp087_report",
+    "run_exp088_long_context_validation_panel",
+    "validate_exp088_report",
 ]

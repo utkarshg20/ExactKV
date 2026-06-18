@@ -66,6 +66,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Phase 16 closeout & claim freeze | Phase 16T / Exp 085 | [`PHASE_16_CLOSEOUT.md`](PHASE_16_CLOSEOUT.md); **Phase 16 complete**; claim freeze before Phase 17 |
 | Claim-safe demo packaging | Phase 17A / Exp 086 | [`PHASE_17_CLAIM_SAFE_DEMO.md`](PHASE_17_CLAIM_SAFE_DEMO.md); demo narrative + cards; **not new runtime** |
 | Broader model validation panel | Phase 17B / Exp 087 | [`PHASE_17B_BROADER_MODEL_VALIDATION.md`](PHASE_17B_BROADER_MODEL_VALIDATION.md); **panel-scoped**; not model-family claim |
+| Longer-context validation panel | Phase 17C / Exp 088 | [`PHASE_17C_LONG_CONTEXT_VALIDATION.md`](PHASE_17C_LONG_CONTEXT_VALIDATION.md); **context-length-scoped**; not long-context support claim |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

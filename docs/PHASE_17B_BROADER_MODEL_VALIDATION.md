@@ -101,4 +101,6 @@ Models that fail to load are recorded with `blocked_reason`; success is not fake
 
 ## 11. Recommended next step
 
-**Phase 17C (proposed):** integration design review or longer-context validation — explicit approval required; claim boundaries unchanged.
+**Phase 17C (complete):** longer-context guarded-shadow validation — see [`PHASE_17C_LONG_CONTEXT_VALIDATION.md`](PHASE_17C_LONG_CONTEXT_VALIDATION.md).
+
+**Phase 17D (proposed):** integration design review — explicit approval required; claim boundaries unchanged.
