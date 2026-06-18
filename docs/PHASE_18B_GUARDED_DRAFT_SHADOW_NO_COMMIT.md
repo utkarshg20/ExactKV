@@ -107,7 +107,7 @@ Speed, throughput, latency, memory savings, serving, VeriCache reproduction, dra
 
 **Phase 18C (complete):** guarded draft-shadow panel validation — see [`PHASE_18C_GUARDED_DRAFT_SHADOW_PANEL_VALIDATION.md`](PHASE_18C_GUARDED_DRAFT_SHADOW_PANEL_VALIDATION.md).
 
-**Phase 18D (proposed):** shadow top-1 extraction hardening.
+**Phase 18D (complete):** shadow top-1 extraction hardening — see [`PHASE_18D_SHADOW_TOP1_EXTRACTION_HARDENING.md`](PHASE_18D_SHADOW_TOP1_EXTRACTION_HARDENING.md).
 
 ---
 

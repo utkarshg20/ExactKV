@@ -106,6 +106,11 @@ def run_shadow_diagnostic_for_snapshot(
         "shadow_status": raw.get("shadow_status"),
         "tolerance_policy_status": raw.get("tolerance_policy_status"),
         "topk_agreement_metrics": raw.get("topk_agreement_metrics"),
+        "shadow_top1_token_id": raw.get("shadow_top1_token_id"),
+        "shadow_top1_token_text": raw.get("shadow_top1_token_text"),
+        "shadow_topk_token_ids": raw.get("shadow_topk_token_ids"),
+        "streaming_top1_token_id": raw.get("streaming_top1_token_id"),
+        "streaming_top5_token_ids": raw.get("streaming_top5_token_ids"),
         "interpretation_note": raw.get("interpretation_note", ""),
         "blockers": list(raw.get("blockers") or []),
     }

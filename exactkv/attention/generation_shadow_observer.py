@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Sequence
+from typing import Any, Callable, Mapping, Sequence
 
 import torch
 
@@ -2083,6 +2083,38 @@ def build_round_boundary_input_ids(
     return torch.cat([prompt_ids, gen_tensor], dim=1), []
 
 
+def diagnostic_shadow_top1_fields(
+    shadow_cell: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Explicit diagnostic-only top-1 fields from shadow replay output.
+
+    These fields are for L3 proposal diagnostics only and must not drive token commits.
+    """
+    empty: dict[str, Any] = {
+        "shadow_top1_token_id": None,
+        "shadow_top1_token_text": None,
+        "shadow_topk_token_ids": None,
+    }
+    if not shadow_cell or shadow_cell.get("blockers"):
+        return empty
+
+    sm_logit = shadow_cell.get("streaming_vs_materialized_logit_metrics") or {}
+    top1 = shadow_cell.get("streaming_top1_token_id")
+    if top1 is None:
+        top1 = sm_logit.get("other_top1_token_id")
+
+    top5 = shadow_cell.get("streaming_top5_token_ids")
+    topk_ids: list[int] | None = None
+    if top5 is not None:
+        topk_ids = [int(x) for x in list(top5)]
+
+    return {
+        "shadow_top1_token_id": int(top1) if top1 is not None else None,
+        "shadow_top1_token_text": shadow_cell.get("shadow_top1_token_text"),
+        "shadow_topk_token_ids": topk_ids,
+    }
+
+
 def _shadow_round_cell(
     *,
     entry: dict[str, Any],
@@ -2114,6 +2146,11 @@ def _shadow_round_cell(
             "streaming_vs_materialized_metrics": None,
             "full_vs_streaming_metrics": None,
             "topk_agreement_metrics": None,
+            "shadow_top1_token_id": None,
+            "shadow_top1_token_text": None,
+            "shadow_topk_token_ids": None,
+            "streaming_top1_token_id": None,
+            "streaming_top5_token_ids": None,
             "interpretation_note": "HF model unavailable for shadow replay.",
             "blockers": ["hf model missing for shadow replay"],
         }
@@ -2144,10 +2181,12 @@ def _shadow_round_cell(
     )
     sm = shadow_cell.get("streaming_vs_materialized_logit_metrics") or {}
     fs = shadow_cell.get("full_vs_streaming_logit_metrics") or {}
+    diag = diagnostic_shadow_top1_fields(shadow_cell)
     topk = {
         "top1_agreement": sm.get("top1_agreement"),
         "top5_overlap": sm.get("top5_overlap"),
         "top10_overlap": sm.get("top10_overlap"),
+        "shadow_top1_token_id": diag.get("shadow_top1_token_id"),
     }
     return {
         **base,
@@ -2157,6 +2196,11 @@ def _shadow_round_cell(
         "streaming_vs_materialized_metrics": sm,
         "full_vs_streaming_metrics": fs,
         "topk_agreement_metrics": topk,
+        "shadow_top1_token_id": diag.get("shadow_top1_token_id"),
+        "shadow_top1_token_text": diag.get("shadow_top1_token_text"),
+        "shadow_topk_token_ids": diag.get("shadow_topk_token_ids"),
+        "streaming_top1_token_id": shadow_cell.get("streaming_top1_token_id"),
+        "streaming_top5_token_ids": shadow_cell.get("streaming_top5_token_ids"),
         "interpretation_note": interp,
         "blockers": list(shadow_cell.get("blockers") or []),
     }
@@ -2230,6 +2274,11 @@ def run_posthoc_shadow_from_live_snapshots(
             "streaming_vs_materialized_metrics": raw.get("streaming_vs_materialized_metrics"),
             "full_vs_streaming_metrics": raw.get("full_vs_streaming_metrics"),
             "topk_agreement_metrics": raw.get("topk_agreement_metrics"),
+            "shadow_top1_token_id": raw.get("shadow_top1_token_id"),
+            "shadow_top1_token_text": raw.get("shadow_top1_token_text"),
+            "shadow_topk_token_ids": raw.get("shadow_topk_token_ids"),
+            "streaming_top1_token_id": raw.get("streaming_top1_token_id"),
+            "streaming_top5_token_ids": raw.get("streaming_top5_token_ids"),
             "interpretation_note": raw.get("interpretation_note", ""),
             "blockers": list(raw.get("blockers") or []),
         })

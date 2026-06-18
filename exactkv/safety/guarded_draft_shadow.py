@@ -63,6 +63,38 @@ DEFAULT_PANEL_PROMPTS = 4
 
 RECOMMENDED_NEXT_PHASE_18C = "phase18d_shadow_top1_extraction_hardening"
 
+EXPERIMENT_093_ID = "exp093_shadow_top1_extraction_hardening"
+DEFAULT_EXP093_REPORT = Path(
+    "reports/experiment_093_shadow_top1_extraction_hardening.json",
+)
+PHASE_18D = "18D"
+RECOMMENDED_NEXT_PHASE_18D = "phase18e_l3_shadow_proposal_provenance_audit"
+
+EXTRACTION_SOURCES_ALLOWED: tuple[str, ...] = (
+    "shadow_top1_token_id",
+    "diagnostic_proposal_token_id",
+    "topk_agreement_metrics.shadow_top1_token_id",
+    "streaming_top1_token_id",
+    "streaming_vs_materialized_logit_metrics.other_top1_token_id",
+    "streaming_vs_materialized_metrics.other_top1_token_id",
+    "shadow_topk_token_ids[0]",
+    "streaming_top5_token_ids[0]",
+)
+
+EXTRACTION_SOURCES_FORBIDDEN: tuple[str, ...] = (
+    "committed_token_id",
+    "generated_token_id",
+    "baseline_token_id",
+    "verifier_committed_token_id",
+    "full_top1_token_id",
+    "materialized_top1_token_id",
+    "reference_top1_token_id",
+    "streaming_vs_materialized_logit_metrics.reference_top1_token_id",
+    "streaming_vs_materialized_metrics.reference_top1_token_id",
+    "unsafe_retokenization_token_id",
+    "proposed_token_text_from_generated_output",
+)
+
 L3_PANEL_SAFETY_SPEC_PROPOSAL = IntegrationProposal(
     proposal_id="exp092_l3_panel_self_validation",
     proposed_level=SAFETY_LEVEL,
@@ -102,6 +134,224 @@ def _frozen_metadata(data: Mapping[str, Any] | None) -> tuple[tuple[str, str], .
     if not data:
         return ()
     return tuple((str(k), str(v)) for k, v in sorted(data.items()))
+
+
+@dataclass(frozen=True)
+class ShadowTop1ExtractionResult:
+    extraction_status: str
+    proposed_token_id: int | None
+    proposed_token_text: str | None
+    extraction_source_field: str | None
+    extraction_confidence: str
+    block_reason: str | None
+    is_shadow_derived: bool
+    uses_committed_token: bool
+    uses_baseline_token: bool
+    exception: str | None
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+def _nested_mapping_get(
+    data: Mapping[str, Any],
+    path: str,
+) -> Any:
+    cur: Any = data
+    for part in path.split("."):
+        if not isinstance(cur, Mapping):
+            return None
+        cur = cur.get(part)
+    return cur
+
+
+def _topk_rank0_token_id(value: Any) -> int | None:
+    if value is None:
+        return None
+    if isinstance(value, int):
+        return value
+    seq = list(value)
+    if not seq:
+        return None
+    return int(seq[0])
+
+
+def extract_shadow_top1_candidate(
+    shadow_output: Mapping[str, Any],
+    *,
+    allow_unsafe_retokenization: bool = False,
+) -> ShadowTop1ExtractionResult:
+    """Safely extract a shadow-derived top-1 proposal candidate from shadow diagnostics."""
+    blocked_base = {
+        "proposed_token_id": None,
+        "proposed_token_text": None,
+        "extraction_source_field": None,
+        "extraction_confidence": "blocked",
+        "is_shadow_derived": False,
+        "uses_committed_token": False,
+        "uses_baseline_token": False,
+        "exception": None,
+    }
+
+    if (
+        shadow_output.get("unsafe_retokenization_token_id") is not None
+        and not allow_unsafe_retokenization
+    ):
+        return ShadowTop1ExtractionResult(
+            extraction_status="blocked",
+            block_reason="unsafe retokenization disabled by default",
+            **blocked_base,
+        )
+
+    if (
+        shadow_output.get("proposed_token_text_from_generated_output")
+        and not allow_unsafe_retokenization
+    ):
+        return ShadowTop1ExtractionResult(
+            extraction_status="blocked",
+            block_reason="unsafe retokenization disabled by default",
+            **blocked_base,
+        )
+
+    explicit_source = shadow_output.get("_extraction_source_field")
+    if isinstance(explicit_source, str) and explicit_source in EXTRACTION_SOURCES_FORBIDDEN:
+        return ShadowTop1ExtractionResult(
+            extraction_status="unsafe_rejected",
+            block_reason=f"forbidden extraction source: {explicit_source}",
+            **blocked_base,
+        )
+
+    safe_candidates: list[tuple[str, str, int | None]] = [
+        ("shadow_top1_token_id", "explicit_field", shadow_output.get("shadow_top1_token_id")),
+        (
+            "diagnostic_proposal_token_id",
+            "explicit_field",
+            shadow_output.get("diagnostic_proposal_token_id"),
+        ),
+        (
+            "topk_agreement_metrics.shadow_top1_token_id",
+            "explicit_field",
+            _nested_mapping_get(shadow_output, "topk_agreement_metrics.shadow_top1_token_id"),
+        ),
+        (
+            "streaming_top1_token_id",
+            "explicit_field",
+            shadow_output.get("streaming_top1_token_id"),
+        ),
+        (
+            "streaming_vs_materialized_logit_metrics.other_top1_token_id",
+            "explicit_field",
+            _nested_mapping_get(
+                shadow_output, "streaming_vs_materialized_logit_metrics.other_top1_token_id",
+            ),
+        ),
+        (
+            "streaming_vs_materialized_metrics.other_top1_token_id",
+            "explicit_field",
+            _nested_mapping_get(
+                shadow_output, "streaming_vs_materialized_metrics.other_top1_token_id",
+            ),
+        ),
+        (
+            "shadow_topk_token_ids[0]",
+            "topk_rank0",
+            _topk_rank0_token_id(shadow_output.get("shadow_topk_token_ids")),
+        ),
+        (
+            "streaming_top5_token_ids[0]",
+            "topk_rank0",
+            _topk_rank0_token_id(shadow_output.get("streaming_top5_token_ids")),
+        ),
+    ]
+
+    for source_field, confidence, raw_token in safe_candidates:
+        if raw_token is None:
+            continue
+        token_id = int(raw_token)
+        uses_committed = source_field in (
+            "committed_token_id",
+            "generated_token_id",
+            "verifier_committed_token_id",
+        )
+        uses_baseline = source_field == "baseline_token_id"
+        is_shadow = source_field in EXTRACTION_SOURCES_ALLOWED
+        if not is_shadow or uses_committed or uses_baseline:
+            return ShadowTop1ExtractionResult(
+                extraction_status="unsafe_rejected",
+                proposed_token_id=None,
+                proposed_token_text=None,
+                extraction_source_field=source_field,
+                extraction_confidence="unsafe_rejected",
+                block_reason="extraction provenance requirements not met",
+                is_shadow_derived=False,
+                uses_committed_token=uses_committed,
+                uses_baseline_token=uses_baseline,
+                exception=None,
+            )
+
+        text = shadow_output.get("shadow_top1_token_text")
+        if source_field == "diagnostic_proposal_token_id":
+            text = shadow_output.get("diagnostic_proposal_token_text") or text
+
+        return ShadowTop1ExtractionResult(
+            extraction_status="success",
+            proposed_token_id=token_id,
+            proposed_token_text=text if isinstance(text, str) else None,
+            extraction_source_field=source_field,
+            extraction_confidence=confidence,
+            block_reason=None,
+            is_shadow_derived=True,
+            uses_committed_token=False,
+            uses_baseline_token=False,
+            exception=None,
+        )
+
+    if shadow_output.get("committed_token_id") is not None and not any(
+        shadow_output.get(k) is not None
+        for k in (
+            "shadow_top1_token_id",
+            "streaming_top1_token_id",
+            "diagnostic_proposal_token_id",
+        )
+    ):
+        return ShadowTop1ExtractionResult(
+            extraction_status="unsafe_rejected",
+            block_reason="committed token source rejected",
+            **blocked_base,
+        )
+
+    if shadow_output.get("baseline_token_id") is not None and not any(
+        shadow_output.get(k) is not None
+        for k in (
+            "shadow_top1_token_id",
+            "streaming_top1_token_id",
+            "diagnostic_proposal_token_id",
+        )
+    ):
+        return ShadowTop1ExtractionResult(
+            extraction_status="unsafe_rejected",
+            block_reason="baseline token source rejected",
+            **blocked_base,
+        )
+
+    if shadow_output.get("shadow_status") not in (None, "shadow_complete"):
+        block_reason = "no safe top1 extraction from shadow output"
+    else:
+        block_reason = "no explicit shadow top-1 diagnostic field available"
+
+    return ShadowTop1ExtractionResult(
+        extraction_status="blocked",
+        block_reason=block_reason,
+        **blocked_base,
+    )
+
+
+def _extraction_metadata(extraction: ShadowTop1ExtractionResult) -> tuple[tuple[str, str], ...]:
+    d = extraction.to_dict()
+    return tuple(
+        (str(k), str(v) if v is not None else "")
+        for k, v in sorted(d.items())
+    )
 
 
 @dataclass(frozen=True)
@@ -304,9 +554,26 @@ def proposal_to_report_dict(
         and proposal.proposed_token_ids[0] == committed_token_id
     )
     safety = default_no_commit_safety_result()
+    meta = dict(proposal.metadata)
+    extraction_fields = {
+        "extraction_status": meta.get("extraction_status"),
+        "proposed_token_id": (
+            int(meta["proposed_token_id"])
+            if meta.get("proposed_token_id") not in (None, "")
+            else None
+        ),
+        "proposed_token_text": meta.get("proposed_token_text") or None,
+        "extraction_source_field": meta.get("extraction_source_field") or None,
+        "extraction_confidence": meta.get("extraction_confidence"),
+        "block_reason": meta.get("block_reason") or proposal_block_reason(proposal),
+        "is_shadow_derived": meta.get("is_shadow_derived") == "True",
+        "uses_committed_token": meta.get("uses_committed_token") == "True",
+        "uses_baseline_token": meta.get("uses_baseline_token") == "True",
+        "exception": meta.get("exception") or proposal.exception,
+    }
     return {
         **proposal.to_dict(),
-        "block_reason": proposal_block_reason(proposal),
+        **extraction_fields,
         "matched_committed_token": matched,
         "proposal_used_for_token_commit": safety.proposal_used_for_token_commit,
         "proposal_exposed_to_generator": safety.proposal_exposed_to_generator,
@@ -442,9 +709,9 @@ def build_decode_time_shadow_top1_proposals(
     prefix = tuple(prefix_token_ids)
     for rnd, committed in enumerate(generated_token_ids):
         cell = posthoc_shadow_cells[rnd] if rnd < len(posthoc_shadow_cells) else {}
-        sm = cell.get("streaming_vs_materialized_metrics") or {}
-        top1 = sm.get("other_top1_token_id")
-        if top1 is None and cell.get("shadow_status") != "shadow_complete":
+        extraction = extract_shadow_top1_candidate(cell)
+
+        if extraction.extraction_status == "unsafe_rejected":
             proposals.append(
                 GuardedDraftShadowProposal(
                     round_index=rnd,
@@ -455,15 +722,14 @@ def build_decode_time_shadow_top1_proposals(
                     proposed_text=None,
                     proposal_source=PROPOSAL_SOURCE_BLOCKED,
                     proposal_status="blocked",
-                    exception="no safe top1 extraction from shadow output",
-                    metadata=(
-                        ("committed_token_id", str(committed)),
-                        ("reason", "blocked_no_provider"),
-                    ),
+                    exception=extraction.block_reason,
+                    metadata=_extraction_metadata(extraction),
                 ),
             )
             continue
-        if top1 is None:
+
+        if extraction.extraction_status != "success" or extraction.proposed_token_id is None:
+            block_reason = extraction.block_reason or "no safe top1 extraction from shadow output"
             proposals.append(
                 GuardedDraftShadowProposal(
                     round_index=rnd,
@@ -474,23 +740,26 @@ def build_decode_time_shadow_top1_proposals(
                     proposed_text=None,
                     proposal_source=PROPOSAL_SOURCE_BLOCKED,
                     proposal_status="blocked",
-                    exception="other_top1_token_id unavailable",
-                    metadata=(("committed_token_id", str(committed)),),
+                    exception=block_reason,
+                    metadata=_extraction_metadata(extraction)
+                    + (("committed_token_id", str(committed)),),
                 ),
             )
             continue
+
         proposals.append(
             GuardedDraftShadowProposal(
                 round_index=rnd,
                 prompt_id=prompt_id,
                 compressor=compressor,
                 prefix_token_ids=prefix,
-                proposed_token_ids=(int(top1),),
-                proposed_text=None,
+                proposed_token_ids=(extraction.proposed_token_id,),
+                proposed_text=extraction.proposed_token_text,
                 proposal_source=PROPOSAL_SOURCE_DECODE_TOP1,
                 proposal_status="complete",
                 exception=None,
-                metadata=(
+                metadata=_extraction_metadata(extraction)
+                + (
                     ("committed_token_id", str(committed)),
                     ("provider", PROPOSAL_SOURCE_DECODE_TOP1),
                 ),
@@ -1298,5 +1567,319 @@ def validate_exp092_report(report: dict[str, Any]) -> list[str]:
         ):
             if ck not in cell:
                 errors.append(f"cells[{idx}] missing {ck}")
+
+    return errors
+
+
+def load_exp092_previous_coverage(
+    report_path: Path | None = None,
+) -> dict[str, Any]:
+    """Load Exp092 proposal coverage for comparison; unknown if report missing."""
+    path = report_path or DEFAULT_EXP092_REPORT
+    unknown = {
+        "previous_total_proposals": None,
+        "previous_successful_proposals": None,
+        "previous_blocked_proposals": None,
+        "previous_coverage_rate": None,
+        "previous_report_available": False,
+    }
+    if not path.is_file():
+        return unknown
+    try:
+        import json
+
+        data = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return unknown
+    if data.get("experiment_id") != EXPERIMENT_092_ID:
+        return unknown
+    return {
+        "previous_total_proposals": data.get("total_proposals"),
+        "previous_successful_proposals": data.get("successful_proposals"),
+        "previous_blocked_proposals": data.get("blocked_proposals"),
+        "previous_coverage_rate": data.get("proposal_coverage_rate"),
+        "previous_report_available": True,
+    }
+
+
+def aggregate_extraction_results(
+    cells: Sequence[dict[str, Any]],
+) -> dict[str, Any]:
+    """Aggregate hardened top-1 extraction outcomes from panel cells."""
+    extractions: list[dict[str, Any]] = []
+    source_summary: dict[str, int] = {}
+    block_summary: dict[str, int] = {}
+    successful = 0
+    blocked = 0
+    unsafe_rejected = 0
+
+    for cell in cells:
+        for prop in cell.get("proposals") or []:
+            status = prop.get("extraction_status")
+            extraction = {
+                "extraction_status": status,
+                "proposed_token_id": prop.get("proposed_token_id"),
+                "proposed_token_text": prop.get("proposed_token_text"),
+                "extraction_source_field": prop.get("extraction_source_field"),
+                "extraction_confidence": prop.get("extraction_confidence"),
+                "block_reason": prop.get("block_reason"),
+                "is_shadow_derived": prop.get("is_shadow_derived"),
+                "uses_committed_token": prop.get("uses_committed_token"),
+                "uses_baseline_token": prop.get("uses_baseline_token"),
+                "exception": prop.get("exception"),
+            }
+            extractions.append(extraction)
+            if status == "success":
+                successful += 1
+                src = extraction.get("extraction_source_field")
+                if src:
+                    source_summary[src] = source_summary.get(src, 0) + 1
+            elif status == "unsafe_rejected":
+                unsafe_rejected += 1
+                reason = extraction.get("block_reason") or "unsafe_rejected"
+                block_summary[reason] = block_summary.get(reason, 0) + 1
+            else:
+                blocked += 1
+                reason = extraction.get("block_reason") or prop.get("exception") or "blocked"
+                block_summary[str(reason)] = block_summary.get(str(reason), 0) + 1
+
+    total = len(extractions)
+    coverage_rate = successful / total if total else 0.0
+    return {
+        "extractions": extractions,
+        "total_extractions": total,
+        "successful_extractions": successful,
+        "blocked_extractions": blocked,
+        "unsafe_extractions_rejected": unsafe_rejected,
+        "extraction_source_summary": source_summary,
+        "extraction_block_reason_summary": block_summary,
+        "current_total_proposals": total,
+        "current_successful_proposals": successful,
+        "current_blocked_proposals": blocked + unsafe_rejected,
+        "current_coverage_rate": coverage_rate,
+    }
+
+
+def compute_coverage_delta(
+    previous: Mapping[str, Any],
+    current: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Compare current extraction coverage to Exp092 baseline when available."""
+    prev_rate = previous.get("previous_coverage_rate")
+    cur_rate = current.get("current_coverage_rate")
+    delta: float | None = None
+    if prev_rate is not None and cur_rate is not None:
+        delta = float(cur_rate) - float(prev_rate)
+    return {
+        **previous,
+        **current,
+        "coverage_delta": delta,
+    }
+
+
+def run_exp093_shadow_top1_extraction_hardening(
+    *,
+    model_id: str = DEFAULT_MODEL_ID,
+    device: str = "cpu",
+    dtype: str = "float32",
+    prompts: Sequence[tuple[str, str]] | None = None,
+    max_prompts: int = DEFAULT_PANEL_PROMPTS,
+    max_new_tokens_values: Sequence[int] = DEFAULT_MAX_NEW_TOKENS_VALUES,
+    compressors_requested: Sequence[str] = DEFAULT_PANEL_COMPRESSORS,
+    proposal_source: str = PROPOSAL_SOURCE_DECODE_TOP1,
+    draft_len: int = 4,
+    local_files_only: bool = False,
+    allow_provider_blocked: bool = True,
+    baseline_generation_fn: Callable[..., dict[str, Any]] | None = None,
+    draft_shadow_generation_fn: Callable[..., dict[str, Any]] | None = None,
+    runtime_loader: Callable[..., Any] | None = None,
+    exp092_report_path: Path | None = None,
+) -> dict[str, Any]:
+    """Run Experiment 093 L3 shadow top-1 extraction hardening panel."""
+    panel = run_exp092_guarded_draft_shadow_panel_validation(
+        model_id=model_id,
+        device=device,
+        dtype=dtype,
+        prompts=prompts,
+        max_prompts=max_prompts,
+        max_new_tokens_values=max_new_tokens_values,
+        compressors_requested=compressors_requested,
+        proposal_source=proposal_source,
+        draft_len=draft_len,
+        local_files_only=local_files_only,
+        allow_provider_blocked=allow_provider_blocked,
+        baseline_generation_fn=baseline_generation_fn,
+        draft_shadow_generation_fn=draft_shadow_generation_fn,
+        runtime_loader=runtime_loader,
+    )
+
+    extraction_agg = aggregate_extraction_results(panel.get("cells") or [])
+    previous = load_exp092_previous_coverage(exp092_report_path)
+    coverage = compute_coverage_delta(previous, extraction_agg)
+
+    safety_top = default_no_commit_safety_result()
+    status = panel.get("status", "blocked")
+    if status == "panel_complete":
+        status = "hardening_complete"
+    elif status == "panel_partial":
+        status = "hardening_partial"
+
+    return {
+        "experiment_id": EXPERIMENT_093_ID,
+        "status": status,
+        "phase": PHASE_18D,
+        "safety_level": SAFETY_LEVEL,
+        "safety_spec_validation": panel.get("safety_spec_validation"),
+        "model_id": panel.get("model_id"),
+        "device": panel.get("device"),
+        "dtype": panel.get("dtype"),
+        "compressors_requested": panel.get("compressors_requested"),
+        "compressors_run": panel.get("compressors_run"),
+        "max_new_tokens_values": panel.get("max_new_tokens_values"),
+        "proposal_source": panel.get("proposal_source"),
+        "extraction_sources_allowed": list(EXTRACTION_SOURCES_ALLOWED),
+        "extraction_sources_forbidden": list(EXTRACTION_SOURCES_FORBIDDEN),
+        "previous_coverage": {
+            k: previous.get(k)
+            for k in (
+                "previous_total_proposals",
+                "previous_successful_proposals",
+                "previous_blocked_proposals",
+                "previous_coverage_rate",
+                "previous_report_available",
+            )
+        },
+        "current_coverage": {
+            "current_total_proposals": coverage.get("current_total_proposals"),
+            "current_successful_proposals": coverage.get("current_successful_proposals"),
+            "current_blocked_proposals": coverage.get("current_blocked_proposals"),
+            "current_coverage_rate": coverage.get("current_coverage_rate"),
+        },
+        "coverage_delta": coverage.get("coverage_delta"),
+        "total_extractions": extraction_agg["total_extractions"],
+        "successful_extractions": extraction_agg["successful_extractions"],
+        "blocked_extractions": extraction_agg["blocked_extractions"],
+        "unsafe_extractions_rejected": extraction_agg["unsafe_extractions_rejected"],
+        "extraction_source_summary": extraction_agg["extraction_source_summary"],
+        "extraction_block_reason_summary": extraction_agg["extraction_block_reason_summary"],
+        "total_cells": panel.get("total_cells"),
+        "baseline_generation_successful_cells": panel.get(
+            "baseline_generation_successful_cells",
+        ),
+        "draft_shadow_generation_successful_cells": panel.get(
+            "draft_shadow_generation_successful_cells",
+        ),
+        "baseline_vs_draft_shadow_token_match_cells": panel.get(
+            "baseline_vs_draft_shadow_token_match_cells",
+        ),
+        "baseline_vs_draft_shadow_text_match_cells": panel.get(
+            "baseline_vs_draft_shadow_text_match_cells",
+        ),
+        "total_proposals": panel.get("total_proposals"),
+        "successful_proposals": panel.get("successful_proposals"),
+        "blocked_proposals": panel.get("blocked_proposals"),
+        "proposal_coverage_rate": panel.get("proposal_coverage_rate"),
+        "proposal_block_reason_summary": panel.get("proposal_block_reason_summary"),
+        "proposal_match_summary": panel.get("proposal_match_summary"),
+        "exactkv_failure_summary": panel.get("exactkv_failure_summary"),
+        "safety_gate_summary": panel.get("safety_gate_summary"),
+        "proposal_used_for_token_commit": safety_top.proposal_used_for_token_commit,
+        "proposal_exposed_to_generator": safety_top.proposal_exposed_to_generator,
+        "generated_output_modified_by_proposal": (
+            safety_top.generated_output_modified_by_proposal
+        ),
+        "default_runtime_changed": safety_top.default_runtime_changed,
+        "cells": panel.get("cells"),
+        "topk_interpretation_note": panel.get("topk_interpretation_note"),
+        "recommended_next_phase": RECOMMENDED_NEXT_PHASE_18D,
+        "claim_note": (
+            "L3 shadow top-1 extraction hardening. Proposals are diagnostic only."
+        ),
+        "forbidden_claims": list(SHADOW_FORBIDDEN_CLAIMS),
+        "blockers": panel.get("blockers"),
+        "limitations": [
+            "L3 extraction hardening only; not L4 verifier-mediated compressed draft.",
+            "Extracted proposals cannot affect token commits or generator decisions.",
+            "Proposal coverage is not exactness; match rate supplementary only.",
+            "ExactKVGenerator and default runtime unchanged.",
+            "No CUDA/Triton/vLLM/serving integration.",
+        ],
+        "no_performance_claims_note": NO_PERFORMANCE_CLAIMS_NOTE,
+    }
+
+
+def validate_exp093_report(report: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "status",
+        "safety_level",
+        "safety_spec_validation",
+        "model_id",
+        "device",
+        "dtype",
+        "compressors_requested",
+        "compressors_run",
+        "max_new_tokens_values",
+        "proposal_source",
+        "extraction_sources_allowed",
+        "extraction_sources_forbidden",
+        "previous_coverage",
+        "current_coverage",
+        "coverage_delta",
+        "total_extractions",
+        "successful_extractions",
+        "blocked_extractions",
+        "unsafe_extractions_rejected",
+        "extraction_source_summary",
+        "extraction_block_reason_summary",
+        "total_cells",
+        "baseline_generation_successful_cells",
+        "draft_shadow_generation_successful_cells",
+        "baseline_vs_draft_shadow_token_match_cells",
+        "baseline_vs_draft_shadow_text_match_cells",
+        "exactkv_failure_summary",
+        "safety_gate_summary",
+        "proposal_used_for_token_commit",
+        "proposal_exposed_to_generator",
+        "generated_output_modified_by_proposal",
+        "default_runtime_changed",
+        "blockers",
+        "limitations",
+        "no_performance_claims_note",
+        "cells",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing key: {key}")
+
+    if report.get("experiment_id") != EXPERIMENT_093_ID:
+        errors.append("experiment_id mismatch")
+
+    if report.get("safety_level") != SAFETY_LEVEL:
+        errors.append("safety_level mismatch")
+
+    if report.get("proposal_used_for_token_commit") is not False:
+        errors.append("proposal_used_for_token_commit must be false")
+
+    if report.get("proposal_exposed_to_generator") is not False:
+        errors.append("proposal_exposed_to_generator must be false")
+
+    spec_val = report.get("safety_spec_validation") or {}
+    if spec_val.get("pass") is not True:
+        errors.append("safety_spec_validation must pass")
+
+    for cell in report.get("cells") or []:
+        for prop in cell.get("proposals") or []:
+            for pk in (
+                "extraction_status",
+                "extraction_source_field",
+                "extraction_confidence",
+                "is_shadow_derived",
+                "uses_committed_token",
+                "uses_baseline_token",
+            ):
+                if pk not in prop:
+                    errors.append(f"proposal missing extraction field: {pk}")
 
     return errors

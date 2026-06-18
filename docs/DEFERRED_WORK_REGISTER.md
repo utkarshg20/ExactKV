@@ -189,6 +189,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Integration safety spec** | **Complete** | Phase 18A ✅ | [`PHASE_18A_INTEGRATION_SAFETY_SPEC.md`](PHASE_18A_INTEGRATION_SAFETY_SPEC.md); invariants, gates, proposal validator; no runtime change |
 | — | **L3 guarded draft-shadow no-commit scaffold** | **Complete** | Phase 18B ✅ | [`PHASE_18B_GUARDED_DRAFT_SHADOW_NO_COMMIT.md`](PHASE_18B_GUARDED_DRAFT_SHADOW_NO_COMMIT.md); proposal interface; no token commit |
 | — | **L3 guarded draft-shadow panel validation** | **Complete** | Phase 18C ✅ | [`PHASE_18C_GUARDED_DRAFT_SHADOW_PANEL_VALIDATION.md`](PHASE_18C_GUARDED_DRAFT_SHADOW_PANEL_VALIDATION.md); 32-cell panel; proposal coverage |
+| — | **L3 shadow top-1 extraction hardening** | **Complete** | Phase 18D ✅ | [`PHASE_18D_SHADOW_TOP1_EXTRACTION_HARDENING.md`](PHASE_18D_SHADOW_TOP1_EXTRACTION_HARDENING.md); provenance-aware extraction; coverage comparison |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

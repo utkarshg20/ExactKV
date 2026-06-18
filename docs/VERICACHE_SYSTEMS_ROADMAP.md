@@ -259,6 +259,8 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 18C (L3 panel validation):** [`PHASE_18C_GUARDED_DRAFT_SHADOW_PANEL_VALIDATION.md`](PHASE_18C_GUARDED_DRAFT_SHADOW_PANEL_VALIDATION.md) — 32-cell panel; proposal coverage diagnostics.
 
-**Post-11K / ... / Post-18B / Post-18C:** Phase 16 complete; Phase 17–18C safety spec and L3 scaffold/panel; default CLI/runtime unchanged.
+**Phase 18D (Shadow top-1 extraction hardening):** [`PHASE_18D_SHADOW_TOP1_EXTRACTION_HARDENING.md`](PHASE_18D_SHADOW_TOP1_EXTRACTION_HARDENING.md) — provenance-aware extraction; coverage comparison vs Exp092.
+
+**Post-11K / ... / Post-18B / Post-18C / Post-18D:** Phase 16 complete; Phase 17–18D safety spec and L3 scaffold/panel/extraction; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

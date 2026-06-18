@@ -140,3 +140,5 @@ Report: `reports/experiment_092_guarded_draft_shadow_panel_validation.json` (git
 | Safety gates | 32/32 OK |
 | Proposals used for token commit | false |
 | Proposals exposed to generator | false |
+
+**Recommended next phase:** Phase 18D shadow top-1 extraction hardening — see [`PHASE_18D_SHADOW_TOP1_EXTRACTION_HARDENING.md`](PHASE_18D_SHADOW_TOP1_EXTRACTION_HARDENING.md).
