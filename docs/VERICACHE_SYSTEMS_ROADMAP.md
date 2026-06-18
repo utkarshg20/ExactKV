@@ -257,6 +257,8 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 18B (L3 guarded draft-shadow no-commit scaffold):** [`PHASE_18B_GUARDED_DRAFT_SHADOW_NO_COMMIT.md`](PHASE_18B_GUARDED_DRAFT_SHADOW_NO_COMMIT.md) — proposal interface; **no commit**.
 
-**Post-11K / ... / Post-18A / Post-18B:** Phase 16 complete; Phase 17–18A safety spec and 18B L3 scaffold; default CLI/runtime unchanged.
+**Phase 18C (L3 panel validation):** [`PHASE_18C_GUARDED_DRAFT_SHADOW_PANEL_VALIDATION.md`](PHASE_18C_GUARDED_DRAFT_SHADOW_PANEL_VALIDATION.md) — 32-cell panel; proposal coverage diagnostics.
+
+**Post-11K / ... / Post-18B / Post-18C:** Phase 16 complete; Phase 17–18C safety spec and L3 scaffold/panel; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

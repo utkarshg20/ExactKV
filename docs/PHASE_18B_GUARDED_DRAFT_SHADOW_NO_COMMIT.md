@@ -105,7 +105,9 @@ Speed, throughput, latency, memory savings, serving, VeriCache reproduction, dra
 
 ## 14. Recommended next phase
 
-**`phase18c_guarded_draft_shadow_panel_validation`** — expanded panel validation under the L3 scaffold.
+**Phase 18C (complete):** guarded draft-shadow panel validation — see [`PHASE_18C_GUARDED_DRAFT_SHADOW_PANEL_VALIDATION.md`](PHASE_18C_GUARDED_DRAFT_SHADOW_PANEL_VALIDATION.md).
+
+**Phase 18D (proposed):** shadow top-1 extraction hardening.
 
 ---
 

@@ -51,6 +51,35 @@ PROPOSAL_INTERPRETATION_NOTE = (
 
 RECOMMENDED_NEXT_PHASE = "phase18c_guarded_draft_shadow_panel_validation"
 
+EXPERIMENT_092_ID = "exp092_guarded_draft_shadow_panel_validation"
+DEFAULT_EXP092_REPORT = Path(
+    "reports/experiment_092_guarded_draft_shadow_panel_validation.json",
+)
+PHASE_18C = "18C"
+
+DEFAULT_PANEL_COMPRESSORS: tuple[str, ...] = ("noop", "int8", "int4_sim", "k8_v4_sim")
+DEFAULT_MAX_NEW_TOKENS_VALUES: tuple[int, ...] = (4, 8)
+DEFAULT_PANEL_PROMPTS = 4
+
+RECOMMENDED_NEXT_PHASE_18C = "phase18d_shadow_top1_extraction_hardening"
+
+L3_PANEL_SAFETY_SPEC_PROPOSAL = IntegrationProposal(
+    proposal_id="exp092_l3_panel_self_validation",
+    proposed_level=SAFETY_LEVEL,
+    opt_in_only=True,
+    modifies_default_runtime=False,
+    verifier_source_of_truth=True,
+    shadow_can_commit_directly=False,
+    compressed_draft_can_commit_without_verifier=False,
+    fallback_to_baseline=True,
+    reports_exactkv_failures=True,
+    hides_token_divergence=False,
+    makes_performance_claim=False,
+    makes_memory_claim=False,
+    makes_serving_claim=False,
+    makes_vericache_claim=False,
+)
+
 L3_SCAFFOLD_SAFETY_SPEC_PROPOSAL = IntegrationProposal(
     proposal_id="exp091_l3_scaffold_self_validation",
     proposed_level=SAFETY_LEVEL,
@@ -206,6 +235,64 @@ def default_no_commit_decision(round_index: int) -> GuardedDraftShadowDecision:
     )
 
 
+def proposal_block_reason(proposal: GuardedDraftShadowProposal) -> str | None:
+    if proposal.proposal_status != "blocked":
+        return None
+    if proposal.exception:
+        return proposal.exception
+    for k, v in proposal.metadata:
+        if k == "reason":
+            return v
+    return "blocked_unknown"
+
+
+def summarize_proposal_coverage(
+    proposals: Sequence[GuardedDraftShadowProposal],
+) -> dict[str, Any]:
+    successful = 0
+    blocked = 0
+    block_reasons: dict[str, int] = {}
+    first_success: int | None = None
+    first_blocked: int | None = None
+    for prop in proposals:
+        if prop.proposal_status == "complete" and prop.proposed_token_ids:
+            successful += 1
+            if first_success is None:
+                first_success = prop.round_index
+        else:
+            blocked += 1
+            if first_blocked is None:
+                first_blocked = prop.round_index
+            reason = proposal_block_reason(prop) or "blocked_unknown"
+            block_reasons[reason] = block_reasons.get(reason, 0) + 1
+    total = len(proposals)
+    return {
+        "total_proposals": total,
+        "successful_proposals": successful,
+        "blocked_proposals": blocked,
+        "proposal_block_reasons": block_reasons,
+        "first_successful_proposal_round": first_success,
+        "first_blocked_proposal_round": first_blocked,
+        "proposal_coverage_rate": successful / total if total else 0.0,
+    }
+
+
+def aggregate_proposal_block_reasons(
+    cells: Sequence[dict[str, Any]],
+) -> dict[str, int]:
+    agg: dict[str, int] = {}
+    for cell in cells:
+        for reason, count in (cell.get("proposal_block_reasons") or {}).items():
+            agg[reason] = agg.get(reason, 0) + int(count)
+    return agg
+
+
+def default_panel_prompts(max_prompts: int = DEFAULT_PANEL_PROMPTS) -> list[tuple[str, str]]:
+    from exactkv.attention.generation_shadow_observer import default_exp080_prompts
+
+    return default_exp080_prompts()[:max_prompts]
+
+
 def proposal_to_report_dict(
     proposal: GuardedDraftShadowProposal,
     *,
@@ -219,6 +306,7 @@ def proposal_to_report_dict(
     safety = default_no_commit_safety_result()
     return {
         **proposal.to_dict(),
+        "block_reason": proposal_block_reason(proposal),
         "matched_committed_token": matched,
         "proposal_used_for_token_commit": safety.proposal_used_for_token_commit,
         "proposal_exposed_to_generator": safety.proposal_exposed_to_generator,
@@ -589,6 +677,7 @@ def _build_panel_cell(
 
     committed_ids = _committed_tokens_from_proposals(proposals)
     prop_match = summarize_proposal_match(proposals, committed_token_ids=committed_ids)
+    coverage = summarize_proposal_coverage(proposals)
 
     cell_obj = GuardedDraftShadowCell(
         prompt_id=prompt_id,
@@ -608,6 +697,16 @@ def _build_panel_cell(
         blockers=tuple(blockers),
     )
     cell = cell_obj.to_dict()
+    cell["max_new_tokens"] = max_new_tokens
+    cell["total_proposals"] = coverage["total_proposals"]
+    cell["successful_proposals"] = coverage["successful_proposals"]
+    cell["blocked_proposals"] = coverage["blocked_proposals"]
+    cell["proposal_block_reasons"] = coverage["proposal_block_reasons"]
+    cell["first_successful_proposal_round"] = coverage["first_successful_proposal_round"]
+    cell["first_blocked_proposal_round"] = coverage["first_blocked_proposal_round"]
+    cell["proposal_match_summary"] = prop_match
+    cell["token_exact_match_baseline"] = baseline.get("token_exact_match")
+    cell["token_exact_match_draft_shadow"] = draft_shadow.get("token_exact_match")
     cell["proposals"] = [
         proposal_to_report_dict(p, committed_token_id=cid)
         for p, cid in zip(proposals, committed_ids, strict=False)
@@ -888,6 +987,315 @@ def validate_exp091_report(report: dict[str, Any]) -> list[str]:
 
     for idx, cell in enumerate(report.get("cells") or []):
         for ck in ("proposal_source", "proposal_count", "safety_gates", "proposals"):
+            if ck not in cell:
+                errors.append(f"cells[{idx}] missing {ck}")
+
+    return errors
+
+
+def run_exp092_guarded_draft_shadow_panel_validation(
+    *,
+    model_id: str = DEFAULT_MODEL_ID,
+    device: str = "cpu",
+    dtype: str = "float32",
+    prompts: Sequence[tuple[str, str]] | None = None,
+    max_prompts: int = DEFAULT_PANEL_PROMPTS,
+    max_new_tokens_values: Sequence[int] = DEFAULT_MAX_NEW_TOKENS_VALUES,
+    compressors_requested: Sequence[str] = DEFAULT_PANEL_COMPRESSORS,
+    proposal_source: str = PROPOSAL_SOURCE_DECODE_TOP1,
+    draft_len: int = 4,
+    local_files_only: bool = False,
+    allow_provider_blocked: bool = True,
+    baseline_generation_fn: Callable[..., dict[str, Any]] | None = None,
+    draft_shadow_generation_fn: Callable[..., dict[str, Any]] | None = None,
+    runtime_loader: Callable[..., Any] | None = None,
+    safety_spec_proposal: IntegrationProposal | None = None,
+) -> dict[str, Any]:
+    """Run Experiment 092 expanded L3 panel with proposal coverage diagnostics."""
+    from exactkv.attention.generation_shadow_observer import resolve_panel_compressors
+
+    prompt_panel = list(prompts) if prompts is not None else default_panel_prompts(max_prompts)
+    runnable, _blocked_comp = resolve_panel_compressors(compressors_requested)
+    mnt_values = list(max_new_tokens_values)
+
+    blockers: list[str] = []
+    if proposal_source not in PROPOSAL_SOURCES:
+        blockers.append(f"unknown proposal_source: {proposal_source}")
+    if proposal_source == PROPOSAL_SOURCE_SYNTHETIC and baseline_generation_fn is None:
+        blockers.append("synthetic_shadow_provider reserved for tests")
+
+    runtime: Any | None = None
+    if baseline_generation_fn is None or draft_shadow_generation_fn is None:
+        try:
+            if runtime_loader is not None:
+                runtime = runtime_loader(
+                    model_id=model_id,
+                    device=device,
+                    dtype=dtype,
+                    local_files_only=local_files_only,
+                )
+            else:
+                from exactkv.runtime.exactkv_generator import ExactKVGenerator  # noqa: F401
+                from exactkv.runtime.model_runtime import ModelRuntime
+
+                runtime = ModelRuntime(model_id, device=device, dtype=dtype)
+        except Exception as exc:  # noqa: BLE001
+            blockers.append(f"model load failed: {type(exc).__name__}: {exc}")
+
+    spec_proposal = safety_spec_proposal or L3_PANEL_SAFETY_SPEC_PROPOSAL
+    safety_spec_validation = validate_integration_proposal(spec_proposal)
+    if not safety_spec_validation["pass"]:
+        blockers.append("safety_spec_validation_failed")
+
+    cells: list[dict[str, Any]] = []
+    baseline_ok = 0
+    draft_ok = 0
+    tok_match = 0
+    txt_match = 0
+    total_proposals = 0
+    successful_proposals = 0
+    blocked_proposals = 0
+    failed_cells = 0
+    sg_ok = 0
+
+    b_fn = baseline_generation_fn
+    d_fn = draft_shadow_generation_fn
+
+    if runtime is None and (b_fn is None or d_fn is None):
+        for prompt_id, prompt_text in prompt_panel:
+            for compressor in runnable:
+                for max_new in mnt_values:
+                    cells.append({
+                        "prompt_id": prompt_id,
+                        "prompt_preview": prompt_text[:80],
+                        "compressor": compressor,
+                        "max_new_tokens": max_new,
+                        "baseline_generation_completed": False,
+                        "draft_shadow_generation_completed": False,
+                        "baseline_vs_draft_shadow_token_match": False,
+                        "baseline_vs_draft_shadow_text_match": False,
+                        "proposal_source": proposal_source,
+                        "total_proposals": 0,
+                        "successful_proposals": 0,
+                        "blocked_proposals": 0,
+                        "proposal_block_reasons": {},
+                        "proposals": [],
+                        "proposal_match_summary": summarize_proposal_match(
+                            [], committed_token_ids=[],
+                        ),
+                        "safety_gates": {},
+                        "blockers": list(blockers),
+                    })
+    else:
+        for prompt_id, prompt_text in prompt_panel:
+            for compressor in runnable:
+                for max_new in mnt_values:
+                    cell, failed = _build_panel_cell(
+                        prompt_id=prompt_id,
+                        prompt_text=prompt_text,
+                        compressor=compressor,
+                        max_new_tokens=max_new,
+                        proposal_source=proposal_source,
+                        runtime=runtime,
+                        draft_len=draft_len,
+                        baseline_generation_fn=b_fn,
+                        draft_shadow_generation_fn=d_fn,
+                        allow_provider_blocked=allow_provider_blocked,
+                    )
+                    cells.append(cell)
+                    if cell["baseline_generation_completed"]:
+                        baseline_ok += 1
+                    if cell["draft_shadow_generation_completed"]:
+                        draft_ok += 1
+                    if cell["baseline_vs_draft_shadow_token_match"]:
+                        tok_match += 1
+                    if cell["baseline_vs_draft_shadow_text_match"]:
+                        txt_match += 1
+                    total_proposals += cell.get("total_proposals", 0)
+                    successful_proposals += cell.get("successful_proposals", 0)
+                    blocked_proposals += cell.get("blocked_proposals", 0)
+                    if _cell_safety_gates_ok(cell.get("safety_gates") or {}):
+                        sg_ok += 1
+                    if failed:
+                        failed_cells += 1
+
+    block_reason_summary = aggregate_proposal_block_reasons(cells)
+    proposal_coverage_rate = (
+        successful_proposals / total_proposals if total_proposals else 0.0
+    )
+
+    proposal_match_agg = {
+        "proposal_count": total_proposals,
+        "proposals_matching_committed_token": sum(
+            (c.get("proposal_match_summary") or {}).get(
+                "proposals_matching_committed_token", 0,
+            )
+            for c in cells
+        ),
+        "proposals_not_matching_committed_token": sum(
+            (c.get("proposal_match_summary") or {}).get(
+                "proposals_not_matching_committed_token", 0,
+            )
+            for c in cells
+        ),
+        "blocked_proposals": blocked_proposals,
+        "interpretation_note": PROPOSAL_INTERPRETATION_NOTE,
+    }
+    if cells:
+        rates = [
+            (c.get("proposal_match_summary") or {}).get("proposal_match_rate", 0.0)
+            for c in cells
+            if (c.get("proposal_match_summary") or {}).get("proposal_count", 0) > 0
+        ]
+        proposal_match_agg["mean_proposal_match_rate"] = (
+            sum(rates) / len(rates) if rates else 0.0
+        )
+
+    total = len(cells)
+    if not safety_spec_validation["pass"]:
+        status = "failed"
+    elif failed_cells > 0:
+        status = "failed"
+    elif baseline_ok == total and draft_ok == total and tok_match == total and total > 0:
+        status = "panel_complete"
+    elif baseline_ok > 0:
+        status = "panel_partial"
+    else:
+        status = "blocked"
+
+    safety_top = default_no_commit_safety_result()
+
+    return {
+        "experiment_id": EXPERIMENT_092_ID,
+        "status": status,
+        "phase": PHASE_18C,
+        "safety_level": SAFETY_LEVEL,
+        "safety_spec_validation": safety_spec_validation,
+        "model_id": model_id,
+        "device": device,
+        "dtype": dtype,
+        "proposal_source": proposal_source,
+        "compressors_requested": list(compressors_requested),
+        "compressors_run": runnable,
+        "max_new_tokens_values": mnt_values,
+        "total_cells": total,
+        "baseline_generation_successful_cells": baseline_ok,
+        "draft_shadow_generation_successful_cells": draft_ok,
+        "baseline_vs_draft_shadow_token_match_cells": tok_match,
+        "baseline_vs_draft_shadow_text_match_cells": txt_match,
+        "total_proposals": total_proposals,
+        "successful_proposals": successful_proposals,
+        "blocked_proposals": blocked_proposals,
+        "proposal_coverage_rate": proposal_coverage_rate,
+        "proposal_block_reason_summary": block_reason_summary,
+        "proposal_match_summary": proposal_match_agg,
+        "exactkv_failure_summary": {
+            "baseline_failures": sum(
+                1 for c in cells if (c.get("exactkv_failures_baseline") or 0) > 0
+            ),
+            "draft_shadow_failures": sum(
+                1 for c in cells if (c.get("exactkv_failures_draft_shadow") or 0) > 0
+            ),
+        },
+        "safety_gate_summary": {
+            "cells_all_gates_ok": sg_ok,
+            "cells_with_gate_failure": total - sg_ok,
+        },
+        "proposal_used_for_token_commit": safety_top.proposal_used_for_token_commit,
+        "proposal_exposed_to_generator": safety_top.proposal_exposed_to_generator,
+        "generated_output_modified_by_proposal": (
+            safety_top.generated_output_modified_by_proposal
+        ),
+        "default_runtime_changed": safety_top.default_runtime_changed,
+        "cells": cells,
+        "topk_interpretation_note": TOPK_INTERPRETATION_NOTE,
+        "recommended_next_phase": RECOMMENDED_NEXT_PHASE_18C,
+        "claim_note": (
+            "L3 guarded draft-shadow panel validation. Proposals are diagnostic only."
+        ),
+        "forbidden_claims": list(SHADOW_FORBIDDEN_CLAIMS),
+        "blockers": blockers,
+        "limitations": [
+            "L3 panel validation only; not L4 verifier-mediated compressed draft.",
+            "Blocked proposals reported, not fabricated.",
+            "Proposal coverage and match rates supplementary; not exactness.",
+            "ExactKVGenerator and default runtime unchanged.",
+            "No CUDA/Triton/vLLM/serving integration.",
+        ],
+        "no_performance_claims_note": NO_PERFORMANCE_CLAIMS_NOTE,
+    }
+
+
+def validate_exp092_report(report: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "status",
+        "safety_level",
+        "safety_spec_validation",
+        "model_id",
+        "device",
+        "dtype",
+        "compressors_requested",
+        "compressors_run",
+        "max_new_tokens_values",
+        "proposal_source",
+        "total_cells",
+        "baseline_generation_successful_cells",
+        "draft_shadow_generation_successful_cells",
+        "baseline_vs_draft_shadow_token_match_cells",
+        "baseline_vs_draft_shadow_text_match_cells",
+        "total_proposals",
+        "successful_proposals",
+        "blocked_proposals",
+        "proposal_coverage_rate",
+        "proposal_block_reason_summary",
+        "proposal_match_summary",
+        "exactkv_failure_summary",
+        "safety_gate_summary",
+        "proposal_used_for_token_commit",
+        "proposal_exposed_to_generator",
+        "generated_output_modified_by_proposal",
+        "default_runtime_changed",
+        "blockers",
+        "limitations",
+        "no_performance_claims_note",
+        "cells",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing key: {key}")
+
+    if report.get("experiment_id") != EXPERIMENT_092_ID:
+        errors.append("experiment_id mismatch")
+
+    if report.get("safety_level") != SAFETY_LEVEL:
+        errors.append("safety_level mismatch")
+
+    if report.get("proposal_used_for_token_commit") is not False:
+        errors.append("proposal_used_for_token_commit must be false")
+
+    if report.get("proposal_exposed_to_generator") is not False:
+        errors.append("proposal_exposed_to_generator must be false")
+
+    spec_val = report.get("safety_spec_validation") or {}
+    if spec_val.get("pass") is not True:
+        errors.append("safety_spec_validation must pass")
+
+    for idx, cell in enumerate(report.get("cells") or []):
+        for ck in (
+            "prompt_id",
+            "compressor",
+            "max_new_tokens",
+            "proposal_source",
+            "total_proposals",
+            "successful_proposals",
+            "blocked_proposals",
+            "proposal_block_reasons",
+            "proposal_match_summary",
+            "safety_gates",
+            "proposals",
+        ):
             if ck not in cell:
                 errors.append(f"cells[{idx}] missing {ck}")
 

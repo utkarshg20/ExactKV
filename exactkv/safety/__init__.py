@@ -2,11 +2,13 @@
 
 from exactkv.safety.guarded_draft_shadow import (
     EXPERIMENT_091_ID,
+    EXPERIMENT_092_ID,
     PROPOSED_GUARDED_DRAFT_SHADOW_NO_COMMIT_CLI_FLAG,
     GuardedDraftShadowProposal,
     run_exp091_guarded_draft_shadow_no_commit_scaffold,
+    run_exp092_guarded_draft_shadow_panel_validation,
     validate_exp091_report,
-    validate_integration_proposal,
+    validate_exp092_report,
 )
 from exactkv.safety.integration_safety_spec import (
     EXPERIMENT_090_ID,
@@ -17,11 +19,13 @@ from exactkv.safety.integration_safety_spec import (
     IntegrationProposal,
     run_exp090_integration_safety_spec,
     validate_exp090_report,
+    validate_integration_proposal,
 )
 
 __all__ = [
     "EXPERIMENT_090_ID",
     "EXPERIMENT_091_ID",
+    "EXPERIMENT_092_ID",
     "GATES",
     "MANDATORY_INVARIANTS",
     "RECOMMENDED_NEXT_PHASE",
@@ -31,7 +35,9 @@ __all__ = [
     "GuardedDraftShadowProposal",
     "run_exp090_integration_safety_spec",
     "run_exp091_guarded_draft_shadow_no_commit_scaffold",
+    "run_exp092_guarded_draft_shadow_panel_validation",
     "validate_exp090_report",
     "validate_exp091_report",
+    "validate_exp092_report",
     "validate_integration_proposal",
 ]
