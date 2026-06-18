@@ -68,6 +68,8 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Broader model validation panel | Phase 17B / Exp 087 | [`PHASE_17B_BROADER_MODEL_VALIDATION.md`](PHASE_17B_BROADER_MODEL_VALIDATION.md); **panel-scoped**; not model-family claim |
 | Longer-context validation panel | Phase 17C / Exp 088 | [`PHASE_17C_LONG_CONTEXT_VALIDATION.md`](PHASE_17C_LONG_CONTEXT_VALIDATION.md); **context-length-scoped**; not long-context support claim |
 | Integration design review | Phase 17D / Exp 089 | [`PHASE_17D_INTEGRATION_DESIGN_REVIEW.md`](PHASE_17D_INTEGRATION_DESIGN_REVIEW.md); L0–L5 levels + gate policy; **not implementation** |
+| Integration safety spec | Phase 18A / Exp 090 | [`PHASE_18A_INTEGRATION_SAFETY_SPEC.md`](PHASE_18A_INTEGRATION_SAFETY_SPEC.md); invariants + proposal validator; **not implementation** |
+| L3 guarded draft-shadow no-commit scaffold | Phase 18B / Exp 091 | [`PHASE_18B_GUARDED_DRAFT_SHADOW_NO_COMMIT.md`](PHASE_18B_GUARDED_DRAFT_SHADOW_NO_COMMIT.md); proposals diagnostic only; **not L4** |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

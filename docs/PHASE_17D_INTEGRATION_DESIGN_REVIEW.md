@@ -154,9 +154,9 @@ From deferred work register and integration review:
 
 ## 11. Recommended next phase
 
-**`phase18a_integration_safety_spec`**
+**Phase 18A (complete):** integration safety spec — see [`PHASE_18A_INTEGRATION_SAFETY_SPEC.md`](PHASE_18A_INTEGRATION_SAFETY_SPEC.md).
 
-Define the exact safety contract before implementing any draft-shadow or verifier-mediated token-commit path. L3–L4 without a written spec risks shadow influence on commits, verifier bypass, or hidden default-runtime changes.
+**Phase 18B (proposed):** guarded draft shadow no-commit spec or scaffold — explicit approval required; claim boundaries unchanged.
 
 ---
 

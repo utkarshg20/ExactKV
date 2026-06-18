@@ -186,6 +186,8 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Broader model validation panel** | **Complete** | Phase 17B ✅ | [`PHASE_17B_BROADER_MODEL_VALIDATION.md`](PHASE_17B_BROADER_MODEL_VALIDATION.md); 2-model guarded shadow panel |
 | — | **Longer-context validation panel** | **Complete** | Phase 17C ✅ | [`PHASE_17C_LONG_CONTEXT_VALIDATION.md`](PHASE_17C_LONG_CONTEXT_VALIDATION.md); 18-cell long-prompt guarded shadow panel |
 | — | **Integration design review** | **Complete** | Phase 17D ✅ | [`PHASE_17D_INTEGRATION_DESIGN_REVIEW.md`](PHASE_17D_INTEGRATION_DESIGN_REVIEW.md); L0–L5 levels, gate policy, risk register; no runtime change |
+| — | **Integration safety spec** | **Complete** | Phase 18A ✅ | [`PHASE_18A_INTEGRATION_SAFETY_SPEC.md`](PHASE_18A_INTEGRATION_SAFETY_SPEC.md); invariants, gates, proposal validator; no runtime change |
+| — | **L3 guarded draft-shadow no-commit scaffold** | **Complete** | Phase 18B ✅ | [`PHASE_18B_GUARDED_DRAFT_SHADOW_NO_COMMIT.md`](PHASE_18B_GUARDED_DRAFT_SHADOW_NO_COMMIT.md); proposal interface; no token commit |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

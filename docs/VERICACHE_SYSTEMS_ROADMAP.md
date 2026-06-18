@@ -253,6 +253,10 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 17D (Integration design review):** [`PHASE_17D_INTEGRATION_DESIGN_REVIEW.md`](PHASE_17D_INTEGRATION_DESIGN_REVIEW.md) — L0–L5 integration levels and gate policy; **design only**.
 
-**Post-11K / ... / Post-16T / Post-17A / Post-17B / Post-17C / Post-17D:** Phase 16 complete; Phase 17A–17D claim-safe packaging, validation, and integration design review; default CLI/runtime unchanged.
+**Phase 18A (Integration safety spec):** [`PHASE_18A_INTEGRATION_SAFETY_SPEC.md`](PHASE_18A_INTEGRATION_SAFETY_SPEC.md) — invariants, gates, proposal validator; **spec only**.
+
+**Phase 18B (L3 guarded draft-shadow no-commit scaffold):** [`PHASE_18B_GUARDED_DRAFT_SHADOW_NO_COMMIT.md`](PHASE_18B_GUARDED_DRAFT_SHADOW_NO_COMMIT.md) — proposal interface; **no commit**.
+
+**Post-11K / ... / Post-18A / Post-18B:** Phase 16 complete; Phase 17–18A safety spec and 18B L3 scaffold; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).
