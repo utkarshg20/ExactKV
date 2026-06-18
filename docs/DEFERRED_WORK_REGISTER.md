@@ -185,6 +185,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Claim-safe demo packaging** | **Complete** | Phase 17A ✅ | [`PHASE_17_CLAIM_SAFE_DEMO.md`](PHASE_17_CLAIM_SAFE_DEMO.md); demo cards + script; no runtime change |
 | — | **Broader model validation panel** | **Complete** | Phase 17B ✅ | [`PHASE_17B_BROADER_MODEL_VALIDATION.md`](PHASE_17B_BROADER_MODEL_VALIDATION.md); 2-model guarded shadow panel |
 | — | **Longer-context validation panel** | **Complete** | Phase 17C ✅ | [`PHASE_17C_LONG_CONTEXT_VALIDATION.md`](PHASE_17C_LONG_CONTEXT_VALIDATION.md); 18-cell long-prompt guarded shadow panel |
+| — | **Integration design review** | **Complete** | Phase 17D ✅ | [`PHASE_17D_INTEGRATION_DESIGN_REVIEW.md`](PHASE_17D_INTEGRATION_DESIGN_REVIEW.md); L0–L5 levels, gate policy, risk register; no runtime change |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

@@ -251,6 +251,8 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 17C (Longer-context validation):** [`PHASE_17C_LONG_CONTEXT_VALIDATION.md`](PHASE_17C_LONG_CONTEXT_VALIDATION.md) — ~128–512 token panel; **context-length-scoped only**.
 
-**Post-11K / ... / Post-16T / Post-17A / Post-17B / Post-17C:** Phase 16 complete; Phase 17A–17C claim-safe packaging and validation; default CLI/runtime unchanged.
+**Phase 17D (Integration design review):** [`PHASE_17D_INTEGRATION_DESIGN_REVIEW.md`](PHASE_17D_INTEGRATION_DESIGN_REVIEW.md) — L0–L5 integration levels and gate policy; **design only**.
+
+**Post-11K / ... / Post-16T / Post-17A / Post-17B / Post-17C / Post-17D:** Phase 16 complete; Phase 17A–17D claim-safe packaging, validation, and integration design review; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

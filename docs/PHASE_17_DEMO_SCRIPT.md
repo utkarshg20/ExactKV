@@ -59,6 +59,8 @@ Use the 2-minute script, then add:
 
 **Phase 17C:** Add optional line: "We extended that panel to longer deterministic prompts at ~128–512 tokens — context-length-scoped, not long-context production support."
 
+**Phase 17D:** Add optional line: "Before any token-commit integration, we defined L0–L5 levels and gate policy — design review only, default generation unchanged."
+
 ---
 
 ## Technical walkthrough version

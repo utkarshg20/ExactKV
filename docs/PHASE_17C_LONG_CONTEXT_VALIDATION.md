@@ -141,4 +141,6 @@ Models that fail to load are recorded with `blocked_reason`; success is not fake
 
 ## 12. Recommended next step
 
-**Phase 17D (proposed):** integration design review — explicit approval required; claim boundaries unchanged.
+**Phase 17D (complete):** integration design review — see [`PHASE_17D_INTEGRATION_DESIGN_REVIEW.md`](PHASE_17D_INTEGRATION_DESIGN_REVIEW.md).
+
+**Phase 18A (proposed):** integration safety spec — explicit approval required; claim boundaries unchanged.

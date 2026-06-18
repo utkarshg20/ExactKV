@@ -90,6 +90,8 @@ CUDA/Triton kernels, vLLM, LMCache, measured active GPU memory savings, producti
 
 **Phase 17C (complete):** longer-context validation — see [`PHASE_17C_LONG_CONTEXT_VALIDATION.md`](PHASE_17C_LONG_CONTEXT_VALIDATION.md).
 
-**Phase 17D (proposed):** integration design review — explicit approval required.
+**Phase 17D (complete):** integration design review — see [`PHASE_17D_INTEGRATION_DESIGN_REVIEW.md`](PHASE_17D_INTEGRATION_DESIGN_REVIEW.md).
+
+**Phase 18A (proposed):** integration safety spec — explicit approval required.
 
 Scripts: [`PHASE_17_DEMO_SCRIPT.md`](PHASE_17_DEMO_SCRIPT.md)
