@@ -37,11 +37,13 @@ DEFAULT_COMPRESSORS: tuple[str, ...] = ("noop", "int8")
 
 PROPOSAL_SOURCE_SYNTHETIC = "synthetic_shadow_provider"
 PROPOSAL_SOURCE_DECODE_TOP1 = "decode_time_shadow_top1"
+PROPOSAL_SOURCE_ROUND_LOG = "exactkv_round_log_draft_tokens"
 PROPOSAL_SOURCE_BLOCKED = "blocked_no_provider"
 
 PROPOSAL_SOURCES: tuple[str, ...] = (
     PROPOSAL_SOURCE_SYNTHETIC,
     PROPOSAL_SOURCE_DECODE_TOP1,
+    PROPOSAL_SOURCE_ROUND_LOG,
     PROPOSAL_SOURCE_BLOCKED,
 )
 
@@ -76,6 +78,21 @@ DEFAULT_EXP094_REPORT = Path(
 )
 PHASE_18E = "18E"
 RECOMMENDED_NEXT_PHASE_18E = "phase19a_alternative_l3_proposal_source_scaffold"
+
+EXPERIMENT_095_ID = "exp095_round_log_draft_proposal_source"
+DEFAULT_EXP095_REPORT = Path(
+    "reports/experiment_095_round_log_draft_proposal_source.json",
+)
+PHASE_19A = "19A"
+RECOMMENDED_NEXT_PHASE_19A = "phase19b_round_log_proposal_panel_validation"
+
+ROUND_LOG_DRAFT_SOURCE_FIELD_TRACE = "exactkv_traces[{round_index}].draft_tokens"
+ROUND_LOG_DRAFT_SOURCE_FIELD_SNAPSHOT = "live_snapshots[{round_index}].draft_token_ids"
+
+ROUND_LOG_PROPOSAL_INTERPRETATION_NOTE = (
+    "Round-log draft proposal match rate is supplementary diagnostic only; "
+    "not an exactness guarantee."
+)
 
 AUDIT_CATEGORY_SAFE_SHADOW_TOP1_AVAILABLE = "safe_shadow_top1_available"
 AUDIT_CATEGORY_MISSING_SHADOW_TOP1_FIELD = "missing_shadow_top1_field"
@@ -825,6 +842,459 @@ def build_decode_time_shadow_top1_proposals(
     return tuple(proposals)
 
 
+def _snapshot_field(snap: Any, name: str, default: Any = None) -> Any:
+    if isinstance(snap, Mapping):
+        return snap.get(name, default)
+    return getattr(snap, name, default)
+
+
+def _committed_tokens_from_snapshot(snap: Any) -> tuple[int, ...]:
+    before = _snapshot_field(snap, "prefix_token_ids_before", ())
+    after = _snapshot_field(snap, "prefix_token_ids_after", ())
+    before_t = tuple(int(x) for x in before)
+    after_t = tuple(int(x) for x in after)
+    if len(after_t) >= len(before_t) and after_t[: len(before_t)] == before_t:
+        return after_t[len(before_t) :]
+    return ()
+
+
+def _trace_draft_tokens(trace: Any) -> list[int] | None:
+    draft = trace.get("draft_tokens") if isinstance(trace, Mapping) else getattr(
+        trace, "draft_tokens", None,
+    )
+    if draft is None:
+        return None
+    return [int(x) for x in list(draft)]
+
+
+def _trace_acceptance_fields(trace: Any) -> tuple[int | None, int | None]:
+    acceptance = trace.get("acceptance") if isinstance(trace, Mapping) else getattr(
+        trace, "acceptance", None,
+    )
+    if acceptance is None:
+        return None, None
+    if isinstance(acceptance, Mapping):
+        accepted = acceptance.get("num_accepted")
+        rejected = acceptance.get("num_rejected")
+        correction = acceptance.get("correction_token")
+    else:
+        accepted = getattr(acceptance, "num_accepted", None)
+        rejected = getattr(acceptance, "num_rejected", None)
+        correction = getattr(acceptance, "correction_token", None)
+    rejected_or_corrected: int | None
+    if rejected is None and correction is None:
+        rejected_or_corrected = None
+    else:
+        rejected_or_corrected = int(rejected or 0) + (1 if correction is not None else 0)
+    return (
+        int(accepted) if accepted is not None else None,
+        rejected_or_corrected,
+    )
+
+
+def _committed_tokens_from_trace(trace: Any) -> tuple[int, ...]:
+    acceptance = trace.get("acceptance") if isinstance(trace, Mapping) else getattr(
+        trace, "acceptance", None,
+    )
+    if acceptance is None:
+        return ()
+    if isinstance(acceptance, Mapping):
+        accepted = list(acceptance.get("accepted_tokens") or ())
+        correction = acceptance.get("correction_token")
+    else:
+        accepted = list(getattr(acceptance, "accepted_tokens", ()) or ())
+        correction = getattr(acceptance, "correction_token", None)
+    out = [int(x) for x in accepted]
+    if correction is not None:
+        out.append(int(correction))
+    return tuple(out)
+
+
+def _round_log_prefix_match(
+    proposed_token_ids: Sequence[int],
+    committed_token_ids: Sequence[int],
+) -> bool | None:
+    if not proposed_token_ids or not committed_token_ids:
+        return None
+    proposed = list(proposed_token_ids)
+    committed = list(committed_token_ids)
+    return proposed[: len(committed)] == committed
+
+
+@dataclass(frozen=True)
+class RoundLogDraftProposalRecord:
+    prompt_id: str
+    compressor: str
+    max_new_tokens: int
+    round_index: int
+    proposal_source: str
+    source_field_path: str | None
+    proposed_token_ids: tuple[int, ...]
+    proposed_text: str | None
+    source_is_round_log_draft: bool
+    uses_committed_token: bool
+    uses_baseline_token: bool
+    uses_verifier_token: bool
+    committed_token_ids_for_comparison: tuple[int, ...]
+    accepted_token_count_for_comparison: int | None
+    rejected_or_corrected_token_count_for_comparison: int | None
+    matched_committed_prefix: bool | None
+    block_reason: str | None
+    interpretation_note: str
+
+    def to_dict(self) -> dict[str, Any]:
+        d = asdict(self)
+        d["used_for_token_commit"] = False
+        d["exposed_to_generator"] = False
+        return d
+
+
+def _round_log_metadata(
+    *,
+    source_field_path: str | None,
+    source_is_round_log_draft: bool,
+    committed_token_ids: Sequence[int],
+    accepted_count: int | None,
+    rejected_count: int | None,
+    matched_prefix: bool | None,
+    block_reason: str | None,
+) -> tuple[tuple[str, str], ...]:
+    return (
+        ("source_field_path", source_field_path or ""),
+        ("source_is_round_log_draft", str(source_is_round_log_draft)),
+        ("uses_committed_token", "False"),
+        ("uses_baseline_token", "False"),
+        ("uses_verifier_token", "False"),
+        ("committed_token_ids_for_comparison", ",".join(str(x) for x in committed_token_ids)),
+        ("accepted_token_count_for_comparison", "" if accepted_count is None else str(accepted_count)),
+        (
+            "rejected_or_corrected_token_count_for_comparison",
+            "" if rejected_count is None else str(rejected_count),
+        ),
+        ("matched_committed_prefix", "" if matched_prefix is None else str(matched_prefix)),
+        ("block_reason", block_reason or ""),
+    )
+
+
+def build_round_log_draft_proposals(
+    *,
+    prompt_id: str,
+    compressor: str,
+    draft_shadow_out: Mapping[str, Any],
+) -> tuple[GuardedDraftShadowProposal, ...]:
+    """Extract draft token proposals from ExactKV round logs or live snapshots."""
+    traces = draft_shadow_out.get("result_traces") or draft_shadow_out.get("exactkv_traces")
+    snapshots = draft_shadow_out.get("live_snapshots") or []
+    proposals: list[GuardedDraftShadowProposal] = []
+
+    if traces:
+        for trace in traces:
+            round_idx = (
+                trace.get("round_idx")
+                if isinstance(trace, Mapping)
+                else getattr(trace, "round_idx", len(proposals))
+            )
+            round_index = int(round_idx if round_idx is not None else len(proposals))
+            draft_tokens = _trace_draft_tokens(trace)
+            source_path = ROUND_LOG_DRAFT_SOURCE_FIELD_TRACE.format(round_index=round_index)
+            accepted_count, rejected_count = _trace_acceptance_fields(trace)
+            committed = _committed_tokens_from_trace(trace)
+            if not draft_tokens:
+                proposals.append(
+                    GuardedDraftShadowProposal(
+                        round_index=round_index,
+                        prompt_id=prompt_id,
+                        compressor=compressor,
+                        prefix_token_ids=(),
+                        proposed_token_ids=(),
+                        proposed_text=None,
+                        proposal_source=PROPOSAL_SOURCE_ROUND_LOG,
+                        proposal_status="blocked",
+                        exception="missing draft token IDs in exactkv round log",
+                        metadata=_round_log_metadata(
+                            source_field_path=source_path,
+                            source_is_round_log_draft=False,
+                            committed_token_ids=committed,
+                            accepted_count=accepted_count,
+                            rejected_count=rejected_count,
+                            matched_prefix=None,
+                            block_reason="missing draft token IDs in exactkv round log",
+                        ),
+                    ),
+                )
+                continue
+            matched = _round_log_prefix_match(draft_tokens, committed)
+            proposals.append(
+                GuardedDraftShadowProposal(
+                    round_index=round_index,
+                    prompt_id=prompt_id,
+                    compressor=compressor,
+                    prefix_token_ids=(),
+                    proposed_token_ids=tuple(draft_tokens),
+                    proposed_text=None,
+                    proposal_source=PROPOSAL_SOURCE_ROUND_LOG,
+                    proposal_status="complete",
+                    exception=None,
+                    metadata=_round_log_metadata(
+                        source_field_path=source_path,
+                        source_is_round_log_draft=True,
+                        committed_token_ids=committed,
+                        accepted_count=accepted_count,
+                        rejected_count=rejected_count,
+                        matched_prefix=matched,
+                        block_reason=None,
+                    ),
+                ),
+            )
+        return tuple(proposals)
+
+    if snapshots:
+        for snap in snapshots:
+            round_index = int(_snapshot_field(snap, "round_index", len(proposals)))
+            draft = _snapshot_field(snap, "draft_token_ids")
+            source_path = ROUND_LOG_DRAFT_SOURCE_FIELD_SNAPSHOT.format(round_index=round_index)
+            committed = _committed_tokens_from_snapshot(snap)
+            accepted_count = _snapshot_field(snap, "accepted_token_count")
+            rejected_count = _snapshot_field(snap, "rejected_or_corrected_token_count")
+            if draft is None or not list(draft):
+                proposals.append(
+                    GuardedDraftShadowProposal(
+                        round_index=round_index,
+                        prompt_id=prompt_id,
+                        compressor=compressor,
+                        prefix_token_ids=(),
+                        proposed_token_ids=(),
+                        proposed_text=None,
+                        proposal_source=PROPOSAL_SOURCE_ROUND_LOG,
+                        proposal_status="blocked",
+                        exception="missing draft token IDs in live round snapshot",
+                        metadata=_round_log_metadata(
+                            source_field_path=source_path,
+                            source_is_round_log_draft=False,
+                            committed_token_ids=committed,
+                            accepted_count=accepted_count,
+                            rejected_count=rejected_count,
+                            matched_prefix=None,
+                            block_reason="missing draft token IDs in live round snapshot",
+                        ),
+                    ),
+                )
+                continue
+            draft_tokens = [int(x) for x in list(draft)]
+            matched = _round_log_prefix_match(draft_tokens, committed)
+            proposals.append(
+                GuardedDraftShadowProposal(
+                    round_index=round_index,
+                    prompt_id=prompt_id,
+                    compressor=compressor,
+                    prefix_token_ids=(),
+                    proposed_token_ids=tuple(draft_tokens),
+                    proposed_text=None,
+                    proposal_source=PROPOSAL_SOURCE_ROUND_LOG,
+                    proposal_status="complete",
+                    exception=None,
+                    metadata=_round_log_metadata(
+                        source_field_path=source_path,
+                        source_is_round_log_draft=True,
+                        committed_token_ids=committed,
+                        accepted_count=accepted_count,
+                        rejected_count=rejected_count,
+                        matched_prefix=matched,
+                        block_reason=None,
+                    ),
+                ),
+            )
+        return tuple(proposals)
+
+    return build_blocked_proposals(
+        prompt_id=prompt_id,
+        compressor=compressor,
+        reason="missing ExactKV round log or live snapshots for draft extraction",
+    )
+
+
+def round_log_proposal_to_report_dict(
+    proposal: GuardedDraftShadowProposal,
+    *,
+    max_new_tokens: int,
+) -> dict[str, Any]:
+    """Serialize a round-log draft proposal with provenance and comparison fields."""
+    meta = dict(proposal.metadata)
+    committed_raw = meta.get("committed_token_ids_for_comparison", "")
+    committed_ids = (
+        tuple(int(x) for x in committed_raw.split(",") if x.strip())
+        if committed_raw
+        else ()
+    )
+    accepted_raw = meta.get("accepted_token_count_for_comparison", "")
+    rejected_raw = meta.get("rejected_or_corrected_token_count_for_comparison", "")
+    matched_raw = meta.get("matched_committed_prefix", "")
+    safety = default_no_commit_safety_result()
+    return {
+        "prompt_id": proposal.prompt_id,
+        "compressor": proposal.compressor,
+        "max_new_tokens": max_new_tokens,
+        "round_index": proposal.round_index,
+        "proposal_source": proposal.proposal_source,
+        "source_field_path": meta.get("source_field_path") or None,
+        "proposed_token_ids": list(proposal.proposed_token_ids),
+        "proposed_text": proposal.proposed_text,
+        "source_is_round_log_draft": meta.get("source_is_round_log_draft") == "True",
+        "uses_committed_token": False,
+        "uses_baseline_token": False,
+        "uses_verifier_token": False,
+        "committed_token_ids_for_comparison": list(committed_ids),
+        "accepted_token_count_for_comparison": (
+            int(accepted_raw) if accepted_raw not in ("", None) else None
+        ),
+        "rejected_or_corrected_token_count_for_comparison": (
+            int(rejected_raw) if rejected_raw not in ("", None) else None
+        ),
+        "matched_committed_prefix": (
+            matched_raw == "True"
+            if matched_raw in ("True", "False")
+            else None
+        ),
+        "block_reason": proposal.exception or meta.get("block_reason") or None,
+        "interpretation_note": (
+            f"{ROUND_LOG_PROPOSAL_INTERPRETATION_NOTE} {COMMITTED_COMPARISON_ONLY_NOTE}"
+        ),
+        "proposal_used_for_token_commit": safety.proposal_used_for_token_commit,
+        "proposal_exposed_to_generator": safety.proposal_exposed_to_generator,
+    }
+
+
+def aggregate_round_log_proposal_coverage(
+    records: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Aggregate round-log draft proposal diagnostics."""
+    total_rounds = len(records)
+    with_draft = 0
+    missing_draft = 0
+    blocked = 0
+    total_proposed_tokens = 0
+    prefix_match = 0
+    prefix_not_match = 0
+    block_reasons: dict[str, int] = {}
+    accepted_counts: dict[str, int] = {}
+    rejected_counts: dict[str, int] = {}
+    comparison_available = 0
+
+    for rec in records:
+        proposed = rec.get("proposed_token_ids") or []
+        if proposed:
+            with_draft += 1
+            total_proposed_tokens += len(proposed)
+        else:
+            missing_draft += 1
+            blocked += 1
+            reason = rec.get("block_reason") or "blocked"
+            block_reasons[str(reason)] = block_reasons.get(str(reason), 0) + 1
+
+        matched = rec.get("matched_committed_prefix")
+        if matched is True:
+            prefix_match += 1
+            comparison_available += 1
+        elif matched is False:
+            prefix_not_match += 1
+            comparison_available += 1
+
+        acc = rec.get("accepted_token_count_for_comparison")
+        if acc is not None:
+            key = str(acc)
+            accepted_counts[key] = accepted_counts.get(key, 0) + 1
+        rej = rec.get("rejected_or_corrected_token_count_for_comparison")
+        if rej is not None:
+            key = str(rej)
+            rejected_counts[key] = rejected_counts.get(key, 0) + 1
+
+    coverage_rate = with_draft / total_rounds if total_rounds else 0.0
+    comparable = prefix_match + prefix_not_match
+    prefix_match_rate = prefix_match / comparable if comparable else 0.0
+    match_rate_total = prefix_match / total_rounds if total_rounds else 0.0
+
+    return {
+        "total_rounds_with_logs": total_rounds,
+        "rounds_with_draft_tokens": with_draft,
+        "rounds_missing_draft_tokens": missing_draft,
+        "total_proposed_tokens": total_proposed_tokens,
+        "blocked_rounds": blocked,
+        "proposal_coverage_rate": coverage_rate,
+        "proposals_matching_committed_prefix": prefix_match,
+        "proposals_not_matching_committed_prefix": prefix_not_match,
+        "proposal_prefix_match_rate": prefix_match_rate,
+        "match_rate_total_rounds": match_rate_total,
+        "accepted_token_count_summary": accepted_counts,
+        "rejected_or_corrected_token_count_summary": rejected_counts,
+        "block_reason_summary": block_reasons,
+        "comparison_availability_summary": {
+            "rounds_with_prefix_comparison": comparison_available,
+            "rounds_without_prefix_comparison": total_rounds - comparison_available,
+        },
+    }
+
+
+def load_exp094_previous_source_comparison(
+    report_path: Path | None = None,
+) -> dict[str, Any]:
+    """Load Exp094 decode_time_shadow_top1 summary for comparison."""
+    path = report_path or DEFAULT_EXP094_REPORT
+    unknown = {
+        "previous_proposal_source": PROPOSAL_SOURCE_DECODE_TOP1,
+        "previous_coverage_rate": None,
+        "previous_match_rate_total_rounds": None,
+        "previous_report_available": False,
+    }
+    if not path.is_file():
+        return unknown
+    try:
+        import json
+
+        data = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        return unknown
+    if data.get("experiment_id") != EXPERIMENT_094_ID:
+        return unknown
+    total = data.get("total_audited_rounds") or 0
+    safe = data.get("safe_extraction_count") or 0
+    coverage = safe / total if total else data.get("match_rate_total_rounds")
+    if "proposal_coverage_rate" in data:
+        coverage = data.get("proposal_coverage_rate")
+    elif total:
+        coverage = safe / total
+    return {
+        "previous_proposal_source": data.get("proposal_source", PROPOSAL_SOURCE_DECODE_TOP1),
+        "previous_coverage_rate": coverage,
+        "previous_match_rate_total_rounds": data.get("match_rate_total_rounds"),
+        "previous_report_available": True,
+    }
+
+
+def compute_source_comparison_delta(
+    previous: Mapping[str, Any],
+    current: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Compare round-log draft source metrics to prior Exp094 shadow top-1 source."""
+    prev_cov = previous.get("previous_coverage_rate")
+    cur_cov = current.get("current_coverage_rate")
+    prev_match = previous.get("previous_match_rate_total_rounds")
+    cur_match = current.get("current_match_rate_total_rounds")
+    cov_delta: float | None = None
+    match_delta: float | None = None
+    if prev_cov is not None and cur_cov is not None:
+        cov_delta = float(cur_cov) - float(prev_cov)
+    if prev_match is not None and cur_match is not None:
+        match_delta = float(cur_match) - float(prev_match)
+    return {
+        **previous,
+        "current_proposal_source": PROPOSAL_SOURCE_ROUND_LOG,
+        "current_coverage_rate": cur_cov,
+        "current_match_rate_total_rounds": cur_match,
+        "coverage_delta": cov_delta,
+        "match_rate_delta": match_delta,
+    }
+
+
 def _as_int_list(value: Any) -> list[int]:
     if value is None:
         return []
@@ -865,6 +1335,17 @@ def extract_proposals_with_context(
                 compressor=compressor,
                 generated_token_ids=gen_ids,
                 prefix_token_ids=prefix,
+            ),
+            posthoc_shadow_cells=(),
+            generated_token_ids=gen_ids,
+        )
+
+    if proposal_source == PROPOSAL_SOURCE_ROUND_LOG:
+        return ProposalExtractionContext(
+            proposals=build_round_log_draft_proposals(
+                prompt_id=prompt_id,
+                compressor=compressor,
+                draft_shadow_out=draft_shadow_out,
             ),
             posthoc_shadow_cells=(),
             generated_token_ids=gen_ids,
@@ -1079,10 +1560,16 @@ def _build_panel_cell(
     cell["proposal_match_summary"] = prop_match
     cell["token_exact_match_baseline"] = baseline.get("token_exact_match")
     cell["token_exact_match_draft_shadow"] = draft_shadow.get("token_exact_match")
-    cell["proposals"] = [
-        proposal_to_report_dict(p, committed_token_id=cid)
-        for p, cid in zip(proposals, committed_ids, strict=False)
-    ]
+    if proposal_source == PROPOSAL_SOURCE_ROUND_LOG:
+        cell["proposals"] = [
+            round_log_proposal_to_report_dict(p, max_new_tokens=max_new_tokens)
+            for p in proposals
+        ]
+    else:
+        cell["proposals"] = [
+            proposal_to_report_dict(p, committed_token_id=cid)
+            for p, cid in zip(proposals, committed_ids, strict=False)
+        ]
     cell["posthoc_shadow_cells"] = list(proposals_ctx.posthoc_shadow_cells)
     cell["generated_token_ids_for_audit"] = list(proposals_ctx.generated_token_ids)
 
@@ -2510,5 +2997,245 @@ def validate_exp094_report(report: dict[str, Any]) -> list[str]:
         for rk in record_keys:
             if rk not in rec:
                 errors.append(f"audit_records[{idx}] missing {rk}")
+
+    return errors
+
+
+def run_exp095_round_log_draft_proposal_source(
+    *,
+    model_id: str = DEFAULT_MODEL_ID,
+    device: str = "cpu",
+    dtype: str = "float32",
+    prompts: Sequence[tuple[str, str]] | None = None,
+    max_prompts: int = DEFAULT_PANEL_PROMPTS,
+    max_new_tokens_values: Sequence[int] = DEFAULT_MAX_NEW_TOKENS_VALUES,
+    compressors_requested: Sequence[str] = DEFAULT_PANEL_COMPRESSORS,
+    proposal_source: str = PROPOSAL_SOURCE_ROUND_LOG,
+    draft_len: int = 4,
+    local_files_only: bool = False,
+    allow_provider_blocked: bool = True,
+    baseline_generation_fn: Callable[..., dict[str, Any]] | None = None,
+    draft_shadow_generation_fn: Callable[..., dict[str, Any]] | None = None,
+    runtime_loader: Callable[..., Any] | None = None,
+    exp094_report_path: Path | None = None,
+) -> dict[str, Any]:
+    """Run Experiment 095 L3 round-log draft proposal source panel."""
+    panel = run_exp092_guarded_draft_shadow_panel_validation(
+        model_id=model_id,
+        device=device,
+        dtype=dtype,
+        prompts=prompts,
+        max_prompts=max_prompts,
+        max_new_tokens_values=max_new_tokens_values,
+        compressors_requested=compressors_requested,
+        proposal_source=proposal_source,
+        draft_len=draft_len,
+        local_files_only=local_files_only,
+        allow_provider_blocked=allow_provider_blocked,
+        baseline_generation_fn=baseline_generation_fn,
+        draft_shadow_generation_fn=draft_shadow_generation_fn,
+        runtime_loader=runtime_loader,
+    )
+
+    all_records: list[dict[str, Any]] = []
+    for cell in panel.get("cells") or []:
+        all_records.extend(cell.get("proposals") or [])
+
+    coverage_agg = aggregate_round_log_proposal_coverage(all_records)
+    previous = load_exp094_previous_source_comparison(exp094_report_path)
+    comparison = compute_source_comparison_delta(
+        previous,
+        {
+            "current_coverage_rate": coverage_agg["proposal_coverage_rate"],
+            "current_match_rate_total_rounds": coverage_agg["match_rate_total_rounds"],
+        },
+    )
+
+    safety_top = default_no_commit_safety_result()
+    status = panel.get("status", "blocked")
+    if status == "panel_complete":
+        status = "scaffold_complete"
+    elif status == "panel_partial":
+        status = "scaffold_partial"
+
+    return {
+        "experiment_id": EXPERIMENT_095_ID,
+        "status": status,
+        "phase": PHASE_19A,
+        "safety_level": SAFETY_LEVEL,
+        "safety_spec_validation": panel.get("safety_spec_validation"),
+        "model_id": panel.get("model_id"),
+        "device": panel.get("device"),
+        "dtype": panel.get("dtype"),
+        "compressors_requested": panel.get("compressors_requested"),
+        "compressors_run": panel.get("compressors_run"),
+        "max_new_tokens_values": panel.get("max_new_tokens_values"),
+        "proposal_source": panel.get("proposal_source"),
+        "total_rounds_with_logs": coverage_agg["total_rounds_with_logs"],
+        "rounds_with_draft_tokens": coverage_agg["rounds_with_draft_tokens"],
+        "rounds_missing_draft_tokens": coverage_agg["rounds_missing_draft_tokens"],
+        "total_proposed_tokens": coverage_agg["total_proposed_tokens"],
+        "blocked_rounds": coverage_agg["blocked_rounds"],
+        "proposal_coverage_rate": coverage_agg["proposal_coverage_rate"],
+        "proposals_matching_committed_prefix": coverage_agg[
+            "proposals_matching_committed_prefix"
+        ],
+        "proposals_not_matching_committed_prefix": coverage_agg[
+            "proposals_not_matching_committed_prefix"
+        ],
+        "proposal_prefix_match_rate": coverage_agg["proposal_prefix_match_rate"],
+        "accepted_token_count_summary": coverage_agg["accepted_token_count_summary"],
+        "rejected_or_corrected_token_count_summary": coverage_agg[
+            "rejected_or_corrected_token_count_summary"
+        ],
+        "block_reason_summary": coverage_agg["block_reason_summary"],
+        "comparison_availability_summary": coverage_agg["comparison_availability_summary"],
+        "previous_source_comparison": {
+            k: comparison.get(k)
+            for k in (
+                "previous_proposal_source",
+                "previous_coverage_rate",
+                "previous_match_rate_total_rounds",
+                "previous_report_available",
+                "current_proposal_source",
+                "current_coverage_rate",
+                "current_match_rate_total_rounds",
+                "coverage_delta",
+                "match_rate_delta",
+            )
+        },
+        "proposal_records": all_records,
+        "total_cells": panel.get("total_cells"),
+        "baseline_generation_successful_cells": panel.get(
+            "baseline_generation_successful_cells",
+        ),
+        "draft_shadow_generation_successful_cells": panel.get(
+            "draft_shadow_generation_successful_cells",
+        ),
+        "baseline_vs_draft_shadow_token_match_cells": panel.get(
+            "baseline_vs_draft_shadow_token_match_cells",
+        ),
+        "baseline_vs_draft_shadow_text_match_cells": panel.get(
+            "baseline_vs_draft_shadow_text_match_cells",
+        ),
+        "exactkv_failure_summary": panel.get("exactkv_failure_summary"),
+        "safety_gate_summary": panel.get("safety_gate_summary"),
+        "proposal_used_for_token_commit": safety_top.proposal_used_for_token_commit,
+        "proposal_exposed_to_generator": safety_top.proposal_exposed_to_generator,
+        "generated_output_modified_by_proposal": (
+            safety_top.generated_output_modified_by_proposal
+        ),
+        "default_runtime_changed": safety_top.default_runtime_changed,
+        "cells": panel.get("cells"),
+        "topk_interpretation_note": panel.get("topk_interpretation_note"),
+        "recommended_next_phase": RECOMMENDED_NEXT_PHASE_19A,
+        "claim_note": (
+            "L3 round-log draft proposal source scaffold. Proposals are diagnostic only."
+        ),
+        "forbidden_claims": list(SHADOW_FORBIDDEN_CLAIMS),
+        "blockers": panel.get("blockers"),
+        "limitations": [
+            "L3 round-log draft proposal scaffold only; not L4 verifier-mediated draft.",
+            "Committed tokens used for comparison only; never as proposal sources.",
+            "Proposal coverage and prefix match rate supplementary; not exactness.",
+            "ExactKVGenerator and default runtime unchanged.",
+            "No CUDA/Triton/vLLM/serving integration.",
+        ],
+        "no_performance_claims_note": NO_PERFORMANCE_CLAIMS_NOTE,
+    }
+
+
+def validate_exp095_report(report: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "status",
+        "safety_level",
+        "safety_spec_validation",
+        "model_id",
+        "device",
+        "dtype",
+        "compressors_requested",
+        "compressors_run",
+        "max_new_tokens_values",
+        "proposal_source",
+        "total_rounds_with_logs",
+        "rounds_with_draft_tokens",
+        "rounds_missing_draft_tokens",
+        "total_proposed_tokens",
+        "blocked_rounds",
+        "proposal_coverage_rate",
+        "proposals_matching_committed_prefix",
+        "proposals_not_matching_committed_prefix",
+        "proposal_prefix_match_rate",
+        "accepted_token_count_summary",
+        "rejected_or_corrected_token_count_summary",
+        "block_reason_summary",
+        "comparison_availability_summary",
+        "previous_source_comparison",
+        "exactkv_failure_summary",
+        "safety_gate_summary",
+        "proposal_used_for_token_commit",
+        "proposal_exposed_to_generator",
+        "generated_output_modified_by_proposal",
+        "default_runtime_changed",
+        "blockers",
+        "limitations",
+        "no_performance_claims_note",
+        "proposal_records",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing key: {key}")
+
+    if report.get("experiment_id") != EXPERIMENT_095_ID:
+        errors.append("experiment_id mismatch")
+
+    if report.get("safety_level") != SAFETY_LEVEL:
+        errors.append("safety_level mismatch")
+
+    if report.get("proposal_source") != PROPOSAL_SOURCE_ROUND_LOG:
+        errors.append("proposal_source must be exactkv_round_log_draft_tokens")
+
+    if report.get("proposal_used_for_token_commit") is not False:
+        errors.append("proposal_used_for_token_commit must be false")
+
+    if report.get("proposal_exposed_to_generator") is not False:
+        errors.append("proposal_exposed_to_generator must be false")
+
+    spec_val = report.get("safety_spec_validation") or {}
+    if spec_val.get("pass") is not True:
+        errors.append("safety_spec_validation must pass")
+
+    record_keys = (
+        "prompt_id",
+        "compressor",
+        "max_new_tokens",
+        "round_index",
+        "proposal_source",
+        "source_field_path",
+        "proposed_token_ids",
+        "proposed_text",
+        "source_is_round_log_draft",
+        "uses_committed_token",
+        "uses_baseline_token",
+        "uses_verifier_token",
+        "committed_token_ids_for_comparison",
+        "accepted_token_count_for_comparison",
+        "rejected_or_corrected_token_count_for_comparison",
+        "matched_committed_prefix",
+        "block_reason",
+        "interpretation_note",
+    )
+    for idx, rec in enumerate(report.get("proposal_records") or []):
+        for rk in record_keys:
+            if rk not in rec:
+                errors.append(f"proposal_records[{idx}] missing {rk}")
+        if rec.get("uses_committed_token") is not False:
+            errors.append(f"proposal_records[{idx}] uses_committed_token must be false")
+        if rec.get("proposed_token_ids") and rec.get("source_is_round_log_draft") is not True:
+            errors.append(
+                f"proposal_records[{idx}] successful extraction must set source_is_round_log_draft",
+            )
 
     return errors

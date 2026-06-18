@@ -129,7 +129,7 @@ Given Phase 18D evidence (low coverage, zero match rate, no unsafe dependency), 
 
 ## 15. Recommended next phase
 
-**Phase 19A:** alternative L3 proposal source scaffold — design and no-commit scaffold for a replacement proposal source without L4 commit integration.
+**Phase 19A (complete):** round-log draft proposal source — see [`PHASE_19A_ROUND_LOG_DRAFT_PROPOSAL_SOURCE.md`](PHASE_19A_ROUND_LOG_DRAFT_PROPOSAL_SOURCE.md).
 
 ---
 
