@@ -267,6 +267,8 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 19B (Proposal source comparison):** [`PHASE_19B_ROUND_LOG_PROPOSAL_SOURCE_COMPARISON.md`](PHASE_19B_ROUND_LOG_PROPOSAL_SOURCE_COMPARISON.md) — side-by-side L3 comparison panel.
 
-**Post-11K / ... / Post-18E / Post-19A / Post-19B:** Phase 16 complete; Phase 17–19B safety spec and L3 scaffold/panel/extraction/audit/round-log source/comparison; default CLI/runtime unchanged.
+**Phase 19C (Promoted-source validation):** [`PHASE_19C_L3_PROMOTED_SOURCE_VALIDATION.md`](PHASE_19C_L3_PROMOTED_SOURCE_VALIDATION.md) — `exactkv_round_log_draft_tokens` promoted L3 validation.
+
+**Post-11K / ... / Post-19B / Post-19C:** Phase 16 complete; Phase 17–19C safety spec and L3 scaffold/panel/comparison/promoted-source validation; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

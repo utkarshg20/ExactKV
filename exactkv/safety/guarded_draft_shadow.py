@@ -93,6 +93,42 @@ DEFAULT_EXP096_REPORT = Path(
 PHASE_19B = "19B"
 RECOMMENDED_NEXT_PHASE_19B = "phase19c_l3_promoted_source_validation"
 
+EXPERIMENT_097_ID = "exp097_l3_promoted_source_validation"
+DEFAULT_EXP097_REPORT = Path(
+    "reports/experiment_097_l3_promoted_source_validation.json",
+)
+PHASE_19C = "19C"
+RECOMMENDED_NEXT_PHASE_19C = "phase20a_pre_l4_safety_gate_review"
+
+DEFAULT_PROMOTED_PANEL_PROMPTS = 6
+PROMOTED_SOURCE_COVERAGE_GATE_THRESHOLD = 0.95
+
+DECISION_L3_SOURCE_PROMOTED = "l3_source_promoted"
+DECISION_L3_SOURCE_NEEDS_MORE_VALIDATION = "l3_source_needs_more_validation"
+DECISION_L3_SOURCE_NOT_PROMOTED = "l3_source_not_promoted"
+
+PROMOTED_SOURCE_DECISION_VALUES: tuple[str, ...] = (
+    DECISION_L3_SOURCE_PROMOTED,
+    DECISION_L3_SOURCE_NEEDS_MORE_VALIDATION,
+    DECISION_L3_SOURCE_NOT_PROMOTED,
+)
+
+SOURCE_VIABILITY_GATE_NAMES: tuple[str, ...] = (
+    "proposal_coverage_gate",
+    "proposal_block_gate",
+    "proposal_provenance_gate",
+    "proposal_isolation_gate",
+    "generation_parity_gate",
+    "exactkv_failure_gate",
+    "claim_boundary_gate",
+)
+
+PROMOTED_SOURCE_POLICY_DEMOTION_REASONS: tuple[str, ...] = (
+    "low coverage on Phase 19B comparison panel",
+    "zero prefix match rate on tested panel",
+    "source disagreement with round-log draft proposals",
+)
+
 DEFAULT_COMPARISON_MODEL_IDS: tuple[str, ...] = (
     "Qwen/Qwen2.5-0.5B",
     "Qwen/Qwen2.5-0.5B-Instruct",
@@ -651,6 +687,809 @@ def default_panel_prompts(max_prompts: int = DEFAULT_PANEL_PROMPTS) -> list[tupl
     from exactkv.attention.generation_shadow_observer import default_exp080_prompts
 
     return default_exp080_prompts()[:max_prompts]
+
+
+def default_promoted_source_prompts(
+    max_prompts: int = DEFAULT_PROMOTED_PANEL_PROMPTS,
+) -> list[tuple[str, str]]:
+    """Six deterministic prompts for promoted-source validation panel."""
+    from exactkv.attention.generation_shadow_observer import default_exp078_prompts
+
+    return default_exp078_prompts()[:max_prompts]
+
+
+def build_promoted_source_policy() -> dict[str, Any]:
+    """L3 promoted-source policy for exactkv_round_log_draft_tokens."""
+    return {
+        "promoted_source": PROPOSAL_SOURCE_ROUND_LOG,
+        "demoted_sources": [
+            {
+                "source": PROPOSAL_SOURCE_DECODE_TOP1,
+                "demotion_reasons": list(PROMOTED_SOURCE_POLICY_DEMOTION_REASONS),
+            },
+        ],
+        "promoted_for_l3_diagnostics_only": True,
+        "authorized_for_l4_token_commit": False,
+        "exposed_to_generator_decisions": False,
+        "used_to_accept_reject_commit_tokens": False,
+        "policy_note": (
+            "Promoted for L3 diagnostics only; not authorized for L4 token commit; "
+            "not exposed to generator decisions; not used to accept/reject/commit tokens."
+        ),
+    }
+
+
+def _cell_round_log_coverage(proposals: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    return aggregate_round_log_proposal_coverage(list(proposals))
+
+
+def evaluate_cell_source_viability_gates(
+    *,
+    proposals: Sequence[Mapping[str, Any]],
+    baseline_vs_promoted_source_token_match: bool,
+    baseline_vs_promoted_source_text_match: bool,
+    exactkv_failures: Mapping[str, Any],
+    safety_gates: Mapping[str, bool],
+) -> dict[str, bool]:
+    """Evaluate per-cell L3 source viability gates for promoted round-log source."""
+    cov = _cell_round_log_coverage(proposals)
+    coverage_rate = float(cov.get("proposal_coverage_rate") or 0.0)
+    blocked_rounds = int(cov.get("blocked_rounds") or 0)
+
+    blocked_records = [
+        p for p in proposals if not (p.get("proposed_token_ids") or [])
+    ]
+    block_gate = blocked_rounds == 0 or all(
+        bool(p.get("block_reason") or p.get("exception"))
+        for p in blocked_records
+    )
+
+    provenance_gate = True
+    for prop in proposals:
+        if prop.get("proposed_token_ids"):
+            if prop.get("proposal_source") != PROPOSAL_SOURCE_ROUND_LOG:
+                provenance_gate = False
+                break
+            if prop.get("source_is_round_log_draft") is not True:
+                provenance_gate = False
+                break
+        if prop.get("uses_committed_token") is True:
+            provenance_gate = False
+            break
+        if prop.get("uses_baseline_token") is True:
+            provenance_gate = False
+            break
+        if prop.get("uses_verifier_token") is True:
+            provenance_gate = False
+            break
+
+    isolation_gate = _cell_safety_gates_ok(dict(safety_gates))
+
+    parity_gate = (
+        baseline_vs_promoted_source_token_match
+        and baseline_vs_promoted_source_text_match
+    )
+
+    baseline_fail = exactkv_failures.get("baseline") or 0
+    promoted_fail = exactkv_failures.get("promoted_source")
+    if promoted_fail is None:
+        promoted_fail = exactkv_failures.get("draft_shadow") or 0
+    exactkv_failure_gate = int(baseline_fail or 0) == 0 and int(promoted_fail or 0) == 0
+
+    return {
+        "proposal_coverage_gate": coverage_rate >= PROMOTED_SOURCE_COVERAGE_GATE_THRESHOLD,
+        "proposal_block_gate": block_gate,
+        "proposal_provenance_gate": provenance_gate,
+        "proposal_isolation_gate": isolation_gate,
+        "generation_parity_gate": parity_gate,
+        "exactkv_failure_gate": exactkv_failure_gate,
+        "claim_boundary_gate": True,
+    }
+
+
+def aggregate_source_viability_gate_summary(
+    cells: Sequence[Mapping[str, Any]],
+) -> dict[str, Any]:
+    """Aggregate source viability gate pass counts across completed panel cells."""
+    completed = [c for c in cells if c.get("generation_completed")]
+    total = len(completed)
+    summary: dict[str, Any] = {}
+    for gate in SOURCE_VIABILITY_GATE_NAMES:
+        passing = sum(
+            1
+            for cell in completed
+            if (cell.get("source_viability_gates") or {}).get(gate) is True
+        )
+        summary[gate] = {
+            "pass": passing == total and total > 0,
+            "cells_passing": passing,
+            "cells_total": total,
+        }
+    required = (
+        "proposal_coverage_gate",
+        "proposal_provenance_gate",
+        "proposal_isolation_gate",
+        "generation_parity_gate",
+        "exactkv_failure_gate",
+        "claim_boundary_gate",
+    )
+    summary["all_required_gates_pass"] = all(
+        summary[g]["pass"] for g in required
+    )
+    return summary
+
+
+def _breakdown_metrics_from_proposals(
+    proposals: Sequence[Mapping[str, Any]],
+    *,
+    cell_count: int,
+) -> dict[str, Any]:
+    agg = aggregate_round_log_proposal_coverage(list(proposals))
+    return {
+        "total_cells": cell_count,
+        "total_rounds_with_logs": agg["total_rounds_with_logs"],
+        "rounds_with_draft_tokens": agg["rounds_with_draft_tokens"],
+        "rounds_missing_draft_tokens": agg["rounds_missing_draft_tokens"],
+        "proposal_coverage_rate": agg["proposal_coverage_rate"],
+        "total_proposed_tokens": agg["total_proposed_tokens"],
+        "matching_committed_prefix": agg["proposals_matching_committed_prefix"],
+        "not_matching_committed_prefix": agg["proposals_not_matching_committed_prefix"],
+        "prefix_match_rate": agg["proposal_prefix_match_rate"],
+    }
+
+
+def aggregate_promoted_source_breakdowns(
+    cells: Sequence[Mapping[str, Any]],
+) -> dict[str, dict[str, Any]]:
+    """Break down promoted-source metrics by model, compressor, prompt, max_new_tokens, round."""
+    by_model: dict[str, list[Mapping[str, Any]]] = {}
+    by_compressor: dict[str, list[Mapping[str, Any]]] = {}
+    by_prompt: dict[str, list[Mapping[str, Any]]] = {}
+    by_max_new: dict[str, list[Mapping[str, Any]]] = {}
+    by_round: dict[str, list[Mapping[str, Any]]] = {}
+
+    for cell in cells:
+        model_id = str(cell.get("model_id", "unknown"))
+        compressor = str(cell.get("compressor", "unknown"))
+        prompt_id = str(cell.get("prompt_id", "unknown"))
+        max_new = str(cell.get("max_new_tokens", "unknown"))
+        by_model.setdefault(model_id, []).append(cell)
+        by_compressor.setdefault(compressor, []).append(cell)
+        by_prompt.setdefault(prompt_id, []).append(cell)
+        by_max_new.setdefault(max_new, []).append(cell)
+        for prop in cell.get("proposals") or []:
+            rnd = str(prop.get("round_index", "unknown"))
+            by_round.setdefault(rnd, []).append(prop)
+
+    def _from_cells(grouped: dict[str, list[Mapping[str, Any]]]) -> dict[str, Any]:
+        out: dict[str, Any] = {}
+        for key, group in sorted(grouped.items()):
+            proposals: list[Mapping[str, Any]] = []
+            for cell in group:
+                proposals.extend(cell.get("proposals") or [])
+            out[key] = _breakdown_metrics_from_proposals(
+                proposals,
+                cell_count=len(group),
+            )
+        return out
+
+    return {
+        "breakdowns_by_model": _from_cells(by_model),
+        "breakdowns_by_compressor": _from_cells(by_compressor),
+        "breakdowns_by_prompt": _from_cells(by_prompt),
+        "breakdowns_by_max_new_tokens": _from_cells(by_max_new),
+        "breakdowns_by_round_index": {
+            key: _breakdown_metrics_from_proposals(props, cell_count=0)
+            for key, props in sorted(by_round.items(), key=lambda x: int(x[0]))
+        },
+    }
+
+
+def compute_promoted_source_decision(
+    *,
+    source_viability_gate_summary: Mapping[str, Any],
+    successful_cells: int,
+    total_cells: int,
+    blocked_cells: int,
+    failed_cells: int,
+    models_blocked: Sequence[Mapping[str, Any]],
+) -> tuple[str, str]:
+    """Recommend whether exactkv_round_log_draft_tokens remains promoted for L3."""
+    required_gates = (
+        "proposal_coverage_gate",
+        "proposal_provenance_gate",
+        "proposal_isolation_gate",
+        "generation_parity_gate",
+        "exactkv_failure_gate",
+        "claim_boundary_gate",
+    )
+
+    provenance_failed = not (
+        source_viability_gate_summary.get("proposal_provenance_gate") or {}
+    ).get("pass", False)
+    isolation_failed = not (
+        source_viability_gate_summary.get("proposal_isolation_gate") or {}
+    ).get("pass", False)
+    parity_gate_summary = source_viability_gate_summary.get("generation_parity_gate") or {}
+    parity_failed = (
+        parity_gate_summary.get("pass") is False and successful_cells > 0
+    )
+
+    if failed_cells > 0:
+        return (
+            DECISION_L3_SOURCE_NOT_PROMOTED,
+            "safety, provenance, or isolation gate failure on promoted-source panel",
+        )
+
+    if (blocked_cells > 0 or models_blocked) and successful_cells == 0:
+        return (
+            DECISION_L3_SOURCE_NEEDS_MORE_VALIDATION,
+            "all generation cells blocked; model load or panel blockers only",
+        )
+
+    if provenance_failed or isolation_failed:
+        return (
+            DECISION_L3_SOURCE_NOT_PROMOTED,
+            "provenance or isolation gate failure on completed promoted-source cells",
+        )
+
+    if (blocked_cells > 0 or models_blocked) and failed_cells == 0:
+        return (
+            DECISION_L3_SOURCE_NEEDS_MORE_VALIDATION,
+            "some cells or models blocked but no safety or provenance failure observed",
+        )
+
+    all_required_pass = all(
+        (source_viability_gate_summary.get(gate) or {}).get("pass") is True
+        for gate in required_gates
+    )
+
+    if (
+        all_required_pass
+        and successful_cells == total_cells
+        and total_cells > 0
+        and failed_cells == 0
+    ):
+        return (
+            DECISION_L3_SOURCE_PROMOTED,
+            "coverage, provenance, isolation, parity, exactkv failure, and claim "
+            "boundary gates pass on full promoted-source validation panel",
+        )
+
+    if parity_failed:
+        return (
+            DECISION_L3_SOURCE_NOT_PROMOTED,
+            "generation parity gate failed on successful promoted-source cells",
+        )
+
+    if not all_required_pass:
+        return (
+            DECISION_L3_SOURCE_NOT_PROMOTED,
+            "one or more required source viability gates failed",
+        )
+
+    return (
+        DECISION_L3_SOURCE_NEEDS_MORE_VALIDATION,
+        "panel incomplete; additional promoted-source validation required",
+    )
+
+
+def _build_promoted_source_panel_cell(
+    *,
+    model_id: str,
+    prompt_id: str,
+    prompt_text: str,
+    compressor: str,
+    max_new_tokens: int,
+    proposal_source: str,
+    runtime: Any | None,
+    draft_len: int,
+    baseline_generation_fn: Callable[..., dict[str, Any]] | None,
+    draft_shadow_generation_fn: Callable[..., dict[str, Any]] | None,
+    allow_provider_blocked: bool,
+) -> tuple[dict[str, Any], bool]:
+    """Run one promoted-source validation cell with viability gates."""
+    preview = prompt_text if len(prompt_text) <= 80 else prompt_text[:77] + "..."
+    blockers: list[str] = []
+
+    if baseline_generation_fn is not None:
+        baseline = baseline_generation_fn(
+            prompt=prompt_text,
+            prompt_id=prompt_id,
+            max_new_tokens=max_new_tokens,
+            compressor_name=compressor,
+            model_id=model_id,
+        )
+    elif runtime is not None:
+        baseline = _run_baseline_generation(
+            runtime, prompt_text, max_new_tokens, compressor, draft_len,
+        )
+    else:
+        baseline = {"generation_completed": False, "blockers": ["no runtime"]}
+
+    if draft_shadow_generation_fn is not None:
+        draft_shadow = draft_shadow_generation_fn(
+            prompt=prompt_text,
+            prompt_id=prompt_id,
+            max_new_tokens=max_new_tokens,
+            compressor_name=compressor,
+            model_id=model_id,
+        )
+    elif runtime is not None:
+        draft_shadow = _run_draft_shadow_no_commit_generation(
+            runtime,
+            prompt_text,
+            prompt_id,
+            max_new_tokens,
+            compressor,
+            draft_len,
+        )
+    else:
+        draft_shadow = {"generation_completed": False, "blockers": ["no runtime"]}
+
+    baseline_ok = bool(baseline.get("generation_completed"))
+    draft_ok = bool(draft_shadow.get("generation_completed"))
+    tok_match = _token_lists_match(
+        baseline.get("generated_token_ids"),
+        draft_shadow.get("generated_token_ids"),
+    )
+    txt_match = baseline.get("generated_text") == draft_shadow.get("generated_text")
+    if not tok_match:
+        blockers.append("baseline_vs_promoted_source_token_mismatch")
+    if not txt_match:
+        blockers.append("baseline_vs_promoted_source_text_mismatch")
+
+    proposals_ctx = extract_proposals_with_context(
+        proposal_source=proposal_source,
+        prompt_id=prompt_id,
+        compressor=compressor,
+        draft_shadow_out=draft_shadow,
+        allow_provider_blocked=allow_provider_blocked,
+    )
+    proposals_raw = proposals_ctx.proposals
+    if proposal_source == PROPOSAL_SOURCE_ROUND_LOG:
+        proposals = [
+            round_log_proposal_to_report_dict(p, max_new_tokens=max_new_tokens)
+            for p in proposals_raw
+        ]
+    else:
+        committed_ids = _committed_tokens_from_proposals(proposals_raw)
+        proposals = [
+            proposal_to_report_dict(p, committed_token_id=cid)
+            for p, cid in zip(proposals_raw, committed_ids, strict=False)
+        ]
+        for rec in proposals:
+            rec["max_new_tokens"] = max_new_tokens
+
+    cell_cov = _cell_round_log_coverage(proposals)
+    gates = default_no_commit_safety_result().to_gates_dict()
+    gates["baseline_generation_completed"] = baseline_ok
+    gates["draft_shadow_generation_completed"] = draft_ok
+    gates["baseline_vs_draft_shadow_token_match"] = tok_match
+    gates["baseline_vs_draft_shadow_text_match"] = txt_match
+
+    exactkv_failures = {
+        "baseline": baseline.get("exactkv_failures"),
+        "promoted_source": draft_shadow.get("exactkv_failures"),
+    }
+    viability_gates = evaluate_cell_source_viability_gates(
+        proposals=proposals,
+        baseline_vs_promoted_source_token_match=tok_match,
+        baseline_vs_promoted_source_text_match=txt_match,
+        exactkv_failures=exactkv_failures,
+        safety_gates=gates,
+    )
+
+    cell = {
+        "model_id": model_id,
+        "prompt_id": prompt_id,
+        "prompt_preview": preview,
+        "compressor": compressor,
+        "max_new_tokens": max_new_tokens,
+        "generation_completed": baseline_ok and draft_ok,
+        "baseline_vs_promoted_source_token_match": tok_match,
+        "baseline_vs_promoted_source_text_match": txt_match,
+        "exactkv_failures": exactkv_failures,
+        "total_rounds_with_logs": cell_cov["total_rounds_with_logs"],
+        "rounds_with_draft_tokens": cell_cov["rounds_with_draft_tokens"],
+        "rounds_missing_draft_tokens": cell_cov["rounds_missing_draft_tokens"],
+        "proposals": proposals,
+        "source_viability_gates": viability_gates,
+        "safety_gates": gates,
+        "blockers": blockers,
+    }
+
+    failed = (
+        not _cell_safety_gates_ok(gates)
+        or not tok_match
+        or not txt_match
+        or not viability_gates.get("proposal_provenance_gate", False)
+        or not viability_gates.get("proposal_isolation_gate", False)
+    )
+    if failed and not _cell_safety_gates_ok(gates):
+        if "safety_gate_failed" not in blockers:
+            blockers.append("safety_gate_failed")
+    cell["blockers"] = blockers
+    return cell, failed
+
+
+def run_exp097_l3_promoted_source_validation(
+    *,
+    model_ids: Sequence[str] | None = None,
+    device: str = "cpu",
+    dtype: str = "float32",
+    prompts: Sequence[tuple[str, str]] | None = None,
+    max_prompts: int = DEFAULT_PROMOTED_PANEL_PROMPTS,
+    max_new_tokens_values: Sequence[int] = DEFAULT_MAX_NEW_TOKENS_VALUES,
+    compressors_requested: Sequence[str] = DEFAULT_PANEL_COMPRESSORS,
+    proposal_source: str = PROPOSAL_SOURCE_ROUND_LOG,
+    draft_len: int = 4,
+    local_files_only: bool = False,
+    allow_model_blocked: bool = True,
+    allow_provider_blocked: bool = True,
+    baseline_generation_fn: Callable[..., dict[str, Any]] | None = None,
+    draft_shadow_generation_fn: Callable[..., dict[str, Any]] | None = None,
+    runtime_loader: Callable[..., Any] | None = None,
+) -> dict[str, Any]:
+    """Run Experiment 097 L3 promoted round-log source validation panel."""
+    from exactkv.attention.generation_shadow_observer import resolve_panel_compressors
+
+    models_requested = list(model_ids or DEFAULT_COMPARISON_MODEL_IDS)
+    prompt_panel = (
+        list(prompts)
+        if prompts is not None
+        else default_promoted_source_prompts(max_prompts)
+    )
+    runnable, _blocked_comp = resolve_panel_compressors(compressors_requested)
+    mnt_values = list(max_new_tokens_values)
+
+    blockers: list[str] = []
+    if proposal_source != PROPOSAL_SOURCE_ROUND_LOG:
+        blockers.append(
+            f"promoted-source validation requires {PROPOSAL_SOURCE_ROUND_LOG}; "
+            f"got {proposal_source}",
+        )
+
+    safety_spec_validation = validate_integration_proposal(L3_PANEL_SAFETY_SPEC_PROPOSAL)
+    if not safety_spec_validation["pass"]:
+        blockers.append("safety_spec_validation_failed")
+
+    cells: list[dict[str, Any]] = []
+    models_loaded: list[str] = []
+    models_blocked: list[dict[str, Any]] = []
+    successful_cells = 0
+    blocked_cells = 0
+    failed_cells = 0
+    sg_ok = 0
+    tok_match_cells = 0
+    txt_match_cells = 0
+    all_proposals: list[dict[str, Any]] = []
+
+    for model_id in models_requested:
+        runtime: Any | None = None
+        load_blockers: list[str] = []
+        if baseline_generation_fn is None or draft_shadow_generation_fn is None:
+            try:
+                if runtime_loader is not None:
+                    runtime = runtime_loader(
+                        model_id=model_id,
+                        device=device,
+                        dtype=dtype,
+                        local_files_only=local_files_only,
+                    )
+                else:
+                    from exactkv.runtime.exactkv_generator import ExactKVGenerator  # noqa: F401
+                    from exactkv.runtime.model_runtime import ModelRuntime
+
+                    runtime = ModelRuntime(model_id, device=device, dtype=dtype)
+            except Exception as exc:  # noqa: BLE001
+                load_blockers.append(f"{type(exc).__name__}: {exc}")
+
+        if runtime is None and (baseline_generation_fn is None or draft_shadow_generation_fn is None):
+            reason = "; ".join(load_blockers) or "model load failed"
+            models_blocked.append({"model_id": model_id, "blocked_reason": reason})
+            for prompt_id, prompt_text in prompt_panel:
+                preview = prompt_text if len(prompt_text) <= 80 else prompt_text[:77] + "..."
+                for compressor in runnable:
+                    for max_new in mnt_values:
+                        blocked_cells += 1
+                        cells.append({
+                            "model_id": model_id,
+                            "prompt_id": prompt_id,
+                            "prompt_preview": preview,
+                            "compressor": compressor,
+                            "max_new_tokens": max_new,
+                            "generation_completed": False,
+                            "baseline_vs_promoted_source_token_match": False,
+                            "baseline_vs_promoted_source_text_match": False,
+                            "exactkv_failures": {
+                                "baseline": None,
+                                "promoted_source": None,
+                            },
+                            "total_rounds_with_logs": 0,
+                            "rounds_with_draft_tokens": 0,
+                            "rounds_missing_draft_tokens": 0,
+                            "proposals": [],
+                            "source_viability_gates": {},
+                            "safety_gates": {},
+                            "blockers": [f"model_blocked: {reason}"],
+                        })
+            if not allow_model_blocked:
+                blockers.append(f"model blocked: {model_id}: {reason}")
+            continue
+
+        models_loaded.append(model_id)
+        for prompt_id, prompt_text in prompt_panel:
+            for compressor in runnable:
+                for max_new in mnt_values:
+                    cell, failed = _build_promoted_source_panel_cell(
+                        model_id=model_id,
+                        prompt_id=prompt_id,
+                        prompt_text=prompt_text,
+                        compressor=compressor,
+                        max_new_tokens=max_new,
+                        proposal_source=proposal_source,
+                        runtime=runtime,
+                        draft_len=draft_len,
+                        baseline_generation_fn=baseline_generation_fn,
+                        draft_shadow_generation_fn=draft_shadow_generation_fn,
+                        allow_provider_blocked=allow_provider_blocked,
+                    )
+                    cells.append(cell)
+                    props = list(cell.get("proposals") or [])
+                    all_proposals.extend(props)
+
+                    if cell.get("generation_completed"):
+                        successful_cells += 1
+                    else:
+                        blocked_cells += 1
+                    if cell.get("baseline_vs_promoted_source_token_match"):
+                        tok_match_cells += 1
+                    if cell.get("baseline_vs_promoted_source_text_match"):
+                        txt_match_cells += 1
+                    if _cell_safety_gates_ok(cell.get("safety_gates") or {}):
+                        sg_ok += 1
+                    if failed:
+                        failed_cells += 1
+
+    coverage_agg = aggregate_round_log_proposal_coverage(all_proposals)
+    breakdowns = aggregate_promoted_source_breakdowns(cells)
+    viability_summary = aggregate_source_viability_gate_summary(cells)
+    decision, decision_reason = compute_promoted_source_decision(
+        source_viability_gate_summary=viability_summary,
+        successful_cells=successful_cells,
+        total_cells=len(cells),
+        blocked_cells=blocked_cells,
+        failed_cells=failed_cells,
+        models_blocked=models_blocked,
+    )
+
+    if not safety_spec_validation["pass"]:
+        status = "failed"
+    elif failed_cells > 0:
+        status = "failed"
+    elif successful_cells == len(cells) and len(cells) > 0:
+        status = "validation_complete"
+    elif successful_cells > 0:
+        status = "validation_partial"
+    else:
+        status = "blocked"
+
+    safety_top = default_no_commit_safety_result()
+
+    return {
+        "experiment_id": EXPERIMENT_097_ID,
+        "status": status,
+        "phase": PHASE_19C,
+        "safety_level": SAFETY_LEVEL,
+        "safety_spec_validation": safety_spec_validation,
+        "promoted_source_policy": build_promoted_source_policy(),
+        "models_requested": models_requested,
+        "models_loaded": models_loaded,
+        "models_blocked": models_blocked,
+        "device": device,
+        "dtype": dtype,
+        "compressors_requested": list(compressors_requested),
+        "compressors_run": runnable,
+        "max_new_tokens_values": mnt_values,
+        "proposal_source": proposal_source,
+        "total_cells": len(cells),
+        "successful_cells": successful_cells,
+        "blocked_cells": blocked_cells,
+        "total_rounds_with_logs": coverage_agg["total_rounds_with_logs"],
+        "rounds_with_draft_tokens": coverage_agg["rounds_with_draft_tokens"],
+        "rounds_missing_draft_tokens": coverage_agg["rounds_missing_draft_tokens"],
+        "proposal_coverage_rate": coverage_agg["proposal_coverage_rate"],
+        "total_proposed_tokens": coverage_agg["total_proposed_tokens"],
+        "matching_committed_prefix": coverage_agg["proposals_matching_committed_prefix"],
+        "not_matching_committed_prefix": coverage_agg[
+            "proposals_not_matching_committed_prefix"
+        ],
+        "prefix_match_rate": coverage_agg["proposal_prefix_match_rate"],
+        "accepted_token_count_summary": coverage_agg["accepted_token_count_summary"],
+        "rejected_or_corrected_token_count_summary": coverage_agg[
+            "rejected_or_corrected_token_count_summary"
+        ],
+        "source_viability_gate_summary": viability_summary,
+        **breakdowns,
+        "decision_recommendation": decision,
+        "decision_reason": decision_reason,
+        "exactkv_failure_summary": {
+            "baseline_failures": sum(
+                1
+                for c in cells
+                if (c.get("exactkv_failures") or {}).get("baseline")
+            ),
+            "promoted_source_failures": sum(
+                1
+                for c in cells
+                if (c.get("exactkv_failures") or {}).get("promoted_source")
+            ),
+        },
+        "parity_summary": {
+            "total_cells": len(cells),
+            "baseline_vs_promoted_source_token_match_cells": tok_match_cells,
+            "baseline_vs_promoted_source_text_match_cells": txt_match_cells,
+            "failed_cells": failed_cells,
+        },
+        "safety_gate_summary": {
+            "cells_all_gates_ok": sg_ok,
+            "cells_with_gate_failure": len(cells) - sg_ok,
+        },
+        "proposal_used_for_token_commit": safety_top.proposal_used_for_token_commit,
+        "proposal_exposed_to_generator": safety_top.proposal_exposed_to_generator,
+        "generated_output_modified_by_proposal": (
+            safety_top.generated_output_modified_by_proposal
+        ),
+        "default_runtime_changed": safety_top.default_runtime_changed,
+        "cells": cells,
+        "recommended_next_phase": RECOMMENDED_NEXT_PHASE_19C,
+        "claim_note": (
+            "L3 promoted round-log source validation. Proposals are diagnostic only."
+        ),
+        "forbidden_claims": list(SHADOW_FORBIDDEN_CLAIMS),
+        "blockers": blockers,
+        "limitations": [
+            "L3 promoted-source validation only; not L4 verifier-mediated compressed draft.",
+            "Committed tokens used for comparison only; never as proposal sources.",
+            "Proposal coverage and prefix match rate supplementary; not exactness.",
+            "Promoting a proposal source for L3 diagnostics does not authorize L4 commit.",
+            "ExactKVGenerator and default runtime unchanged.",
+            "No CUDA/Triton/vLLM/serving integration.",
+        ],
+        "no_performance_claims_note": NO_PERFORMANCE_CLAIMS_NOTE,
+    }
+
+
+def validate_exp097_report(report: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "status",
+        "safety_level",
+        "safety_spec_validation",
+        "promoted_source_policy",
+        "models_requested",
+        "models_loaded",
+        "models_blocked",
+        "device",
+        "dtype",
+        "compressors_requested",
+        "compressors_run",
+        "max_new_tokens_values",
+        "total_cells",
+        "successful_cells",
+        "blocked_cells",
+        "total_rounds_with_logs",
+        "rounds_with_draft_tokens",
+        "rounds_missing_draft_tokens",
+        "proposal_coverage_rate",
+        "total_proposed_tokens",
+        "matching_committed_prefix",
+        "not_matching_committed_prefix",
+        "prefix_match_rate",
+        "accepted_token_count_summary",
+        "rejected_or_corrected_token_count_summary",
+        "source_viability_gate_summary",
+        "breakdowns_by_model",
+        "breakdowns_by_compressor",
+        "breakdowns_by_prompt",
+        "breakdowns_by_max_new_tokens",
+        "breakdowns_by_round_index",
+        "decision_recommendation",
+        "decision_reason",
+        "exactkv_failure_summary",
+        "parity_summary",
+        "safety_gate_summary",
+        "proposal_used_for_token_commit",
+        "proposal_exposed_to_generator",
+        "generated_output_modified_by_proposal",
+        "default_runtime_changed",
+        "blockers",
+        "limitations",
+        "no_performance_claims_note",
+        "cells",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing key: {key}")
+
+    if report.get("experiment_id") != EXPERIMENT_097_ID:
+        errors.append("experiment_id mismatch")
+
+    if report.get("safety_level") != SAFETY_LEVEL:
+        errors.append("safety_level mismatch")
+
+    if report.get("decision_recommendation") not in PROMOTED_SOURCE_DECISION_VALUES:
+        errors.append("invalid decision_recommendation")
+
+    policy = report.get("promoted_source_policy") or {}
+    if policy.get("promoted_source") != PROPOSAL_SOURCE_ROUND_LOG:
+        errors.append("promoted_source must be exactkv_round_log_draft_tokens")
+    demoted = policy.get("demoted_sources") or []
+    if not any(
+        d.get("source") == PROPOSAL_SOURCE_DECODE_TOP1 for d in demoted
+    ):
+        errors.append("decode_time_shadow_top1 must be demoted")
+
+    if report.get("proposal_used_for_token_commit") is not False:
+        errors.append("proposal_used_for_token_commit must be false")
+
+    if report.get("proposal_exposed_to_generator") is not False:
+        errors.append("proposal_exposed_to_generator must be false")
+
+    spec_val = report.get("safety_spec_validation") or {}
+    if spec_val.get("pass") is not True:
+        errors.append("safety_spec_validation must pass")
+
+    cell_keys = (
+        "model_id",
+        "prompt_id",
+        "prompt_preview",
+        "compressor",
+        "max_new_tokens",
+        "generation_completed",
+        "baseline_vs_promoted_source_token_match",
+        "baseline_vs_promoted_source_text_match",
+        "exactkv_failures",
+        "total_rounds_with_logs",
+        "rounds_with_draft_tokens",
+        "rounds_missing_draft_tokens",
+        "proposals",
+        "source_viability_gates",
+        "safety_gates",
+        "blockers",
+    )
+    proposal_keys = (
+        "round_index",
+        "proposal_source",
+        "source_field_path",
+        "proposed_token_ids",
+        "proposed_text",
+        "source_is_round_log_draft",
+        "uses_committed_token",
+        "uses_baseline_token",
+        "uses_verifier_token",
+        "committed_token_ids_for_comparison",
+        "accepted_token_count_for_comparison",
+        "rejected_or_corrected_token_count_for_comparison",
+        "matched_committed_prefix",
+        "interpretation_note",
+    )
+    for idx, cell in enumerate(report.get("cells") or []):
+        for ck in cell_keys:
+            if ck not in cell:
+                errors.append(f"cells[{idx}] missing {ck}")
+        for pidx, prop in enumerate(cell.get("proposals") or []):
+            for pk in proposal_keys:
+                if pk not in prop:
+                    errors.append(f"cells[{idx}].proposals[{pidx}] missing {pk}")
+
+    for gate in SOURCE_VIABILITY_GATE_NAMES:
+        if gate not in (report.get("source_viability_gate_summary") or {}):
+            errors.append(f"source_viability_gate_summary missing {gate}")
+
+    return errors
 
 
 def proposal_to_report_dict(

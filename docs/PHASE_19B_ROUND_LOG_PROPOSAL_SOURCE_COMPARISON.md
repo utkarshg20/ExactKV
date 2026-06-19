@@ -127,7 +127,7 @@ Self-validates against Phase 18A `validate_integration_proposal()` as `L3_GUARDE
 
 ## 14. Recommended next phase
 
-**Phase 19C:** L3 promoted-source validation — focused panel on the promoted round-log source across additional dimensions without L4 commit integration.
+**Phase 19C:** L3 promoted-source validation for `exactkv_round_log_draft_tokens`. See [`PHASE_19C_L3_PROMOTED_SOURCE_VALIDATION.md`](PHASE_19C_L3_PROMOTED_SOURCE_VALIDATION.md).
 
 ---
 
