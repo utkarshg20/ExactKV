@@ -86,6 +86,44 @@ DEFAULT_EXP095_REPORT = Path(
 PHASE_19A = "19A"
 RECOMMENDED_NEXT_PHASE_19A = "phase19b_round_log_proposal_panel_validation"
 
+EXPERIMENT_096_ID = "exp096_round_log_proposal_source_comparison_panel"
+DEFAULT_EXP096_REPORT = Path(
+    "reports/experiment_096_round_log_proposal_source_comparison_panel.json",
+)
+PHASE_19B = "19B"
+RECOMMENDED_NEXT_PHASE_19B = "phase19c_l3_promoted_source_validation"
+
+DEFAULT_COMPARISON_MODEL_IDS: tuple[str, ...] = (
+    "Qwen/Qwen2.5-0.5B",
+    "Qwen/Qwen2.5-0.5B-Instruct",
+)
+DEFAULT_COMPARISON_PROPOSAL_SOURCES: tuple[str, ...] = (
+    PROPOSAL_SOURCE_ROUND_LOG,
+    PROPOSAL_SOURCE_DECODE_TOP1,
+)
+
+DECISION_PROMOTE_ROUND_LOG = "promote_round_log_draft_tokens_as_l3_source"
+DECISION_KEEP_COMPARING = "keep_comparing_sources"
+DECISION_REPLACE_BOTH = "replace_both_sources"
+DECISION_INSUFFICIENT_EVIDENCE = "insufficient_evidence"
+
+COMPARISON_DECISION_VALUES: tuple[str, ...] = (
+    DECISION_PROMOTE_ROUND_LOG,
+    DECISION_KEEP_COMPARING,
+    DECISION_REPLACE_BOTH,
+    DECISION_INSUFFICIENT_EVIDENCE,
+)
+
+COMPARISON_COVERAGE_ADVANTAGE_THRESHOLD = 0.2
+COMPARISON_MATCH_ADVANTAGE_THRESHOLD = 0.1
+COMPARISON_LOW_COVERAGE_THRESHOLD = 0.5
+COMPARISON_BLOCKED_CELL_RATIO_THRESHOLD = 0.5
+
+COMPARISON_INTERPRETATION_NOTE = (
+    "Side-by-side proposal source comparison is supplementary diagnostic only; "
+    "not an exactness guarantee."
+)
+
 ROUND_LOG_DRAFT_SOURCE_FIELD_TRACE = "exactkv_traces[{round_index}].draft_tokens"
 ROUND_LOG_DRAFT_SOURCE_FIELD_SNAPSHOT = "live_snapshots[{round_index}].draft_token_ids"
 
@@ -3237,5 +3275,826 @@ def validate_exp095_report(report: dict[str, Any]) -> list[str]:
             errors.append(
                 f"proposal_records[{idx}] successful extraction must set source_is_round_log_draft",
             )
+
+    return errors
+
+def _proposal_record_successful(rec: Mapping[str, Any]) -> bool:
+    proposed = rec.get("proposed_token_ids") or []
+    if proposed:
+        return True
+    return rec.get("proposed_token_id") is not None
+
+
+def _proposal_record_matched(rec: Mapping[str, Any]) -> bool | None:
+    if "matched_committed_prefix" in rec:
+        val = rec.get("matched_committed_prefix")
+        if val is None:
+            return None
+        return bool(val)
+    if "matched_committed_token" in rec:
+        val = rec.get("matched_committed_token")
+        if val is None:
+            return None
+        return bool(val)
+    return None
+
+
+def _proposal_record_block_reason(rec: Mapping[str, Any]) -> str | None:
+    return rec.get("block_reason") or rec.get("exception")
+
+
+def _proposal_record_source_field(rec: Mapping[str, Any]) -> str | None:
+    return rec.get("source_field_path") or rec.get("extraction_source_field")
+
+
+def _shadow_record_token_ids(rec: Mapping[str, Any]) -> list[int]:
+    if rec.get("proposed_token_ids"):
+        return [int(x) for x in rec["proposed_token_ids"]]
+    token_id = rec.get("proposed_token_id")
+    if token_id is not None:
+        return [int(token_id)]
+    return []
+
+
+def summarize_proposal_source_rounds(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    proposal_source: str,
+) -> dict[str, Any]:
+    """Aggregate per-source proposal diagnostics from serialized round records."""
+    total = len(records)
+    successful = 0
+    blocked = 0
+    prefix_match = 0
+    prefix_not_match = 0
+    block_reasons: dict[str, int] = {}
+    source_fields: dict[str, int] = {}
+
+    for rec in records:
+        if _proposal_record_successful(rec):
+            successful += 1
+        else:
+            blocked += 1
+            reason = _proposal_record_block_reason(rec) or "blocked"
+            block_reasons[str(reason)] = block_reasons.get(str(reason), 0) + 1
+
+        matched = _proposal_record_matched(rec)
+        if matched is True:
+            prefix_match += 1
+        elif matched is False:
+            prefix_not_match += 1
+
+        field = _proposal_record_source_field(rec)
+        if field:
+            source_fields[str(field)] = source_fields.get(str(field), 0) + 1
+
+    comparable = prefix_match + prefix_not_match
+    return {
+        "proposal_source": proposal_source,
+        "total_possible_rounds": total,
+        "successful_proposals": successful,
+        "blocked_proposals": blocked,
+        "proposal_coverage_rate": successful / total if total else 0.0,
+        "matched_committed_prefix": prefix_match,
+        "not_matched_committed_prefix": prefix_not_match,
+        "prefix_match_rate": prefix_match / comparable if comparable else 0.0,
+        "block_reason_summary": block_reasons,
+        "source_field_summary": source_fields,
+    }
+
+
+def build_side_by_side_round_records(
+    *,
+    round_log_records: Sequence[Mapping[str, Any]],
+    shadow_records: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Build per-round side-by-side comparison between round-log and shadow top-1."""
+    rl_by_round = {int(r["round_index"]): r for r in round_log_records}
+    sh_by_round = {int(r["round_index"]): r for r in shadow_records}
+    all_rounds = sorted(set(rl_by_round) | set(sh_by_round))
+    out: list[dict[str, Any]] = []
+
+    for rnd in all_rounds:
+        rl_rec = rl_by_round.get(rnd, {})
+        sh_rec = sh_by_round.get(rnd, {})
+        rl_ids = [int(x) for x in (rl_rec.get("proposed_token_ids") or [])]
+        sh_ids = _shadow_record_token_ids(sh_rec)
+
+        rl_status = "complete" if rl_ids else "blocked"
+        sh_status = "complete" if sh_ids else "blocked"
+
+        committed = list(rl_rec.get("committed_token_ids_for_comparison") or [])
+        if not committed and sh_rec.get("committed_token_id_for_comparison") is not None:
+            committed = [int(sh_rec["committed_token_id_for_comparison"])]
+
+        both_available = rl_status == "complete" and sh_status == "complete"
+        only_rl = rl_status == "complete" and sh_status != "complete"
+        only_sh = sh_status == "complete" and rl_status != "complete"
+        neither = rl_status != "complete" and sh_status != "complete"
+
+        if both_available:
+            if rl_ids == sh_ids:
+                agree = True
+                summary = "proposed_token_ids_equal"
+            else:
+                agree = False
+                summary = "proposed_token_ids_differ"
+        elif only_rl:
+            agree = False
+            summary = "only_round_log_available"
+        elif only_sh:
+            agree = False
+            summary = "only_shadow_top1_available"
+        else:
+            agree = False
+            summary = "neither_source_available"
+
+        out.append({
+            "round_index": rnd,
+            "committed_token_ids_for_comparison": committed,
+            "exactkv_round_log_draft_tokens_status": rl_status,
+            "exactkv_round_log_draft_tokens_ids": rl_ids,
+            "decode_time_shadow_top1_status": sh_status,
+            "decode_time_shadow_top1_ids": sh_ids,
+            "sources_agree": agree,
+            "source_match_summary": summary,
+            "interpretation_note": COMPARISON_INTERPRETATION_NOTE,
+        })
+    return out
+
+
+def aggregate_side_by_side_summary(
+    round_records: Sequence[Mapping[str, Any]],
+    *,
+    round_log_prefix_match_rate: float,
+    shadow_prefix_match_rate: float,
+) -> dict[str, Any]:
+    """Aggregate side-by-side availability and agreement counts."""
+    both = 0
+    only_rl = 0
+    only_sh = 0
+    neither = 0
+    agree = 0
+    disagree = 0
+
+    for rec in round_records:
+        rl_ok = rec.get("exactkv_round_log_draft_tokens_status") == "complete"
+        sh_ok = rec.get("decode_time_shadow_top1_status") == "complete"
+        if rl_ok and sh_ok:
+            both += 1
+        elif rl_ok:
+            only_rl += 1
+        elif sh_ok:
+            only_sh += 1
+        else:
+            neither += 1
+        if rec.get("sources_agree") is True:
+            agree += 1
+        elif rl_ok or sh_ok:
+            disagree += 1
+
+    return {
+        "rounds_where_both_sources_available": both,
+        "rounds_where_only_round_log_available": only_rl,
+        "rounds_where_only_shadow_top1_available": only_sh,
+        "rounds_where_neither_available": neither,
+        "rounds_where_sources_agree": agree,
+        "rounds_where_sources_disagree": disagree,
+        "match_rate_delta": round_log_prefix_match_rate - shadow_prefix_match_rate,
+    }
+
+
+def compute_comparison_decision(
+    *,
+    source_summaries: Sequence[Mapping[str, Any]],
+    total_generation_cells: int,
+    successful_generation_cells: int,
+    blocked_generation_cells: int,
+    safety_gates_all_ok: bool,
+) -> tuple[str, str]:
+    """Recommend L3 proposal source promotion based on side-by-side panel."""
+    if total_generation_cells == 0:
+        return (
+            DECISION_INSUFFICIENT_EVIDENCE,
+            "no generation cells in panel",
+        )
+
+    blocked_ratio = blocked_generation_cells / total_generation_cells
+    if blocked_ratio >= COMPARISON_BLOCKED_CELL_RATIO_THRESHOLD:
+        return (
+            DECISION_INSUFFICIENT_EVIDENCE,
+            f"blocked generation cell ratio {blocked_ratio:.2f} exceeds threshold",
+        )
+
+    if successful_generation_cells == 0:
+        return (
+            DECISION_INSUFFICIENT_EVIDENCE,
+            "no successful generation cells",
+        )
+
+    if not safety_gates_all_ok:
+        return (
+            DECISION_INSUFFICIENT_EVIDENCE,
+            "one or more cells failed safety gates",
+        )
+
+    rl_summary = next(
+        (s for s in source_summaries if s.get("proposal_source") == PROPOSAL_SOURCE_ROUND_LOG),
+        None,
+    )
+    sh_summary = next(
+        (s for s in source_summaries if s.get("proposal_source") == PROPOSAL_SOURCE_DECODE_TOP1),
+        None,
+    )
+    if rl_summary is None or sh_summary is None:
+        return (
+            DECISION_INSUFFICIENT_EVIDENCE,
+            "missing one or both proposal source summaries",
+        )
+
+    rl_cov = float(rl_summary.get("proposal_coverage_rate") or 0.0)
+    rl_match = float(rl_summary.get("prefix_match_rate") or 0.0)
+    sh_cov = float(sh_summary.get("proposal_coverage_rate") or 0.0)
+    sh_match = float(sh_summary.get("prefix_match_rate") or 0.0)
+
+    if (
+        rl_cov < COMPARISON_LOW_COVERAGE_THRESHOLD
+        and sh_cov < COMPARISON_LOW_COVERAGE_THRESHOLD
+    ):
+        return (
+            DECISION_REPLACE_BOTH,
+            "both proposal sources below low coverage threshold",
+        )
+
+    cov_advantage = rl_cov - sh_cov
+    match_advantage = rl_match - sh_match
+
+    if (
+        cov_advantage >= COMPARISON_COVERAGE_ADVANTAGE_THRESHOLD
+        and match_advantage >= COMPARISON_MATCH_ADVANTAGE_THRESHOLD
+    ):
+        return (
+            DECISION_PROMOTE_ROUND_LOG,
+            "round-log draft tokens materially higher coverage and prefix match rate "
+            "with safety gates holding",
+        )
+
+    if cov_advantage > 0 and match_advantage > 0:
+        if cov_advantage >= COMPARISON_COVERAGE_ADVANTAGE_THRESHOLD / 2:
+            return (
+                DECISION_PROMOTE_ROUND_LOG,
+                "round-log draft tokens higher on both coverage and prefix match rate",
+            )
+        return (
+            DECISION_KEEP_COMPARING,
+            "round-log advantage present but below material threshold on one axis",
+        )
+
+    if cov_advantage < 0 or match_advantage < 0:
+        return (
+            DECISION_KEEP_COMPARING,
+            "mixed source performance across coverage and prefix match metrics",
+        )
+
+    return (
+        DECISION_KEEP_COMPARING,
+        "inconclusive side-by-side comparison; additional panel evidence required",
+    )
+
+
+def _build_comparison_panel_cell(
+    *,
+    model_id: str,
+    prompt_id: str,
+    prompt_text: str,
+    compressor: str,
+    max_new_tokens: int,
+    proposal_sources: Sequence[str],
+    runtime: Any | None,
+    draft_len: int,
+    baseline_generation_fn: Callable[..., dict[str, Any]] | None,
+    draft_shadow_generation_fn: Callable[..., dict[str, Any]] | None,
+    allow_provider_blocked: bool,
+) -> tuple[dict[str, Any], bool]:
+    """Run one generation cell and compare multiple L3 proposal sources."""
+    preview = prompt_text if len(prompt_text) <= 80 else prompt_text[:77] + "..."
+    blockers: list[str] = []
+
+    if baseline_generation_fn is not None:
+        baseline = baseline_generation_fn(
+            prompt=prompt_text,
+            prompt_id=prompt_id,
+            max_new_tokens=max_new_tokens,
+            compressor_name=compressor,
+            model_id=model_id,
+        )
+    elif runtime is not None:
+        baseline = _run_baseline_generation(
+            runtime, prompt_text, max_new_tokens, compressor, draft_len,
+        )
+    else:
+        baseline = {"generation_completed": False, "blockers": ["no runtime"]}
+
+    if draft_shadow_generation_fn is not None:
+        draft_shadow = draft_shadow_generation_fn(
+            prompt=prompt_text,
+            prompt_id=prompt_id,
+            max_new_tokens=max_new_tokens,
+            compressor_name=compressor,
+            model_id=model_id,
+        )
+    elif runtime is not None:
+        draft_shadow = _run_draft_shadow_no_commit_generation(
+            runtime,
+            prompt_text,
+            prompt_id,
+            max_new_tokens,
+            compressor,
+            draft_len,
+        )
+    else:
+        draft_shadow = {"generation_completed": False, "blockers": ["no runtime"]}
+
+    baseline_ok = bool(baseline.get("generation_completed"))
+    draft_ok = bool(draft_shadow.get("generation_completed"))
+    tok_match = _token_lists_match(
+        baseline.get("generated_token_ids"),
+        draft_shadow.get("generated_token_ids"),
+    )
+    txt_match = baseline.get("generated_text") == draft_shadow.get("generated_text")
+    if not tok_match:
+        blockers.append("baseline_vs_draft_shadow_token_mismatch")
+    if not txt_match:
+        blockers.append("baseline_vs_draft_shadow_text_mismatch")
+
+    proposal_source_records: dict[str, list[dict[str, Any]]] = {}
+    for source in proposal_sources:
+        ctx = extract_proposals_with_context(
+            proposal_source=source,
+            prompt_id=prompt_id,
+            compressor=compressor,
+            draft_shadow_out=draft_shadow,
+            allow_provider_blocked=allow_provider_blocked,
+        )
+        proposals = ctx.proposals
+        committed_ids = _committed_tokens_from_proposals(proposals)
+        if source == PROPOSAL_SOURCE_ROUND_LOG:
+            proposal_source_records[source] = [
+                round_log_proposal_to_report_dict(p, max_new_tokens=max_new_tokens)
+                for p in proposals
+            ]
+        elif source == PROPOSAL_SOURCE_DECODE_TOP1:
+            proposal_source_records[source] = [
+                proposal_to_report_dict(p, committed_token_id=cid)
+                for p, cid in zip(proposals, committed_ids, strict=False)
+            ]
+            for rec in proposal_source_records[source]:
+                rec["max_new_tokens"] = max_new_tokens
+        elif source == PROPOSAL_SOURCE_SYNTHETIC:
+            proposal_source_records[source] = [
+                proposal_to_report_dict(p, committed_token_id=cid)
+                for p, cid in zip(proposals, committed_ids, strict=False)
+            ]
+            for rec in proposal_source_records[source]:
+                rec["max_new_tokens"] = max_new_tokens
+        else:
+            proposal_source_records[source] = [
+                proposal_to_report_dict(p, committed_token_id=cid)
+                for p, cid in zip(proposals, committed_ids, strict=False)
+            ]
+            for rec in proposal_source_records[source]:
+                rec["max_new_tokens"] = max_new_tokens
+
+    rl_records = proposal_source_records.get(PROPOSAL_SOURCE_ROUND_LOG, [])
+    sh_records = proposal_source_records.get(PROPOSAL_SOURCE_DECODE_TOP1, [])
+    side_by_side = build_side_by_side_round_records(
+        round_log_records=rl_records,
+        shadow_records=sh_records,
+    )
+
+    gates = default_no_commit_safety_result().to_gates_dict()
+    gates["baseline_generation_completed"] = baseline_ok
+    gates["draft_shadow_generation_completed"] = draft_ok
+    gates["baseline_vs_draft_shadow_token_match"] = tok_match
+    gates["baseline_vs_draft_shadow_text_match"] = txt_match
+
+    cell = {
+        "model_id": model_id,
+        "prompt_id": prompt_id,
+        "prompt_preview": preview,
+        "compressor": compressor,
+        "max_new_tokens": max_new_tokens,
+        "generation_completed": baseline_ok and draft_ok,
+        "baseline_vs_draft_shadow_token_match": tok_match,
+        "baseline_vs_draft_shadow_text_match": txt_match,
+        "exactkv_failures": {
+            "baseline": baseline.get("exactkv_failures"),
+            "draft_shadow": draft_shadow.get("exactkv_failures"),
+        },
+        "proposal_source_records": proposal_source_records,
+        "side_by_side_round_records": side_by_side,
+        "safety_gates": gates,
+        "blockers": blockers,
+    }
+
+    failed = not _cell_safety_gates_ok(gates) or not tok_match or not txt_match
+    if failed and "safety_gate_failed" not in blockers and _cell_safety_gates_ok(gates):
+        if not tok_match or not txt_match:
+            pass
+        else:
+            blockers.append("safety_gate_failed")
+    elif failed and not _cell_safety_gates_ok(gates):
+        if "safety_gate_failed" not in blockers:
+            blockers.append("safety_gate_failed")
+    cell["blockers"] = blockers
+    return cell, failed
+
+
+def run_exp096_round_log_proposal_source_comparison_panel(
+    *,
+    model_ids: Sequence[str] | None = None,
+    device: str = "cpu",
+    dtype: str = "float32",
+    prompts: Sequence[tuple[str, str]] | None = None,
+    max_prompts: int = DEFAULT_PANEL_PROMPTS,
+    max_new_tokens_values: Sequence[int] = DEFAULT_MAX_NEW_TOKENS_VALUES,
+    compressors_requested: Sequence[str] = DEFAULT_PANEL_COMPRESSORS,
+    proposal_sources: Sequence[str] = DEFAULT_COMPARISON_PROPOSAL_SOURCES,
+    draft_len: int = 4,
+    local_files_only: bool = False,
+    allow_model_blocked: bool = True,
+    allow_provider_blocked: bool = True,
+    baseline_generation_fn: Callable[..., dict[str, Any]] | None = None,
+    draft_shadow_generation_fn: Callable[..., dict[str, Any]] | None = None,
+    runtime_loader: Callable[..., Any] | None = None,
+) -> dict[str, Any]:
+    """Run Experiment 096 L3 round-log vs shadow top-1 proposal source comparison."""
+    from exactkv.attention.generation_shadow_observer import resolve_panel_compressors
+
+    models_requested = list(model_ids or DEFAULT_COMPARISON_MODEL_IDS)
+    sources = list(proposal_sources)
+    prompt_panel = list(prompts) if prompts is not None else default_panel_prompts(max_prompts)
+    runnable, _blocked_comp = resolve_panel_compressors(compressors_requested)
+    mnt_values = list(max_new_tokens_values)
+
+    blockers: list[str] = []
+    for src in sources:
+        if src not in PROPOSAL_SOURCES:
+            blockers.append(f"unknown proposal_source: {src}")
+    if PROPOSAL_SOURCE_SYNTHETIC in sources and baseline_generation_fn is None:
+        blockers.append("synthetic_shadow_provider reserved for tests")
+
+    safety_spec_validation = validate_integration_proposal(L3_PANEL_SAFETY_SPEC_PROPOSAL)
+    if not safety_spec_validation["pass"]:
+        blockers.append("safety_spec_validation_failed")
+
+    cells: list[dict[str, Any]] = []
+    models_loaded: list[str] = []
+    models_blocked: list[dict[str, Any]] = []
+    successful_cells = 0
+    blocked_cells = 0
+    failed_cells = 0
+    sg_ok = 0
+    tok_match_cells = 0
+    txt_match_cells = 0
+    all_rl_records: list[dict[str, Any]] = []
+    all_sh_records: list[dict[str, Any]] = []
+    all_side_by_side: list[dict[str, Any]] = []
+
+    for model_id in models_requested:
+        runtime: Any | None = None
+        load_blockers: list[str] = []
+        if baseline_generation_fn is None or draft_shadow_generation_fn is None:
+            try:
+                if runtime_loader is not None:
+                    runtime = runtime_loader(
+                        model_id=model_id,
+                        device=device,
+                        dtype=dtype,
+                        local_files_only=local_files_only,
+                    )
+                else:
+                    from exactkv.runtime.exactkv_generator import ExactKVGenerator  # noqa: F401
+                    from exactkv.runtime.model_runtime import ModelRuntime
+
+                    runtime = ModelRuntime(model_id, device=device, dtype=dtype)
+            except Exception as exc:  # noqa: BLE001
+                load_blockers.append(f"{type(exc).__name__}: {exc}")
+
+        if runtime is None and (baseline_generation_fn is None or draft_shadow_generation_fn is None):
+            reason = "; ".join(load_blockers) or "model load failed"
+            models_blocked.append({"model_id": model_id, "blocked_reason": reason})
+            for prompt_id, prompt_text in prompt_panel:
+                preview = prompt_text if len(prompt_text) <= 80 else prompt_text[:77] + "..."
+                for compressor in runnable:
+                    for max_new in mnt_values:
+                        blocked_cells += 1
+                        cells.append({
+                            "model_id": model_id,
+                            "prompt_id": prompt_id,
+                            "prompt_preview": preview,
+                            "compressor": compressor,
+                            "max_new_tokens": max_new,
+                            "generation_completed": False,
+                            "baseline_vs_draft_shadow_token_match": False,
+                            "baseline_vs_draft_shadow_text_match": False,
+                            "exactkv_failures": {"baseline": None, "draft_shadow": None},
+                            "proposal_source_records": {s: [] for s in sources},
+                            "side_by_side_round_records": [],
+                            "safety_gates": {},
+                            "blockers": [f"model_blocked: {reason}"],
+                        })
+            if not allow_model_blocked:
+                blockers.append(f"model blocked: {model_id}: {reason}")
+            continue
+
+        models_loaded.append(model_id)
+        for prompt_id, prompt_text in prompt_panel:
+            for compressor in runnable:
+                for max_new in mnt_values:
+                    cell, failed = _build_comparison_panel_cell(
+                        model_id=model_id,
+                        prompt_id=prompt_id,
+                        prompt_text=prompt_text,
+                        compressor=compressor,
+                        max_new_tokens=max_new,
+                        proposal_sources=sources,
+                        runtime=runtime,
+                        draft_len=draft_len,
+                        baseline_generation_fn=baseline_generation_fn,
+                        draft_shadow_generation_fn=draft_shadow_generation_fn,
+                        allow_provider_blocked=allow_provider_blocked,
+                    )
+                    cells.append(cell)
+
+                    if cell.get("generation_completed"):
+                        successful_cells += 1
+                    else:
+                        blocked_cells += 1
+
+                    if cell.get("baseline_vs_draft_shadow_token_match"):
+                        tok_match_cells += 1
+                    if cell.get("baseline_vs_draft_shadow_text_match"):
+                        txt_match_cells += 1
+                    if _cell_safety_gates_ok(cell.get("safety_gates") or {}):
+                        sg_ok += 1
+                    if failed:
+                        failed_cells += 1
+
+                    psr = cell.get("proposal_source_records") or {}
+                    rl_recs = list(psr.get(PROPOSAL_SOURCE_ROUND_LOG) or [])
+                    sh_recs = list(psr.get(PROPOSAL_SOURCE_DECODE_TOP1) or [])
+                    all_rl_records.extend(rl_recs)
+                    all_sh_records.extend(sh_recs)
+                    all_side_by_side.extend(cell.get("side_by_side_round_records") or [])
+
+    source_summaries: list[dict[str, Any]] = []
+    for src in sources:
+        if src == PROPOSAL_SOURCE_ROUND_LOG:
+            recs = all_rl_records
+        elif src == PROPOSAL_SOURCE_DECODE_TOP1:
+            recs = all_sh_records
+        else:
+            recs = []
+            for cell in cells:
+                recs.extend((cell.get("proposal_source_records") or {}).get(src) or [])
+        source_summaries.append(
+            summarize_proposal_source_rounds(recs, proposal_source=src),
+        )
+
+    rl_match = next(
+        (s["prefix_match_rate"] for s in source_summaries if s["proposal_source"] == PROPOSAL_SOURCE_ROUND_LOG),
+        0.0,
+    )
+    sh_match = next(
+        (s["prefix_match_rate"] for s in source_summaries if s["proposal_source"] == PROPOSAL_SOURCE_DECODE_TOP1),
+        0.0,
+    )
+    side_by_side_summary = aggregate_side_by_side_summary(
+        all_side_by_side,
+        round_log_prefix_match_rate=rl_match,
+        shadow_prefix_match_rate=sh_match,
+    )
+
+    total_cells = len(cells)
+    safety_gates_all_ok = sg_ok == total_cells and total_cells > 0 and failed_cells == 0
+    decision, decision_reason = compute_comparison_decision(
+        source_summaries=source_summaries,
+        total_generation_cells=total_cells,
+        successful_generation_cells=successful_cells,
+        blocked_generation_cells=blocked_cells,
+        safety_gates_all_ok=safety_gates_all_ok,
+    )
+
+    if not safety_spec_validation["pass"]:
+        status = "failed"
+    elif failed_cells > 0:
+        status = "failed"
+    elif successful_cells == total_cells and total_cells > 0:
+        status = "panel_complete"
+    elif successful_cells > 0:
+        status = "panel_partial"
+    else:
+        status = "blocked"
+
+    safety_top = default_no_commit_safety_result()
+
+    return {
+        "experiment_id": EXPERIMENT_096_ID,
+        "status": status,
+        "phase": PHASE_19B,
+        "safety_level": SAFETY_LEVEL,
+        "safety_spec_validation": safety_spec_validation,
+        "models_requested": models_requested,
+        "models_loaded": models_loaded,
+        "models_blocked": models_blocked,
+        "device": device,
+        "dtype": dtype,
+        "compressors_requested": list(compressors_requested),
+        "compressors_run": runnable,
+        "max_new_tokens_values": mnt_values,
+        "proposal_sources": sources,
+        "total_generation_cells": total_cells,
+        "successful_generation_cells": successful_cells,
+        "blocked_generation_cells": blocked_cells,
+        "source_summaries": source_summaries,
+        "side_by_side_summary": side_by_side_summary,
+        "decision_recommendation": decision,
+        "decision_reason": decision_reason,
+        "exactkv_failure_summary": {
+            "baseline_failures": sum(
+                1
+                for c in cells
+                if (c.get("exactkv_failures") or {}).get("baseline")
+            ),
+            "draft_shadow_failures": sum(
+                1
+                for c in cells
+                if (c.get("exactkv_failures") or {}).get("draft_shadow")
+            ),
+        },
+        "parity_summary": {
+            "total_cells": total_cells,
+            "baseline_vs_draft_shadow_token_match_cells": tok_match_cells,
+            "baseline_vs_draft_shadow_text_match_cells": txt_match_cells,
+            "failed_cells": failed_cells,
+        },
+        "safety_gate_summary": {
+            "cells_all_gates_ok": sg_ok,
+            "cells_with_gate_failure": total_cells - sg_ok,
+        },
+        "proposal_used_for_token_commit": safety_top.proposal_used_for_token_commit,
+        "proposal_exposed_to_generator": safety_top.proposal_exposed_to_generator,
+        "generated_output_modified_by_proposal": (
+            safety_top.generated_output_modified_by_proposal
+        ),
+        "default_runtime_changed": safety_top.default_runtime_changed,
+        "cells": cells,
+        "recommended_next_phase": RECOMMENDED_NEXT_PHASE_19B,
+        "claim_note": (
+            "L3 proposal source comparison panel. Proposals are diagnostic only."
+        ),
+        "forbidden_claims": list(SHADOW_FORBIDDEN_CLAIMS),
+        "blockers": blockers,
+        "limitations": [
+            "L3 proposal source comparison only; not L4 verifier-mediated compressed draft.",
+            "Committed tokens used for comparison only; never as proposal sources.",
+            "Proposal coverage and prefix match rate supplementary; not exactness.",
+            "Promoting a proposal source for L3 does not authorize L4 commit integration.",
+            "ExactKVGenerator and default runtime unchanged.",
+            "No CUDA/Triton/vLLM/serving integration.",
+        ],
+        "no_performance_claims_note": NO_PERFORMANCE_CLAIMS_NOTE,
+    }
+
+
+def validate_exp096_report(report: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    required = (
+        "experiment_id",
+        "status",
+        "safety_level",
+        "safety_spec_validation",
+        "models_requested",
+        "models_loaded",
+        "models_blocked",
+        "device",
+        "dtype",
+        "compressors_requested",
+        "compressors_run",
+        "max_new_tokens_values",
+        "proposal_sources",
+        "total_generation_cells",
+        "successful_generation_cells",
+        "blocked_generation_cells",
+        "source_summaries",
+        "side_by_side_summary",
+        "decision_recommendation",
+        "decision_reason",
+        "exactkv_failure_summary",
+        "parity_summary",
+        "safety_gate_summary",
+        "proposal_used_for_token_commit",
+        "proposal_exposed_to_generator",
+        "generated_output_modified_by_proposal",
+        "default_runtime_changed",
+        "blockers",
+        "limitations",
+        "no_performance_claims_note",
+        "cells",
+    )
+    for key in required:
+        if key not in report:
+            errors.append(f"missing key: {key}")
+
+    if report.get("experiment_id") != EXPERIMENT_096_ID:
+        errors.append("experiment_id mismatch")
+
+    if report.get("safety_level") != SAFETY_LEVEL:
+        errors.append("safety_level mismatch")
+
+    if report.get("decision_recommendation") not in COMPARISON_DECISION_VALUES:
+        errors.append("invalid decision_recommendation")
+
+    if report.get("proposal_used_for_token_commit") is not False:
+        errors.append("proposal_used_for_token_commit must be false")
+
+    if report.get("proposal_exposed_to_generator") is not False:
+        errors.append("proposal_exposed_to_generator must be false")
+
+    spec_val = report.get("safety_spec_validation") or {}
+    if spec_val.get("pass") is not True:
+        errors.append("safety_spec_validation must pass")
+
+    summary_keys = (
+        "proposal_source",
+        "total_possible_rounds",
+        "successful_proposals",
+        "blocked_proposals",
+        "proposal_coverage_rate",
+        "matched_committed_prefix",
+        "not_matched_committed_prefix",
+        "prefix_match_rate",
+        "block_reason_summary",
+        "source_field_summary",
+    )
+    for idx, summ in enumerate(report.get("source_summaries") or []):
+        for sk in summary_keys:
+            if sk not in summ:
+                errors.append(f"source_summaries[{idx}] missing {sk}")
+
+    sbs_keys = (
+        "rounds_where_both_sources_available",
+        "rounds_where_only_round_log_available",
+        "rounds_where_only_shadow_top1_available",
+        "rounds_where_neither_available",
+        "rounds_where_sources_agree",
+        "rounds_where_sources_disagree",
+        "match_rate_delta",
+    )
+    sbs = report.get("side_by_side_summary") or {}
+    for sk in sbs_keys:
+        if sk not in sbs:
+            errors.append(f"side_by_side_summary missing {sk}")
+
+    cell_keys = (
+        "model_id",
+        "prompt_id",
+        "prompt_preview",
+        "compressor",
+        "max_new_tokens",
+        "generation_completed",
+        "baseline_vs_draft_shadow_token_match",
+        "baseline_vs_draft_shadow_text_match",
+        "exactkv_failures",
+        "proposal_source_records",
+        "side_by_side_round_records",
+        "safety_gates",
+        "blockers",
+    )
+    round_keys = (
+        "round_index",
+        "committed_token_ids_for_comparison",
+        "exactkv_round_log_draft_tokens_status",
+        "exactkv_round_log_draft_tokens_ids",
+        "decode_time_shadow_top1_status",
+        "decode_time_shadow_top1_ids",
+        "sources_agree",
+        "source_match_summary",
+        "interpretation_note",
+    )
+    for idx, cell in enumerate(report.get("cells") or []):
+        for ck in cell_keys:
+            if ck not in cell:
+                errors.append(f"cells[{idx}] missing {ck}")
+        for ridx, rnd in enumerate(cell.get("side_by_side_round_records") or []):
+            for rk in round_keys:
+                if rk not in rnd:
+                    errors.append(f"cells[{idx}].side_by_side_round_records[{ridx}] missing {rk}")
+
+    if report.get("status") == "failed":
+        parity = report.get("parity_summary") or {}
+        if parity.get("failed_cells", 0) == 0 and not errors:
+            pass
 
     return errors

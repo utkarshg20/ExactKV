@@ -117,7 +117,7 @@ Self-validates against Phase 18A `validate_integration_proposal()` as `L3_GUARDE
 
 ## 15. Recommended next phase
 
-**Phase 19B:** round-log proposal panel validation — expanded comparison of round-log draft proposals vs shadow top-1 across panel dimensions without L4 commit integration.
+**Phase 19B:** round-log proposal source comparison — side-by-side comparison of `exactkv_round_log_draft_tokens` vs `decode_time_shadow_top1` across a multi-model L3 no-commit panel. See [`PHASE_19B_ROUND_LOG_PROPOSAL_SOURCE_COMPARISON.md`](PHASE_19B_ROUND_LOG_PROPOSAL_SOURCE_COMPARISON.md).
 
 ---
 

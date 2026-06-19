@@ -74,6 +74,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | L3 shadow top-1 extraction hardening | Phase 18D / Exp 093 | [`PHASE_18D_SHADOW_TOP1_EXTRACTION_HARDENING.md`](PHASE_18D_SHADOW_TOP1_EXTRACTION_HARDENING.md); provenance-aware extraction; **panel-scoped** |
 | L3 shadow proposal provenance audit | Phase 18E / Exp 094 | [`PHASE_18E_SHADOW_PROPOSAL_PROVENANCE_AUDIT.md`](PHASE_18E_SHADOW_PROPOSAL_PROVENANCE_AUDIT.md); decision gate; **panel-scoped** |
 | L3 round-log draft proposal source | Phase 19A / Exp 095 | [`PHASE_19A_ROUND_LOG_DRAFT_PROPOSAL_SOURCE.md`](PHASE_19A_ROUND_LOG_DRAFT_PROPOSAL_SOURCE.md); alternative proposal source; **panel-scoped** |
+| L3 proposal source comparison panel | Phase 19B / Exp 096 | [`PHASE_19B_ROUND_LOG_PROPOSAL_SOURCE_COMPARISON.md`](PHASE_19B_ROUND_LOG_PROPOSAL_SOURCE_COMPARISON.md); round-log vs shadow top-1; **panel-scoped** |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

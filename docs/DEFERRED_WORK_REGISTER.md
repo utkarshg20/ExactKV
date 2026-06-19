@@ -192,6 +192,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **L3 shadow top-1 extraction hardening** | **Complete** | Phase 18D ✅ | [`PHASE_18D_SHADOW_TOP1_EXTRACTION_HARDENING.md`](PHASE_18D_SHADOW_TOP1_EXTRACTION_HARDENING.md); provenance-aware extraction; coverage comparison |
 | — | **L3 shadow proposal provenance audit** | **Complete** | Phase 18E ✅ | [`PHASE_18E_SHADOW_PROPOSAL_PROVENANCE_AUDIT.md`](PHASE_18E_SHADOW_PROPOSAL_PROVENANCE_AUDIT.md); taxonomy + decision gate |
 | — | **L3 round-log draft proposal source** | **Complete** | Phase 19A ✅ | [`PHASE_19A_ROUND_LOG_DRAFT_PROPOSAL_SOURCE.md`](PHASE_19A_ROUND_LOG_DRAFT_PROPOSAL_SOURCE.md); `exactkv_round_log_draft_tokens` scaffold |
+| — | **L3 proposal source comparison panel** | **Complete** | Phase 19B ✅ | [`PHASE_19B_ROUND_LOG_PROPOSAL_SOURCE_COMPARISON.md`](PHASE_19B_ROUND_LOG_PROPOSAL_SOURCE_COMPARISON.md); round-log vs `decode_time_shadow_top1` |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 
