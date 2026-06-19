@@ -111,7 +111,9 @@ Runtime fallback/rollback, stages 1–3 implementation, L4 parity panel, exactkv
 
 ## 15. Recommended next phase
 
-**Phase 21A:** L4 no-op opt-in scaffold (`phase21a_l4_noop_opt_in_scaffold`).
+**Phase 21A:** L4 no-op opt-in scaffold — complete. See [`PHASE_21A_L4_NOOP_OPT_IN_SCAFFOLD.md`](PHASE_21A_L4_NOOP_OPT_IN_SCAFFOLD.md).
+
+**Next:** Phase 21B panel validation (`phase21b_l4_noop_scaffold_panel_validation`).
 
 ---
 

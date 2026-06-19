@@ -849,6 +849,8 @@ Formal scope: [`V13_SCOPE_STATEMENT.md`](V13_SCOPE_STATEMENT.md) (Phases 0–9; 
 | 20B | L4 verifier-mediated design spec | ✅ [`PHASE_20B_L4_VERIFIER_MEDIATED_DESIGN_SPEC.md`](PHASE_20B_L4_VERIFIER_MEDIATED_DESIGN_SPEC.md) |
 | 20C | L4 contract tests (no runtime) | ✅ [`PHASE_20C_L4_CONTRACT_TESTS_NO_RUNTIME.md`](PHASE_20C_L4_CONTRACT_TESTS_NO_RUNTIME.md) |
 | 20D | L4 integration plan review | ✅ [`PHASE_20D_L4_INTEGRATION_PLAN_REVIEW.md`](PHASE_20D_L4_INTEGRATION_PLAN_REVIEW.md) |
+| 21A | L4 no-op opt-in scaffold | ✅ [`PHASE_21A_L4_NOOP_OPT_IN_SCAFFOLD.md`](PHASE_21A_L4_NOOP_OPT_IN_SCAFFOLD.md) |
+| 21B | L4 no-op scaffold panel validation | ✅ [`PHASE_21B_L4_NOOP_SCAFFOLD_PANEL_VALIDATION.md`](PHASE_21B_L4_NOOP_SCAFFOLD_PANEL_VALIDATION.md) |
 | 10I | Benchmark gap analysis | ✅ [`BENCHMARK_GAP_ANALYSIS.md`](BENCHMARK_GAP_ANALYSIS.md) |
 | 10C | Parallel work integration | ✅ [`PARALLEL_WORK_INTEGRATION_REPORT.md`](PARALLEL_WORK_INTEGRATION_REPORT.md) |
 | 9C | Launch validation & should-fix | Planned |

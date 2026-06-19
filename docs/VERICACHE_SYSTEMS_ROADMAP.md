@@ -277,6 +277,10 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 20D (L4 integration plan):** [`PHASE_20D_L4_INTEGRATION_PLAN_REVIEW.md`](PHASE_20D_L4_INTEGRATION_PLAN_REVIEW.md) — staged integration plan; stage 4 blocked.
 
-**Post-11K / ... / Post-20C / Post-20D:** Phase 16 complete; Phase 17–20D safety spec, L3 work, L4 design, contract tests, and integration plan; default CLI/runtime unchanged.
+**Phase 21A (L4 no-op scaffold):** [`PHASE_21A_L4_NOOP_OPT_IN_SCAFFOLD.md`](PHASE_21A_L4_NOOP_OPT_IN_SCAFFOLD.md) — stage 1 no-op opt-in scaffold; research-script flag only.
+
+**Phase 21B (L4 no-op panel):** [`PHASE_21B_L4_NOOP_SCAFFOLD_PANEL_VALIDATION.md`](PHASE_21B_L4_NOOP_SCAFFOLD_PANEL_VALIDATION.md) — real-model panel validation; commit blocked.
+
+**Post-11K / ... / Post-21A / Post-21B:** Phase 16 complete; Phase 17–21B L4 safety track; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).
