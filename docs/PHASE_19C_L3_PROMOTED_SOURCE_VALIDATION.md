@@ -149,7 +149,7 @@ Self-validates against Phase 18A `validate_integration_proposal()` as `L3_GUARDE
 
 ## 17. Recommended next phase
 
-**Phase 20A:** pre-L4 safety gate review — design review before any verifier-mediated compressed draft work.
+**Phase 20A:** pre-L4 safety gate review. See [`PHASE_20A_PRE_L4_SAFETY_GATE_REVIEW.md`](PHASE_20A_PRE_L4_SAFETY_GATE_REVIEW.md).
 
 ---
 

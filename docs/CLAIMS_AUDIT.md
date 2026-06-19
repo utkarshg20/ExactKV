@@ -76,6 +76,9 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | L3 round-log draft proposal source | Phase 19A / Exp 095 | [`PHASE_19A_ROUND_LOG_DRAFT_PROPOSAL_SOURCE.md`](PHASE_19A_ROUND_LOG_DRAFT_PROPOSAL_SOURCE.md); alternative proposal source; **panel-scoped** |
 | L3 proposal source comparison panel | Phase 19B / Exp 096 | [`PHASE_19B_ROUND_LOG_PROPOSAL_SOURCE_COMPARISON.md`](PHASE_19B_ROUND_LOG_PROPOSAL_SOURCE_COMPARISON.md); round-log vs shadow top-1; **panel-scoped** |
 | L3 promoted round-log source validation | Phase 19C / Exp 097 | [`PHASE_19C_L3_PROMOTED_SOURCE_VALIDATION.md`](PHASE_19C_L3_PROMOTED_SOURCE_VALIDATION.md); viability gates; **panel-scoped** |
+| Pre-L4 safety gate review | Phase 20A / Exp 098 | [`PHASE_20A_PRE_L4_SAFETY_GATE_REVIEW.md`](PHASE_20A_PRE_L4_SAFETY_GATE_REVIEW.md); L4 design spec gate only; **not implementation** |
+| L4 verifier-mediated design spec | Phase 20B / Exp 099 | [`PHASE_20B_L4_VERIFIER_MEDIATED_DESIGN_SPEC.md`](PHASE_20B_L4_VERIFIER_MEDIATED_DESIGN_SPEC.md); contracts only; **not implementation** |
+| L4 contract tests (no runtime) | Phase 20C / Exp 100 | [`PHASE_20C_L4_CONTRACT_TESTS_NO_RUNTIME.md`](PHASE_20C_L4_CONTRACT_TESTS_NO_RUNTIME.md); synthetic contract tests; **not runtime** |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

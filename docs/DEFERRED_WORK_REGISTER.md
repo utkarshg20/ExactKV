@@ -194,6 +194,9 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **L3 round-log draft proposal source** | **Complete** | Phase 19A ✅ | [`PHASE_19A_ROUND_LOG_DRAFT_PROPOSAL_SOURCE.md`](PHASE_19A_ROUND_LOG_DRAFT_PROPOSAL_SOURCE.md); `exactkv_round_log_draft_tokens` scaffold |
 | — | **L3 proposal source comparison panel** | **Complete** | Phase 19B ✅ | [`PHASE_19B_ROUND_LOG_PROPOSAL_SOURCE_COMPARISON.md`](PHASE_19B_ROUND_LOG_PROPOSAL_SOURCE_COMPARISON.md); round-log vs `decode_time_shadow_top1` |
 | — | **L3 promoted round-log source validation** | **Complete** | Phase 19C ✅ | [`PHASE_19C_L3_PROMOTED_SOURCE_VALIDATION.md`](PHASE_19C_L3_PROMOTED_SOURCE_VALIDATION.md); viability gates on promoted source |
+| — | **Pre-L4 safety gate review** | **Complete** | Phase 20A ✅ | [`PHASE_20A_PRE_L4_SAFETY_GATE_REVIEW.md`](PHASE_20A_PRE_L4_SAFETY_GATE_REVIEW.md); L4 design spec authorization gate |
+| — | **L4 verifier-mediated design spec** | **Complete** | Phase 20B ✅ | [`PHASE_20B_L4_VERIFIER_MEDIATED_DESIGN_SPEC.md`](PHASE_20B_L4_VERIFIER_MEDIATED_DESIGN_SPEC.md); design contracts; implementation blocked |
+| — | **L4 contract tests (no runtime)** | **Complete** | Phase 20C ✅ | [`PHASE_20C_L4_CONTRACT_TESTS_NO_RUNTIME.md`](PHASE_20C_L4_CONTRACT_TESTS_NO_RUNTIME.md); synthetic contract tests; runtime blocked |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

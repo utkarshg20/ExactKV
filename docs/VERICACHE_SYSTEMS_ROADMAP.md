@@ -269,6 +269,12 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 19C (Promoted-source validation):** [`PHASE_19C_L3_PROMOTED_SOURCE_VALIDATION.md`](PHASE_19C_L3_PROMOTED_SOURCE_VALIDATION.md) — `exactkv_round_log_draft_tokens` promoted L3 validation.
 
-**Post-11K / ... / Post-19B / Post-19C:** Phase 16 complete; Phase 17–19C safety spec and L3 scaffold/panel/comparison/promoted-source validation; default CLI/runtime unchanged.
+**Phase 20A (Pre-L4 safety gate review):** [`PHASE_20A_PRE_L4_SAFETY_GATE_REVIEW.md`](PHASE_20A_PRE_L4_SAFETY_GATE_REVIEW.md) — L4 design spec gate; implementation blocked.
+
+**Phase 20B (L4 design spec):** [`PHASE_20B_L4_VERIFIER_MEDIATED_DESIGN_SPEC.md`](PHASE_20B_L4_VERIFIER_MEDIATED_DESIGN_SPEC.md) — verifier-mediated compressed draft design contracts.
+
+**Phase 20C (L4 contract tests):** [`PHASE_20C_L4_CONTRACT_TESTS_NO_RUNTIME.md`](PHASE_20C_L4_CONTRACT_TESTS_NO_RUNTIME.md) — synthetic contract tests; no runtime integration.
+
+**Post-11K / ... / Post-20A / Post-20B / Post-20C:** Phase 16 complete; Phase 17–20C safety spec, L3 work, pre-L4 gate, L4 design spec, and contract tests; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).
