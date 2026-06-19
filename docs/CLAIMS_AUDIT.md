@@ -79,6 +79,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | Pre-L4 safety gate review | Phase 20A / Exp 098 | [`PHASE_20A_PRE_L4_SAFETY_GATE_REVIEW.md`](PHASE_20A_PRE_L4_SAFETY_GATE_REVIEW.md); L4 design spec gate only; **not implementation** |
 | L4 verifier-mediated design spec | Phase 20B / Exp 099 | [`PHASE_20B_L4_VERIFIER_MEDIATED_DESIGN_SPEC.md`](PHASE_20B_L4_VERIFIER_MEDIATED_DESIGN_SPEC.md); contracts only; **not implementation** |
 | L4 contract tests (no runtime) | Phase 20C / Exp 100 | [`PHASE_20C_L4_CONTRACT_TESTS_NO_RUNTIME.md`](PHASE_20C_L4_CONTRACT_TESTS_NO_RUNTIME.md); synthetic contract tests; **not runtime** |
+| L4 integration plan review | Phase 20D / Exp 101 | [`PHASE_20D_L4_INTEGRATION_PLAN_REVIEW.md`](PHASE_20D_L4_INTEGRATION_PLAN_REVIEW.md); staged plan; **not runtime** |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

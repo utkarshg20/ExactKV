@@ -197,6 +197,7 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **Pre-L4 safety gate review** | **Complete** | Phase 20A ✅ | [`PHASE_20A_PRE_L4_SAFETY_GATE_REVIEW.md`](PHASE_20A_PRE_L4_SAFETY_GATE_REVIEW.md); L4 design spec authorization gate |
 | — | **L4 verifier-mediated design spec** | **Complete** | Phase 20B ✅ | [`PHASE_20B_L4_VERIFIER_MEDIATED_DESIGN_SPEC.md`](PHASE_20B_L4_VERIFIER_MEDIATED_DESIGN_SPEC.md); design contracts; implementation blocked |
 | — | **L4 contract tests (no runtime)** | **Complete** | Phase 20C ✅ | [`PHASE_20C_L4_CONTRACT_TESTS_NO_RUNTIME.md`](PHASE_20C_L4_CONTRACT_TESTS_NO_RUNTIME.md); synthetic contract tests; runtime blocked |
+| — | **L4 integration plan review** | **Complete** | Phase 20D ✅ | [`PHASE_20D_L4_INTEGRATION_PLAN_REVIEW.md`](PHASE_20D_L4_INTEGRATION_PLAN_REVIEW.md); staged integration plan; runtime blocked |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 

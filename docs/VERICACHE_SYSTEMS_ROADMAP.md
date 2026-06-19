@@ -275,6 +275,8 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 20C (L4 contract tests):** [`PHASE_20C_L4_CONTRACT_TESTS_NO_RUNTIME.md`](PHASE_20C_L4_CONTRACT_TESTS_NO_RUNTIME.md) — synthetic contract tests; no runtime integration.
 
-**Post-11K / ... / Post-20A / Post-20B / Post-20C:** Phase 16 complete; Phase 17–20C safety spec, L3 work, pre-L4 gate, L4 design spec, and contract tests; default CLI/runtime unchanged.
+**Phase 20D (L4 integration plan):** [`PHASE_20D_L4_INTEGRATION_PLAN_REVIEW.md`](PHASE_20D_L4_INTEGRATION_PLAN_REVIEW.md) — staged integration plan; stage 4 blocked.
+
+**Post-11K / ... / Post-20C / Post-20D:** Phase 16 complete; Phase 17–20D safety spec, L3 work, L4 design, contract tests, and integration plan; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

@@ -117,7 +117,9 @@ ExactKVGenerator integration plan, runtime fallback/rollback, L4 parity panel, e
 
 ## 16. Recommended next phase
 
-**Phase 20D:** L4 integration plan review (`phase20d_l4_integration_plan_review`).
+**Phase 20D:** L4 integration plan review — complete. See [`PHASE_20D_L4_INTEGRATION_PLAN_REVIEW.md`](PHASE_20D_L4_INTEGRATION_PLAN_REVIEW.md).
+
+**Next:** Phase 21A no-op opt-in scaffold (`phase21a_l4_noop_opt_in_scaffold`).
 
 ---
 
