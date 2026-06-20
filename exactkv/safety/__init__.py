@@ -31,6 +31,11 @@ from exactkv.safety.l4_integration_plan_review import (
     run_exp101_l4_integration_plan_review,
     validate_exp101_report,
 )
+from exactkv.safety.l4_trace_only_dry_run_design import (
+    EXPERIMENT_104_ID,
+    run_exp104_l4_trace_only_dry_run_design,
+    validate_exp104_report,
+)
 from exactkv.safety.l4_noop_opt_in_scaffold import (
     EXPERIMENT_102_ID,
     EXPERIMENT_103_ID,
@@ -60,6 +65,7 @@ __all__ = [
     "EXPERIMENT_101_ID",
     "EXPERIMENT_102_ID",
     "EXPERIMENT_103_ID",
+    "EXPERIMENT_104_ID",
     "GATES",
     "MANDATORY_INVARIANTS",
     "RECOMMENDED_NEXT_PHASE",
@@ -76,6 +82,7 @@ __all__ = [
     "run_exp101_l4_integration_plan_review",
     "run_exp102_l4_noop_opt_in_scaffold",
     "run_exp103_l4_noop_scaffold_panel_validation",
+    "run_exp104_l4_trace_only_dry_run_design",
     "validate_exp090_report",
     "validate_exp091_report",
     "validate_exp092_report",
@@ -85,5 +92,6 @@ __all__ = [
     "validate_exp101_report",
     "validate_exp102_report",
     "validate_exp103_panel_report",
+    "validate_exp104_report",
     "validate_integration_proposal",
 ]

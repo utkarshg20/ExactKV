@@ -96,7 +96,9 @@ Runtime fallback/rollback, stages 2–4, L4 commit parity panel, exactkv_failure
 
 ## 13. Recommended next phase
 
-**Phase 21C:** L4 trace-only dry-run design (`phase21c_l4_trace_only_dry_run_design`).
+**Phase 21C:** L4 trace-only dry-run design — complete. See [`PHASE_21C_L4_TRACE_ONLY_DRY_RUN_DESIGN.md`](PHASE_21C_L4_TRACE_ONLY_DRY_RUN_DESIGN.md).
+
+**Next:** Phase 21D trace-only dry-run scaffold (`phase21d_l4_trace_only_dry_run_scaffold`).
 
 ---
 

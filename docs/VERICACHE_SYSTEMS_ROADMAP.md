@@ -281,6 +281,8 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 21B (L4 no-op panel):** [`PHASE_21B_L4_NOOP_SCAFFOLD_PANEL_VALIDATION.md`](PHASE_21B_L4_NOOP_SCAFFOLD_PANEL_VALIDATION.md) — real-model panel validation; commit blocked.
 
-**Post-11K / ... / Post-21A / Post-21B:** Phase 16 complete; Phase 17–21B L4 safety track; default CLI/runtime unchanged.
+**Phase 21C (L4 trace-only design):** [`PHASE_21C_L4_TRACE_ONLY_DRY_RUN_DESIGN.md`](PHASE_21C_L4_TRACE_ONLY_DRY_RUN_DESIGN.md) — Stage 2 trace-only dry-run design.
+
+**Post-11K / ... / Post-21B / Post-21C:** Phase 16 complete; Phase 17–21C L4 safety track; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

@@ -82,6 +82,7 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | L4 integration plan review | Phase 20D / Exp 101 | [`PHASE_20D_L4_INTEGRATION_PLAN_REVIEW.md`](PHASE_20D_L4_INTEGRATION_PLAN_REVIEW.md); staged plan; **not runtime** |
 | L4 no-op opt-in scaffold | Phase 21A / Exp 102 | [`PHASE_21A_L4_NOOP_OPT_IN_SCAFFOLD.md`](PHASE_21A_L4_NOOP_OPT_IN_SCAFFOLD.md); stage 1 no-op; **not commit** |
 | L4 no-op scaffold panel validation | Phase 21B / Exp 103 | [`PHASE_21B_L4_NOOP_SCAFFOLD_PANEL_VALIDATION.md`](PHASE_21B_L4_NOOP_SCAFFOLD_PANEL_VALIDATION.md); panel parity; **not commit** |
+| L4 trace-only dry-run design | Phase 21C / Exp 104 | [`PHASE_21C_L4_TRACE_ONLY_DRY_RUN_DESIGN.md`](PHASE_21C_L4_TRACE_ONLY_DRY_RUN_DESIGN.md); Stage 2 design; **not runtime** |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |
