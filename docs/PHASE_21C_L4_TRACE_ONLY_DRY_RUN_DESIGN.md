@@ -106,7 +106,9 @@ Stage 2 scaffold implementation, stages 3–4, L4 commit parity panel, exactkv_f
 
 ## 13. Recommended next phase
 
-**Phase 21D:** L4 trace-only dry-run scaffold (`phase21d_l4_trace_only_dry_run_scaffold`).
+**Phase 21D:** L4 trace-only dry-run scaffold — complete. See [`PHASE_21D_L4_TRACE_ONLY_DRY_RUN_SCAFFOLD.md`](PHASE_21D_L4_TRACE_ONLY_DRY_RUN_SCAFFOLD.md).
+
+**Next:** Phase 21E trace-only panel validation (`phase21e_l4_trace_only_dry_run_panel_validation`).
 
 ---
 

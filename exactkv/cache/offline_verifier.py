@@ -28,7 +28,7 @@ from exactkv.cache.hf_kv_restore import (
 )
 from exactkv.cache.compressed_state import CompressedKVState
 from exactkv.cache.storage import KVStorageBackend, KVStorageHandle
-from exactkv.compressors import get_compressor
+from exactkv.compressors.registry import get_compressor
 from exactkv.runtime.generation import generate_full_greedy
 from exactkv.runtime.model_runtime import ModelRuntime
 from exactkv.verification.acceptance import AcceptanceResult, compute_acceptance

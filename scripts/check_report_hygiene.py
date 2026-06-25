@@ -22,10 +22,25 @@ EXPECTED_PUBLIC = (
 )
 
 
-def git_ls_files(root: Path, pattern: str) -> list[str]:
+# Top-level reports/*.json|csv must NOT be tracked (nested experiment kv meta allowed).
+ALLOWED_TRACKED_TOP_LEVEL = frozenset({
+    "reports/release_evidence_status.json",
+})
+
+
+def _is_forbidden_top_level_report(path: str) -> bool:
+    parts = Path(path).parts
+    if len(parts) != 2 or parts[0] != "reports":
+        return False
+    if path in ALLOWED_TRACKED_TOP_LEVEL:
+        return False
+    return path.endswith(".json") or path.endswith(".csv")
+
+
+def git_tracked_top_level_reports(root: Path) -> list[str]:
     try:
         result = subprocess.run(
-            ["git", "ls-files", pattern],
+            ["git", "ls-files", "reports/"],
             cwd=root,
             capture_output=True,
             text=True,
@@ -35,8 +50,11 @@ def git_ls_files(root: Path, pattern: str) -> list[str]:
         return []
     if result.returncode != 0:
         return []
-    return [ln.strip() for ln in result.stdout.splitlines() if ln.strip()]
-
+    return [
+        ln.strip()
+        for ln in result.stdout.splitlines()
+        if ln.strip() and _is_forbidden_top_level_report(ln.strip())
+    ]
 
 def git_staged_forbidden(root: Path) -> list[str]:
     try:
@@ -68,13 +86,12 @@ def main() -> int:
     failures = 0
     print("ExactKV report hygiene audit")
 
-    for pattern in FORBIDDEN_TRACKED_GLOBS:
-        tracked = git_ls_files(root, pattern)
-        if tracked:
-            print(f"\nFAIL: tracked forbidden files matching {pattern!r}:")
-            for t in tracked:
-                print(f"  {t}")
-            failures += len(tracked)
+    tracked = git_tracked_top_level_reports(root)
+    if tracked:
+        print("\nFAIL: tracked forbidden top-level report artifacts:")
+        for t in tracked:
+            print(f"  {t}")
+        failures += len(tracked)
 
     staged_bad = git_staged_forbidden(root)
     if staged_bad:

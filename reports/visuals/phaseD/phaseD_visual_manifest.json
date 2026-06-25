@@ -1,0 +1,6 @@
+{
+  "output_dir": "reports/visuals/phaseD",
+  "layer_drift_heatmap": "reports/visuals/phaseD/layer_drift_heatmap.png",
+  "memory_proxy_bars": "reports/visuals/phaseD/memory_proxy_bars.png",
+  "divergence_compression_curve": "reports/visuals/phaseD/divergence_compression_curve.png"
+}

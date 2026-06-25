@@ -1,0 +1,152 @@
+{
+  "first_divergence_map": {
+    "title": "First Divergence Map",
+    "x_axis": "token_position",
+    "y_axis": "compressor",
+    "points": [
+      {
+        "demo_id": "structured_output_drift_p2_json_tool_int4_sim",
+        "compressor": "int4_sim",
+        "first_divergence_index": 1,
+        "prompt_id": "p2_json_tool"
+      },
+      {
+        "demo_id": "qa_partial_drift_p0_capital_france_shard",
+        "compressor": "shard",
+        "first_divergence_index": null,
+        "prompt_id": "p0_capital_france"
+      },
+      {
+        "demo_id": "worst_case_compression_p0_capital_france_int4_sim",
+        "compressor": "int4_sim",
+        "first_divergence_index": 1,
+        "prompt_id": "p0_capital_france"
+      },
+      {
+        "demo_id": "cross_model_disagreement_p1_simple_math_k8_v4_sim",
+        "compressor": "k8_v4_sim",
+        "first_divergence_index": null,
+        "prompt_id": "p1_simple_math"
+      },
+      {
+        "demo_id": "first_divergence_explosion_p3_code_fn_kvquant",
+        "compressor": "kvquant",
+        "first_divergence_index": null,
+        "prompt_id": "p3_code_fn"
+      }
+    ]
+  },
+  "compression_failure_heatmap": {
+    "title": "Compression Failure Heatmap",
+    "x_axis": "compressor",
+    "y_axis": "model",
+    "compressors": [
+      "int4_sim",
+      "int8",
+      "k8_v4_sim",
+      "kvquant",
+      "noop",
+      "shard",
+      "spectralquant"
+    ],
+    "models": [
+      "Llama-3.1-8B",
+      "Mistral-7B",
+      "Qwen 0.5B",
+      "Qwen 0.5B-Instruct"
+    ],
+    "values": {
+      "Llama-3.1-8B": {
+        "noop": 0.0,
+        "int8": 0.0,
+        "k8_v4_sim": 0.25,
+        "int4_sim": 0.5,
+        "spectralquant": 0.5,
+        "kvquant": 0.5,
+        "shard": 0.3333
+      },
+      "Mistral-7B": {
+        "noop": 0.0,
+        "int8": 0.1667,
+        "k8_v4_sim": 0.5,
+        "int4_sim": 0.5,
+        "spectralquant": 0.5,
+        "kvquant": 0.5,
+        "shard": 0.1667
+      },
+      "Qwen 0.5B": {
+        "noop": 0.0,
+        "int8": 0.1667,
+        "k8_v4_sim": 0.4167,
+        "int4_sim": 0.5,
+        "shard": 0.1667,
+        "spectralquant": 0.5,
+        "kvquant": 0.5
+      },
+      "Qwen 0.5B-Instruct": {
+        "noop": 0.0,
+        "int8": 0.0,
+        "k8_v4_sim": 0.1667,
+        "int4_sim": 0.8333,
+        "spectralquant": 0.8333,
+        "kvquant": 0.8333,
+        "shard": 0.4167
+      }
+    }
+  },
+  "acceptance_divergence_curve": {
+    "title": "Acceptance vs Divergence Tradeoff",
+    "points": [
+      {
+        "compressor": "int4_sim",
+        "mean_acceptance_rate": 0.7358,
+        "mean_divergence_score": 0.583325,
+        "global_mean_score": 0.6325
+      },
+      {
+        "compressor": "int8",
+        "mean_acceptance_rate": 0.995225,
+        "mean_divergence_score": 0.08335,
+        "global_mean_score": 0.9156
+      },
+      {
+        "compressor": "k8_v4_sim",
+        "mean_acceptance_rate": 0.948325,
+        "mean_divergence_score": 0.33335,
+        "global_mean_score": 0.8015
+      },
+      {
+        "compressor": "kvquant",
+        "mean_acceptance_rate": 0.7358,
+        "mean_divergence_score": 0.583325,
+        "global_mean_score": 0.6119
+      },
+      {
+        "compressor": "noop",
+        "mean_acceptance_rate": 1.0,
+        "mean_divergence_score": 0.0,
+        "global_mean_score": 0.9945
+      },
+      {
+        "compressor": "shard",
+        "mean_acceptance_rate": 0.609175,
+        "mean_divergence_score": 0.27085,
+        "global_mean_score": 0.5288
+      },
+      {
+        "compressor": "spectralquant",
+        "mean_acceptance_rate": 0.7358,
+        "mean_divergence_score": 0.583325,
+        "global_mean_score": 0.6119
+      }
+    ]
+  },
+  "exp117_visual_refs": [
+    "reports/visuals/exp117/phase_diagram.png",
+    "reports/visuals/exp117/model_comparison.png",
+    "reports/visuals/exp117/length_sensitivity.png",
+    "reports/visuals/exp117/interaction_heatmaps.png",
+    "reports/visuals/exp117/stability_surface.png",
+    "reports/visuals/exp117/boundary_overlay.png"
+  ]
+}

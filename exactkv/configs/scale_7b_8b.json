@@ -1,0 +1,20 @@
+{
+  "models": [
+    "meta-llama/Llama-3.1-8B",
+    "mistralai/Mistral-7B-Instruct-v0.3"
+  ],
+  "prompts": 50,
+  "max_new_tokens": [4, 8, 16],
+  "compressors": ["noop", "int8", "int4", "spectralquant_real", "shard_real"],
+  "compressor_map": {
+    "int4": "int4_sim",
+    "spectralquant_real": "spectralquant",
+    "shard_real": "shard"
+  },
+  "device": "auto",
+  "dtype": "float16",
+  "draft_len": 4,
+  "local_files_only": false,
+  "deterministic_fallback": false,
+  "output_dir": "reports/scale_7b"
+}

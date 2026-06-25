@@ -25,6 +25,9 @@ PUBLIC_SCAN_REL = (
     "docs/EXACTKV_CRASH_TEST_VIDEO.md",
     "docs/DEMO_EXACTKV_LIVE_CORRECTION.md",
     "docs/PRELAUNCH_HARDENING_REPORT.md",
+    "reports/public_release/README_PUBLIC.md",
+    "reports/public_release/benchmark_summary.md",
+    "reports/public_release/methodology.md",
 )
 
 # Files that list forbidden terms — skip if discovered via rglob.
@@ -140,6 +143,15 @@ FORBIDDEN_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\bimproves?\s+throughput\b", re.I), "improves throughput"),
     (re.compile(r"\bimproves?\s+latency\b", re.I), "improves latency"),
     (re.compile(r"\bclaims?\s+speedup\b", re.I), "claims speedup"),
+    (re.compile(r"\bnothing\s+like\s+this\s+exists\b", re.I), "nothing like this exists"),
+    (re.compile(r"\bfirst\s+ever\b", re.I), "first ever"),
+    (re.compile(r"\bproduction[- ]ready\b", re.I), "production ready"),
+    (re.compile(r"\bserving\s+system\b", re.I), "serving system"),
+    (re.compile(r"\bend[- ]to[- ]end\s+speedup\b", re.I), "end-to-end speedup"),
+    (re.compile(r"\bbeats\s+vericache\b", re.I), "beats VeriCache"),
+    (re.compile(r"\breproduces\s+vericache\b", re.I), "reproduces VeriCache"),
+    (re.compile(r"\breal\s+spectralquant\b(?!\s+fallback)", re.I), "real SpectralQuant"),
+    (re.compile(r"\breal\s+shard\b(?!\s+probe)", re.I), "real Shard"),
 ]
 
 # Standalone "speedup" / "faster" need extra care.

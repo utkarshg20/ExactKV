@@ -283,6 +283,24 @@ Stages 5–7 can proceed in parallel after Stage 2 but **must not** skip exactne
 
 **Phase 21C (L4 trace-only design):** [`PHASE_21C_L4_TRACE_ONLY_DRY_RUN_DESIGN.md`](PHASE_21C_L4_TRACE_ONLY_DRY_RUN_DESIGN.md) — Stage 2 trace-only dry-run design.
 
-**Post-11K / ... / Post-21B / Post-21C:** Phase 16 complete; Phase 17–21C L4 safety track; default CLI/runtime unchanged.
+**Phase 21D (L4 trace-only scaffold):** [`PHASE_21D_L4_TRACE_ONLY_DRY_RUN_SCAFFOLD.md`](PHASE_21D_L4_TRACE_ONLY_DRY_RUN_SCAFFOLD.md) — diagnostic-only dry-run evaluator.
+
+**Phase 21E (L4 trace-only panel):** [`PHASE_21E_L4_TRACE_ONLY_DRY_RUN_PANEL_VALIDATION.md`](PHASE_21E_L4_TRACE_ONLY_DRY_RUN_PANEL_VALIDATION.md) — panel trace diagnostics.
+
+**Phase 21F (verifier evidence schema):** [`PHASE_21F_L4_VERIFIER_EVIDENCE_TRACE_SCHEMA_DESIGN.md`](PHASE_21F_L4_VERIFIER_EVIDENCE_TRACE_SCHEMA_DESIGN.md) — explicit verifier trace field design.
+
+**Phase 21G (schema scaffold):** [`PHASE_21G_L4_VERIFIER_EVIDENCE_TRACE_SCHEMA_SCAFFOLD.md`](PHASE_21G_L4_VERIFIER_EVIDENCE_TRACE_SCHEMA_SCAFFOLD.md) — validate and convert schema records.
+
+**Phase 21H (schema example validation):** [`PHASE_21H_L4_VERIFIER_TRACE_SCHEMA_EXAMPLE_VALIDATION.md`](PHASE_21H_L4_VERIFIER_TRACE_SCHEMA_EXAMPLE_VALIDATION.md) — full example suite + enforcement coverage.
+
+**Phase 21I (adversarial panel):** [`PHASE_21I_L4_TRACE_SCHEMA_ADVERSARIAL_INJECTION_PANEL.md`](PHASE_21I_L4_TRACE_SCHEMA_ADVERSARIAL_INJECTION_PANEL.md) — adversarial stress-testing panel.
+
+**Phase 21J (runtime instrumentation design):** [`PHASE_21J_L4_VERIFIER_RUNTIME_INSTRUMENTATION_DESIGN.md`](PHASE_21J_L4_VERIFIER_RUNTIME_INSTRUMENTATION_DESIGN.md) — runtime hook architecture design; no implementation.
+
+**Phase 21K (Stage 3 dry-run design):** [`PHASE_21K_L4_STAGE3_VERIFIER_MEDIATED_DRY_RUN_DESIGN.md`](PHASE_21K_L4_STAGE3_VERIFIER_MEDIATED_DRY_RUN_DESIGN.md) — verifier-mediated dry-run execution model design; no runtime.
+
+**Phase 21L (Stage 3 dry-run scaffold):** [`PHASE_21L_L4_STAGE3_VERIFIER_MEDIATED_DRY_RUN_SCAFFOLD.md`](PHASE_21L_L4_STAGE3_VERIFIER_MEDIATED_DRY_RUN_SCAFFOLD.md) — trace-only decision graph evaluator; no model execution.
+
+**Post-11K / ... / Post-21K / Post-21L:** Phase 16 complete; Phase 17–21L L4 safety track; default CLI/runtime unchanged.
 
 See [`DEFERRED_WORK_REGISTER.md`](DEFERRED_WORK_REGISTER.md) for deferred IDs (D11 vLLM, D12 LMCache, D21 extended verify).

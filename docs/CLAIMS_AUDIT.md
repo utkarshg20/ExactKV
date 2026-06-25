@@ -83,6 +83,15 @@ Each claim must cite the **specific experiment or panel** it rests on. Do not ge
 | L4 no-op opt-in scaffold | Phase 21A / Exp 102 | [`PHASE_21A_L4_NOOP_OPT_IN_SCAFFOLD.md`](PHASE_21A_L4_NOOP_OPT_IN_SCAFFOLD.md); stage 1 no-op; **not commit** |
 | L4 no-op scaffold panel validation | Phase 21B / Exp 103 | [`PHASE_21B_L4_NOOP_SCAFFOLD_PANEL_VALIDATION.md`](PHASE_21B_L4_NOOP_SCAFFOLD_PANEL_VALIDATION.md); panel parity; **not commit** |
 | L4 trace-only dry-run design | Phase 21C / Exp 104 | [`PHASE_21C_L4_TRACE_ONLY_DRY_RUN_DESIGN.md`](PHASE_21C_L4_TRACE_ONLY_DRY_RUN_DESIGN.md); Stage 2 design; **not runtime** |
+| L4 trace-only dry-run scaffold | Phase 21D / Exp 105 | [`PHASE_21D_L4_TRACE_ONLY_DRY_RUN_SCAFFOLD.md`](PHASE_21D_L4_TRACE_ONLY_DRY_RUN_SCAFFOLD.md); diagnostic evaluator; **not commit** |
+| L4 trace-only dry-run panel validation | Phase 21E / Exp 106 | [`PHASE_21E_L4_TRACE_ONLY_DRY_RUN_PANEL_VALIDATION.md`](PHASE_21E_L4_TRACE_ONLY_DRY_RUN_PANEL_VALIDATION.md); panel diagnostics; **not commit** |
+| L4 verifier evidence trace schema design | Phase 21F / Exp 107 | [`PHASE_21F_L4_VERIFIER_EVIDENCE_TRACE_SCHEMA_DESIGN.md`](PHASE_21F_L4_VERIFIER_EVIDENCE_TRACE_SCHEMA_DESIGN.md); schema design; **not instrumentation** |
+| L4 verifier evidence trace schema scaffold | Phase 21G / Exp 108 | [`PHASE_21G_L4_VERIFIER_EVIDENCE_TRACE_SCHEMA_SCAFFOLD.md`](PHASE_21G_L4_VERIFIER_EVIDENCE_TRACE_SCHEMA_SCAFFOLD.md); validate/convert; **not instrumentation** |
+| L4 verifier trace schema example validation | Phase 21H / Exp 109 | [`PHASE_21H_L4_VERIFIER_TRACE_SCHEMA_EXAMPLE_VALIDATION.md`](PHASE_21H_L4_VERIFIER_TRACE_SCHEMA_EXAMPLE_VALIDATION.md); example suite; **not instrumentation** |
+| L4 trace schema adversarial injection panel | Phase 21I / Exp 110 | [`PHASE_21I_L4_TRACE_SCHEMA_ADVERSARIAL_INJECTION_PANEL.md`](PHASE_21I_L4_TRACE_SCHEMA_ADVERSARIAL_INJECTION_PANEL.md); stress panel; **not instrumentation** |
+| L4 verifier runtime instrumentation design | Phase 21J / Exp 111 | [`PHASE_21J_L4_VERIFIER_RUNTIME_INSTRUMENTATION_DESIGN.md`](PHASE_21J_L4_VERIFIER_RUNTIME_INSTRUMENTATION_DESIGN.md); architecture design; **not implementation** |
+| L4 Stage 3 verifier-mediated dry-run design | Phase 21K / Exp 112 | [`PHASE_21K_L4_STAGE3_VERIFIER_MEDIATED_DRY_RUN_DESIGN.md`](PHASE_21K_L4_STAGE3_VERIFIER_MEDIATED_DRY_RUN_DESIGN.md); execution model design; **not runtime** |
+| L4 Stage 3 verifier-mediated dry-run scaffold | Phase 21L / Exp 113 | [`PHASE_21L_L4_STAGE3_VERIFIER_MEDIATED_DRY_RUN_SCAFFOLD.md`](PHASE_21L_L4_STAGE3_VERIFIER_MEDIATED_DRY_RUN_SCAFFOLD.md); trace-only evaluator; **not commit** |
 | Shard restricted external-drafter probe | Exp 039–041 RunPod | 32-prompt stress + ablation + combined stress; max divergence 56.25% (Exp 041); **not** integration claim |
 | Leaderboard tier separation | Phase 8f | “Full-panel, restricted, smoke-only, and future candidates are separated.” |
 | Token-level acceptance rate | Per compressor × panel | Quote mean acceptance with panel name; not universal ranking |

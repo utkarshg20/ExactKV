@@ -1,0 +1,10 @@
+{
+  "plots_dir": "reports/plots",
+  "copied": 4,
+  "sources": [
+    "reports/phaseG_divergence_map.png",
+    "reports/visuals/phaseD/layer_drift_heatmap.png",
+    "reports/visuals/phaseD/divergence_compression_curve.png",
+    "reports/visuals/phaseD/memory_proxy_bars.png"
+  ]
+}

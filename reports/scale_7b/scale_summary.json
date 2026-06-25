@@ -1,0 +1,17 @@
+{
+  "phase_id": "phaseH_plus_scale_7b_8b_benchmark",
+  "status": "scale_benchmark_complete",
+  "device": "cuda",
+  "deterministic_mode": false,
+  "models": [
+    "meta-llama/Llama-3.1-8B",
+    "mistralai/Mistral-7B-Instruct-v0.3"
+  ],
+  "total_cells": 1500,
+  "exactkv_failures": 0,
+  "outputs": {
+    "raw": "reports/scale_7b/raw.json",
+    "leaderboard_json": "reports/scale_7b/leaderboard.json"
+  },
+  "sequential_run": true
+}

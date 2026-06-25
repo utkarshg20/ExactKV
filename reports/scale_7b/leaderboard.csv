@@ -1,0 +1,11 @@
+rank,compressor,model,model_short,score,acceptance_rate,divergence_score,verifier_agreement,failure_rate,stability_score,compression_ratio,first_divergence_normalized,availability,num_cells
+1,noop,meta-llama/Llama-3.1-8B,Llama-3.1-8B,1.0,1.0,0.0,1.0,0.0,1.0,1.0,1.0,available,150
+2,int8,meta-llama/Llama-3.1-8B,Llama-3.1-8B,1.0,1.0,0.0,1.0,0.0,1.0,0.25,1.0,available,150
+3,int4_sim,meta-llama/Llama-3.1-8B,Llama-3.1-8B,0.6839,0.8515,0.52,0.8515,0.0,0.48,0.25,0.125,available,150
+4,spectralquant,meta-llama/Llama-3.1-8B,Llama-3.1-8B,0.6839,0.8515,0.52,0.8515,0.0,0.48,0.25,0.125,mock_fallback,150
+5,shard,meta-llama/Llama-3.1-8B,Llama-3.1-8B,0.544,0.6323,0.2267,0.5317,0.0,0.7733,0.4062,0.0625,probe_only,150
+,noop,mistralai/Mistral-7B-Instruct-v0.3,Mistral-7B,,,,,,,,,unavailable,
+,int8,mistralai/Mistral-7B-Instruct-v0.3,Mistral-7B,,,,,,,,,unavailable,
+,int4_sim,mistralai/Mistral-7B-Instruct-v0.3,Mistral-7B,,,,,,,,,unavailable,
+,spectralquant,mistralai/Mistral-7B-Instruct-v0.3,Mistral-7B,,,,,,,,,unavailable,
+,shard,mistralai/Mistral-7B-Instruct-v0.3,Mistral-7B,,,,,,,,,unavailable,

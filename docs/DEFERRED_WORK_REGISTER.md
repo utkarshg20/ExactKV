@@ -201,6 +201,15 @@ V12 closed deferred backend, policy, forensics, and claim-boundary tracks — **
 | — | **L4 no-op opt-in scaffold** | **Complete** | Phase 21A ✅ | [`PHASE_21A_L4_NOOP_OPT_IN_SCAFFOLD.md`](PHASE_21A_L4_NOOP_OPT_IN_SCAFFOLD.md); stage 1 no-op; commit blocked |
 | — | **L4 no-op scaffold panel validation** | **Complete** | Phase 21B ✅ | [`PHASE_21B_L4_NOOP_SCAFFOLD_PANEL_VALIDATION.md`](PHASE_21B_L4_NOOP_SCAFFOLD_PANEL_VALIDATION.md); panel parity; commit blocked |
 | — | **L4 trace-only dry-run design** | **Complete** | Phase 21C ✅ | [`PHASE_21C_L4_TRACE_ONLY_DRY_RUN_DESIGN.md`](PHASE_21C_L4_TRACE_ONLY_DRY_RUN_DESIGN.md); Stage 2 design; commit blocked |
+| — | **L4 trace-only dry-run scaffold** | **Complete** | Phase 21D ✅ | [`PHASE_21D_L4_TRACE_ONLY_DRY_RUN_SCAFFOLD.md`](PHASE_21D_L4_TRACE_ONLY_DRY_RUN_SCAFFOLD.md); diagnostic evaluator; commit blocked |
+| — | **L4 trace-only dry-run panel validation** | **Complete** | Phase 21E ✅ | [`PHASE_21E_L4_TRACE_ONLY_DRY_RUN_PANEL_VALIDATION.md`](PHASE_21E_L4_TRACE_ONLY_DRY_RUN_PANEL_VALIDATION.md); panel diagnostics; commit blocked |
+| — | **L4 verifier evidence trace schema design** | **Complete** | Phase 21F ✅ | [`PHASE_21F_L4_VERIFIER_EVIDENCE_TRACE_SCHEMA_DESIGN.md`](PHASE_21F_L4_VERIFIER_EVIDENCE_TRACE_SCHEMA_DESIGN.md); schema design; instrumentation blocked |
+| — | **L4 verifier evidence trace schema scaffold** | **Complete** | Phase 21G ✅ | [`PHASE_21G_L4_VERIFIER_EVIDENCE_TRACE_SCHEMA_SCAFFOLD.md`](PHASE_21G_L4_VERIFIER_EVIDENCE_TRACE_SCHEMA_SCAFFOLD.md); validate/convert; instrumentation blocked |
+| — | **L4 verifier trace schema example validation** | **Complete** | Phase 21H ✅ | [`PHASE_21H_L4_VERIFIER_TRACE_SCHEMA_EXAMPLE_VALIDATION.md`](PHASE_21H_L4_VERIFIER_TRACE_SCHEMA_EXAMPLE_VALIDATION.md); example suite; instrumentation blocked |
+| — | **L4 trace schema adversarial injection panel** | **Complete** | Phase 21I ✅ | [`PHASE_21I_L4_TRACE_SCHEMA_ADVERSARIAL_INJECTION_PANEL.md`](PHASE_21I_L4_TRACE_SCHEMA_ADVERSARIAL_INJECTION_PANEL.md); stress panel; instrumentation blocked |
+| — | **L4 verifier runtime instrumentation design** | **Complete** | Phase 21J ✅ | [`PHASE_21J_L4_VERIFIER_RUNTIME_INSTRUMENTATION_DESIGN.md`](PHASE_21J_L4_VERIFIER_RUNTIME_INSTRUMENTATION_DESIGN.md); architecture design; implementation blocked |
+| — | **L4 Stage 3 verifier-mediated dry-run design** | **Complete** | Phase 21K ✅ | [`PHASE_21K_L4_STAGE3_VERIFIER_MEDIATED_DRY_RUN_DESIGN.md`](PHASE_21K_L4_STAGE3_VERIFIER_MEDIATED_DRY_RUN_DESIGN.md); execution model design; runtime blocked |
+| — | **L4 Stage 3 verifier-mediated dry-run scaffold** | **Complete** | Phase 21L ✅ | [`PHASE_21L_L4_STAGE3_VERIFIER_MEDIATED_DRY_RUN_SCAFFOLD.md`](PHASE_21L_L4_STAGE3_VERIFIER_MEDIATED_DRY_RUN_SCAFFOLD.md); trace-only evaluator; commit blocked |
 
 V13 builds and measures missing practicality pieces — **not** public launch by default.
 
