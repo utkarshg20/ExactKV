@@ -1,32 +1,38 @@
 # ExactKV
 
-**Compress the KV cache. Keep every output token.**
+**When does compressed KV start lying?** ExactKV is a compressor-agnostic crash-test and leaderboard framework for LLM KV-cache compression. It measures token-level drift, first divergence, acceptance rate, verifier agreement, and exactness failures across compressors and models.
 
-ExactKV is a **correctness-first KV-cache compression crash-test lab**: lossy compressed KV proposes draft tokens, a full-precision KV verifier checks them, and the final greedy output matches uncompressed inference on tested panels.
+ExactKV grew through a **long verifier-first research arc** (V1–V21, Experiments 001–113+, safety ladder, shadow probes, no-go serving investigations) before Phases A–J formalized, scaled, packaged, validated, and released the public benchmark platform. **ExactKV did not start at Phase A.** See [`docs/PROJECT_LINEAGE.md`](docs/PROJECT_LINEAGE.md), [`docs/VERSION_LINEAGE.md`](docs/VERSION_LINEAGE.md), and [`docs/HISTORICAL_ARTIFACT_INVENTORY.md`](docs/HISTORICAL_ARTIFACT_INVENTORY.md).
 
-**Public positioning (Phase I):** ExactKV is a compressor-agnostic crash-test and leaderboard framework for LLM KV-cache compression. It measures token-level drift, first divergence, acceptance rate, verifier agreement, and exactness failures across compressors and models. See [`docs/NOVELTY_AUDIT.md`](docs/NOVELTY_AUDIT.md).
+**Public release (authoritative):** **1500-cell** real-GPU benchmark on **Llama-3.1-8B** and **Mistral-7B-Instruct-v0.3** — `exactkv_failures = 0`. Source: [`reports/scale_7b/raw.json`](reports/scale_7b/raw.json). Historical Phase A (336 cells) is internal supporting evidence only.
 
-**Phase I claim boundaries:** Not a production serving system. Does not reproduce VeriCache. Compression ratios are stored tensor byte ratios unless active GPU memory is explicitly measured. SpectralQuant uses fallback/proxy when the dependency is unavailable. Shard is probe-first heuristic analysis, not a full Shard integration. Phase F speedups (when cited) are kernel microbenchmark only — not end-to-end inference speedups.
-
-**Status:** Prelaunch research prototype. V13 has strong exactness evidence, demos, a tiered leaderboard, and **completed Shard/SpectralQuant restricted external-method probes (Phase 10)** — but **public launch and v1.0 are not approved yet**. See [`docs/LAUNCH_READINESS_GAP_AUDIT.md`](docs/LAUNCH_READINESS_GAP_AUDIT.md) · [`docs/PHASE_10_EXTERNAL_METHODS_SUMMARY.md`](docs/PHASE_10_EXTERNAL_METHODS_SUMMARY.md).
+**Caveats:** Not a production serving system. Does not reproduce VeriCache. Phase F speedups are kernel microbenchmark only. Compression ratios are stored tensor byte ratios. SpectralQuant is fallback/proxy. Shard is probe-first. See [`docs/CLAIM_BOUNDARIES.md`](docs/CLAIM_BOUNDARIES.md).
 
 ```bash
-# Install (once)
-pip install -e ".[dev]"    # see docs/INSTALL.md
+pip install -e ".[dev]"
 
-# Smoke test
-bash scripts/smoke_test.sh
+# Regenerate public reports + lineage (no expensive inference)
+python3 scripts/exactkv_repro.py --reports-only
 
-# Terminal crash-test demo (replay; no GPU)
-python3 scripts/exactkv_terminal_crash_test.py --speed fast
+# Full release validation gate
+python3 scripts/exactkv_repro.py --release-check
 
-# Crash-test leaderboard
-python3 scripts/exactkv_leaderboard.py
+# Build launch pack (demo cards + manifest)
+python3 scripts/build_launch_pack.py
 ```
 
-**Docs:** [`docs/QUICKSTART.md`](docs/QUICKSTART.md) · [`docs/INSTALL.md`](docs/INSTALL.md) · [`docs/leaderboard.html`](docs/leaderboard.html) · [`docs/BENCHMARK_GAP_ANALYSIS.md`](docs/BENCHMARK_GAP_ANALYSIS.md) · [`docs/LAUNCH_VALIDATION_REPORT.md`](docs/LAUNCH_VALIDATION_REPORT.md) · [`docs/VERICACHE_PARITY_AUDIT.md`](docs/VERICACHE_PARITY_AUDIT.md) · [`docs/VERICACHE_PARITY_CLAIM_GATE.md`](docs/VERICACHE_PARITY_CLAIM_GATE.md)
+**Launch docs:** [`docs/EXACTKV_TECHNICAL_REPORT.md`](docs/EXACTKV_TECHNICAL_REPORT.md) · [`docs/NOVELTY_AUDIT.md`](docs/NOVELTY_AUDIT.md) · [`docs/METRIC_DEFINITIONS.md`](docs/METRIC_DEFINITIONS.md) · [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) · [`reports/public_release/leaderboard_final.json`](reports/public_release/leaderboard_final.json) · [`reports/public_release/demo_cards.md`](reports/public_release/demo_cards.md)
 
-**Claims boundary:** No speedup, throughput, latency, tokens/sec, active GPU memory savings, production serving, or model accuracy improvement claim. [`docs/CLAIMS_AUDIT.md`](docs/CLAIMS_AUDIT.md)
+**Positioning (Phase I):** Compressor-agnostic crash-test and leaderboard for KV-cache exactness — not throughput or serving claims.
+
+```bash
+# Terminal crash-test demo (replay; no GPU)
+python3 scripts/exactkv_terminal_crash_test.py --speed fast
+```
+
+**Docs:** [`docs/QUICKSTART.md`](docs/QUICKSTART.md) · [`docs/INSTALL.md`](docs/INSTALL.md) · [`docs/leaderboard.html`](docs/leaderboard.html)
+
+**Claims boundary:** No end-to-end speedup, active GPU memory savings, production serving, or VeriCache reproduction claims. [`docs/CLAIMS_AUDIT.md`](docs/CLAIMS_AUDIT.md)
 
 ---
 

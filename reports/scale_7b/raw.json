@@ -144844,7 +144844,7 @@
           "divergence_rate": 0.52,
           "divergence_stability_score": 0.48,
           "exactkv_failure_rate": 0.0,
-          "mean_first_divergence_index": 2.0,
+          "mean_first_divergence_index": null,
           "mean_compression_ratio": 0.25
         },
         "int8": {
@@ -144874,7 +144874,7 @@
           "divergence_rate": 0.22666666666666666,
           "divergence_stability_score": 0.7733333333333333,
           "exactkv_failure_rate": 0.0,
-          "mean_first_divergence_index": 1.0,
+          "mean_first_divergence_index": null,
           "mean_compression_ratio": 0.4062429166666666
         },
         "spectralquant": {
@@ -144884,7 +144884,63 @@
           "divergence_rate": 0.52,
           "divergence_stability_score": 0.48,
           "exactkv_failure_rate": 0.0,
-          "mean_first_divergence_index": 2.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.25
+        }
+      },
+      "total_cells": 750,
+      "exactkv_failures": 0
+    },
+    "mistralai/Mistral-7B-Instruct-v0.3": {
+      "compressor_summary": {
+        "int4_sim": {
+          "num_cells": 150,
+          "mean_acceptance_rate": 0.836487639553429,
+          "mean_verifier_agreement_score": 0.836487639553429,
+          "divergence_rate": 0.5066666666666667,
+          "divergence_stability_score": 0.4933333333333333,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.25
+        },
+        "int8": {
+          "num_cells": 150,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.17333333333333334,
+          "divergence_stability_score": 0.8266666666666667,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.25
+        },
+        "noop": {
+          "num_cells": 150,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 1.0
+        },
+        "shard": {
+          "num_cells": 150,
+          "mean_acceptance_rate": 0.6233333333333333,
+          "mean_verifier_agreement_score": 0.5333333333333333,
+          "divergence_rate": 0.24666666666666667,
+          "divergence_stability_score": 0.7533333333333333,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.39632791666666667
+        },
+        "spectralquant": {
+          "num_cells": 150,
+          "mean_acceptance_rate": 0.836487639553429,
+          "mean_verifier_agreement_score": 0.836487639553429,
+          "divergence_rate": 0.5066666666666667,
+          "divergence_stability_score": 0.4933333333333333,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
           "mean_compression_ratio": 0.25
         }
       },

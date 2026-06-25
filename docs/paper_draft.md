@@ -2,7 +2,7 @@
 
 ## Abstract
 
-KV cache compression reduces memory footprint but introduces token-level drift between lossy draft generation and full-precision verification. We present ExactKV, a compressor-agnostic crash-test and leaderboard framework for LLM KV-cache compression exactness. It measures acceptance rate, first-divergence index, verifier agreement, and cross-model instability under compressed KV conditions. Across 336 Phase A benchmark cells (4 models, 7 compressors) and a Phase H+ scale panel of 1500 real-GPU cells on Llama-3.1-8B and Mistral-7B-Instruct-v0.3, INT8 achieves strong leaderboard scores with zero ExactKV failures in the reported panels. Simulated INT4, asymmetric K8/V4, and restricted external adapters exhibit elevated divergence rates and lower verifier agreement. ExactKV provides trace-only verification without runtime commit, enabling reproducible comparison of compression robustness prior to deployment.
+KV cache compression reduces memory footprint but introduces token-level drift between lossy draft generation and full-precision verification. We present ExactKV, a compressor-agnostic crash-test and leaderboard framework for LLM KV-cache compression exactness. It measures acceptance rate, first-divergence index, verifier agreement, and cross-model instability under compressed KV conditions. Across **1500 Phase H+ scale cells** (real GPU, Llama-3.1-8B and Mistral-7B-Instruct-v0.3) and a historical **336-cell Phase A panel**, INT8 achieves the highest practical exactness on tested 7B/8B scale rows with **zero ExactKV failures** in the scale summary. Simulated INT4 and restricted external adapters exhibit elevated divergence rates and lower verifier agreement. ExactKV provides trace-only verification without runtime commit, enabling reproducible comparison of compression robustness prior to deployment.
 
 ## 1. Introduction
 
@@ -14,16 +14,14 @@ ExactKV evaluates three generation modes per cell: full-KV greedy (reference), l
 
 ## 3. Experimental Setup
 
-| Parameter | Value |
-|-----------|-------|
-| Models | Qwen 0.5B, Qwen 0.5B-Instruct, Mistral-7B, Llama-3.1-8B |
-| Compressors | noop, int8, int4_sim, k8_v4_sim, spectralquant, kvquant, shard |
-| Prompts | 4 deterministic panel prompts |
-| Lengths | [4, 8, 16] |
-| Total cells | 336 |
-| Deterministic mode | False |
+| Parameter | Phase H+ scale (public release) | Phase A (historical) |
+|-----------|--------------------------------|----------------------|
+| Models | Llama-3.1-8B, Mistral-7B-Instruct-v0.3 | Qwen 0.5B, Qwen 0.5B-Instruct, Mistral-7B, Llama-3.1-8B |
+| Compressors | noop, int8, int4_sim, spectralquant, shard | noop, int8, int4_sim, k8_v4_sim, spectralquant, kvquant, shard |
+| Total cells | **1500** | 336 |
+| Deterministic mode | False (real GPU) | False |
 
-Data sources: `reports/phaseA_benchmark.json`, `reports/leaderboard.json`.
+Data sources: `reports/scale_7b/raw.json` (authoritative), `reports/phaseA_benchmark.json` (supporting).
 
 ## 4. Key Results
 

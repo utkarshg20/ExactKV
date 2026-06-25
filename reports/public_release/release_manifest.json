@@ -1,16 +1,23 @@
 {
   "release_dir": "reports/public_release",
-  "generated_at": "2026-06-25T14:43:09.308864+00:00",
+  "generated_at": "2026-06-25T22:37:22.391547+00:00",
+  "authoritative_evidence": "reports/scale_7b/raw.json",
+  "total_cells": 1500,
   "source_artifacts": [
     "reports/scale_7b/raw.json",
     "reports/scale_7b/leaderboard.json",
-    "reports/scale_7b/scale_summary.json"
+    "reports/scale_7b/scale_summary.json",
+    "reports/phaseF_kernel_benchmark.json",
+    "reports/phaseG_unified_truth.json",
+    "reports/novelty_audit.json",
+    "reports/release_evidence_status.json"
   ],
   "files": [
     "README_PUBLIC.md",
     "benchmark_summary.md",
     "methodology.md",
     "repro_command.sh",
-    "leaderboard_final.json"
+    "leaderboard_final.json",
+    "release_manifest.json"
   ]
 }

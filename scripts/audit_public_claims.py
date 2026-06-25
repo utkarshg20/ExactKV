@@ -38,6 +38,10 @@ EXTRA_SCAN_REL = (
     "docs/linkedin_post.md",
     "docs/paper_draft.md",
     "docs/NOVELTY_AUDIT.md",
+    "docs/EXACTKV_TECHNICAL_REPORT.md",
+    "docs/launch_blog_final.md",
+    "docs/launch_x_thread_final.md",
+    "docs/launch_linkedin_final.md",
 )
 
 # Phase I: caveat enforcement only on launch-positioning docs (not demo/install guides).
@@ -50,6 +54,10 @@ CAVEAT_SCAN_REL = (
     "docs/x_thread.md",
     "docs/linkedin_post.md",
     "docs/paper_draft.md",
+    "docs/EXACTKV_TECHNICAL_REPORT.md",
+    "docs/launch_blog_final.md",
+    "docs/launch_x_thread_final.md",
+    "docs/launch_linkedin_final.md",
 )
 
 SKIP_FILES = frozenset({
@@ -99,7 +107,10 @@ ALLOWLIST_PATTERNS = [
         r"\bif\s+this\s+is\s+nonzero\b",
         r"\bspeedup\s+number\s+without\b",
         r"\bnot\s+an\s+exactkv\s+result\b",
-        r"\bnot\s+real\s+packed\b",
+        r"\bnot\s+real\s+(spectralquant|shard)\b",
+        r"\bno\b.{0,30}\bactive\s+gpu\s+memory\b",
+        r"\(not active gpu memory",
+        r"torch\s*→\s*triton\s+ratio",
         r"\b_sim\b",
         r"\bsimulated\b",
         r"\bint8\s+containers?\b",

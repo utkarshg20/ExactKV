@@ -4,9 +4,9 @@
 
 3/9 Worst INT4 cell: acceptance 0.33, divergence at token 1. ExactKV caught it — zero silent failures.
 
-4/9 Cross-model panel: 336 cells, 4 models, 7 compressors. INT8 mean score 0.916.
+4/9 Phase H+ scale: **1500 real-GPU cells**, Llama-3.1-8B + Mistral-7B-Instruct-v0.3, **exactkv_failures = 0**.
 
-5/9 int8 is near-optimal baseline: high acceptance, zero divergence rate in aggregated leaderboard, zero ExactKV failures.
+5/9 Llama leaderboard: `noop`/`int8` score 1.0; `int4_sim` 0.684; `shard` (probe-first) 0.544.
 
 6/9 `noop` leads the cross-model mean score (0.995 across 4 models).
 

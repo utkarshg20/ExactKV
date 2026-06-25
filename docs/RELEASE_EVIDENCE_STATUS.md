@@ -44,6 +44,8 @@
 | public_leaderboard_exists | yes | /Users/utkarshgupta/Documents/ExactKV/reports/public_release/leaderboard_final.j |
 | public_manifest_exists | yes | /Users/utkarshgupta/Documents/ExactKV/reports/public_release/release_manifest.js |
 | manifest_references_scale_7b | yes |  |
+| public_leaderboard_covers_raw_models | yes | ok |
+| public_mistral_numeric_rows | yes | 750 raw Mistral cells |
 | phase_f_exists | yes |  |
 | phase_f_cuda | yes | True |
 | phase_f_triton | yes | True |

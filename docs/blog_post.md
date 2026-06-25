@@ -8,7 +8,9 @@ ExactKV is an evaluation framework that asks a simple question: **does the compr
 
 ## The short answer
 
-In our latest cross-model panel, **INT8 is the near-optimal baseline** — mean leaderboard score **0.916** with **zero ExactKV failures** across four models. Aggressive simulators and external probes diverge earlier and accept fewer draft tokens.
+**Phase H+ public release:** **1500 real-GPU cells** on Llama-3.1-8B and Mistral-7B-Instruct-v0.3 with **zero ExactKV failures**. On Llama-3.1-8B, `noop` and `int8` score **1.0** with full acceptance.
+
+**Historical Phase A panel (336 cells, 4 small/mid models):** INT8 mean leaderboard score **0.916** with zero failures — supporting cross-model evidence, not the final public release headline.
 
 ## Three cases that illustrate the problem
 
@@ -37,13 +39,15 @@ First divergence at token **None**, acceptance **0.66**. Partial prefix acceptan
 First divergence at token **1**, acceptance **0.33**. Lowest acceptance int4_sim cell in Phase A benchmark.
 
 
-## Leaderboard snapshot
+## Leaderboard snapshot (Phase H+ scale_7b — Llama-3.1-8B)
 
-| Rank | Compressor | Mean score |
-|-----:|------------|----------:|
-| 1 | `noop` | 0.995 |
-| 2 | `int8` | 0.916 |
-| 3 | `k8_v4_sim` | 0.801 |
+| Rank | Compressor | Score | Acceptance |
+|-----:|------------|------:|-----------:|
+| 1 | `noop` | 1.0 | 1.0 |
+| 2 | `int8` | 1.0 | 1.0 |
+| 3 | `int4_sim` | 0.684 | 0.852 |
+| 4 | `spectralquant` (fallback/proxy) | 0.684 | 0.852 |
+| 5 | `shard` (probe-first) | 0.544 | 0.632 |
 
 ## Why this matters
 
@@ -57,4 +61,4 @@ No speedups in end-to-end inference. No memory savings unless measured. No produ
 
 ---
 
-*Data: Phase A benchmark + Phase B leaderboard. Reproduce: `python scripts/run_leaderboard.py --all`*
+*Data: Phase H+ scale_7b (1500 cells) + Phase A (336 cells, historical). Reproduce: `python3 scripts/exactkv_repro.py --reports-only`*

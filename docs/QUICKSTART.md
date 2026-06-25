@@ -1,12 +1,12 @@
 # ExactKV Quickstart
 
-**Five commands** to see what ExactKV is — no GPU, no model download.
+CPU-safe paths to explore ExactKV without expensive GPU inference.
 
-> Status: **prelaunch hardening** — not public launch, not v1.0.
+> **Status:** Prelaunch research prototype — not a production serving system. See [`CLAIM_BOUNDARIES.md`](CLAIM_BOUNDARIES.md).
 
 ---
 
-## 1. Install
+## Install
 
 ```bash
 python3 -m venv .venv
@@ -19,88 +19,93 @@ Details: [`INSTALL.md`](INSTALL.md)
 
 ---
 
-## 2. Smoke test (validates install)
+## CPU-safe quick command
 
 ```bash
 bash scripts/smoke_test.sh
-```
-
-Or via Makefile:
-
-```bash
-make smoke
-```
-
----
-
-## 3. Terminal crash-test demo
-
-```bash
 python3 scripts/exactkv_terminal_crash_test.py --speed fast
 ```
 
-Replay of verified Exp 034b trace (`drop` → `pickup`). No model inference.
+No GPU or model download required for the terminal demo.
+
+---
+
+## Reports-only command (no inference)
+
+Regenerate public release bundle, novelty audit, and evidence status from on-disk artifacts:
 
 ```bash
-make demo
+python3 scripts/exactkv_repro.py --reports-only
+```
+
+**Expected outputs:**
+- `reports/public_release/` — README, leaderboard, methodology, manifest
+- `docs/NOVELTY_AUDIT.md`, `reports/novelty_audit.json`
+- `reports/release_evidence_status.json`, `docs/RELEASE_EVIDENCE_STATUS.md`
+- `reports/repro_manifest.json`
+
+---
+
+## Release validation (recommended before launch)
+
+```bash
+python3 scripts/exactkv_repro.py --release-check
+# or
+bash scripts/repro_all.sh
 ```
 
 ---
 
-## 4. Crash-test leaderboard
+## GPU benchmark command (expensive)
+
+Real 7B/8B inference requires:
+- CUDA GPU with sufficient VRAM
+- Hugging Face authentication (`HF_TOKEN` / `HUGGING_FACE_HUB_TOKEN`)
+- Large disk volume for model caches (prefer `HF_HOME` on `/workspace` or equivalent — not root disk)
+- Hours of runtime
 
 ```bash
-python3 scripts/exactkv_leaderboard.py
+export HF_HOME=/workspace/.cache/huggingface   # example: large volume
+export HF_TOKEN=your_token_here                # never commit tokens
+python3 scripts/exactkv.py run full-scale-7b --config exactkv/configs/scale_7b_8b.yaml
 ```
 
-Terminal table + updates `docs/leaderboard.md` and `docs/leaderboard.html`.
+**Requires explicit confirmation for full repro wrapper:**
 
 ```bash
-make leaderboard
+python3 scripts/exactkv_repro.py --full --confirm-expensive
 ```
 
-Open the HTML view:
-
-```bash
-open docs/leaderboard.html   # macOS
-```
+Without `--confirm-expensive`, `--full` refuses to run expensive inference.
 
 ---
 
-## 5. Prelaunch audits (optional)
+## Public release regeneration
 
 ```bash
-make audit
+python3 scripts/exactkv.py run publish
 ```
 
-Runs claims, link, and report-hygiene checks.
+Authoritative public evidence: **1500-cell Phase H+ scale_7b** (`reports/scale_7b/raw.json`).
 
 ---
 
 ## What you should see
 
 | Step | Success signal |
-|---|---|
+|------|----------------|
 | Smoke | `SMOKE TEST PASSED` |
-| Demo | `DRIFT DETECTED`, `REJECTED`, `COMMITTED`, failures `0` |
-| Leaderboard | `FULL PANEL RESULTS` table with tier sections |
+| `--reports-only` | `wrote reports/repro_manifest.json`, public_release updated |
+| `--release-check` | evidence PASS, claim audit PASS, public release validator PASS |
 
 ---
 
 ## What ExactKV is / is not
 
-**Is:** A KV-cache compression **crash-test lab** — lossy KV drafts, full-KV verifies, exact greedy output on tested panels.
+**Is:** Compressor-agnostic crash-test and leaderboard for LLM KV-cache compression exactness.
 
-**Is not:** A speedup library, VRAM saver, production serving stack, or v1.0 product.
+**Is not:** Production serving, VeriCache reproduction, end-to-end speedup proof, or v1.0 product.
 
-Full claims boundary: [`CLAIMS_AUDIT.md`](CLAIMS_AUDIT.md)
-
----
-
-## Next steps (optional)
-
-| Goal | Command / doc |
-|---|---|
-| Full test suite (needs model weights) | `TRANSFORMERS_OFFLINE=1 pytest tests/ -q` |
-| Research figures | `pip install matplotlib pillow && python3 scripts/visualize_experiment_035.py` |
-| Launch readiness audit | [`LAUNCH_READINESS_GAP_AUDIT.md`](LAUNCH_READINESS_GAP_AUDIT.md) |
+- [`CLAIM_BOUNDARIES.md`](CLAIM_BOUNDARIES.md)
+- [`NOVELTY_AUDIT.md`](NOVELTY_AUDIT.md)
+- [`RESULTS_SUMMARY.md`](RESULTS_SUMMARY.md)

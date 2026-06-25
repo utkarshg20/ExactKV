@@ -106,7 +106,7 @@ def test_release_packager_writes_bundle(tmp_path: Path) -> None:
         ):
             assert (out / fname).is_file(), fname
         repro = (out / "repro_command.sh").read_text()
-        assert "exactkv.py run publish" in repro
+        assert "exactkv_repro.py --reports-only" in repro
 
 
 def test_cli_spectralquant_check_exits_zero() -> None:

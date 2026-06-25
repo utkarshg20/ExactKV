@@ -60,6 +60,27 @@ def test_public_release_leaderboard_exists() -> None:
     assert data.get("entries")
 
 
+def test_public_mistral_leaderboard_numeric_when_raw_present() -> None:
+    raw_path = Path("reports/scale_7b/raw.json")
+    lb_path = Path("reports/public_release/leaderboard_final.json")
+    if not raw_path.is_file() or not lb_path.is_file():
+        return
+    raw = json.loads(raw_path.read_text())
+    lb = json.loads(lb_path.read_text())
+    mistral_cells = sum(
+        1 for c in raw.get("cells") or [] if "mistral" in str(c.get("model_name", "")).lower()
+    )
+    if mistral_cells == 0:
+        return
+    mistral_scored = [
+        e for e in lb.get("entries") or []
+        if "mistral" in str(e.get("model", "")).lower()
+        and e.get("score") is not None
+        and e.get("availability") != "unavailable"
+    ]
+    assert mistral_scored, f"{mistral_cells} Mistral raw cells require numeric public rows"
+
+
 def test_phase_f_has_int8_int4_speedups() -> None:
     path = Path("reports/phaseF_kernel_benchmark.json")
     if not path.is_file():

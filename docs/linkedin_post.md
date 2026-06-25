@@ -1,10 +1,12 @@
 We built ExactKV as a **compressor-agnostic crash-test and leaderboard framework for LLM KV-cache compression** — not another speed benchmark.
 
-Recent cross-model results (28 ranked model×compressor cells on Phase A; Phase H+ adds 1500 real-GPU cells on 7B/8B models):
+Recent **Phase H+ scale_7b** results (**1500 real-GPU cells**, `exactkv_failures = 0`):
 
-• INT8 remains the strongest baseline (mean score 0.916)
-• Simulated INT4 and external probe adapters (Shard probe-first; SpectralQuant fallback/proxy) show higher token-level divergence
-• Verifier agreement drops before ExactKV failures appear — catching drift early matters
+• Llama-3.1-8B: `noop`/`int8` score **1.0**; `int4_sim` **0.684**
+• SpectralQuant rows: **fallback/proxy** when dependency unavailable
+• Shard rows: **probe-first** heuristic — not full Shard integration
+
+Phase A (336 cells) remains historical cross-model supporting evidence.
 
 The system is fully reproducible from published JSON reports: benchmark → leaderboard → publication artifacts. ExactKV is **not a production serving system** and does **not reproduce VeriCache**. Compression ratios in reports are **stored tensor byte ratios**, not active GPU memory savings claims.
 

@@ -25,6 +25,8 @@ from exactkv.benchmarks.leaderboard_platform import (
     validate_leaderboard_report,
 )
 
+from exactkv.platform.leaderboard_aggregates import repair_phase_a_report_aggregates
+
 PHASE_H_LEADERBOARD_ID = "phaseH_public_leaderboard"
 DEFAULT_PUBLIC_LEADERBOARD_JSON = Path("reports/leaderboard.json")
 DEFAULT_PUBLIC_LEADERBOARD_MD = Path("reports/leaderboard.md")
@@ -62,6 +64,8 @@ def run_public_leaderboard(
 
     if not phase_a:
         phase_a = load_phase_a_report(phase_a_path or "reports/phaseA_benchmark.json")
+
+    phase_a = repair_phase_a_report_aggregates(phase_a)
 
     models = list(phase_a.get("models_evaluated") or [])
     compressors = list(phase_a.get("compressors") or [])
@@ -172,7 +176,7 @@ def _write_leaderboard_csv(report: Mapping[str, Any], path: Path) -> None:
         "num_cells",
     ]
     with path.open("w", newline="", encoding="utf-8") as fh:
-        writer = csv.DictWriter(fh, fieldnames=fieldnames, extrasaction="ignore")
+        writer = csv.DictWriter(fh, fieldnames=fieldnames, extrasaction="ignore", lineterminator="\n")
         writer.writeheader()
         for row in entries:
             writer.writerow(row)

@@ -17,6 +17,10 @@ PUBLIC_FILES = (
     "docs/x_thread.md",
     "docs/linkedin_post.md",
     "docs/paper_draft.md",
+    "docs/launch_blog_final.md",
+    "docs/launch_x_thread_final.md",
+    "docs/launch_linkedin_final.md",
+    "docs/EXACTKV_TECHNICAL_REPORT.md",
 )
 
 FORBIDDEN_PHRASES = (
@@ -89,7 +93,10 @@ def test_active_gpu_memory_savings_not_claimed() -> None:
 
 
 def test_required_positioning_in_key_public_docs() -> None:
-    for rel in ("docs/blog_post.md", "reports/public_release/README_PUBLIC.md"):
+    for rel in (
+        "docs/launch_blog_final.md",
+        "reports/public_release/README_PUBLIC.md",
+    ):
         text = (_ROOT / rel).read_text(encoding="utf-8").lower()
         assert REQUIRED_POSITIONING_SNIPPET in text
 

@@ -183,6 +183,34 @@ def validate_public_release(
         except OSError:
             warnings.append("Could not compare artifact timestamps.")
 
+        raw = _read_json(scale_raw_path)
+        lb = _read_json(public_lb_path)
+        from exactkv.platform.leaderboard_aggregates import validate_leaderboard_against_raw  # noqa: PLC0415
+
+        lb_errors = validate_leaderboard_against_raw(raw, lb)
+        _add(
+            checks,
+            "public_leaderboard_covers_raw_models",
+            not lb_errors,
+            "; ".join(lb_errors[:5]) or "ok",
+        )
+        mistral_cells = sum(
+            1 for c in (raw.get("cells") or []) if "mistral" in str(c.get("model_name", "")).lower()
+        )
+        if mistral_cells > 0:
+            mistral_ok = any(
+                "mistral" in str(e.get("model", "")).lower()
+                and e.get("score") is not None
+                and e.get("availability") != "unavailable"
+                for e in (lb.get("entries") or [])
+            )
+            _add(
+                checks,
+                "public_mistral_numeric_rows",
+                mistral_ok,
+                f"{mistral_cells} raw Mistral cells",
+            )
+
 
 def validate_phase_f(path: Path, checks: list[CheckResult], report: EvidenceIntegrityReport) -> None:
     if not path.is_file():
