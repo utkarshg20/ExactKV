@@ -192,3 +192,22 @@ Include at least one of these near any public demo, leaderboard, or results tabl
 | Visual package sign-off | ⏳ |
 | Parallel work integration | ✅ Phase 10C — [`PARALLEL_WORK_INTEGRATION_REPORT.md`](PARALLEL_WORK_INTEGRATION_REPORT.md) |
 | Launch approval | ❌ **Not granted** |
+
+---
+
+## 7. Phase I novelty audit (claim lock)
+
+**Authoritative prior-art and claim decisions:** [`NOVELTY_AUDIT.md`](NOVELTY_AUDIT.md) · [`reports/novelty_audit.json`](../reports/novelty_audit.json)
+
+| Decision | Status |
+|---|---|
+| Compressor-agnostic KV exactness benchmark / leaderboard | ✅ Allowed |
+| Real 7B/8B scale panel (Phase H+) | ✅ Allowed with panel scope |
+| Triton kernel microbenchmark path | ✅ Allowed with qualification |
+| "First system like this" / uniqueness | ❌ Forbidden |
+| Reproduces VeriCache / invented compressed-KV verification | ❌ Forbidden |
+| End-to-end speedups / active GPU memory savings | ❌ Forbidden |
+| Production ready / serving system | ❌ Forbidden |
+| Real SpectralQuant / real Shard | ❌ Forbidden (fallback/probe only) |
+
+Automated enforcement: `python scripts/audit_public_claims.py` · `python scripts/run_novelty_audit.py`

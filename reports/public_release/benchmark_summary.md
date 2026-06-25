@@ -15,3 +15,7 @@
 - `int4_sim` on Mistral-7B — score None acceptance None
 - `spectralquant` on Mistral-7B — score None acceptance None
 - `shard` on Mistral-7B — score None acceptance None
+
+## Claim boundaries
+
+SpectralQuant rows use **fallback/proxy** mode when the real dependency is unavailable. Shard rows are **probe-first** heuristic analysis, not a full Shard integration. Compression ratios in source reports are **stored tensor byte ratios** unless active GPU memory is explicitly measured.

@@ -31,6 +31,27 @@ PUBLIC_SCAN_REL = (
 )
 
 # Files that list forbidden terms — skip if discovered via rglob.
+# Additional Phase I public launch docs.
+EXTRA_SCAN_REL = (
+    "docs/blog_post.md",
+    "docs/x_thread.md",
+    "docs/linkedin_post.md",
+    "docs/paper_draft.md",
+    "docs/NOVELTY_AUDIT.md",
+)
+
+# Phase I: caveat enforcement only on launch-positioning docs (not demo/install guides).
+CAVEAT_SCAN_REL = (
+    "README.md",
+    "reports/public_release/README_PUBLIC.md",
+    "reports/public_release/benchmark_summary.md",
+    "reports/public_release/methodology.md",
+    "docs/blog_post.md",
+    "docs/x_thread.md",
+    "docs/linkedin_post.md",
+    "docs/paper_draft.md",
+)
+
 SKIP_FILES = frozenset({
     "CLAIMS_AUDIT.md",
     "LAUNCH_READINESS_GAP_AUDIT.md",
@@ -152,6 +173,9 @@ FORBIDDEN_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\breproduces\s+vericache\b", re.I), "reproduces VeriCache"),
     (re.compile(r"\breal\s+spectralquant\b(?!\s+fallback)", re.I), "real SpectralQuant"),
     (re.compile(r"\breal\s+shard\b(?!\s+probe)", re.I), "real Shard"),
+    (re.compile(r"\bfirst\s+and\s+only\b", re.I), "first and only"),
+    (re.compile(r"\bfastest\b", re.I), "fastest"),
+    (re.compile(r"\bsota\b", re.I), "SOTA unqualified"),
 ]
 
 # Standalone "speedup" / "faster" need extra care.
@@ -164,9 +188,43 @@ EXTRA_PATTERNS: list[tuple[re.Pattern[str], str]] = [
 
 # In disclaimer sections, allow production serving mentions on list lines.
 _DISCLAIMER_SECTION = re.compile(
-    r"(forbidden|claims boundary|does not claim|not claim|no speedup)",
+    r"(forbidden|claims boundary|does not claim|not claim|no speedup|claims forbidden|## 14)",
     re.I,
 )
+
+# When a trigger matches file text, at least one required phrase must appear (case-insensitive).
+CAVEAT_RULES: list[tuple[re.Pattern[str], list[str], str]] = [
+    (
+        re.compile(r"phase\s*f|kernel\s+microbenchmark|\d+\.?\d*x\s+speedup", re.I),
+        ["kernel microbenchmark", "not end-to-end", "no speedup"],
+        "Phase F / speedup caveat",
+    ),
+    (
+        re.compile(r"compression[_ ]ratio", re.I),
+        ["stored tensor", "byte ratio", "unless active gpu memory", "not active gpu"],
+        "compression ratio caveat",
+    ),
+    (
+        re.compile(r"spectralquant", re.I),
+        ["fallback", "proxy", "dependency unavailable", "not claim real"],
+        "SpectralQuant caveat",
+    ),
+    (
+        re.compile(r"\bshard\b(?!cache)", re.I),
+        ["probe", "heuristic", "not a full", "probe-only", "probe_first"],
+        "Shard caveat",
+    ),
+    (
+        re.compile(r"vericache", re.I),
+        ["not reproduce", "does not reproduce", "forbidden", "inspired by"],
+        "VeriCache caveat",
+    ),
+    (
+        re.compile(r"(?<!\bnot )(?<!\bnon-)\bproduction[- ]ready\b|\bproduction\s+serving\b", re.I),
+        ["not production", "not a production", "research-grade", "prelaunch"],
+        "production caveat",
+    ),
+]
 
 
 def _should_skip_file(path: Path) -> bool:
@@ -207,9 +265,28 @@ def scan_file(path: Path) -> list[tuple[int, str, str]]:
     return violations
 
 
+def check_caveats(path: Path, text: str) -> list[str]:
+    """Return missing caveat labels for a file."""
+    missing: list[str] = []
+    if path.name in SKIP_FILES:
+        return missing
+    try:
+        rel = path.relative_to(_ROOT)
+    except ValueError:
+        return missing
+    if str(rel) not in CAVEAT_SCAN_REL:
+        return missing
+    lower = text.lower()
+    for trigger, required_phrases, label in CAVEAT_RULES:
+        if trigger.search(text):
+            if not any(p.lower() in lower for p in required_phrases):
+                missing.append(label)
+    return missing
+
+
 def collect_scan_paths(root: Path) -> list[Path]:
     paths: list[Path] = []
-    for rel in PUBLIC_SCAN_REL:
+    for rel in PUBLIC_SCAN_REL + EXTRA_SCAN_REL:
         p = root / rel
         if p.is_file():
             paths.append(p)
@@ -222,19 +299,30 @@ def main() -> int:
     args = parser.parse_args()
 
     paths = collect_scan_paths(args.root)
+    caveat_failures = 0
     total = 0
     print("ExactKV public claims audit")
     print(f"Scanning {len(paths)} file(s)...")
     for path in paths:
         rel = path.relative_to(args.root)
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
         hits = scan_file(path)
+        caveats = check_caveats(path, text)
         if hits:
             print(f"\n{rel}:")
             for lineno, label, excerpt in hits:
                 print(f"  L{lineno} [{label}] {excerpt}")
                 total += 1
-    if total:
-        print(f"\nFAILED: {total} potential forbidden positive claim(s)")
+        if caveats:
+            print(f"\n{rel} missing caveats:")
+            for c in caveats:
+                print(f"  [caveat] {c}")
+                caveat_failures += 1
+    if total or caveat_failures:
+        print(f"\nFAILED: {total} forbidden claim(s), {caveat_failures} caveat gap(s)")
         return 1
     print("PASSED: no forbidden positive claims detected")
     return 0

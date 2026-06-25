@@ -4,6 +4,10 @@
 
 ExactKV is a **correctness-first KV-cache compression crash-test lab**: lossy compressed KV proposes draft tokens, a full-precision KV verifier checks them, and the final greedy output matches uncompressed inference on tested panels.
 
+**Public positioning (Phase I):** ExactKV is a compressor-agnostic crash-test and leaderboard framework for LLM KV-cache compression. It measures token-level drift, first divergence, acceptance rate, verifier agreement, and exactness failures across compressors and models. See [`docs/NOVELTY_AUDIT.md`](docs/NOVELTY_AUDIT.md).
+
+**Phase I claim boundaries:** Not a production serving system. Does not reproduce VeriCache. Compression ratios are stored tensor byte ratios unless active GPU memory is explicitly measured. SpectralQuant uses fallback/proxy when the dependency is unavailable. Shard is probe-first heuristic analysis, not a full Shard integration. Phase F speedups (when cited) are kernel microbenchmark only — not end-to-end inference speedups.
+
 **Status:** Prelaunch research prototype. V13 has strong exactness evidence, demos, a tiered leaderboard, and **completed Shard/SpectralQuant restricted external-method probes (Phase 10)** — but **public launch and v1.0 are not approved yet**. See [`docs/LAUNCH_READINESS_GAP_AUDIT.md`](docs/LAUNCH_READINESS_GAP_AUDIT.md) · [`docs/PHASE_10_EXTERNAL_METHODS_SUMMARY.md`](docs/PHASE_10_EXTERNAL_METHODS_SUMMARY.md).
 
 ```bash

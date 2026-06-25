@@ -46,6 +46,11 @@ PUBLIC_RELEASE_SCAN = (
     Path("reports/public_release/leaderboard_final.json"),
 )
 
+_CLAIM_NEGATION = re.compile(
+    r"\b(not|no|never|forbidden|without|does\s+not|do\s+not|don'?t)\b",
+    re.I,
+)
+
 
 @dataclass
 class CheckResult:
@@ -256,13 +261,20 @@ def validate_claim_safety(paths: Sequence[Path], checks: list[CheckResult]) -> N
         if not path.is_file():
             continue
         text = path.read_text(encoding="utf-8", errors="replace")
+        lower = text.lower()
         for label, pattern in UNSAFE_CLAIM_PATTERNS:
-            for match in pattern.finditer(text):
-                if label.startswith("real SpectralQuant") and "fallback" in text.lower():
-                    continue
-                if label.startswith("real Shard") and "probe" in text.lower():
-                    continue
-                violations.append(f"{path}:{label}:{match.group(0)!r}")
+            if label.startswith("real SpectralQuant") and "fallback" in lower:
+                continue
+            if label.startswith("real Shard") and "probe" in lower:
+                continue
+            for line in text.splitlines():
+                for match in pattern.finditer(line):
+                    start = match.start()
+                    window = line[max(0, start - 60) : start]
+                    if _CLAIM_NEGATION.search(window):
+                        continue
+                    violations.append(f"{path}:{label}:{match.group(0)!r}")
+                    break
     _add(checks, "public_claim_safety", not violations, "; ".join(violations[:5]) or "clean")
 
 

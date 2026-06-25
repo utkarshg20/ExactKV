@@ -29,3 +29,12 @@ Phase H+ adapters: spectralquant_real (fallback mode when dependency missing), s
 ## Reproducibility
 
 All benchmarks are reproducible from disk reports without re-inference when using `--deterministic`.
+
+## Claim boundaries (Phase I)
+
+- ExactKV is **not a production serving system**.
+- Phase F speedups (when cited) are **kernel microbenchmark** results only — **not end-to-end** inference speedups.
+- Compression ratios are **stored tensor byte ratios** unless active GPU memory is explicitly measured.
+- **SpectralQuant** uses **fallback/proxy** mode when the real dependency is unavailable.
+- **Shard** (`shard_real`) is **probe-first** heuristic analysis, not a full Shard integration.
+- ExactKV is inspired by verifier-mediated compressed-KV ideas; it does **not reproduce VeriCache** serving throughput.

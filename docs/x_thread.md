@@ -1,4 +1,4 @@
-1/9 KV cache compression is everywhere. Token-level drift is not. ExactKV measures when compressed caches start lying — before you ship.
+1/9 KV cache compression is everywhere. Token-level drift is not. ExactKV is a compressor-agnostic crash-test and leaderboard for LLM KV-cache compression exactness.
 
 2/9 Structured output case: `int4_sim` on Qwen 0.5B. First divergence at token 1. Acceptance 0.50.
 
@@ -12,6 +12,6 @@
 
 7/9 Simulated INT4 + external probes (shard, kvquant mock) show 2–3× higher divergence on small models.
 
-8/9 ExactKV = trace-only verification. No runtime commit. Reproducible benchmark + leaderboard from JSON reports.
+8/9 ExactKV = trace-only verification. Not a production serving system. Does not reproduce VeriCache. Shard = probe-first; SpectralQuant = fallback/proxy when dependency missing.
 
-9/9 Full paper draft + demo pack in repo. `python scripts/run_leaderboard.py --all`
+9/9 Phase H+ scale: 1500 cells on Llama-3.1-8B + Mistral-7B-Instruct-v0.3 (real GPU). Full audit: docs/NOVELTY_AUDIT.md

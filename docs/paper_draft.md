@@ -2,7 +2,7 @@
 
 ## Abstract
 
-KV cache compression reduces memory footprint but introduces token-level drift between lossy draft generation and full-precision verification. We present ExactKV, an evaluation framework that measures acceptance rate, first-divergence index, verifier agreement, and cross-model instability under compressed KV conditions. Across 336 benchmark cells spanning 4 models and 7 compressors, INT8 achieves the highest cross-model leaderboard score (0.916 mean) with zero ExactKV failures in the reported panel. Simulated INT4, asymmetric K8/V4, and restricted external adapters exhibit elevated divergence rates and lower verifier agreement, with first-token mismatches appearing as early as index 0. ExactKV provides trace-only verification without runtime commit, enabling reproducible comparison of compression robustness prior to deployment.
+KV cache compression reduces memory footprint but introduces token-level drift between lossy draft generation and full-precision verification. We present ExactKV, a compressor-agnostic crash-test and leaderboard framework for LLM KV-cache compression exactness. It measures acceptance rate, first-divergence index, verifier agreement, and cross-model instability under compressed KV conditions. Across 336 Phase A benchmark cells (4 models, 7 compressors) and a Phase H+ scale panel of 1500 real-GPU cells on Llama-3.1-8B and Mistral-7B-Instruct-v0.3, INT8 achieves strong leaderboard scores with zero ExactKV failures in the reported panels. Simulated INT4, asymmetric K8/V4, and restricted external adapters exhibit elevated divergence rates and lower verifier agreement. ExactKV provides trace-only verification without runtime commit, enabling reproducible comparison of compression robustness prior to deployment.
 
 ## 1. Introduction
 
@@ -66,9 +66,11 @@ Compression error concentrates at token boundaries: the earliest observed mismat
 ## 8. Limitations
 
 - Phase A deterministic runs do not log decoded output text; demos use token-index timelines and optional Exp 115 token IDs.
-- No runtime kernel integration or serving-system claims.
-- No speed or GPU memory claims unless directly measured in source reports.
-- Pharmacy-style semantic prompts are outside the current Phase A panel; structured JSON drift is used as the closest proxy.
+- ExactKV is **not a production serving system** and does **not reproduce VeriCache** serving throughput.
+- Phase F kernel speedups (when cited) are **kernel microbenchmark** results only — **not end-to-end** inference speedups.
+- Compression ratios are **stored tensor byte ratios** unless active GPU memory is explicitly measured; we do **not** claim active GPU memory savings.
+- **SpectralQuant** uses **fallback/proxy** mode when the real dependency is unavailable; **Shard** is **probe-first** heuristic analysis, not a full Shard integration.
+- No runtime kernel integration or unqualified serving claims.
 
 ## 9. Conclusion
 

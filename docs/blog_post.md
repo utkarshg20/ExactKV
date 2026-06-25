@@ -1,5 +1,7 @@
 # What Breaks When You Compress the KV Cache
 
+ExactKV is a compressor-agnostic crash-test and leaderboard framework for LLM KV-cache compression. It measures token-level drift, first divergence, acceptance rate, verifier agreement, and exactness failures across compressors and models.
+
 Everyone wants smaller KV caches. Few teams measure what happens to the *tokens* when compression kicks in.
 
 ExactKV is an evaluation framework that asks a simple question: **does the compressed cache still agree with full-precision generation, token by token?**
@@ -49,7 +51,9 @@ Compression is not a single number. A method can look fine on average yet fail o
 
 ## What we are not claiming
 
-No speedups. No memory savings unless measured. No production serving integration — this is an evaluation layer, not a deployment stack.
+ExactKV is **not a production serving system**. It does **not reproduce VeriCache** serving throughput. Phase F kernel results are **kernel microbenchmark** numbers only — **not end-to-end** inference speedups. Reported compression ratios are **stored tensor byte ratios** unless active GPU memory is explicitly measured (we do **not** claim active GPU memory savings). **SpectralQuant** cells use **fallback/proxy** mode when the real dependency is unavailable. **Shard** is **probe-first** heuristic analysis, not a full Shard integration.
+
+No speedups in end-to-end inference. No memory savings unless measured. No production serving integration — this is an evaluation layer, not a deployment stack.
 
 ---
 

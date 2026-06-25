@@ -1,7 +1,10 @@
 # ExactKV Public Benchmark Release
 
-ExactKV is a reproducible KV compression benchmarking platform with plugin-based
-compressors, standardized evaluation, and public leaderboard generation.
+ExactKV is a compressor-agnostic crash-test and leaderboard framework for LLM
+KV-cache compression. It measures token-level drift, first divergence, acceptance
+rate, verifier agreement, and exactness failures across compressors and models.
+
+**Not a production serving system.** ExactKV does not reproduce VeriCache serving throughput.
 
 ## Quick start
 
@@ -28,7 +31,6 @@ python scripts/exactkv.py run publish
 
 ## Claims policy
 
-No speedup, latency, or memory savings claims unless directly measured in Phase F.
-Token-level acceptance and divergence metrics only.
+No end-to-end speedup, latency, or active GPU memory savings claims. Phase F results (when cited) are kernel microbenchmark only. Compression ratios are stored tensor byte ratios unless active GPU memory is explicitly measured. SpectralQuant: fallback/proxy when dependency unavailable. Shard: probe-first analysis only.
 
 Generated: 2026-06-25T14:43:09.307725+00:00
