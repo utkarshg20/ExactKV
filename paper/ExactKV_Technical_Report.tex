@@ -63,11 +63,42 @@ VeriCache~\citep{vericache2026}.
 \end{abstract}
 
 \section{Introduction}
-Compressed KV is usually treated as a transparent optimization. Under greedy
-decoding, a single perturbed logit can flip the argmax, trajectories diverge.
-Aggregate metrics hide \emph{where} divergence begins. ExactKV asks: \textbf{at
-what token does the compressed-cache path first stop matching full-KV greedy
-decoding?}
+Lossy KV-cache compression is widely deployed as a transparent optimization for
+LLM inference. Under greedy decoding, a single perturbed logit can flip the
+argmax --- after which trajectories diverge. Aggregate metrics (perplexity,
+LongBench, task accuracy) average over this divergence and hide \emph{where}
+it begins, \emph{how severe} it is, and \emph{which compressor design choices}
+drive it.
+
+\begin{sloppypar}
+ExactKV reframes KV-cache evaluation around a single diagnostic question:
+\textbf{at what generated token does the compressed-cache path first stop
+matching full-KV greedy decoding?} We answer this with a compressor-agnostic
+crash-test framework that runs a draft/verify/commit loop and records
+first-divergence index, draft acceptance, verifier agreement, and exactness
+failures per cell.
+\end{sloppypar}
+
+\textbf{Contributions:}
+\begin{enumerate}
+\item A \textbf{compressor-agnostic crash-test framework} with leaderboard-style
+  reporting for token-level drift, first-divergence index, acceptance rate, and
+  exactness failures across compressors and models (\S3--5).
+\item \textbf{7,348 GPU cells} across Llama-3.1-8B and Mistral-7B, five
+  benchmark families, six compressor variants, with \texttt{exactkv\_failures=0}
+  throughout (\S6).
+\item Empirical evidence that \textbf{task type dominates drift} (6\% code
+  $\to$ 90\% reading for \texttt{int4\_sim}) and \textbf{generation length
+  scales it} (9\% $\to$ 62\% on BFCL, 7$\times$) (\S6.4--6.12).
+\item A \textbf{logit autopsy} over 1,103 divergent cells identifying three
+  mechanistically distinct failure modes: near-tie noise (int8), distribution
+  shift (int4\_sim), and attention destruction (H2O eviction) (\S6.10, \S8).
+\item \textbf{Downstream validity measurement}: despite 50\% token drift, all
+  106/106 full-KV valid BFCL tool calls are preserved (\S6.11).
+\item \textbf{GPU validation} of \texttt{int6\_sim} and \texttt{int4\_per\_vec\_sim}
+  confirming non-catastrophic drift on structured tasks; per-vector granularity
+  task-conditional at 8K context (\S6.13--6.15).
+\end{enumerate}
 
 \subsection{Shared problem framing with VeriCache}
 VeriCache~\citep{vericache2026} and ExactKV share the observation that lossy KV
@@ -139,10 +170,12 @@ acceptance, and exactness failures, \emph{not} deployment throughput. It does
 \end{tabularx}
 \end{table}
 
+\begin{sloppypar}
 \textbf{Corrections vs rejections:} \texttt{total\_rejected} counts rejected
 \emph{draft tokens}, \texttt{total\_corrections} counts verification \emph{rounds}
 with a correction. For \texttt{int4\_sim}: 1284/1502 accepted, 218 rejected tokens,
 \textbf{116 correction rounds}.
+\end{sloppypar}
 
 \subsection{Algorithm}
 \begin{verbatim}
@@ -947,11 +980,47 @@ ExactKV uses verification to measure exactly where and how compressors drift.}
 ExactKV does \emph{not} replace VeriCache for deployment.
 
 \section{Related Work}
-KVQuant~\citep{hooper2024kvquant}, KIVI~\citep{liu2024kivi}, SnapKV~\citep{li2024snapkv}
-are compression \emph{methods}, CacheGen~\citep{liu2024cachegen}, LMCache~\citep{lmcache2025}
-are storage/streaming, speculative decoding~\citep{leviathan2023speculative} and
-MagicDec~\citep{chen2024magicdec} target throughput. ExactKV evaluates compressors,
-it does not subsume them.
+
+\paragraph{Verification-based serving.}
+\begin{sloppypar}
+VeriCache~\citep{vericache2026} is the closest prior art. Both systems use a
+compressed-KV draft path and a full-KV verify/correct loop. The distinction is
+purpose: VeriCache is a throughput-oriented \emph{serving system} (scheduling,
+memory tiering, cross-resource staggering); ExactKV is a \emph{diagnostic
+measurement framework} reporting where the unverified compressed path first
+diverges and how often. ExactKV does not reproduce VeriCache's system design and
+makes no claim to the draft+verify algorithm.
+Speculative decoding~\citep{leviathan2023speculative} and
+MagicDec~\citep{chen2024magicdec} use draft/verify for throughput acceleration;
+ExactKV borrows the same semantics purely for measurement.
+\end{sloppypar}
+
+\paragraph{KV quantization methods.}
+KVQuant~\citep{hooper2024kvquant} proposes non-uniform per-channel INT4 quantization
+targeting KV outlier heads. KIVI~\citep{liu2024kivi} proposes asymmetric 2-bit
+per-channel KV quantization with a CUDA kernel. Both directly motivate
+\texttt{int4\_per\_vec\_sim}, which simulates per-vector granularity without a
+production kernel. The \texttt{kivi\_offline} adapter (real KIVI quantizer math, no
+CUDA/Triton kernels) revealed 100\% divergence in the current offline integration
+(\S6.4.6) --- a diagnostic, not a claim about KIVI's algorithmic accuracy.
+SnapKV~\citep{li2024snapkv} selects important KV entries by eviction; the
+\texttt{h2o\_sim} family models the H2O Heavy Hitter Oracle
+policy~\citep{zhang2023h2o} from the same compressor class and shows 100\%
+LongBench divergence even at 75\% retention (\S6.8).
+
+\paragraph{KV storage and streaming.}
+CacheGen~\citep{liu2024cachegen} compresses KV caches for network streaming and
+bandwidth reduction. LMCache~\citep{lmcache2025} targets KV reuse and offloading
+across serving instances. Neither is designed to measure when or why the compressed
+path first diverges from the full-KV oracle.
+
+\paragraph{Evaluation methodology.}
+Standard benchmarks (LongBench, BFCL, HumanEval) measure task-level accuracy
+averaged over many tokens. ExactKV's first-divergence index (fdi) is a
+token-resolution diagnostic orthogonal to task accuracy: a cell can score
+perfectly on a task metric while accumulating 90\% token-level drift (if the
+verifier corrects it). ExactKV uses official HF LongBench and BFCL datasets but
+reports \emph{drift measurements}, not official benchmark scores.
 
 \section{Novelty and Claim Boundaries}
 \textbf{Defensible (narrow):} compressor-agnostic diagnostic/leaderboard for

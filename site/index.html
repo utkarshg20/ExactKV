@@ -30,7 +30,7 @@
 <!-- ─── HERO ─────────────────────────────────────────────────────────────── -->
 <section class="hero">
   <div class="hero-inner">
-    <p class="eyebrow">KV-cache compression · crash-test &amp; leaderboard · v2.9</p>
+    <p class="eyebrow">KV-cache compression · crash-test &amp; leaderboard · v3.0</p>
     <h1>When does compressed KV<br>start lying?</h1>
     <p class="lede">
       ExactKV measures exactly where a compressed KV cache first diverges from
@@ -60,7 +60,7 @@
   <div class="wrap">
     <p class="section-label">Empirical findings</p>
     <h2>Four things ExactKV established</h2>
-    <p class="section-sub">Across Llama-3.1-8B and Mistral-7B, five benchmark families, five compressor variants.</p>
+    <p class="section-sub">Across Llama-3.1-8B and Mistral-7B, five benchmark families, six compressor variants.</p>
 
     <div class="findings-grid">
 
@@ -367,8 +367,8 @@
           <tr><td>6</td><td><code>int4_sim</code></td><td>Mistral-7B</td><td><span class="score-bar"><span class="sb-fill sb-mid" style="--pct:85.1%"></span>0.851</span></td><td>0.837</td><td>0.507</td><td><span class="tag ok">validated</span></td></tr>
           <tr><td>—</td><td><code>int6_sim</code></td><td>Mistral-7B</td><td><span class="score-bar"><span class="sb-fill" style="--pct:96.4%"></span>0.964</span></td><td>0.964</td><td>0.375</td><td><span class="tag ok">v3.0</span></td></tr>
           <tr><td>—</td><td><code>int4_per_vec_sim</code></td><td>Mistral-7B</td><td><span class="score-bar"><span class="sb-fill" style="--pct:93.0%"></span>0.930</span></td><td>0.930</td><td>0.556</td><td><span class="tag ok">v3.0</span></td></tr>
-          <tr class="lb-pending"><td>—</td><td><code>int6_sim</code></td><td>Llama-3.1-8B</td><td colspan="3" style="color:var(--faint);font-style:italic">v3.1 pending (HF auth)</td><td><span class="tag analytical">pending</span></td></tr>
-          <tr class="lb-pending"><td>—</td><td><code>int4_per_vec_sim</code></td><td>Llama-3.1-8B</td><td colspan="3" style="color:var(--faint);font-style:italic">v3.1 pending (HF auth)</td><td><span class="tag analytical">pending</span></td></tr>
+          <tr class="lb-pending"><td>—</td><td><code>int6_sim</code></td><td>Llama-3.1-8B</td><td colspan="3" style="color:var(--faint);font-style:italic">v3.1 in progress</td><td><span class="tag analytical">pending</span></td></tr>
+          <tr class="lb-pending"><td>—</td><td><code>int4_per_vec_sim</code></td><td>Llama-3.1-8B</td><td colspan="3" style="color:var(--faint);font-style:italic">v3.1 in progress</td><td><span class="tag analytical">pending</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -502,7 +502,7 @@ python3 scripts/summarize_v30_panel.py \
       <a href="../README.md" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>GitHub / README</strong><span>Setup, install, quick start</span></span></a>
       <a href="../paper/ExactKV_Technical_Report.md" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Technical report</strong><span>Full methodology, results, analysis</span></span></a>
       <a href="../reports/public_release/leaderboard_final.json" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Leaderboard (JSON)</strong><span>Machine-readable scores</span></span></a>
-      <a href="../RELEASE.md" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Release notes</strong><span>v2.9 changelog and status</span></span></a>
+      <a href="../RELEASE.md" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Release notes</strong><span>v3.0 changelog and status</span></span></a>
       <a href="../release_synthesis/claim_decision_table.md" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Claim decisions</strong><span>Per-claim evidence boundaries</span></span></a>
       <a href="../release_synthesis/source_of_truth_map.md" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Source-of-truth map</strong><span>Every number to its artifact</span></span></a>
     </div>

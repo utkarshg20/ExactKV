@@ -72,14 +72,40 @@ serving. ExactKV does **not** claim novelty for compressed-KV draft plus full-KV
 
 ## 2. Introduction
 
-Compressed KV is usually treated as a transparent optimization. Under greedy
-decoding, a single perturbed logit can flip the argmax, after that, trajectories
-diverge. Aggregate metrics (perplexity, LongBench, task accuracy) average over
-this and hide *where* divergence begins.
+Lossy KV-cache compression is widely deployed as a transparent optimization
+for LLM inference. Under greedy decoding, a single perturbed logit can flip
+the argmax — after which trajectories diverge. Aggregate metrics (perplexity,
+LongBench accuracy, task pass rates) average over this divergence and hide
+*where* it begins, *how severe* it is, and *which compressor design choices*
+drive it.
 
-ExactKV reframes evaluation: **at what generated token does the compressed-cache
-path first stop matching full-KV greedy decoding?** That diagnostic is
-orthogonal to proposing a new compressor.
+ExactKV reframes KV-cache evaluation around a single diagnostic question:
+**at what generated token does the compressed-cache path first stop matching
+full-KV greedy decoding?** We answer this with a compressor-agnostic crash-test
+framework that runs a draft/verify/commit loop — draft from compressed KV,
+verify each token against the full-KV oracle, accept the matching prefix,
+correct on mismatch — and records first-divergence index, draft acceptance,
+verifier agreement, and exactness failures per cell.
+
+**Contributions:**
+
+1. A **compressor-agnostic crash-test framework** with leaderboard-style reporting
+   that measures token-level drift, first-divergence index, acceptance rate, and
+   exactness failures across compressors and models (§3–5).
+2. **7,348 GPU cells** across Llama-3.1-8B and Mistral-7B, five benchmark families,
+   six compressor variants, with `exactkv_failures = 0` throughout (§6).
+3. Empirical evidence that **task type dominates drift** (6% code → 90% reading for
+   int4_sim) and **generation length scales it within a task** (9% → 62% on BFCL,
+   7×), two axes that aggregate benchmarks do not resolve (§6.4–6.12).
+4. A **logit autopsy** over 1,103 divergent cells identifying three mechanistically
+   distinct failure modes: near-tie noise (int8), distribution shift (int4_sim),
+   and attention destruction (H2O-style eviction), each with forensic case studies
+   (§6.10, §8).
+5. **Downstream validity measurement**: despite 50% token drift, all 106/106 full-KV
+   valid BFCL tool calls are preserved under verifier-mediated execution (§6.11).
+6. **GPU validation of two new compressors** (int6_sim, int4_per_vec_sim) confirming
+   non-catastrophic drift on structured tasks and revealing that per-vector granularity
+   eliminates drift on BFCL/MBPP but is task-conditional at 8K context (§6.13–6.15).
 
 ### 2.1 Shared problem framing with VeriCache
 
@@ -107,11 +133,6 @@ ExactKV is an **evaluation/crash-test framework**. It uses verifier-mediated
 semantics to **measure** first divergence on the lossy path, draft acceptance,
 verifier agreement, and exactness failures across compressors, **not** to optimize
 deployment throughput or reproduce VeriCache's system design. See Section 10.
-
-ExactKV grew through a long verifier-first research arc (**V1–V21**) before a
-separate formal release arc (**Phases A–K**). These are **two distinct timelines
-with different numbering systems** (Section 8). **ExactKV did not start at Phase
-A.**
 
 ---
 
@@ -1707,18 +1728,85 @@ in system integration, and documents drift even when `exactkv_failures = 0`.
 
 ---
 
-## 12. Related work (other systems)
+## 12. Related work
+
+ExactKV is a measurement framework, not a compression method or serving system.
+It therefore relates to prior work in three distinct ways: (1) systems whose
+algorithmic pattern it shares, (2) compressors whose drift it measures, and
+(3) evaluation methodologies it contrasts against.
+
+### 12.1 Verification-based serving
+
+**VeriCache** [vericache2026] is the closest algorithmic prior art. Both ExactKV and
+VeriCache use a compressed-KV draft path and a full-KV verify/correct loop to
+produce greedy-equivalent output. The critical distinction is purpose: VeriCache is a
+**throughput-oriented serving system** — its contribution is scheduling, memory
+tiering, and cross-resource staggering for production inference. ExactKV uses the same
+algorithmic skeleton as a **diagnostic measurement tool** — it reports *where* the
+unverified compressed path first diverges and *how often*, not how fast verified
+serving runs. ExactKV does not reproduce VeriCache's memory scheduling, does not
+measure serving throughput, and makes no claim to the draft+verify algorithm itself.
+The two are complementary: ExactKV measures whether a compressor is worth verifying
+before committing to a serving integration.
+
+**Speculative decoding** [leviathan2023speculative] established the general pattern
+of using a small draft model and a larger verifier for throughput acceleration.
+ExactKV borrows the draft/verify semantics purely for measurement: the "draft" is
+the compressed-KV path, and the "verify" is the full-KV oracle. There is no
+throughput claim and no model-size draft/target asymmetry. **MagicDec** [chen2024magicdec]
+extends speculative decoding to long contexts; ExactKV measures drift at long context
+rather than accelerating it.
+
+### 12.2 KV quantization methods
+
+**KVQuant** [hooper2024kvquant] proposes non-uniform per-channel INT4 quantization
+with a nuq4 kernel designed specifically for KV cache outlier heads. **KIVI** [liu2024kivi]
+proposes asymmetric 2-bit per-channel quantization of KV caches with a CUDA kernel.
+Both methods directly motivate ExactKV's `int4_per_vec_sim` compressor, which simulates
+the per-vector granularity insight without a production kernel. ExactKV evaluates these
+designs as compressors-under-test: the `kivi_offline` adapter uses real KIVI quantizer
+math and revealed 100% divergence in the current offline integration (§6.4.6) — a
+diagnostic result, not a claim about KIVI's algorithmic accuracy. KVQuant and SnapKV
+production kernel integrations remain future work.
+
+**SnapKV** [li2024snapkv] selects important KV entries by clustering observation
+windows; it is an eviction/selection method rather than quantization. The ExactKV
+`h2o_sim` compressor family (§6.8) models the Heavy Hitter Oracle eviction policy
+[zhang2023h2o], which is the same compressor class as SnapKV. ExactKV's eviction
+results (100% LongBench divergence even at 75% retention) quantify the worst-case
+cost of this class on reading tasks.
+
+### 12.3 KV storage and streaming
+
+**CacheGen** [liu2024cachegen] compresses KV caches for efficient network streaming
+and disaggregated serving; its goal is bandwidth reduction, not token-level exactness.
+**LMCache** [lmcache2025] focuses on KV reuse and offloading across serving instances.
+Neither is designed to answer when or why the compressed path first diverges from the
+full-KV oracle — the question ExactKV addresses.
+
+### 12.4 Evaluation methodology
+
+Standard LLM benchmarks (MMLU, LongBench, HumanEval, BFCL) measure task-level
+accuracy averaged over many tokens. ExactKV's **first-divergence index (fdi)** is a
+finer-grained, token-resolution metric: it pinpoints the first token where compressed
+and full-KV paths disagree, and the acceptance rate measures what fraction of draft
+tokens survive verification. This is orthogonal to task-level accuracy: a cell can
+score perfectly on a task metric while accumulating 90% token-level drift (if the
+verifier catches and corrects it), or it can show 0% drift and also pass (noop, int8
+on short tasks). ExactKV uses official HF LongBench and BFCL datasets but reports
+drift measurements, **not** official benchmark scores.
 
 | System | Category | ExactKV relationship |
 |--------|----------|---------------------|
-| VeriCache [vericache2026] | Lossless **serving** via compressed draft + full-KV verify | See Sections 10–11, **not reproduced**, overlap on algorithm, not on system contribution |
-| KVQuant [hooper2024kvquant] | KV quantization method | Evaluate as compressor under test (adapter exists, not in headline panel) |
-| KIVI [liu2024kivi] | Asymmetric 2-bit KV quant | Same |
-| SnapKV [li2024snapkv] | KV eviction/selection | Factory-only adapter in repo |
-| CacheGen [liu2024cachegen] | KV compression + streaming | Different task (network/streaming) |
+| VeriCache [vericache2026] | Lossless serving via compressed draft + full-KV verify | Algorithmic overlap; serving system vs. measurement framework — see §10–11 |
+| KVQuant [hooper2024kvquant] | Per-channel INT4 KV quant | Motivates `int4_per_vec_sim`; adapter available (`kivi_offline` diagnostic) |
+| KIVI [liu2024kivi] | Asymmetric 2-bit per-channel KV quant | Same; `kivi_offline` shows 100% divergence in offline integration (§6.4.6) |
+| SnapKV [li2024snapkv] | KV eviction/selection | Modeled by `h2o_sim` class; eviction results in §6.8 |
+| H2O [zhang2023h2o] | Heavy Hitter Oracle eviction | Direct inspiration for `h2o_sim`; 100% LongBench divergence (§6.8) |
+| CacheGen [liu2024cachegen] | KV compression + streaming | Different task (network bandwidth) |
 | LMCache [lmcache2025] | KV storage/offload | Different task (reuse/serving) |
-| Speculative decoding [leviathan2023speculative] | Draft/verify for speedup | ExactKV uses verify semantics for **measurement** |
-| MagicDec [chen2024magicdec] | Long-context speculative decoding | Throughput focus, adjacent |
+| Speculative decoding [leviathan2023speculative] | Draft/verify for speedup | ExactKV uses verify semantics for measurement only, no throughput claim |
+| MagicDec [chen2024magicdec] | Long-context speculative decoding | Adjacent; ExactKV measures long-context drift rather than accelerating it |
 
 Full audit: [`release_synthesis/related_work_audit.md`](../release_synthesis/related_work_audit.md).
 
