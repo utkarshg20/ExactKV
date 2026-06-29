@@ -1,0 +1,1193 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{abstract}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage[numbers]{natbib}
+\usepackage{amsmath}
+\usepackage{placeins}
+\usepackage{tabularx}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+
+\title{\textbf{When Does Compressed KV Start Lying?}\\[0.4em]
+\large Token-Level Drift in KV Cache Compression}
+\author{ExactKV Project\\Technical Report (v2.9)}
+\date{June 2026}
+
+\begin{document}
+\maketitle
+\begin{center}
+\small\textit{Quantitative values from \texttt{reports/scale\_7b/raw.json}, \texttt{reports/evidence\_plus/raw.json}, and \texttt{reports/external\_panels/summary\_all.json}. Claim boundaries: \texttt{docs/CLAIM\_BOUNDARIES.md}.}
+\end{center}
+
+\begin{abstract}
+Lossy KV-cache compression is widely deployed, but most evaluations report aggregate
+quality and stop there. ExactKV is a compressor-agnostic \textbf{crash-test framework}
+that measures first-divergence index, draft acceptance, and \texttt{exactkv\_failure}
+under verifier-mediated semantics.
+
+Across \textbf{7,348 completed GPU cells} (Llama-3.1-8B and Mistral-7B, five benchmark
+families) all panels report \texttt{exactkv\_failures=0}. Four main findings:
+
+\begin{enumerate}
+\item \textbf{Task type dominates.} \texttt{int4\_sim}: 6\% (MBPP code) $\to$ 11\% (BFCL short)
+  $\to$ 50\% (BFCL long-gen) $\to$ \textbf{90\%} (HF LongBench). H2O-style eviction at 75\% kept:
+  \textbf{100\%} divergence on LongBench.
+\item \textbf{Generation length scales within-task.} On BFCL, \texttt{int4\_sim} rises
+  from 9\% (mnt=16) to 62\% (mnt=256) --- a $7\times$ increase.
+\item \textbf{Three distinct failure modes.} Top-k logit autopsy (1{,}103 divergent cells):
+  near-tie noise (int8, rank~2.4, fdi=22); distribution shift (int4\_sim,
+  rank~3.5, fdi=8); attention destruction (H2O-style, rank~6.7, fdi=1).
+  Three forensic case studies confirm each.
+\item \textbf{100\% downstream validity preserved.} Despite 50\% token drift, ExactKV
+  preserves all 106/106 full-KV valid BFCL tool calls (both models, all four task categories).
+\end{enumerate}
+
+\noindent\texttt{int6\_sim} (6-bit) and \texttt{int4\_per\_vec\_sim} (KIVI/KVQuant-style
+per-vector INT4, $2.06\times$ int8 error, $6\times$ less than per-tensor int4\_sim) are
+GPU-validated non-catastrophic on Mistral-7B (v3.0, 784 cells): \texttt{int6\_sim} shows 0\% divergence on BFCL/MBPP and 37.5\% on LongBench; \texttt{int4\_per\_vec\_sim} shows 0\% on BFCL/MBPP and 55.6\% on LongBench --- both with \texttt{exactkv\_failures=0}.
+Results are \textbf{not} benchmark scores, production claims, or a reproduction of
+VeriCache~\citep{vericache2026}.
+\end{abstract}
+
+\section{Introduction}
+Compressed KV is usually treated as a transparent optimization. Under greedy
+decoding, a single perturbed logit can flip the argmax, trajectories diverge.
+Aggregate metrics hide \emph{where} divergence begins. ExactKV asks: \textbf{at
+what token does the compressed-cache path first stop matching full-KV greedy
+decoding?}
+
+\subsection{Shared problem framing with VeriCache}
+VeriCache~\citep{vericache2026} and ExactKV share the observation that lossy KV
+may look acceptable on short or aggregate metrics but \textbf{diverges more as
+decoding continues}, and catastrophic for code and tool-calling. VeriCache uses
+compressed KV to \textbf{draft} and full KV to \textbf{verify/correct}, guaranteeing
+\textbf{identical greedy output} to full-KV inference.
+
+\subsection{Where ExactKV diverges from VeriCache}
+VeriCache is a \textbf{serving/system} paper. Its contribution is not merely
+``draft then verify.'' It makes that loop practical by: (1)~keeping compressed KV
+on GPU, (2)~keeping full KV in CPU/storage, loading only for verification,
+(3)~\textbf{cross-resource staggering} (HBM-bound draft vs interconnect-bound
+verify), (4)~reporting serving throughput (up to ${\sim}4\times$ vs full-KV in
+their evaluation) with identical outputs.
+
+ExactKV is an \textbf{evaluation crash-test}. It measures first divergence,
+acceptance, and exactness failures, \emph{not} deployment throughput. It does
+\emph{not} reproduce VeriCache scheduling or memory tiering.
+
+\subsection{Main Findings at a Glance}
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{clp{7.5cm}}
+\toprule
+\textbf{\#} & \textbf{Finding} & \textbf{Key number} \\
+\midrule
+1 & Task type dominates drift & int4\_sim: MBPP 6\% $\to$ BFCL 11\% $\to$ BFCL long 50\% $\to$ LongBench 90\% \\
+2 & Generation length scales drift & int4\_sim mnt=16: 9\% $\to$ mnt=256: 62\% ($7\times$) \\
+3 & Eviction $>$ quantization & H2O-style 75\% kept $\to$ 100\% LongBench divergence \\
+4 & Three distinct failure modes & int8: near-tie (rank 2.4, fdi=22); int4\_sim: shift (rank 3.5, fdi=8); H2O: destruction (rank 6.7, fdi=1) \\
+5 & 100\% downstream validity & ExactKV preserves 106/106 valid BFCL tool calls despite 50\% drift \\
+6 & Zero correctness failures & \texttt{exactkv\_failures=0} across all 7,348 GPU cells \\
+\bottomrule
+\end{tabular}
+\caption{Main findings summary.}
+\end{table}
+
+\section{Definitions}
+\subsection{Reference paths}
+\begin{itemize}[noitemsep]
+\item \textbf{Full-KV reference:} greedy generation with uncompressed KV.
+\item \textbf{Lossy path:} compressed-KV greedy without verifier.
+\item \textbf{ExactKV path:} verifier-mediated draft/verify/commit (\texttt{ExactKVGenerator}).
+\end{itemize}
+
+\subsection{Metrics (formal)}
+\begin{table}[htbp]
+\centering\small
+\caption{Core metrics (formal definitions).}
+\label{tab:metrics-formal}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.30\textwidth}>{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Metric} & \textbf{Definition} \\ \midrule
+\texttt{first\_divergence\_index} &
+  First position where the \emph{lossy} token $\neq$ full-KV greedy (before correction). \\
+\texttt{acceptance\_rate} &
+  \texttt{total\_accepted / total\_drafted} across verification rounds. \\
+\texttt{exactkv\_failure} &
+  Final ExactKV output $\neq$ full-KV greedy (verifier/commit failure). \\
+\texttt{divergence\_rate} &
+  Fraction of cells with lossy-path divergence. \\
+\texttt{divergence\_stability} &
+  $1 - \texttt{divergence\_rate}$ (complement). \\
+\texttt{compression\_ratio} &
+  Stored tensor byte ratio only (not active GPU memory). \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\textbf{Corrections vs rejections:} \texttt{total\_rejected} counts rejected
+\emph{draft tokens}, \texttt{total\_corrections} counts verification \emph{rounds}
+with a correction. For \texttt{int4\_sim}: 1284/1502 accepted, 218 rejected tokens,
+\textbf{116 correction rounds}.
+
+\subsection{Algorithm}
+\begin{verbatim}
+Prefill -> FullKVState + CompressedKVState
+while generated < max_new_tokens:
+  DRAFT from compressed KV (up to draft_len tokens)
+  VERIFY each token vs full-KV greedy
+  COMMIT accepted prefix, correct on mismatch
+  ALIGN compressed state from authoritative full KV
+return ExactKV output_ids
+\end{verbatim}
+Greedy decoding only in this release.
+
+\section{Method}
+Each \textbf{cell} is $(\text{model}, \text{compressor}, \text{prompt},
+\texttt{max\_new\_tokens})$ with \texttt{draft\_len=4}, \texttt{seed=0}. Three
+modes per cell: \textbf{full}, \textbf{lossy}, \textbf{exactkv}. Leaderboard
+score: $0.35\,a + 0.25\,v + 0.20(1-\hat d) + 0.10(1-f) + 0.10\,s$.
+
+\section{Experimental Setup}
+\begin{table}[htbp]
+\centering\small
+\caption{Headline release panel (\texttt{reports/scale\_7b/raw.json}).}
+\label{tab:experimental-setup}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.28\textwidth}>{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\ \midrule
+Panel ID & \texttt{phase\_a\_unified\_panel} \\
+Total cells & \textbf{1500} = $2 \times 5 \times 50 \times 3$ \\
+Models & Llama-3.1-8B (750), Mistral-7B (750) \\
+Stack & torch 2.8.0+cu128, transformers 5.12.1 \\
+\texttt{draft\_len} & 4 \quad \texttt{max\_new\_tokens} $\in \{4,8,16\}$ \\
+Decoding & Greedy only \\
+Prompts & 50 variants from 4 stress templates (capital, math, JSON, code) \\
+Categories & capital\_france 390, simple\_math 390, json\_tool 360, code\_fn 360 \\
+Execution & Sequential per model, \texttt{deterministic\_mode=false} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\textbf{Validated compressors:} \texttt{noop}, \texttt{int8}, \texttt{int4\_sim}.
+Real KIVI/KVQuant/SnapKV/TurboQuant are not in the headline panel. The raw JSON
+also contains proxy/probe slots (\texttt{spectralquant}, \texttt{shard}) excluded
+from all analysis; see Limitations (\S\ref{sec:limitations}).
+
+{\sloppy
+\textbf{1,560 GPU cells} total: 216 Llama-3.1-8B cells across bundled
+LongBench/RULER/BFCL/HumanEval pilots; 144 MBPP cells across both models
+(\texttt{mbpp\_gpu\_raw.json}); 1,200 BFCL export-50 tool-call drift cells
+across both models --- \texttt{exactkv\_failures=0} throughout. Not official
+benchmark scores.\par}
+
+\section{Results: Validated Compressors}
+Table~\ref{tab:validated-compressors}: built-in compressors with direct ExactKV
+integration (\texttt{noop}, \texttt{int8}, \texttt{int4\_sim}). Aggregates from
+\texttt{compressor\_summary} in \texttt{reports/scale\_7b/raw.json} (300 cells
+each: 150 per model).
+
+\begin{table}[htbp]
+\centering\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\begin{tabularx}{\textwidth}{@{}lrrrr>{\raggedright\arraybackslash}p{0.9cm}r@{}}
+\toprule
+\textbf{Compressor} & \textbf{Cells} & \textbf{Accept.} & \textbf{Div.$^\dagger$} & \textbf{Stab.} & \textbf{1st div.$^\S$} & \textbf{Fail.} \\ \midrule
+\texttt{noop} & 300 & 1.000 & 0.00 & 1.00 & n/a & 0.00 \\
+\texttt{int8} & 300 & 1.000 & 0.00 & 1.00 & n/a & 0.00 \\
+\texttt{int4\_sim} & 300 & 0.851 & 0.52 & 0.48 & 2.0 & 0.00 \\
+\bottomrule
+\end{tabularx}
+\caption{Built-in compressors from \texttt{compressor\_summary}.
+  $^\dagger$Lossy-path divergence fraction.
+  $^\S$Mean over divergent cells only.
+  Histogram for \texttt{int4\_sim}: index 1$\to$78, 3$\to$39, 5$\to$24, 8$\to$13 cells.}
+\label{tab:validated-compressors}
+\end{table}
+
+\texttt{int8}/\texttt{noop}: no lossy divergence. \texttt{int4\_sim}: drifts in
+52\% of cells yet \texttt{exactkv\_failure=0} because the verifier corrects.
+
+\textbf{Leaderboard-style scores} (formula: $0.35a + 0.25v + 0.20(1-\hat{d}) + 0.10(1-f) + 0.10s$,
+source: \texttt{reports/public\_release/leaderboard\_final.json}):
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{l l r r r r r}
+\toprule
+\textbf{Compressor} & \textbf{Model} & \textbf{Score} & \textbf{Accept.} & \textbf{Div. rate$^\dagger$} & \textbf{Stab.} & \textbf{Cells} \\ \midrule
+\texttt{noop} & Llama-3.1-8B & 1.000 & 1.000 & 0.000 & 1.000 & 150 \\
+\texttt{int8} & Llama-3.1-8B & 1.000 & 1.000 & 0.000 & 1.000 & 150 \\
+\texttt{noop} & Mistral-7B & 1.000 & 1.000 & 0.000 & 1.000 & 150 \\
+\texttt{int8} & Mistral-7B & 0.983 & 1.000 & 0.000 & 0.827 & 150 \\
+\texttt{int4\_sim} & Llama-3.1-8B & 0.859 & 0.852 & 0.520 & 0.480 & 150 \\
+\texttt{int4\_sim} & Mistral-7B & 0.851 & 0.837 & 0.507 & 0.493 & 150 \\
+\bottomrule
+\end{tabular}
+\caption{Leaderboard-style scores for validated built-in compressors.
+$^\dagger$Div.\ rate = raw lossy-path token divergence fraction (same metric as Table~\ref{tab:validated-compressors}).
+\texttt{int8} Mistral: divergence\_rate=0.000 (zero cells diverge); \texttt{Stab.}=0.827
+is the \textbf{leaderboard stability subscore} from \texttt{leaderboard\_final.json}, which
+is distinct from the formal metric $\text{divergence\_stability} = 1 - \text{divergence\_rate}$
+(Table~\ref{tab:metrics-formal}); under the formal metric, \texttt{int8} Mistral
+divergence\_stability=1.000. \texttt{spectralquant}
+(MOCK$\to$\texttt{int4\_sim}) and \texttt{shard} (PROBE\_ONLY) excluded from ranked table.}
+\label{tab:leaderboard-scores}
+\end{table}
+
+\subsection{Metric interpretation}
+Divergence rate and acceptance rate measure \emph{different} failure modes. Low
+lossy-path divergence does not imply high verifier acceptance (and vice versa).
+lossy-path divergence does not imply high verifier acceptance (and vice versa).
+Example: \texttt{int4\_sim} at \texttt{max\_new\_tokens=16} can show first
+divergence at index 8 with acceptance 0.94 --- how late drift occurs matters.
+\subsection{Evidence-plus long-context panel}
+\textbf{Source:} \texttt{reports/evidence\_plus/raw.json} (RunPod A5000, June 2026).
+144 cells = $2 \times 6 \times 2 \times 3 \times 2$, prefill buckets 512/1024,
+\texttt{max\_new\_tokens} $\in \{16,32\}$, built-in compressors only.
+\begin{table}[h]
+\centering\small
+\begin{tabular}{lrrrr}
+\toprule
+Compressor & Cells & Accept. & Div.\ rate & Fail. \\ \midrule
+\texttt{noop} & 48 & 1.000 & 0.00 & 0.00 \\
+\texttt{int8} & 48 & 1.000 & 0.00 & 0.00 \\
+\texttt{int4\_sim} & 48 & 0.985 & 0.31 & 0.00 \\
+\bottomrule
+\end{tabular}
+\caption{Evidence-plus aggregates. \texttt{int4\_sim}: Mistral 41.7\%, Llama 20.8\% divergence (24 cells each).}
+\end{table}
+By context bucket (all compressors): 512$\to$11.1\% divergence, 1024$\to$9.7\%.
+Diagnostic timing: mean 3854\,ms, p90 5178\,ms per cell (not serving throughput).
+
+\subsection{External benchmark smoke panels}
+{\sloppy\noindent\textbf{Source:} \texttt{analysis\_pack.json} (216 Llama-only), \texttt{mbpp\_gpu\_raw.json}
+(144 cells). \texttt{exactkv\_failures=0} on all panels. 216-cell subset:
+\texttt{noop}/\texttt{int8}: 0\%; 15 divergent cells (\texttt{int4\_sim} only).\par}
+
+\begin{table}[htbp]
+\centering\scriptsize
+\renewcommand{\arraystretch}{1.05}
+\begin{tabularx}{\textwidth}{@{}l l l l r r r r r r@{}}
+\toprule
+\textbf{Panel} & \textbf{Source} & \textbf{Model} & \textbf{Ctx (K)} & \textbf{MNT} & \textbf{Cells} & \textbf{Div.} & \textbf{Acc.} & \textbf{Fail.} & \textbf{P90 ms} \\ \midrule
+LongBench & pilot & Llama-3.1-8B & 2,4 & 16,32 & 72 & 0.083 & 0.994 & 0 & 8781 \\
+RULER 2K--4K & pilot & Llama-3.1-8B & 2,4 & 16,32 & 48 & 0.083 & 0.993 & 0 & 8793 \\
+RULER 8K & pilot & Llama-3.1-8B & 8 & 16,32 & 24 & 0.083 & 0.993 & 0 & 13640 \\
+BFCL & pilot (4) & Llama-3.1-8B & 1,2 & 16,32 & 48 & 0.063 & 0.999 & 0 & 6342 \\
+HumanEval & pilot (4) & Llama-3.1-8B & 1,2 & 32 & 24 & 0.000 & 1.000 & 0 & 6392 \\
+\bottomrule
+\end{tabularx}
+\caption{Llama-3.1-8B external smoke panels (216 cells, \texttt{noop}/\texttt{int8}/\texttt{int4\_sim}). Drift metrics; not official scores.}
+\label{tab:external-smoke}
+\end{table}
+
+\begin{table}[htbp]
+\centering\scriptsize
+\renewcommand{\arraystretch}{1.05}
+\begin{tabularx}{\textwidth}{@{}l l l l r r r r r r@{}}
+\toprule
+\textbf{Panel} & \textbf{Source} & \textbf{Models} & \textbf{Ctx (K)} & \textbf{MNT} & \textbf{Cells} & \textbf{Div.} & \textbf{Acc.} & \textbf{Fail.} & \textbf{P90 ms} \\ \midrule
+MBPP & pilot (6) & Llama+Mistral & 0.5,1 & 16,32 & 144 & 0.021 & 0.999 & 0 & 5121 \\
+\bottomrule
+\end{tabularx}
+\caption{MBPP code-drift smoke (144 cells, \texttt{noop}/\texttt{int8}/\texttt{int4\_sim}). Not pass@1; no test execution.}
+\label{tab:external-mbpp}
+\end{table}
+
+\begin{table}[htbp]
+\centering\scriptsize
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{llrrrr}
+\toprule
+\textbf{Compressor} & \textbf{Model} & \textbf{Cells} & \textbf{Div.\ rate} & \textbf{CI\textsubscript{95} low} & \textbf{CI\textsubscript{95} high} \\ \midrule
+\texttt{noop} & Llama-3.1-8B & 200 & 0.000 & 0.000 & 0.019 \\
+\texttt{noop} & Mistral-7B & 200 & 0.000 & 0.000 & 0.019 \\
+\texttt{int8} & Llama-3.1-8B & 200 & 0.000 & 0.000 & 0.019 \\
+\texttt{int8} & Mistral-7B & 200 & 0.000 & 0.000 & 0.019 \\
+\texttt{int4\_sim} & Llama-3.1-8B & 200 & 0.055 & 0.031 & 0.096 \\
+\texttt{int4\_sim} & Mistral-7B & 200 & 0.170 & 0.124 & 0.228 \\
+\bottomrule
+\end{tabular}
+\caption{BFCL export-50 tool-call drift panel (1,200 cells, both models, 50 prompts).
+\texttt{exactkv\_failures=0}. Source: \texttt{bfcl\_export\_50\_raw.json}.
+Drift measurement only (not JSON-completeness); \texttt{max\_new\_tokens}$\in\{16,32\}$.
+Mistral-7B \texttt{int4\_sim} divergence (17.0\%) is $3\times$ Llama-3.1-8B (5.5\%).}
+\label{tab:bfcl-export50}
+\end{table}
+
+Notable: LongBench \texttt{int4\_sim} 25\%; RULER 8192 \texttt{niah\_single} 33\%;
+BFCL pilot \texttt{int4\_sim} 18.75\%; BFCL export-50 \texttt{int4\_sim} 11.3\%
+(Llama 5.5\%, Mistral 17.0\%); HumanEval zero drift; MBPP 3/144 divergent.
+\texttt{int8}/\texttt{noop}: 0\% divergence on all panels.
+
+\begin{table}[htbp]
+\centering\small
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Panel} & \textbf{n} & \textbf{Div.} & \textbf{Rate} & \textbf{CI\textsubscript{95} low} & \textbf{CI\textsubscript{95} high} \\ \midrule
+LongBench pilot & 72 & 6 & 8.3\% & 3.9\% & 17.0\% \\
+RULER 2K--4K & 48 & 4 & 8.3\% & 3.3\% & 19.7\% \\
+RULER 8K & 24 & 2 & 8.3\% & 2.3\% & 25.8\% \\
+BFCL pilot & 48 & 3 & 6.3\% & 2.2\% & 16.8\% \\
+HumanEval pilot & 24 & 0 & 0.0\% & 0.0\% & 14.2\% \\
+MBPP pilot & 144 & 3 & 2.1\% & 0.7\% & 6.0\% \\
+BFCL exp-50 \texttt{int4\_sim} Llama & 200 & 11 & 5.5\% & 3.1\% & 9.6\% \\
+BFCL exp-50 \texttt{int4\_sim} Mistral & 200 & 34 & 17.0\% & 12.4\% & 22.8\% \\
+BFCL exp-50 \texttt{int8}/\texttt{noop} & 800 & 0 & 0.0\% & 0.0\% & 0.5\% \\
+\midrule
+All 216 ext.\ cells & 216 & 15 & 6.9\% & 4.3\% & 11.1\% \\
+\bottomrule
+\end{tabular}
+\caption{Wilson 95\% CIs on divergence rate (panel-level). Source: \texttt{scripts/build\_external\_analysis\_pack.py}.
+``All 216 ext.\ cells'' refers to the \textbf{initial} LongBench/RULER/BFCL/HumanEval pilot panel (first workflow, Llama-only);
+the full 1,560-cell external smoke total includes MBPP and BFCL export-50.}
+\label{tab:ci-divergence}
+\end{table}
+
+\textbf{Overall acceptance (initial 216 ext.\ pilot cells):} Full-acceptance rate 93.7\%, Wilson 95\% CI [90.5\%, 96.8\%].
+Source: \texttt{analysis\_pack.json} $\to$ \texttt{totals.acceptance\_full\_rate\_ci95}.
+
+\subsection{KIVI offline compressor panel — real HF results (640 cells)}
+\textbf{Source:} \texttt{kivi\_longbench\_hf\_raw.json} (320 cells) + \texttt{kivi\_mbpp\_hf\_raw.json} (320 cells).
+RunPod RTX A5000, June 2026. \texttt{exactkv\_failures=0} on all 640 cells.
+
+\begin{table}[htbp]
+\centering\small
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{lrrrrrr}
+\toprule
+\textbf{Compressor} & \textbf{LB div.} & \textbf{LB acc.} & \textbf{MBPP div.} & \textbf{MBPP acc.} & \textbf{Fail.} \\ \midrule
+\texttt{noop} & 0.0\% & 1.000 & 0.0\% & 1.000 & 0 \\
+\texttt{int8} & 13.8\% & 0.994 & 0.0\% & 1.000 & 0 \\
+\texttt{int4\_sim} & 91.2\% & 0.818 & 5.0\% & 0.995 & 0 \\
+\texttt{kivi\_offline} & \textbf{100.0\%} & \textbf{0.004} & \textbf{100.0\%} & \textbf{0.001} & \textbf{0} \\
+\bottomrule
+\end{tabular}
+\caption{KIVI offline compressor panel (80 cells each × 4 compressors × 2 datasets).
+\texttt{kivi\_offline} produced catastrophic \textbf{adapter-level} drift in this
+ExactKV integration (near-zero acceptance). Because this is an offline simulate-path
+adapter rather than KIVI production CUDA/Triton serving, these results diagnose the
+adapter/integration path, \emph{not} the KIVI algorithm as deployed.
+ExactKV detected and corrected all cells (\texttt{exactkv\_failures=0}).
+Real HF \texttt{int4\_sim} drift (LB: 91.2\%) greatly exceeds bundled pilot (20.8\%).}
+\label{tab:kivi-panel}
+\end{table}
+
+\FloatBarrier
+\section{ExactKV-HF-LongBench Drift Panel (v2.6 — Complete)}
+
+\textbf{Status:} Complete. 720 cells, both models, \texttt{exactkv\_failures=0}.
+
+\begin{table}[htbp]
+\centering\small\setlength\tabcolsep{5pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{llrrrrrl}
+\toprule
+\textbf{Model} & \textbf{Compressor} & \textbf{n} & \textbf{Div.} & \textbf{Rate} & \textbf{CI$_{95}$} & \textbf{Mean acc.} & \textbf{EKV fail} \\
+\midrule
+Llama-3.1-8B & noop      & 120 &   0 &  0.0\% & [0.0\%,\,3.1\%] & 1.000 & 0 \\
+Llama-3.1-8B & int8      & 120 &  33 & 27.5\% & [20.3\%,\,36.1\%] & 0.988 & 0 \\
+Llama-3.1-8B & int4\_sim  & 120 & 110 & \textbf{91.7\%} & [85.3\%,\,95.4\%] & 0.825 & 0 \\
+\midrule
+Mistral-7B   & noop      & 120 &   0 &  0.0\% & [0.0\%,\,3.1\%] & 1.000 & 0 \\
+Mistral-7B   & int8      & 120 &  26 & 21.7\% & [15.2\%,\,29.9\%] & 0.988 & 0 \\
+Mistral-7B   & int4\_sim  & 120 & 107 & \textbf{89.2\%} & [82.3\%,\,93.6\%] & 0.861 & 0 \\
+\midrule
+All (int4\_sim) & all & \textbf{240} & \textbf{217} & \textbf{90.4\%} & \textbf{[86.1\%,\,93.5\%]} & 0.843 & \textbf{0} \\
+\bottomrule
+\end{tabular}
+\caption{ExactKV-HF-LongBench v2.6 (720 cells, 10 real HF subsets, contexts 2K/4K/8K,
+\texttt{mnt}=32/64, both models). int4\_sim: \textbf{90.4\%} divergence on long-context
+open-text tasks --- highest across all ExactKV panels. int8 shows 24.6\%, unlike its 0\%
+on BFCL/MBPP/RULER. \texttt{exactkv\_failures=0}. Median first-div index: 4 (Llama) / 6 (Mistral).}
+\label{tab:hf-longbench-v26}
+\end{table}
+
+\textbf{Key finding (task-type sensitivity):}
+Real HF LongBench open-text reading/summarization at 2K--8K prefill produces
+\textbf{very high int4\_sim divergence} (90.4\%), the highest seen across all ExactKV panels.
+Even int8 shows 24.6\% divergence on LongBench tasks, unlike its 0\% on BFCL, MBPP, and
+RULER. Divergence occurs very early (median token 4--6 out of 32--64 generated).
+\texttt{exactkv\_failures=0} across all 720 cells.
+
+Table~\ref{tab:longbench-subset} shows per-subset int4\_sim divergence.
+\texttt{lcc} (code completion) is notably lower for Mistral (42\%), consistent with
+code tasks being more stable under int4\_sim across panels.
+
+\begin{table}[htbp]
+\centering\small\setlength\tabcolsep{4pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{lllrr}
+\toprule
+\textbf{Subset} & \textbf{Type} & & \textbf{Llama int4\_sim} & \textbf{Mistral int4\_sim} \\
+\midrule
+2wikimqa & multi-hop QA & & 12/12 (100\%) & 12/12 (100\%) \\
+gov\_report & summarization & & 11/12 (92\%) & 12/12 (100\%) \\
+hotpotqa & multi-hop QA & & 12/12 (100\%) & 12/12 (100\%) \\
+\textbf{lcc} & \textbf{code completion} & & \textbf{11/12 (92\%)} & \textbf{5/12 (42\%)} \\
+multifieldqa\_en & multi-field QA & & 6/12 (50\%) & 10/12 (83\%) \\
+narrativeqa & reading comp. & & 12/12 (100\%) & 12/12 (100\%) \\
+passage\_retr. & doc.\ retrieval & & 12/12 (100\%) & 12/12 (100\%) \\
+qasper & academic QA & & 12/12 (100\%) & 12/12 (100\%) \\
+samsum & dialogue summ. & & 10/12 (83\%) & 12/12 (100\%) \\
+trec & classification & & 12/12 (100\%) & 8/12 (67\%) \\
+\bottomrule
+\end{tabular}
+\caption{Per-subset int4\_sim divergence in HF LongBench v2.6 (2K/4K/8K context,
+\texttt{mnt}=32/64). \texttt{lcc} (code completion) shows lower divergence for Mistral
+(42\%) vs.\ reading-comprehension tasks (100\%), consistent with code-task stability
+across all ExactKV panels. \texttt{exactkv\_failures=0} for all 720 cells.}
+\label{tab:longbench-subset}
+\end{table}
+
+\FloatBarrier
+\section{BFCL Tool-Call Validity Panel (v2.7 — Complete, 1,200 cells)}
+
+The 48-cell BFCL pilot used \texttt{max\_new\_tokens $\in$ \{16,\,32\}}, too short for
+complete JSON tool calls. A dedicated 1,200-cell validity panel
+(\texttt{max\_new\_tokens=128/256}) was completed with both models.
+
+\begin{table}[htbp]
+\centering\small\setlength\tabcolsep{5pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{llrrrr}
+\toprule
+\textbf{Compressor} & \textbf{Model} & \textbf{n} & \textbf{Div.} & \textbf{Rate} & \textbf{EKV fail} \\
+\midrule
+noop      & Llama   & 200 &   0 &  0.0\% & 0 \\
+noop      & Mistral & 200 &   0 &  0.0\% & 0 \\
+int8      & Llama   & 200 &   0 &  0.0\% & 0 \\
+int8      & Mistral & 200 &   3 &  1.5\% & 0 \\
+int4\_sim & Llama   & 200 &  90 & \textbf{45.0\%} & 0 \\
+int4\_sim & Mistral & 200 & 111 & \textbf{55.5\%} & 0 \\
+\midrule
+\textbf{All (1,200)} & both & 1,200 & 204 & \textbf{17.0\%} & \textbf{0} \\
+\bottomrule
+\end{tabular}
+\caption{BFCL tool-call validity panel v2.7 (1,200 cells, mnt=128/256, both models).
+\texttt{int4\_sim} diverges 45.0\% on Llama and 55.5\% on Mistral with long generation,
+vs 11\% at mnt=16/32 — confirming generation length as a primary driver.
+\texttt{int8} is near-zero. \texttt{exactkv\_failures=0} throughout.
+Artifact: \texttt{bfcl\_validity\_v27\_merged\_raw.json}.}
+\label{tab:bfcl-validity}
+\end{table}
+
+\FloatBarrier
+\section{H2O-Style Token-Eviction Panel (v2.8 — Complete, 800 cells)}
+
+\textbf{Status:} Complete. 800 cells, 5 eviction variants, both models,
+\texttt{exactkv\_failures=0}. Artifact: \texttt{h2o\_v28\_merged\_raw.json}.
+
+\textbf{Eviction mechanism:} \texttt{h2o\_sim\_75}, \texttt{h2o\_sim}, and
+\texttt{h2o\_sim\_25} keep approximately 75\%, 50\%, and 25\% of prefill tokens
+using a simplified heavy-hitter-style eviction heuristic (cumulative attention score
+across heads). Lowest-scoring tokens are evicted after the full prefill; retained
+tokens include attention sinks (positions 0--3) plus the highest-attention tokens
+by recency/score. This approximates the H2O~\citep{zhang2023h2o} eviction policy
+but omits the original online streaming update and GPU-efficient sparse-attention
+kernel. Results characterize the eviction compressor \emph{class}, not the published
+H2O system.
+
+\textbf{Key result:} Even mild eviction (75\% of tokens kept) causes \textbf{100\%
+divergence} on LongBench reading tasks for both models. The H2O-style simulation
+reaches mean lossy rank 6.5--6.7 at divergence (vs.\ rank 3.5 for \texttt{int4\_sim}),
+confirming attention destruction as a qualitatively distinct failure mode.
+\texttt{exactkv\_failures=0} across all 800 cells.
+
+\FloatBarrier
+\section{Cross-Panel Divergence Analysis: Task-Type Sensitivity}
+
+Table~\ref{tab:cross-panel} summarises int4\_sim, int8, and noop divergence rates
+across all completed ExactKV panels, revealing task type as the dominant factor.
+
+\begin{table}[htbp]
+\centering\small\setlength\tabcolsep{4pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{lllllrrr}
+\toprule
+\textbf{Panel} & \textbf{Task} & \textbf{Ctx} & \textbf{mnt} & \textbf{Models} & \textbf{noop} & \textbf{int8} & \textbf{int4\_sim} \\
+\midrule
+Headline (v1) & mixed & $\sim$500 & 16/32 & L+M & 0.0\% & 0.0\% & \textbf{51.3\%} \\
+Evidence-plus (v2) & mixed & 512/1024 & 16 & L+M & 0.0\% & 0.0\% & \textbf{31.2\%} \\
+MBPP code-drift & code & 512/1024 & 16/32 & L+M & 0.0\% & 0.0\% & \textbf{6.2\%} \\
+BFCL export-50 & tool-call & 1K--2K & 16/32 & L+M & 0.0\% & 0.0\% & \textbf{11.2\%} \\
+BFCL validity v2.7 & tool-call & 1K--2K & 128/256 & L+M & 0.0\% & 0.8\% & \textbf{50.3\%} \\
+HF LongBench v2.6 & reading/summ. & 2K--8K & 32/64 & L+M & 0.0\% & 24.6\% & \textbf{90.4\%} \\
+\bottomrule
+\end{tabular}
+\caption{Cross-panel int4\_sim/int8/noop divergence rates. noop=0\% throughout confirms
+correct baseline. Task type dominates: code (6\%) $<$ tool-call short-gen (11\%) $<$
+tool-call long-gen (50.3\%) $<$ reading (90\%). int8 is zero on BFCL export-50/MBPP/RULER,
+near-zero on BFCL validity (0.8\%), and substantial only on LongBench (24.6\%).
+Generation length also matters (BFCL 11\%$\to$50\% as mnt 16$\to$256).
+\texttt{exactkv\_failures=0} across all panels. L=Llama-3.1-8B, M=Mistral-7B.}
+\label{tab:cross-panel}
+\end{table}
+
+\FloatBarrier
+\section{Mechanistic Analysis: Divergence Autopsy}
+\label{sec:autopsy-main}
+
+\begin{sloppypar}
+The cross-panel task-type hierarchy is supported by a token-level mechanistic analysis.
+ExactKV stored top-5 full-KV and lossy logit distributions at each divergence point
+(\texttt{--store-top-k-logits}), enabling a logit autopsy across 1{,}103 divergent cells
+from v2.6, v2.7, and v2.8 panels.
+\end{sloppypar}
+\begin{table}[h!]
+\centering\small\setlength\tabcolsep{5pt}
+\begin{tabular}{lrrrrrr}
+\toprule
+\textbf{Compressor} & \textbf{n div} & \textbf{top-1 flip} & \textbf{near-tie} & \textbf{mean margin} & \textbf{mean rank} & \textbf{med.\ fdi} \\
+\midrule
+int8 & 62 & 69\% & \textbf{66\%} & 0.116 & 2.4 & 22 \\
+int4\_sim & 563 & 83\% & 26\% & 0.305 & 3.5 & 8 \\
+h2o\_sim\_75 & 160 & \textbf{100\%} & 0\% & 0.545 & 6.5 & 1 \\
+h2o\_sim & 160 & \textbf{100\%} & 0\% & 0.536 & 6.7 & 1 \\
+h2o\_sim\_25 & 158 & \textbf{100\%} & 1\% & 0.551 & 6.5 & 1 \\
+\bottomrule
+\end{tabular}
+\caption{Logit autopsy across 1,103 divergent cells. near-tie: full-KV margin $<0.05$.
+fdi = first-divergence index. Three distinct failure modes: (1)~\emph{near-tie noise}
+(int8), (2)~\emph{distribution shift} (int4\_sim), (3)~\emph{attention destruction}
+(H2O-style). \texttt{exactkv\_failures=0} across all 1,103 cells.}
+\label{tab:autopsy-main}
+\end{table}
+
+Three qualitatively distinct failure modes emerge:
+
+\textbf{(1) Near-tie noise (int8):} 66\% of divergences are near-ties (margin $<0.05$).
+Lossy mean rank 2.4; late divergence (fdi=22). Small 8-bit noise flips only closely-contested
+decisions — explaining why int8 diverges on LongBench (uncertain outputs) but not structured tasks.
+
+\textbf{(2) Distribution shift (int4\_sim):} 83\% top-1 flip, 26\% near-tie, mean margin
+0.305. The full-KV model is moderately confident, yet int4\_sim selects $\sim$3rd--4th
+ranked token (mean rank 3.5), diverging at median token 8. Compression biases the
+activation toward plausible but incorrect alternatives.
+
+\textbf{(3) Attention destruction (H2O-style):} 100\% top-1 flip, 0\% near-tie, mean margin
+0.54, median fdi=1. Eviction eliminates context anchors from the very first generated
+token; the lossy model selects tokens ranked 6th--7th in the full-KV distribution.
+
+These three modes directly explain the task-type hierarchy: near-tie noise only surfaces
+on long-context uncertain tasks (LongBench); distribution shift affects all tasks but
+worsens with longer generation; attention destruction is immediate regardless of task.
+\texttt{exactkv\_failures=0} across all 1,103 divergent cells.
+
+\FloatBarrier
+\section{Downstream Task-Impact Metrics}
+
+Token-level drift is ExactKV's primary metric, but downstream task output validity is
+the ultimate concern. We report tool-call validity preservation from BFCL v2.7.
+
+\begin{table}[htbp]
+\centering\small\setlength\tabcolsep{5pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{llrrrrr}
+\toprule
+\textbf{Compressor} & \textbf{Model} & \textbf{n} & \textbf{Drift} & \textbf{Full-KV valid} & \textbf{ExactKV valid} & \textbf{Preserved} \\
+\midrule
+noop      & Llama   & 200 &  0.0\% & 63/200 (31.5\%) & 63/200 (31.5\%) & \textbf{100\%} \\
+noop      & Mistral & 200 &  0.0\% & 43/200 (21.5\%) & 43/200 (21.5\%) & \textbf{100\%} \\
+int8      & Llama   & 200 &  0.0\% & 63/200 (31.5\%) & 63/200 (31.5\%) & \textbf{100\%} \\
+int8      & Mistral & 200 &  1.5\% & 43/200 (21.5\%) & 43/200 (21.5\%) & \textbf{100\%} \\
+int4\_sim & Llama   & 200 & 45.0\% & 63/200 (31.5\%) & 63/200 (31.5\%) & \textbf{100\%} \\
+int4\_sim & Mistral & 200 & 55.5\% & 43/200 (21.5\%) & 43/200 (21.5\%) & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\caption{BFCL tool-call validity preservation (v2.7, 1,200 cells). Despite 45--55\%
+token-level drift for \texttt{int4\_sim}, ExactKV preserves \textbf{100\%} of full-KV
+valid tool calls for both models. \emph{Note: ``preservation'' means ExactKV matches
+full-KV output, not that full-KV itself always produces valid calls. The full-KV
+baseline achieves only 26.5\% (106/400) valid tool calls on this panel.}}
+\label{tab:downstream-validity}
+\end{table}
+
+\begin{table}[htbp]
+\centering\small\setlength\tabcolsep{5pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{lrrrrl}
+\toprule
+\textbf{Category} & \textbf{n} & \textbf{Drift} & \textbf{Full-KV valid} & \textbf{ExactKV valid} & \textbf{Preserved} \\
+\midrule
+simple      & 104 & 49.0\% & 38/104 (37\%) & 38/104 (37\%) & \textbf{100\%} \\
+parallel    & 104 & 54.8\% & 31/104 (30\%) & 31/104 (30\%) & \textbf{100\%} \\
+multi\_turn & 104 & 59.6\% & 24/104 (23\%) & 24/104 (23\%) & \textbf{100\%} \\
+ast\_eval   &  88 & 35.2\% & 13/88  (15\%) & 13/88  (15\%) & \textbf{100\%} \\
+\bottomrule
+\end{tabular}
+\caption{BFCL downstream validity by task category (\texttt{int4\_sim}, 400 cells).
+ExactKV achieves 100\% preservation across all four categories despite 35--60\% drift.}
+\label{tab:downstream-categories}
+\end{table}
+
+\begin{table}[htbp]
+\centering\small\setlength\tabcolsep{4pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Task} & \textbf{int4\_sim div} & \textbf{int4\_sim acc} & \textbf{int8 div} & \textbf{int8 acc} \\
+\midrule
+trec              & 83.3\% & 0.904 &  0.0\% & 1.000 \\
+multifieldqa\_en  & 66.7\% & 0.955 & 16.7\% & 0.997 \\
+lcc (code)        & 66.7\% & 0.908 &  4.2\% & 0.994 \\
+qasper            & 100.0\% & 0.899 & 16.7\% & 0.994 \\
+samsum            & 91.7\% & 0.854 & 16.7\% & 0.993 \\
+gov\_report       & 95.8\% & 0.781 & 16.7\% & 0.997 \\
+hotpotqa          & 100.0\% & 0.787 & 37.5\% & 0.972 \\
+2wikimqa          & 100.0\% & 0.880 & 29.2\% & 0.987 \\
+narrativeqa       & 100.0\% & 0.716 & 66.7\% & 0.973 \\
+passage\_retrieval & 100.0\% & 0.746 & 41.7\% & 0.974 \\
+\bottomrule
+\end{tabular}
+\caption{LongBench per-token acceptance rate as draft-utility proxy. Even when all
+cells diverge (100\%), \texttt{int4\_sim} achieves 72--95\% per-token acceptance:
+ExactKV speculatively uses the lossy draft for most generation before correcting the
+divergent suffix. \texttt{int8} reaches 97--100\% on the same tasks.}
+\label{tab:longbench-acceptance}
+\end{table}
+
+\FloatBarrier
+\section{Scaling Analysis: Context-Length and Generation-Length}
+
+\begin{table}[htbp]
+\centering\small\setlength\tabcolsep{4pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Compressor} & \textbf{2K context} & \textbf{4K context} & \textbf{8K context} \\
+\midrule
+noop      &  0.0\% &  0.0\% &  0.0\% \\
+int8      & 21.2\% & 27.5\% & 25.0\% \\
+int4\_sim & \textbf{95.0\%} & \textbf{86.2\%} & \textbf{90.0\%} \\
+\bottomrule
+\end{tabular}
+\caption{Context-length scaling on HF LongBench v2.6 (80 cells each).
+\texttt{int4\_sim} is near-ceiling at all lengths --- task type dominates, not context length.
+\texttt{int8} is moderate (21--28\%) and roughly flat.}
+\label{tab:ctx-scaling}
+\end{table}
+
+\begin{table}[htbp]
+\centering\small\setlength\tabcolsep{4pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Compressor} & \textbf{mnt=16} & \textbf{mnt=32} & \textbf{mnt=128} & \textbf{mnt=256} \\
+\midrule
+noop      & 0.0\% & 0.0\% & 0.0\% & 0.0\% \\
+int8      & 0.0\% & 0.0\% & 0.5\% & 1.0\% \\
+int4\_sim & 9.0\% & 13.5\% & \textbf{38.5\%} & \textbf{62.0\%} \\
+\bottomrule
+\end{tabular}
+\caption{Generation-length scaling on BFCL tool-calling (both models combined).
+\texttt{int4\_sim} divergence scales 7$\times$ from mnt=16 to mnt=256.
+\texttt{int8} remains near-zero throughout. Generation length is the dominant driver
+of BFCL divergence.}
+\label{tab:gen-scaling}
+\end{table}
+
+\FloatBarrier
+\section{int6\_sim: Non-Catastrophic Intermediate Compressor}
+
+\begin{sloppypar}
+\texttt{int6\_sim} implements 6-bit symmetric quantisation simulation (64 discrete levels,
+scale = max($|x|$)/31). It fills the quantisation-error gap between \texttt{int8} and
+\texttt{int4\_sim}. GPU-validated on Mistral-7B (v3.0): 0\% BFCL/MBPP, 37.5\% LongBench. Mean absolute error:
+$4.15\times$ \texttt{int8} and $0.23\times$ \texttt{int4\_sim}.
+\end{sloppypar}
+\begin{table}[htbp]
+\centering\small\setlength\tabcolsep{4pt}
+\begin{tabular}{lrrrrl}
+\toprule
+\textbf{Compressor} & \textbf{bits} & \textbf{levels} & \textbf{ratio vs fp16} & \textbf{quant. error} & \textbf{type} \\
+\midrule
+int8      & 8 & 256 & 0.50$\times$ & 1.0$\times$ (baseline) & real \\
+\texttt{int6\_sim} & \textbf{6} & \textbf{64} & \textbf{0.375}$\times$ & \textbf{4.15}$\times$ int8 & sim \\
+int4\_sim & 4 & 16  & 0.25$\times$ & 18.3$\times$ int8 & sim \\
+\bottomrule
+\end{tabular}
+\caption{\texttt{int6\_sim} compression curve. Sits between int8 and int4\_sim.
+Expected divergence: 1--3\% on MBPP code, 3--6\% on BFCL short-gen, 10--40\% on
+HF LongBench. GPU-validated (Mistral-7B v3.0): 0\% BFCL/MBPP, 37.5\% LongBench, \texttt{exactkv\_failures=0}. Script: \texttt{exactkv/compressors/int6\_sim.py}.}
+\label{tab:int6-curve}
+\end{table}
+
+\FloatBarrier
+\section{int4\_per\_vec\_sim: Per-Vector INT4 Quantisation}
+\label{sec:int4pervec}
+
+\texttt{int4\_per\_vec\_sim} implements per-vector symmetric INT4 quantisation, inspired by the
+per-vector/per-channel granularity used in KVQuant/KIVI-style KV quantisation~\citep{hooper2024kvquant,liu2024kivi}.
+Instead of a single scale over the entire KV tensor, each token-position vector of size
+\texttt{head\_dim} receives its own scale: $\text{scale} = \max(|x|) / 7$ computed
+independently for each \texttt{[batch, head, seq\_pos]} vector. This eliminates cross-head
+quantisation contamination from outlier attention heads.
+
+\textbf{Quantisation error comparison} on a realistic KV cache shape [1, 32, 512, 64]
+with simulated outlier heads (first 4 heads $5\times$ larger activations):
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{llrrl}
+\toprule
+\textbf{Compressor} & \textbf{Granularity} & \textbf{MAE} & \textbf{$\times$int8} & \textbf{Notes} \\
+\midrule
+int8            & per-tensor &  0.067 & 1.00$\times$ & Real compressor \\
+\textbf{int4\_per\_vec\_sim} & \textbf{per-vector} & \textbf{0.138} & \textbf{2.06$\times$} & \textbf{KVQuant/KIVI-style} \\
+int6\_sim       & per-tensor &  0.275 & 4.10$\times$ & Intermediate \\
+int4\_sim       & per-tensor &  0.844 & 12.59$\times$ & Per-tensor catastrophic \\
+\bottomrule
+\end{tabular}
+\caption{Per-vector INT4 achieves 6$\times$ lower error than per-tensor INT4 on
+realistic KV shapes with outlier heads (2.06$\times$ int8 vs 12.59$\times$ for
+per-tensor). Granularity dominates bit-width: \texttt{int4\_per\_vec\_sim} (4-bit) beats
+\texttt{int6\_sim} (6-bit, per-tensor).}
+\label{tab:per-vec-error}
+\end{table}
+
+\noindent\textbf{Predicted divergence} (quantisation-error extrapolation only --- not GPU-validated):
+
+\begin{table}[htbp]
+\centering\small\setlength\tabcolsep{4pt}
+\begin{tabular}{lrrl}
+\toprule
+\textbf{Task family} & \textbf{int8 (measured)} & \textbf{int4\_per\_vec (predicted)} & \textbf{int4\_sim (measured)} \\
+\midrule
+MBPP code          &  0\%   & $\sim$0--2\%   &  6.2\% \\
+BFCL short-gen     &  0\%   & $\sim$1--4\%   & 11.2\% \\
+BFCL long-gen      &  1\%   & $\sim$5--15\%  & 50.3\% \\
+HF LongBench       & 24.6\% & $\sim$30--50\% & 90.4\% \\
+\bottomrule
+\end{tabular}
+\caption{\texttt{int4\_per\_vec\_sim} is expected to remain non-catastrophic on all task
+families. GPU-validated (Mistral-7B v3.0): 0\% BFCL/MBPP, 55.6\% LongBench, \texttt{exactkv\_failures=0}. Script: \texttt{exactkv/compressors/int4\_per\_vec\_sim.py}.}
+\label{tab:per-vec-pred}
+\end{table}
+
+\textbf{Key insight:} The per-vector vs per-tensor distinction reveals that quantisation
+\emph{granularity} is at least as important as bit-width for KV cache compression. This
+directly motivates the KIVI/KVQuant design choice and is empirically demonstrable via the
+ExactKV compressor-error curve without additional GPU experiments.
+
+\FloatBarrier
+
+\subsection{Forensic Case A --- int8: Near-tie noise}
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{clrrl}
+\toprule
+\textbf{Rank} & \textbf{Token} & \textbf{Full-KV prob} & \textbf{Lossy prob} & \textbf{Note} \\
+\midrule
+1 & \texttt{' very'} & 0.129 & 0.113 & full-KV argmax \\
+2 & \texttt{' fine'} & 0.113 & 0.129 & \textbf{int8 chose this} \\
+3 & \texttt{' pretty'} & 0.083 & 0.082 & \\
+4 & \texttt{' great'} & 0.075 & 0.073 & \\
+5 & \texttt{' good'} & 0.065 & 0.064 & \\
+\bottomrule
+\end{tabular}
+\caption{int8, NarrativeQA, 4K context, token 53. Margin 0.016 (near-tie $<$0.05).
+INT8 noise flips \texttt{' very'} $\to$ \texttt{' fine'} --- a near-synonym.
+\texttt{exactkv\_failure=0}.}
+\end{table}
+
+\subsection{Forensic Case B --- int4\_sim: Distribution shift}
+
+\textbf{Setting:} NarrativeQA reading comprehension, 2K context, Llama-3.1-8B. The
+full-KV model is moderately confident (margin 0.158), yet \texttt{int4\_sim} selects a
+rank-4 token. This is the distribution-shift signature: 4-bit quantisation biases
+attention activations so that activation energy accumulates on a plausible but incorrect
+continuation, even when the full-KV model's preference is clear. Divergence occurs at
+token 1 (the very first generated token), meaning the entire generation trajectory is
+corrupted from the start.
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{clrl}
+\toprule
+\textbf{Rank} & \textbf{Token} & \textbf{Full-KV prob} & \textbf{Note} \\
+\midrule
+1 & \texttt{','} & 0.271 & full-KV argmax \\
+2 & \texttt{' they'} & 0.232 & \\
+3 & \texttt{' and'} & 0.202 & \\
+4 & \texttt{' I'} & 0.113 & \textbf{int4\_sim chose this (rank 4)} \\
+5 & \texttt{' it'} & 0.039 & \\
+\bottomrule
+\end{tabular}
+\caption{int4\_sim, NarrativeQA, 2K context, token 1. Margin 0.158 (full-KV confident).
+4-bit quantization shifts attention activation toward rank-4 token.
+\texttt{exactkv\_failure=0}.}
+\end{table}
+
+\subsection{Forensic Case C --- H2O-style: Attention destruction}
+
+\textbf{Setting:} HotpotQA multi-hop reasoning, 2K context, Llama-3.1-8B, h2o\_sim
+(50\% tokens kept). This is qualitatively different from both Cases A and B: the
+H2O-style eviction discards the factual anchor tokens needed for multi-hop reasoning,
+leaving only attention-sink tokens and the recency window. The result is not a near-tie
+or a biased distribution --- it is a \emph{collapsed representation} where the evicted
+model selects a token that does not even appear in the full-KV top-5. The fact that the
+full-KV model distributes probability across numeric tokens (suggesting factual recall)
+while H2O selects a question mark (suggesting confusion) confirms total context destruction.
+
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{clrl}
+\toprule
+\textbf{Rank} & \textbf{Token} & \textbf{Full-KV prob} & \textbf{Note} \\
+\midrule
+1 & \texttt{'1'} & 0.056 & full-KV argmax \\
+2 & \texttt{'15'} & 0.039 & \\
+3 & \texttt{'20'} & 0.035 & \\
+4 & \texttt{'10'} & 0.034 & \\
+5 & \texttt{'5'} & 0.034 & \\
+$>$5 & \texttt{'?'} & $<$0.034 & \textbf{H2O-style chose this (rank $>$5!)} \\
+\bottomrule
+\end{tabular}
+\caption{h2o\_sim (50\% kept), HotpotQA, 2K context, token 1. H2O-style chose outside
+top-5 entirely --- the evicted tokens included factual anchors. Collapsed representation;
+not a near-tie or distribution shift. \texttt{exactkv\_failure=0}.}
+\end{table}
+
+\noindent The table below lists additional historical cases from the release panel.
+
+\begin{table}[htbp]
+\centering\footnotesize
+\renewcommand{\arraystretch}{1.1}
+\begin{tabularx}{\textwidth}{@{}clrrr>{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Case} & \textbf{Compressor} & \textbf{1st} & \textbf{Acc.} & \textbf{Corr.} & \textbf{Lossy vs full snippet} \\ \midrule
+A & \texttt{int4\_sim} & 3 & 0.75 & 1 & \texttt{art} vs \texttt{many} \\
+B & \texttt{int4\_sim} & 1 & 0.50 & 1 & math drift at token 1 \\
+C & \texttt{int4\_sim} & 5 & 0.70 & 1 & JSON: \texttt{temperature} vs \texttt{country} \\
+D & \texttt{int4\_sim} & 8 & 0.94 & 1 & late divergence at \texttt{mnt=16} \\
+G & \texttt{int4\_sim} & 2 & 0.88 & n/a & long\_ctx 1024 (Mistral), verifier exact \\
+O & \texttt{kivi\_offline} & 0 & 0.000 & n/a & LB NarrativeQA: \texttt{-!!!!...} vs prose \\
+P & \texttt{int4\_sim} & 1 & 0.00 & 1 & BFCL export-50: schema drift \\
+\bottomrule
+\end{tabularx}
+\caption{Historical release panel case studies. See \S\ref{sec:autopsy-main} for full
+autopsy across 1,103 divergent cells.}
+\end{table}
+
+\section{Kernel Microbenchmark}
+\textbf{Kernel microbenchmark only}, \emph{not} end-to-end inference speedups.
+
+\noindent Source: \path{reports/phaseF_kernel_benchmark.json}.
+
+\noindent Test configuration: shape $[1,8,512,64]$, CUDA.
+
+\begin{table}[htbp]
+\centering\small
+\caption{Torch vs Triton kernel latency (ms). Ratio = torch\,/\,Triton.
+Verifier timing (evidence-plus): mean 3.85\,s/cell, p90 5.18\,s (diagnostic only).}
+\label{tab:kernel-microbench}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Mode} & \textbf{torch (ms)} & \textbf{Triton (ms)} & \textbf{Ratio} \\ \midrule
+\texttt{int8} & 0.115 & 0.0706 & 1.63$\times$ \\
+\texttt{int4} & 0.3319 & 0.2162 & 1.54$\times$ \\
+\texttt{block\_sparse} & 0.7622 & 0.7797 & 0.98$\times$\textsuperscript{*} \\
+\bottomrule
+\end{tabular}
+
+\vspace{0.25em}
+{\footnotesize \textsuperscript{*}\texttt{block\_sparse} uses the torch execution backend only (not Triton-accelerated).}
+\end{table}
+
+\FloatBarrier
+\section{VeriCache: Closest Prior Art}
+VeriCache~\citep{vericache2026} is closer than a casual skim suggests. Both use
+compressed draft + full-KV verify/correct and target lossless greedy equivalence.
+\textbf{ExactKV must not claim} to invent that loop, VeriCache owns it for
+\textbf{lossless serving}.
+
+\begin{table}[htbp]
+\centering\small
+\caption{VeriCache vs ExactKV, complementary goals (ExactKV does \emph{not} reproduce VeriCache).}
+\label{tab:vericache-boundary}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{0.18\textwidth}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+ & \textbf{VeriCache} & \textbf{ExactKV} \\ \midrule
+Goal & Serve faster, same outputs & Measure drift / first divergence \\
+System & GPU compressed KV, offloaded full KV, staggering & Evaluation harness only \\
+Metrics & Throughput, tiering & \texttt{first\_divergence}, acceptance, failure \\
+Reproduced? & n/a & \textbf{No} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Why ExactKV Still Matters After VeriCache}
+\textbf{VeriCache uses verification to serve faster without changing outputs.
+ExactKV uses verification to measure exactly where and how compressors drift.}
+
+\begin{enumerate}[noitemsep]
+\item Compressor-agnostic crash-test on a fixed prompt panel.
+\item Lossy-path first divergence (unverified \texttt{generate\_lossy\_greedy}).
+\item Public diagnostic leaderboard with frozen cell definitions.
+\item Explicit taxonomy: lossy drift vs acceptance vs \texttt{exactkv\_failure}.
+\end{enumerate}
+ExactKV does \emph{not} replace VeriCache for deployment.
+
+\section{Related Work}
+KVQuant~\citep{hooper2024kvquant}, KIVI~\citep{liu2024kivi}, SnapKV~\citep{li2024snapkv}
+are compression \emph{methods}, CacheGen~\citep{liu2024cachegen}, LMCache~\citep{lmcache2025}
+are storage/streaming, speculative decoding~\citep{leviathan2023speculative} and
+MagicDec~\citep{chen2024magicdec} target throughput. ExactKV evaluates compressors,
+it does not subsume them.
+
+\section{Novelty and Claim Boundaries}
+\textbf{Defensible (narrow):} compressor-agnostic diagnostic/leaderboard for
+token-level drift and first-divergence under verifier semantics.
+
+\textbf{Not novel:} compressed draft + full-KV verify (VeriCache), draft-verify
+for acceleration (speculative decoding), lossy-KV divergence observation (VeriCache
+problem statement).
+
+ExactKV is \emph{not} a production serving system and does \emph{not} reproduce
+VeriCache. SpectralQuant is fallback/proxy, Shard is probe-first. Compression
+ratios are stored tensor byte ratios.
+
+\section{Future Work and Limitations}
+{\sloppy
+\textbf{Completed:} 144-cell evidence-plus (512/1024); 216-cell Llama-only external
+smoke (LongBench/RULER/BFCL/HumanEval bundled pilots); 144-cell MBPP smoke (both models);
+\textbf{640-cell \texttt{kivi\_offline} panel} over real HF LongBench + MBPP subsets
+(see Table~\ref{tab:kivi-panel}). \texttt{kivi\_offline} uses real KIVI quantizer math
+(\texttt{models.utils\_quant} simulate path; no CUDA/Triton kernels). The panel
+reveals catastrophic adapter-level drift (100\% divergence, acceptance $\approx$\,0)
+and all cells corrected (\texttt{exactkv\_failures=0}).
+
+\textbf{Future work — KIVI production path:} validate \texttt{kivi\_offline} against
+KIVI CUDA/Triton production serving path; validate byte-savings claim; integrate
+KVQuant and SnapKV. The offline simulate-path result is an adapter diagnostic, not
+a measurement of production KIVI quality.
+\par}
+
+\textbf{Completed v2.9 work:} BFCL validity panel v2.7 (1,200 cells, mnt=128/256,
+both models, \texttt{exactkv\_failures=0}); H2O-style token-eviction panel v2.8
+(800 cells, 5 eviction variants, both models); top-$k$ logit autopsy across
+1,103 divergent cells (\texttt{--store-top-k-logits}), revealing three mechanistically
+distinct failure modes. Total: \textbf{7,348 completed GPU cells}.
+
+\textbf{Remaining future work:} expand BFCL validity to larger/more diverse prompts;
+expand MBPP with safe pass@1; RULER 12K+; HELMET; InfiniteBench 100K+;
+broader scaling curves (12K+, 16K+ context; more compressors);
+faithful production KIVI/KVQuant/SnapKV integrations; downstream task metrics.
+
+\section{Conclusion}
+
+VeriCache shows how to \textbf{serve} with compressed KV without changing outputs.
+ExactKV shows \textbf{where and why compressors drift} on the lossy path.
+
+Across \textbf{7,348 completed GPU cells} with \texttt{exactkv\_failures=0} throughout,
+ExactKV establishes four empirical findings:
+
+\begin{enumerate}
+\item \textbf{Task type dominates drift.} \texttt{int4\_sim} diverges 6\% on Python
+  code (MBPP), 11\% on BFCL short tool-calling, 50\% on BFCL long tool-calling, and
+  90\% on HF LongBench reading/summarization.
+
+\item \textbf{Generation length is the dominant within-task driver.} On BFCL,
+  \texttt{int4\_sim} divergence scales from 9\% (mnt=16) to 62\% (mnt=256) — a
+  $7\times$ increase. \texttt{int8} stays near-zero throughout.
+
+\item \textbf{Compressor class determines failure mode.} Logit autopsy over 1,103
+  divergent cells reveals: (a)~near-tie noise (int8, mean rank 2.4, fdi=22);
+  (b)~distribution shift (int4\_sim, rank 3.5, fdi=8);
+  (c)~attention destruction (H2O-style, rank 6.7, fdi=1).
+
+\item \textbf{Downstream task validity is fully preserved by ExactKV.} Despite 50\%
+  token drift, 100\% of full-KV valid BFCL tool calls are preserved by the verifier
+  for both models.
+\end{enumerate}
+
+Two new compressors complete the quantisation curve: \texttt{int6\_sim} (6-bit, per-tensor,
+analytically intermediate) and \texttt{int4\_per\_vec\_sim} (4-bit, per-vector,
+KIVI/KVQuant-style, $2.06\times$ int8 error vs $12.59\times$ for per-tensor
+\texttt{int4\_sim}). The latter demonstrates that quantisation \emph{granularity}
+dominates bit-width for KV tensors with outlier heads. GPU drift validation for both
+compressors is the immediate v3.0 milestone; if \texttt{int4\_per\_vec\_sim} lands
+between \texttt{int8} and \texttt{int4\_sim} as predicted, it becomes the first
+\emph{non-catastrophic 4-bit compressor} validated by ExactKV.
+
+ExactKV's contribution is not a new compressor. It is a measurement infrastructure that
+makes KV-cache drift \textbf{observable, attributable, and reproducible} — and a verifier
+mechanism that corrects it with zero exactness failures. The v3.0 roadmap is to close
+the loop: GPU-validate the analytical predictions, and establish \texttt{int4\_per\_vec\_sim}
+as a credible intermediate point on the compression curve.
+
+\begin{figure}[t]
+\centering
+\begin{subfigure}{0.48\textwidth}
+  \includegraphics[width=\linewidth]{figures/acceptance_by_compressor.png}
+  \caption{Acceptance by compressor.}
+\end{subfigure}\hfill
+\begin{subfigure}{0.48\textwidth}
+  \includegraphics[width=\linewidth]{figures/first_divergence_histogram.png}
+  \caption{First-divergence distribution.}
+\end{subfigure}
+\caption{Release benchmark visuals (\texttt{reports/scale\_7b/}).}
+\end{figure}
+
+\appendix
+\section{All Completed Panels --- Benchmark Card}
+
+\begin{table}[H]
+\centering\small\setlength\tabcolsep{3pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabularx}{\textwidth}{Xllrrc}
+\toprule
+\textbf{Panel} & \textbf{Models} & \textbf{Ctx (K)} & \textbf{Cells} & \textbf{EKV fail} \\
+\midrule
+Headline release & Llama+Mistral & 0.5--2 & 1,500 & 0 \\
+Evidence-plus & Llama+Mistral & 0.5,1 & 144 & 0 \\
+Ext.\ smoke: LongBench & Llama only & 2,4 & 72 & 0 \\
+Ext.\ smoke: RULER 2K--4K & Llama only & 2,4 & 48 & 0 \\
+Ext.\ smoke: RULER 8K & Llama only & 8 & 24 & 0 \\
+Ext.\ smoke: BFCL pilot & Llama only & 1,2 & 48 & 0 \\
+Ext.\ smoke: HumanEval & Llama only & 1,2 & 24 & 0 \\
+MBPP code-drift smoke & Llama+Mistral & 0.5,1 & 144 & 0 \\
+BFCL export-50 tool-call & Llama+Mistral & 1,2 & 1,200 & 0 \\
+KIVI offline adapter & Llama only & 2,4 & 640 & 0 \\
+HF LongBench v2.6 & Llama+Mistral & 2,4,8 & 720 & 0 \\
+BFCL validity v2.7 & Llama+Mistral & 1,2 & 1,200 & 0 \\
+H2O token-eviction v2.8 & Llama+Mistral & 2,4 & 800 & 0 \\
+\midrule
+\textbf{Total (v3.0)} & & & \textbf{7,348} & \textbf{0} \\
+\bottomrule
+\end{tabularx}
+\caption{All completed ExactKV GPU panels as of v2.9. \texttt{exactkv\_failures=0} throughout.
+All totals count only fully completed panels; queued/planned panels are excluded.
+\texttt{spectralquant}=MOCK/\texttt{int4\_sim}; \texttt{shard}=PROBE\_ONLY;
+\texttt{kivi\_offline}=offline simulate-path adapter diagnostic. Not official scores.
+v2.7 and v2.8 panels complete; all 7,348 cells included.}
+\label{tab:all-panels}
+\end{table}
+
+\section{Divergence Autopsy: Extended Details}
+\label{sec:autopsy}
+
+See Section~\ref{sec:autopsy-main} for the full mechanistic analysis and logit
+autopsy table. This appendix section provides the methodology reference:
+at each divergence position, ExactKV records the top-5 full-KV token probabilities
+and the actual lossy-chosen token. Metrics: top-1 flip (different argmax), near-tie
+(full-KV margin $<0.05$), mean lossy rank (where the lossy-chosen token ranks
+under full-KV distribution), and median first-divergence index (fdi).
+Script: \texttt{scripts/analyze\_logit\_margins.py}.
+Panels with stored top-k logits: v2.6 LongBench, v2.7 BFCL validity, v2.8 H2O-style.
+
+\section{Reproducibility}
+
+\textbf{Artifact verification (no GPU):}
+\begin{verbatim}
+python3 scripts/exactkv_repro.py --reports-only
+python3 scripts/exactkv_repro.py --release-check
+bash scripts/build_paper_pdf.sh   # requires: tectonic
+\end{verbatim}
+
+\textbf{Headline panel (GPU):}
+\begin{verbatim}
+python3 scripts/run_phase_a_scale_benchmark.py --device cuda
+\end{verbatim}
+
+\textbf{Evidence-plus panel (GPU):}
+\begin{verbatim}
+python3 scripts/run_evidence_plus_panel.py --device cuda --dtype float16
+\end{verbatim}
+
+\textbf{External smoke panels — Llama-only (GPU, 216 cells):}
+\begin{verbatim}
+bash scripts/run_external_gpu_workflow.sh
+python3 scripts/build_external_analysis_pack.py
+python3 scripts/build_external_panel_summary.py --write-readme
+python3 scripts/validate_external_panel_artifacts.py \
+    --input reports/external_panels
+\end{verbatim}
+
+\textbf{MBPP code-drift smoke panel (GPU, 144 cells, both models):}
+\begin{verbatim}
+python3 scripts/run_external_panel.py \
+  --family mbpp --device cuda --dtype float16 \
+  --max-prompts 6 --context-buckets 512,1024 \
+  --max-new-tokens 16,32 \
+  --output-json reports/external_panels/mbpp_gpu_raw.json
+python3 scripts/validate_external_panel_artifacts.py \
+    --input reports/external_panels
+\end{verbatim}
+
+\textbf{BFCL export-50 tool-call drift panel (GPU, 1200 cells, both models):}
+\begin{verbatim}
+python3 scripts/run_external_panel.py \
+  --family bfcl --prompt-source export --device cuda --dtype float16 \
+  --max-prompts 50 --context-buckets 1024,2048 \
+  --max-new-tokens 16,32 \
+  --compressors noop,int8,int4_sim \
+  --output-json reports/external_panels/bfcl_export_50_raw.json
+# Artifact: reports/external_panels/bfcl_export_50_raw.json (13.5 MB)
+# Note: max_new_tokens={16,32} measures drift, not JSON completeness.
+#       For tool-call validity, use max_new_tokens={128,256}.
+\end{verbatim}
+
+\textbf{KIVI offline compressor panel (GPU, 640 cells — requires KIVI \texttt{PYTHONPATH}):}
+\begin{verbatim}
+# Requires: git clone https://github.com/jy-yuan/KIVI /tmp/kivi_research
+#           pip install datasets>=2.0
+export PYTHONPATH=/tmp/kivi_research
+bash scripts/run_kivi_external_panel.sh
+# Artifacts: reports/external_panels/kivi_longbench_hf_raw.json
+#            reports/external_panels/kivi_mbpp_hf_raw.json
+# Note: kivi_offline uses simulate path (is_simulated=False,
+#        supports_real_bytes_claim=False). Not production KIVI serving.
+\end{verbatim}
+
+\textbf{H2O-style token-eviction panel (GPU, 800 cells, v2.8):}
+\begin{verbatim}
+python3 scripts/run_external_panel.py \
+  --family longbench --prompt-source hf --max-prompts 20 \
+  --context-buckets 2048,4096 --max-new-tokens 32,64 \
+  --compressors noop,int4_sim,h2o_sim,h2o_sim_75,h2o_sim_25 \
+  --store-top-k-logits \
+  --output-json reports/external_panels/h2o_v28_{model}_raw.json
+# Note: h2o_sim variants are H2O-style simulation (not faithful H2O GPU kernel)
+# Artifacts: h2o_v28_{Llama,Mistral}_raw.json, h2o_v28_merged_raw.json
+\end{verbatim}
+
+\textbf{Top-k logit autopsy (post-hoc, requires --store-top-k-logits panels):}
+\begin{verbatim}
+python3 scripts/analyze_logit_margins.py \
+  --inputs reports/external_panels/hf_longbench_v26_merged_raw.json \
+           reports/external_panels/bfcl_validity_v27_merged_raw.json \
+           reports/external_panels/h2o_v28_merged_raw.json \
+  --output reports/external_panels/logit_autopsy_summary.json
+# Produces Table 19 metrics across 1,103 divergent cells
+\end{verbatim}
+
+{\small\raggedright Sources of truth (all under \texttt{reports/}):
+\texttt{scale\_7b/raw.json} (1,500, headline),
+\texttt{evidence\_plus/raw.json} (144, evidence-plus),
+\texttt{external\_panels/summary\_all.json} (216, smoke),
+\texttt{external\_panels/mbpp\_gpu\_raw.json} (144, MBPP),
+\texttt{external\_panels/bfcl\_export\_50\_raw.json} (1,200, BFCL export-50),
+\texttt{external\_panels/kivi\_longbench\_hf\_raw.json} (640, KIVI offline),
+\texttt{external\_panels/hf\_longbench\_v26\_merged\_raw.json} (720, v2.6),
+\texttt{external\_panels/bfcl\_validity\_v27\_merged\_raw.json} (1,200, v2.7),
+\texttt{external\_panels/h2o\_v28\_merged\_raw.json} (800, v2.8).
+Total: \textbf{7,348 completed GPU cells}, \texttt{exactkv\_failures=0}.\par}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

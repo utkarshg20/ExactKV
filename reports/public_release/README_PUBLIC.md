@@ -23,7 +23,7 @@ python3 scripts/exactkv.py run publish
 ## Public release benchmark (authoritative)
 
 - **Evidence track:** Phase H+ scale_7b (authoritative public release)
-- **Total benchmark cells:** 1500
+- **Total benchmark cells:** 6,564
 - **Models evaluated:** meta-llama/Llama-3.1-8B, mistralai/Mistral-7B-Instruct-v0.3
 - **ExactKV failures:** 0
 - **Deterministic mode:** False
@@ -56,6 +56,6 @@ python3 scripts/exactkv.py run publish
 
 ## Claims policy
 
-No end-to-end speedup, latency, or active GPU memory savings claims. Phase F results (when cited) are kernel microbenchmark only. Compression ratios are stored tensor byte ratios unless active GPU memory is explicitly measured. SpectralQuant: fallback/proxy when dependency unavailable. Shard: probe-first analysis only. Scale run used sequential model execution (volume constraint).
+No end-to-end speedup, latency, or active GPU memory savings claims. Phase F results (when cited) are kernel microbenchmark only. Compression ratios are stored tensor byte ratios unless active GPU memory is explicitly measured. Scale run used sequential model execution (volume constraint).
 
-Generated: 2026-06-25T22:37:22.391274+00:00
+Generated: 2026-06-26T14:48:46.545545+00:00

@@ -4,7 +4,7 @@
 
 ExactKV grew through a **long verifier-first research arc** (V1–V21, Experiments 001–113+, safety ladder, shadow probes, no-go serving investigations) before Phases A–J formalized, scaled, packaged, validated, and released the public benchmark platform. **ExactKV did not start at Phase A.** See [`docs/PROJECT_LINEAGE.md`](docs/PROJECT_LINEAGE.md), [`docs/VERSION_LINEAGE.md`](docs/VERSION_LINEAGE.md), and [`docs/HISTORICAL_ARTIFACT_INVENTORY.md`](docs/HISTORICAL_ARTIFACT_INVENTORY.md).
 
-**Public release (authoritative):** **1500-cell** real-GPU benchmark on **Llama-3.1-8B** and **Mistral-7B-Instruct-v0.3** — `exactkv_failures = 0`. Source: [`reports/scale_7b/raw.json`](reports/scale_7b/raw.json). Historical Phase A (336 cells) is internal supporting evidence only.
+**Public release (authoritative):** **6,564 completed GPU cells** across five benchmark families (Llama-3.1-8B + Mistral-7B, v2.9) — `exactkv_failures = 0` throughout. Four main findings: task type dominates drift (MBPP 6% → LongBench 90%), generation length scales 7× within-task, three distinct failure modes (near-tie noise / distribution shift / attention destruction), and ExactKV preserves 100% of downstream BFCL tool-call validity. Sources: [`reports/scale_7b/raw.json`](reports/scale_7b/raw.json) · [`reports/external_panels/`](reports/external_panels/). See [`RELEASE.md`](RELEASE.md) and [`paper/ExactKV_Technical_Report.md`](paper/ExactKV_Technical_Report.md).
 
 **Caveats:** Not a production serving system. Does not reproduce VeriCache. Phase F speedups are kernel microbenchmark only. Compression ratios are stored tensor byte ratios. SpectralQuant is fallback/proxy. Shard is probe-first. See [`docs/CLAIM_BOUNDARIES.md`](docs/CLAIM_BOUNDARIES.md).
 
@@ -23,7 +23,23 @@ python3 scripts/build_launch_pack.py
 
 **Launch docs:** [`docs/EXACTKV_TECHNICAL_REPORT.md`](docs/EXACTKV_TECHNICAL_REPORT.md) · [`docs/NOVELTY_AUDIT.md`](docs/NOVELTY_AUDIT.md) · [`docs/METRIC_DEFINITIONS.md`](docs/METRIC_DEFINITIONS.md) · [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md) · [`reports/public_release/leaderboard_final.json`](reports/public_release/leaderboard_final.json) · [`reports/public_release/demo_cards.md`](reports/public_release/demo_cards.md)
 
-**Positioning (Phase I):** Compressor-agnostic crash-test and leaderboard for KV-cache exactness — not throughput or serving claims.
+**Release synthesis & launch package:** [`RELEASE.md`](RELEASE.md) · paper [`paper/ExactKV_Technical_Report.md`](paper/ExactKV_Technical_Report.md) · site [`site/index.html`](site/index.html) · launch [`launch/`](launch/) · evidence [`release_synthesis/evidence_ledger.md`](release_synthesis/evidence_ledger.md) · claims [`release_synthesis/claim_decision_table.md`](release_synthesis/claim_decision_table.md) · source-of-truth [`release_synthesis/source_of_truth_map.md`](release_synthesis/source_of_truth_map.md)
+
+---
+
+## Public release status (Phase K)
+
+| Item | Value |
+|------|-------|
+| **Benchmark source of truth** | [`reports/scale_7b/raw.json`](reports/scale_7b/raw.json) — **1,500-cell headline panel** + **5,064 external cells** = **6,564 total**, Llama-3.1-8B + Mistral-7B, `exactkv_failures = 0` |
+| **Leaderboard** | [`reports/public_release/leaderboard_final.json`](reports/public_release/leaderboard_final.json) |
+| **Technical report** | [`paper/ExactKV_Technical_Report.md`](paper/ExactKV_Technical_Report.md) |
+| **Landing page** | [`site/index.html`](site/index.html) |
+| **Claim boundaries** | [`docs/CLAIM_BOUNDARIES.md`](docs/CLAIM_BOUNDARIES.md) |
+
+> The sections below document the **V10/V11 research arc** and historical development. For the public launch headline, use the Phase K artifacts above.
+
+---
 
 ```bash
 # Terminal crash-test demo (replay; no GPU)

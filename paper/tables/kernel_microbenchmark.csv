@@ -1,0 +1,4 @@
+mode,torch_latency_ms,triton_latency_ms,speedup_x
+int8,0.115,0.0706,1.63
+int4,0.3319,0.2162,1.54
+block_sparse,0.7622,0.7797,0.98

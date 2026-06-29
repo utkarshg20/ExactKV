@@ -1,0 +1,6 @@
+compressor,num_cells,mean_acceptance_rate,divergence_rate,divergence_stability_score,exactkv_failure_rate,mean_first_divergence_index,mean_compression_ratio
+noop,150,1.0,0.0,1.0,0.0,,1.0
+int8,150,1.0,0.0,1.0,0.0,,0.25
+int4_sim,150,0.8515,0.52,0.48,0.0,2.0,0.25
+spectralquant,150,0.8515,0.52,0.48,0.0,2.0,0.25
+shard,150,0.6323,0.22666666666666666,0.7733,0.0,1.0,0.4062

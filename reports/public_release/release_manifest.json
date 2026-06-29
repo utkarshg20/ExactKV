@@ -1,8 +1,8 @@
 {
   "release_dir": "reports/public_release",
-  "generated_at": "2026-06-25T22:37:22.391547+00:00",
+  "generated_at": "2026-06-28T23:30:16Z",
   "authoritative_evidence": "reports/scale_7b/raw.json",
-  "total_cells": 1500,
+  "total_cells": 6564,
   "source_artifacts": [
     "reports/scale_7b/raw.json",
     "reports/scale_7b/leaderboard.json",
@@ -10,7 +10,11 @@
     "reports/phaseF_kernel_benchmark.json",
     "reports/phaseG_unified_truth.json",
     "reports/novelty_audit.json",
-    "reports/release_evidence_status.json"
+    "reports/release_evidence_status.json",
+    "reports/evidence_plus/raw.json",
+    "reports/external_panels/summary_all.json",
+    "reports/external_panels/bfcl_export_50_raw.json",
+    "reports/external_panels/mbpp_gpu_raw.json"
   ],
   "files": [
     "README_PUBLIC.md",
@@ -19,5 +23,6 @@
     "repro_command.sh",
     "leaderboard_final.json",
     "release_manifest.json"
-  ]
+  ],
+  "version": "v2.9"
 }

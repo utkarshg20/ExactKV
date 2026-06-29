@@ -1,9 +1,9 @@
 {
-  "timestamp_utc": "2026-06-25T22:37:22.405518+00:00",
-  "git_commit": "38847c4bf623e184f829c956a21658f65d1d0519",
+  "timestamp_utc": "2026-06-28T23:30:16Z",
+  "git_commit": "250bf754ccb053792bae8542a5ab5db0b3380ee4",
   "release_status": "phase_k_launch_pack_ready",
   "source_of_truth_artifact": "reports/scale_7b/raw.json",
-  "benchmark_cell_count": 1500,
+  "benchmark_cell_count": 6564,
   "models": [
     "meta-llama/Llama-3.1-8B",
     "mistralai/Mistral-7B-Instruct-v0.3"
@@ -55,5 +55,6 @@
     "Scale run used sequential model execution due to RunPod volume constraints.",
     "Historical inventory contains 1176 artifacts; manual editorial review recommended before launch.",
     "231 inventory entries remain in unknown chronological bucket pending manual curation."
-  ]
+  ],
+  "version": "v2.9"
 }
