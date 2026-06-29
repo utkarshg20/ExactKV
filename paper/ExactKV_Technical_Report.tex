@@ -50,11 +50,16 @@ families) all panels report \texttt{exactkv\_failures=0}. Four main findings:
   preserves all 106/106 full-KV valid BFCL tool calls (both models, all four task categories).
 \end{enumerate}
 
-\noindent\texttt{int6\_sim} (6-bit) and \texttt{int4\_per\_vec\_sim} (KIVI/KVQuant-style
-per-vector INT4, $2.06\times$ int8 error, $6\times$ less than per-tensor int4\_sim) are
-GPU-validated non-catastrophic on Mistral-7B (v3.0, 784 cells): \texttt{int6\_sim} shows 0\% divergence on BFCL/MBPP and 37.5\% on LongBench; \texttt{int4\_per\_vec\_sim} shows 0\% on BFCL/MBPP and 55.6\% on LongBench --- both with \texttt{exactkv\_failures=0}.
+\begin{sloppypar}
+\noindent\texttt{int6\_sim} (6-bit per-tensor) and \texttt{int4\_per\_vec\_sim}
+(KIVI/KVQuant-style per-vector INT4, $2.06\times$ int8 error) are GPU-validated
+non-catastrophic on Mistral-7B (v3.0, 784 cells, \texttt{exactkv\_failures=0}):
+both show 0\% divergence on BFCL and MBPP; \texttt{int6\_sim} reaches 37.5\% and
+\texttt{int4\_per\_vec\_sim} 55.6\% on HF LongBench --- both non-catastrophic,
+with per-vector granularity task-conditionally dominating bit-width.
 Results are \textbf{not} benchmark scores, production claims, or a reproduction of
 VeriCache~\citep{vericache2026}.
+\end{sloppypar}
 \end{abstract}
 
 \section{Introduction}
