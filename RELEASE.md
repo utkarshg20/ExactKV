@@ -38,24 +38,25 @@ system — and does not reproduce VeriCache.**
   mean lossy rank, median fdi
 - Three forensic case studies with full top-5 logit traces confirming each mechanism
 
-### v3.0 GPU panel — int6_sim + int4_per_vec_sim (784 cells, Mistral-7B complete)
+### v3.0 GPU panel — int6_sim + int4_per_vec_sim (both models, 1,568 cells)
 
-**Both new compressors GPU-validated as non-catastrophic. `exactkv_failures = 0` throughout.**
+**Both new compressors GPU-validated on Mistral-7B and Llama-3.1-8B. `exactkv_failures = 0` throughout.**
 
-| Task | int8 | int6_sim | int4_per_vec_sim | int4_sim |
+| Task (both-model mean) | int8 | int6_sim | int4_per_vec_sim | int4_sim |
 |------|-----:|---------:|-----------------:|---------:|
-| MBPP (code) | 0% | 0% | 0% | 0% |
-| BFCL (tool-call) | 0% | 0% | 0% | 45% |
-| HF LongBench (reading) | 15.3% | 37.5% | 55.6% | 86.1% |
+| MBPP (code) | 0% | 0% | 0% | 6.3% |
+| BFCL (tool-call) | 0% | 0% | 0% | 52.5% |
+| HF LongBench (reading) | 18.1% | 42.4% | 56.3% | 85.4% |
 
 Key finding: **per-vector INT4 matches int8 on structured tasks** (BFCL/MBPP) but shows
 55.6% on long-context reading — non-catastrophic but higher than int6_sim (37.5%).
 The "granularity > bit-width" claim is task-conditional: it holds on BFCL/MBPP, partially
-on LongBench (86% → 56%, a 30pp improvement), but bit-width still matters at 8K context.
+on LongBench (86% → 57%, a 29pp improvement), but bit-width still matters at 8K context.
+`exactkv_failures=0` across all 1,568 v3.0 cells (both models).
 
 - Source: `reports/external_panels/v30/`
 - Mistral-7B: **complete** (784 cells)
-- Llama-3.1-8B: **in progress** (running on RunPod, tmux session `llama_v30`)
+- Llama-3.1-8B: **complete** (784 cells)
 
 ### BFCL downstream metrics
 - 4-category BFCL breakdown: simple 37%, parallel 30%, multi-turn 23%, AST-eval 15%
@@ -64,26 +65,31 @@ on LongBench (86% → 56%, a 30pp improvement), but bit-width still matters at 8
 
 ### Paper
 - Technical report v3.0 (Markdown + LaTeX + PDF, ~225 KB)
-- 7,348 cells, four benchmark families, all `exactkv_failures = 0`
+- 8,132 cells, four benchmark families, all `exactkv_failures = 0`
 - §6.15 populated with real GPU results (no placeholders)
 
-### Total: **7,348 completed GPU cells**, `exactkv_failures = 0` throughout
-(+784 pending: Llama-3.1-8B v3.0 panels in progress)
+### Total: **8,132 completed GPU cells**, `exactkv_failures = 0` throughout
 
-## Score (per external reviewer, pre-v3.0 GPU results)
+
+## Score (external reviewer, v3.0 complete)
+
 | Dimension | Score |
 |-----------|------:|
-| Problem framing | 9.4 |
-| Empirical evidence | 9.5 |
+| Problem framing | 9.5 |
+| Empirical evidence | 9.7 |
 | Mechanistic analysis | 9.5 |
-| Downstream validity | 8.9 |
-| Compressor coverage | 8.8 |
-| Claim safety | 9.2 |
-| **Strict research-paper** | **9.35/10** |
-| **Technical report / artifact** | **9.65/10** |
+| Downstream validity | 9.0 |
+| Compressor coverage | 9.4 |
+| Claim safety | 9.3 |
+| Paper consistency | 9.3 |
+| Paper polish | 9.2 |
+| **Strict research-paper (current draft)** | **9.50/10** |
+| **After final wording pass** | **9.55–9.60/10** |
+| **Underlying project / evidence quality** | **9.65/10** |
+| **With faithful production KIVI/KVQuant kernel** | **9.7+/10** |
 
-v3.0 GPU results directly address Compressor Coverage (8.8 → estimated 9.2+):
-both new compressors validated with real GPU measurements, clean story, zero failures.
+Path to 9.7+: validate one production-faithful compressor (KIVI CUDA/Triton, KVQuant,
+or SnapKV kernel) under the same ExactKV panel grid — not more smoke experiments.
 
 ## Benchmark source of truth
 
@@ -134,6 +140,6 @@ python3 scripts/summarize_v30_panel.py --output reports/external_panels/v30/summ
 - Phase F kernel results are a **kernel microbenchmark only** — not end-to-end speedup.
 - Compression ratios are **stored tensor byte ratios** — not active GPU memory savings.
 - `exactkv_failures = 0` is a hard gate **on the tested panels only**.
-- v3.0 results are **Mistral-7B only**; Llama-3.1-8B in progress (v3.1 target).
+- v3.0 results cover both Mistral-7B and Llama-3.1-8B (1,568 v3.0 cells total).
 - External panels are **drift measurements**, not official LongBench/BFCL/MBPP scores.
 - Scale run used **sequential model execution** (volume constraint).

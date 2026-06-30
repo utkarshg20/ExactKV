@@ -1,0 +1,36 @@
+{
+  "schema": "exactkv.paper.export_status.v1",
+  "generated_files": [
+    "paper/ExactKV_Technical_Report.md",
+    "paper/ExactKV_Technical_Report.tex",
+    "paper/ExactKV_Technical_Report.pdf",
+    "paper/references.bib",
+    "paper/figures/hero_card.png",
+    "paper/figures/first_divergence_histogram.png",
+    "paper/figures/acceptance_by_compressor.png",
+    "paper/figures/phaseG_divergence_map.png",
+    "paper/tables/scale_leaderboard.csv",
+    "paper/tables/compressor_summary.csv",
+    "paper/tables/kernel_microbenchmark.csv"
+  ],
+  "pdf_generated": true,
+  "pdf_path": "paper/ExactKV_Technical_Report.pdf",
+  "pdf_reason": null,
+  "pdf_build_commands": {
+    "recommended": [
+      "bash scripts/build_paper_pdf.sh"
+    ],
+    "tectonic": [
+      "cd paper",
+      "tectonic ExactKV_Technical_Report.tex"
+    ],
+    "latex": [
+      "cd paper",
+      "pdflatex ExactKV_Technical_Report.tex",
+      "bibtex ExactKV_Technical_Report",
+      "pdflatex ExactKV_Technical_Report.tex",
+      "pdflatex ExactKV_Technical_Report.tex"
+    ]
+  },
+  "notes": "The .md file (ExactKV_Technical_Report.md) is the canonical full report. The .tex mirrors it for PDF builds via tectonic/pdflatex. Do not replace .tex with a short summary-only version."
+}

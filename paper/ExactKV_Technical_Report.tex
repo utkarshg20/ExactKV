@@ -60,7 +60,8 @@ all panels report \texttt{exactkv\_failures=0}. Four main findings:
 non-catastrophic on both Mistral-7B and Llama-3.1-8B (v3.0, 1,568 cells total,
 \texttt{exactkv\_failures=0}): both show 0\% divergence on BFCL and MBPP;
 \texttt{int6\_sim} reaches 37--47\% and \texttt{int4\_per\_vec\_sim} 56--57\% on
-HF LongBench --- per-vector granularity task-conditional at 8K context.
+HF LongBench --- per-vector granularity helps on structured tasks, while bit-width
+still matters at 8K LongBench context.
 Results are \textbf{not} benchmark scores, production claims, or a reproduction of
 VeriCache~\citep{vericache2026}.
 \end{sloppypar}
@@ -100,8 +101,9 @@ failures per cell.
 \item \textbf{Downstream validity measurement}: despite 50\% token drift, all
   106/106 full-KV valid BFCL tool calls are preserved (\S6.11).
 \item \textbf{GPU validation} of \texttt{int6\_sim} and \texttt{int4\_per\_vec\_sim}
-  confirming non-catastrophic drift on structured tasks; per-vector granularity
-  task-conditional at 8K context (\S6.13--6.15).
+  confirming non-catastrophic drift on structured tasks; per-vector granularity helps
+  on BFCL/MBPP while bit-width still matters at 8K LongBench context
+  (Sections~\ref{sec:int6}--\ref{sec:int4pervec}, Table~\ref{tab:core-curve}).
 \end{enumerate}
 
 \subsection{Shared problem framing with VeriCache}
@@ -744,6 +746,7 @@ of BFCL divergence.}
 
 \FloatBarrier
 \section{int6\_sim: Non-Catastrophic Intermediate Compressor}
+\label{sec:int6}
 
 \begin{sloppypar}
 \texttt{int6\_sim} implements 6-bit symmetric quantisation simulation (64 discrete levels,
@@ -815,8 +818,9 @@ HF LongBench   & 18.1\% & $\sim$30--50\% & \textbf{56.3\%} & 42.4\% & 85.4\% \\
 \bottomrule
 \end{tabular}
 \caption{Analytical prediction vs GPU-observed divergence for \texttt{int4\_per\_vec\_sim}.
-v3.0 panel (both models, \texttt{exactkv\_failures=0}). LongBench prediction within range,
-upper end. Script: \texttt{exactkv/compressors/int4\_per\_vec\_sim.py}.}
+v3.0 panel (both models, \texttt{exactkv\_failures=0}). LongBench observed value is
+slightly above the predicted range but remains between \texttt{int8} and per-tensor
+\texttt{int4\_sim}.}
 \label{tab:per-vec-pred}
 \end{table}
 
@@ -1088,14 +1092,20 @@ both models, \texttt{exactkv\_failures=0}); H2O-style token-eviction panel v2.8
 distinct failure modes. Total: \textbf{8,132 completed GPU cells}.
 
 \textbf{Remaining future work:} expand BFCL validity to larger/more diverse prompts;
-expand MBPP with safe pass@1; RULER 12K+; HELMET; InfiniteBench 100K+;
+expand MBPP with safe pass@1/syntax validation; broader downstream metrics beyond BFCL
+(including LongBench answer-overlap); RULER 12K+; HELMET; InfiniteBench 100K+;
 broader scaling curves (12K+, 16K+ context; more compressors);
-faithful production KIVI/KVQuant/SnapKV integrations; downstream task metrics.
+faithful production KIVI/KVQuant/SnapKV integrations.
 
 \section{Conclusion}
 
 VeriCache shows how to \textbf{serve} with compressed KV without changing outputs.
 ExactKV shows \textbf{where and why compressors drift} on the lossy path.
+
+ExactKV's strongest supported claim is that \textbf{KV-cache drift is governed jointly
+by task type, generation length, compressor class, and quantization granularity} ---
+and that verifier-mediated decoding preserves full-KV greedy equivalence
+(\texttt{exactkv\_failures=0} throughout).
 
 Across \textbf{8,132 completed GPU cells} with \texttt{exactkv\_failures=0} throughout,
 ExactKV establishes four empirical findings:

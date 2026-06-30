@@ -61,8 +61,8 @@ parallel 30%, multi-turn 23%, AST-eval 15% baseline valid rate).
 and MBPP, 37.5% on HF LongBench — cleanly between int8 (15%) and int4_sim (86%).
 `int4_per_vec_sim` (KIVI/KVQuant-style per-vector INT4) achieves 0% divergence on
 structured-output and code tasks, and 55.6% on LongBench — non-catastrophic but higher
-than int6_sim on extreme long-context (8K) reading. Per-vector granularity eliminates
-drift on BFCL/MBPP but does not fully compensate for 4-bit resolution at 8K context.
+than int6_sim on extreme long-context (8K) reading. Per-vector granularity helps on
+structured tasks, while bit-width still matters at 8K LongBench context.
 GPU-validated on both Mistral-7B-Instruct-v0.3 and Llama-3.1-8B (1,568 cells total,
 `exactkv_failures=0`). Results are **not** official benchmark scores, production
 serving claims, or a reproduction of VeriCache [vericache2026] throughput-oriented
@@ -109,8 +109,8 @@ verifier agreement, and exactness failures per cell.
 5. **Downstream validity measurement**: despite 50% token drift, all 106/106 full-KV
    valid BFCL tool calls are preserved under verifier-mediated execution (§6.11).
 6. **GPU validation of two new compressors** (int6_sim, int4_per_vec_sim) confirming
-   non-catastrophic drift on structured tasks and revealing that per-vector granularity
-   eliminates drift on BFCL/MBPP but is task-conditional at 8K context (§6.13–6.15).
+   non-catastrophic drift on structured tasks; per-vector granularity helps on BFCL/MBPP
+   while bit-width still matters at 8K LongBench context (§6.13–6.16, Table 6.16).
 
 ### 2.1 Shared problem framing with VeriCache
 
@@ -151,6 +151,12 @@ deployment throughput or reproduce VeriCache's system design. See Section 10.
 | 4 | **Three distinct failure modes** | int8: near-tie (rank 2.4, fdi=22); int4_sim: distribution shift (rank 3.5, fdi=8); H2O: attention destruction (rank 6.7, fdi=1) |
 | 5 | **100% downstream validity preserved** | ExactKV preserves all 106/106 valid BFCL tool calls despite 50% drift |
 | 6 | **Zero correctness failures** | exactkv_failures=0 across all 8,132 GPU cells |
+| 7 | **Compressor design-space curve** | int8 → int6 → int4_per_vec → int4_sim → H2O: monotonic LongBench degradation (Table 6.16) |
+
+ExactKV's strongest supported claim is not merely that compressed KV drifts — it is
+that **KV-cache drift is governed jointly by task type, generation length, compressor
+class, and quantization granularity**, while verifier-mediated decoding preserves
+full-KV greedy equivalence (`exactkv_failures=0` throughout).
 
 ---
 
@@ -1432,7 +1438,8 @@ theoretical 4× compression (0.25× fp16). It is closer to int8 than to int4_sim
 | HF LongBench | 18.1% | ~30–50% | **56.3%** | 42.4% | 85.4% |
 
 *Prior analytical prediction for LongBench: ~30–50%. Observed both-model mean: 56.3%
-— within range, upper end. Prediction held on BFCL/MBPP (0% observed vs ~0–4% predicted).*
+— slightly above the predicted range, but cleanly between `int8` (18.1%) and per-tensor
+`int4_sim` (85.4%). Prediction held on BFCL/MBPP (0% observed vs ~0–4% predicted).*
 
 **Key insight — granularity outweighs bit-width (task-conditional):** `int4_per_vec_sim`
 (4-bit per-vector) matches int8 exactly on BFCL and MBPP, and achieves 30pp lower divergence
@@ -1980,7 +1987,7 @@ Claim boundary: `kivi_offline` uses real KIVI quantizer math (simulate path,
 | **InfiniteBench 100K+ stress** | Not run, pending verifier memory/runtime stability |
 | **KVQuant/SnapKV integrations** (production kernels) | Adapters exist; KIVI offline done at simulate tier; faithful production integration future work |
 | **RULER 16K/32K scaling** | 2K/4K/8K pilot done |
-| **HumanEval/MBPP pass@1 impact** | Requires safe sandboxing |
+| **HumanEval/MBPP pass@1 impact** | Requires safe sandboxing; extend beyond BFCL downstream validity to MBPP pass@1/syntax and LongBench answer-overlap |
 | **Confidence intervals** | Wilson CIs added for all external panels |
 | **BFCL validity: larger/more diverse prompts** | Extend beyond 50 export-50 prompts to wider function diversity |
 | **Broader scaling curves: more tasks, 12K+, 16K+, and additional compressors** | 1K–16K context vs divergence rate; 16–256 token generation vs divergence |
@@ -2193,6 +2200,10 @@ changing greedy outputs. ExactKV shows **where compressors drift** on the lossy
 path and how verifier-mediated execution behaves on a fixed panel.
 
 ExactKV's strongest supported claim is not "we beat X" or "we invented verify." It is:
+
+**KV-cache drift is governed jointly by task type, generation length, compressor class,
+and quantization granularity** — and ExactKV maps that design space while verifier-mediated
+decoding preserves full-KV greedy equivalence (`exactkv_failures=0` throughout).
 
 **ExactKV tells you exactly when compressed KV cache behavior stops matching the
 verifier**, and separately reports when the *lossy* path drifts, how often drafts

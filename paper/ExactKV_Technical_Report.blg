@@ -1,0 +1,14 @@
+This is BibTeX, Version 0.99d
+Capacity: max_strings=35307, hash_size=35307, hash_prime=30011
+The top-level auxiliary file: ExactKV_Technical_Report.aux
+The style file: plainnat.bst
+Database file #1: references.bib
+Repeated entry---line 131 of file references.bib
+ : @article{liu2024kivi
+ :                     ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 142 of file references.bib
+ : @article{hooper2024kvquant
+ :                           ,
+I'm skipping whatever remains of this entry
+(There were 2 error messages)
