@@ -2,14 +2,14 @@
 
 ## bfcl_Mistral_7B_Instruct_v0_3_raw
 
-- **Cells:** 68 ok / 68 total
+- **Cells:** 98 ok / 98 total
 - **ExactKV failures:** 0
 
 | Compressor | n | Div. rate | Mean accept. |
 |------------|--:|----------:|-------------:|
-| `int8` | 25 | 0.0% | 1.000 |
-| `kivi_offline_r32` | 23 | 100.0% | 0.036 |
-| `snapkv_experimental` | 20 | 100.0% | 0.394 |
+| `int8` | 35 | 0.0% | 1.000 |
+| `kivi_offline_r32` | 33 | 100.0% | 0.032 |
+| `snapkv_experimental` | 30 | 100.0% | 0.400 |
 
 ## longbench_Mistral_7B_Instruct_v0_3_raw
 
@@ -35,14 +35,14 @@
 
 ## merged_raw
 
-- **Cells:** 50 ok / 50 total
+- **Cells:** 384 ok / 384 total
 - **ExactKV failures:** 0
 
 | Compressor | n | Div. rate | Mean accept. |
 |------------|--:|----------:|-------------:|
-| `int8` | 17 | 0.0% | 1.000 |
-| `kivi_offline_r32` | 17 | 100.0% | 0.022 |
-| `snapkv_experimental` | 16 | 87.5% | 0.541 |
+| `int8` | 131 | 8.4% | 0.992 |
+| `kivi_offline_r32` | 129 | 100.0% | 0.041 |
+| `snapkv_experimental` | 124 | 96.8% | 0.412 |
 
 ## smoke2_mbpp_llama_raw
 
@@ -66,6 +66,6 @@
 
 | Compressor | n | Div. rate | Mean accept. |
 |------------|--:|----------:|-------------:|
-| `int8` | 131 | 8.4% | 0.992 |
-| `kivi_offline_r32` | 129 | 100.0% | 0.041 |
-| `snapkv_experimental` | 124 | 96.8% | 0.412 |
+| `int8` | 255 | 8.6% | 0.991 |
+| `kivi_offline_r32` | 251 | 100.0% | 0.042 |
+| `snapkv_experimental` | 242 | 97.5% | 0.404 |
