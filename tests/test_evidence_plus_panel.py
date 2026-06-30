@@ -37,6 +37,11 @@ def test_external_compressor_resolution_graceful() -> None:
     assert res_r32.compressor_name == "kivi_offline_r32"
     assert res_r32.backend_tier in ("RESTRICTED_ADAPTER", "UNAVAILABLE")
 
+    for name in ("snapkv_experimental", "kvpress_knorm_experimental", "turboquant_experimental"):
+        res = resolve_evidence_plus_compressor(name)
+        assert res.compressor_name == name
+        assert res.backend_tier in ("RESTRICTED_ADAPTER", "UNAVAILABLE")
+
 
 def test_write_outputs(tmp_path: Path) -> None:
     report = run_evidence_plus_panel(deterministic_mode=True, smoke=True)

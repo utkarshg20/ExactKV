@@ -1,12 +1,20 @@
 {
-  "schema": "exactkv.launch.manifest.v1",
+  "schema": "exactkv.launch.manifest.v2",
   "tagline": "ExactKV tells you exactly when compressed KV cache behavior stops matching the verifier.",
   "benchmark_source_of_truth": "reports/scale_7b/raw.json",
+  "external_panels_source": "reports/external_panels/",
   "headline": {
-    "total_cells": 1500,
+    "total_cells_external": 8132,
+    "core_leaderboard_cells": 1500,
     "models": ["meta-llama/Llama-3.1-8B", "mistralai/Mistral-7B-Instruct-v0.3"],
     "exactkv_failures": 0,
     "deterministic_mode": false
+  },
+  "urls": {
+    "github": "https://github.com/utkarshg20/ExactKV",
+    "technical_report": "https://github.com/utkarshg20/ExactKV/blob/main/paper/ExactKV_Technical_Report.md",
+    "landing_page": "https://github.com/utkarshg20/ExactKV/blob/main/site/index.html",
+    "leaderboard_json": "https://github.com/utkarshg20/ExactKV/blob/main/reports/public_release/leaderboard_final.json"
   },
   "assets": {
     "x_thread": "launch/x_thread.md",
@@ -29,7 +37,8 @@
     "SpectralQuant = fallback/proxy",
     "Shard = probe-first heuristic",
     "exactkv_failures=0 is a hard gate on the tested panel only",
-    "sequential model execution (volume constraint)"
+    "sequential model execution (volume constraint)",
+    "external panel drift rates are not official benchmark scores"
   ],
   "forbidden_claims": [
     "production ready", "first ever", "first and only", "nothing like this exists",
@@ -37,5 +46,5 @@
     "beats VeriCache", "reproduces VeriCache", "beats TurboQuant", "beats Shard",
     "real SpectralQuant", "real Shard", "fastest", "SOTA"
   ],
-  "generated_at": "2026-06-26T00:00:00+00:00"
+  "generated_at": "2026-06-29T00:00:00+00:00"
 }

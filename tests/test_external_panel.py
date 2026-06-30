@@ -14,6 +14,7 @@ from exactkv.benchmarks.external_dataset_loaders import (
 from exactkv.benchmarks.external_panel import (
     EXTERNAL_PANEL_ID,
     build_external_context_prompt,
+    load_external_panel_resume_index,
     run_external_panel,
     write_external_panel_outputs,
 )
@@ -167,3 +168,27 @@ def test_build_external_context_prompt_truncates(monkeypatch: pytest.MonkeyPatch
     entry = build_external_context_prompt(_Runtime(), base, 5)
     assert entry["prefill_tokens"] == 5
     assert entry["context_bucket"] == 5
+
+
+def test_external_panel_resume_skips_completed_cells(tmp_path: Path) -> None:
+    json_path = tmp_path / "longbench_resume.json"
+    first = run_external_panel(
+        "longbench",
+        deterministic_mode=True,
+        smoke=True,
+        checkpoint_json=json_path,
+    )
+    write_external_panel_outputs(first, json_path=json_path)
+    assert first["status"] == "benchmark_complete"
+    assert json_path.is_file()
+
+    second = run_external_panel(
+        "longbench",
+        deterministic_mode=True,
+        smoke=True,
+        resume_json=json_path,
+        checkpoint_json=json_path,
+    )
+    assert second["status"] == "benchmark_complete"
+    assert second["cells_run"] == first["cells_run"]
+    assert load_external_panel_resume_index(json_path)

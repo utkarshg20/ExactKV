@@ -25,11 +25,24 @@ fi
 export PYTHONPATH="$KIVI_DIR${PYTHONPATH:+:$PYTHONPATH}"
 "$PY" -c "import models.utils_quant; print('KIVI utils_quant OK:', models.utils_quant.__file__)"
 
-echo "==> Installing kvpress (SnapKV experimental)"
+echo "==> Installing kvpress (SnapKV + KnormPress experimental)"
 "$PY" -m pip install -q kvpress
 "$PY" -c "import kvpress; print('kvpress OK')"
 
+TURBO_DIR="${EXACTKV_TURBOQUANT_ROOT:-/tmp/turboquant_plus}"
+if [[ "${INSTALL_TURBOQUANT:-0}" == "1" ]]; then
+  if [[ ! -d "$TURBO_DIR/.git" ]]; then
+    git clone --depth 1 https://github.com/TheTom/turboquant_plus "$TURBO_DIR"
+  fi
+  export PYTHONPATH="$TURBO_DIR${PYTHONPATH:+:$PYTHONPATH}"
+  "$PY" -c "import turboquant; print('turboquant OK:', turboquant.__file__)"
+else
+  echo "==> TurboQuant: skip (set INSTALL_TURBOQUANT=1 to clone TheTom/turboquant_plus)"
+fi
+
 echo ""
 echo "==> Setup complete. Add to your shell before running panels:"
-echo "    export PYTHONPATH=$KIVI_DIR"
+echo "    export EXACTKV_KIVI_ROOT=$KIVI_DIR"
+echo "    export EXACTKV_TURBOQUANT_ROOT=$TURBO_DIR   # if TurboQuant installed"
 echo "    bash scripts/run_faithful_compressor_panel.sh"
+echo "    bash scripts/run_faithful_external_wave2_smoke.sh  # KnormPress + TurboQuant compare"

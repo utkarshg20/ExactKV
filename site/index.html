@@ -39,20 +39,20 @@
       Not aggregate quality. <strong>The first wrong token.</strong>
     </p>
     <div class="cta-row">
-      <a class="btn btn-primary" href="../paper/ExactKV_Technical_Report.md">Technical report</a>
+      <a class="btn btn-primary" href="https://github.com/utkarshg20/ExactKV/blob/main/paper/ExactKV_Technical_Report.md">Technical report</a>
       <a class="btn btn-ghost" href="#findings">See the findings</a>
       <a class="btn btn-ghost" href="#reproduce">Reproduce</a>
     </div>
     <div class="hero-stats">
       <div class="hstat"><span class="hnum">8,132</span><span class="hcap">GPU cells</span></div>
       <div class="hstat-div"></div>
-      <div class="hstat"><span class="hnum">0</span><span class="hcap">exactkv_failures</span></div>
+      <div class="hstat"><span class="hnum">0</span><span class="hcap">exactkv failures</span></div>
       <div class="hstat-div"></div>
       <div class="hstat"><span class="hnum">5</span><span class="hcap">benchmark families</span></div>
       <div class="hstat-div"></div>
       <div class="hstat"><span class="hnum">3</span><span class="hcap">failure modes</span></div>
     </div>
-    <p class="hero-note">Research-grade evaluation framework. <strong>Not a production serving system.</strong> Does <strong>not</strong> reproduce VeriCache. Numbers trace to on-disk artifacts.</p>
+    <p class="hero-note">Research-grade evaluation framework. <strong>Not a production serving system.</strong> Does <strong>not</strong> reproduce VeriCache. <strong>8,132</strong> completed GPU cells across external panels (<code>exactkv_failures=0</code>); core compressor leaderboard from the <strong>1,500-cell</strong> scale panel (<code>reports/scale_7b/raw.json</code>). Phase F = kernel microbenchmark only (not end-to-end speedup). Compression ratios = stored tensor byte ratios (not active GPU memory savings). SpectralQuant = fallback/proxy; Shard = probe-first heuristic.</p>
   </div>
 </section>
 
@@ -571,9 +571,10 @@ bash scripts/run_faithful_compressor_panel.sh
   <div class="wrap">
     <h2>Links</h2>
     <div class="link-grid">
-      <a href="../README.md" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>GitHub / README</strong><span>Setup, install, quick start</span></span></a>
-      <a href="../paper/ExactKV_Technical_Report.md" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Technical report</strong><span>Full methodology, results, analysis</span></span></a>
-      <a href="../reports/public_release/leaderboard_final.json" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Leaderboard (JSON)</strong><span>Machine-readable scores</span></span></a>
+      <a href="https://github.com/utkarshg20/ExactKV" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>GitHub / README</strong><span>Setup, install, quick start</span></span></a>
+      <a href="https://github.com/utkarshg20/ExactKV/blob/main/paper/ExactKV_Technical_Report.md" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Technical report</strong><span>Full methodology, results, analysis</span></span></a>
+      <a href="https://github.com/utkarshg20/ExactKV/blob/main/reports/public_release/leaderboard_final.json" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Leaderboard (JSON)</strong><span>Machine-readable scores</span></span></a>
+      <a href="https://github.com/utkarshg20/ExactKV/blob/main/site/index.html" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Landing page</strong><span>Findings, divergence table, reproduce</span></span></a>
       <a href="../RELEASE.md" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Release notes</strong><span>v3.0 changelog and status</span></span></a>
       <a href="../release_synthesis/claim_decision_table.md" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Claim decisions</strong><span>Per-claim evidence boundaries</span></span></a>
       <a href="../release_synthesis/source_of_truth_map.md" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Source-of-truth map</strong><span>Every number to its artifact</span></span></a>

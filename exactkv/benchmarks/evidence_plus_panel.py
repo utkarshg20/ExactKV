@@ -52,6 +52,8 @@ EXTERNAL_COMPRESSORS: tuple[str, ...] = (
     "kivi_offline_r32",
     "kvquant_sim",
     "snapkv_experimental",
+    "kvpress_knorm_experimental",
+    "turboquant_experimental",
 )
 
 DEFAULT_MODELS: tuple[str, ...] = (
@@ -83,6 +85,10 @@ def _kivi_utils_available() -> bool:
     except ImportError:
         return False
     return True
+
+
+def _turboquant_available() -> bool:
+    return importlib.util.find_spec("turboquant") is not None
 
 
 def resolve_evidence_plus_compressor(
@@ -122,6 +128,22 @@ def resolve_evidence_plus_compressor(
             adapter_available=ok,
             probe_only=False,
         )
+    if name == "kvpress_knorm_experimental":
+        ok = _kvpress_available()
+        return CompressorResolution(
+            compressor_name=name,
+            backend_tier="RESTRICTED_ADAPTER" if ok else "UNAVAILABLE",
+            adapter_available=ok,
+            probe_only=False,
+        )
+    if name == "turboquant_experimental":
+        ok = _turboquant_available()
+        return CompressorResolution(
+            compressor_name=name,
+            backend_tier="RESTRICTED_ADAPTER" if ok else "UNAVAILABLE",
+            adapter_available=ok,
+            probe_only=False,
+        )
     # Fall back to Phase A resolution (noop/int8/int4_sim/spectralquant/shard/...)
     return resolve_compressor(name, runtime=runtime)
 
@@ -154,6 +176,21 @@ def _instantiate_evidence_plus_compressor(
             compression_ratio=0.5,
             isolate_compression_model=isolate,
         )
+    if resolution.compressor_name == "kvpress_knorm_experimental":
+        from exactkv.compressors.kvpress_knorm import create_kvpress_knorm_adapter  # noqa: PLC0415
+
+        isolate = os.environ.get("EXACTKV_KVPRESS_ISOLATE", "0") == "1"
+        return create_kvpress_knorm_adapter(
+            runtime,
+            compression_ratio=0.5,
+            isolate_compression_model=isolate,
+        )
+    if resolution.compressor_name == "turboquant_experimental":
+        from exactkv.compressors.turboquant_adapter import (  # noqa: PLC0415
+            create_turboquant_python_adapter,
+        )
+
+        return create_turboquant_python_adapter(runtime, k_bits=3, v_bits=3)
     return _instantiate_compressor(resolution, runtime)
 
 

@@ -6,6 +6,7 @@ bucket. Does **not** compute official LongBench/RULER/BFCL scores.
 """
 from __future__ import annotations
 
+import json
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -58,6 +59,7 @@ _PROMPT_METADATA_KEYS = (
     "source",
     "source_dataset",
     "entry_point",
+    "reference_answer",
 )
 
 
@@ -125,6 +127,119 @@ def _aggregate_by_category(cells: Sequence[Mapping[str, Any]]) -> dict[str, Any]
     return summary
 
 
+RESUMABLE_CELL_STATUSES = frozenset({"ok", "skipped"})
+
+
+def external_cell_resume_key(
+    *,
+    model_name: str,
+    prompt_id: str,
+    context_bucket: int | None,
+    compressor_name: str,
+    max_new_tokens: int,
+) -> tuple[str, str, int, str, int]:
+    return (
+        model_name,
+        prompt_id,
+        int(context_bucket or 0),
+        compressor_name,
+        int(max_new_tokens),
+    )
+
+
+def load_external_panel_resume_index(path: Path | str | None) -> dict[tuple[str, str, int, str, int], dict[str, Any]]:
+    if not path:
+        return {}
+    resume_path = Path(path)
+    if not resume_path.is_file():
+        return {}
+    data = json.loads(resume_path.read_text(encoding="utf-8"))
+    index: dict[tuple[str, str, int, str, int], dict[str, Any]] = {}
+    for cell in data.get("cells") or []:
+        if cell.get("status") not in RESUMABLE_CELL_STATUSES:
+            continue
+        key = external_cell_resume_key(
+            model_name=str(cell.get("model_name") or ""),
+            prompt_id=str(cell.get("prompt_id") or ""),
+            context_bucket=cell.get("context_bucket"),
+            compressor_name=str(cell.get("compressor_name") or ""),
+            max_new_tokens=int(cell.get("max_new_tokens") or 0),
+        )
+        index[key] = dict(cell)
+    return index
+
+
+def _build_external_panel_report(
+    *,
+    family: str,
+    cells: Sequence[Mapping[str, Any]],
+    status: str,
+    deterministic_mode: bool,
+    smoke: bool,
+    prompt_source: str,
+    models_evaluated: Sequence[str],
+    models_blocked: Mapping[str, str],
+    bucket_list: Sequence[int],
+    mnt_list: Sequence[int],
+    compressor_list: Sequence[str],
+    draft_len: int,
+) -> dict[str, Any]:
+    ok_cells = [c for c in cells if c.get("status") == "ok"]
+    by_bucket: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
+    for c in ok_cells:
+        b = c.get("context_bucket")
+        if b is not None:
+            by_bucket[str(int(b))].append(c)
+
+    bucket_summary: dict[str, Any] = {}
+    for b, bucket_cells in sorted(by_bucket.items(), key=lambda x: int(x[0])):
+        metrics = [c.get("metrics") or {} for c in bucket_cells]
+        n = max(len(metrics), 1)
+        div = sum(1 for m in metrics if m.get("token_level_divergence"))
+        bucket_summary[b] = {
+            "num_cells": len(bucket_cells),
+            "divergence_rate": div / n,
+            "mean_acceptance_rate": sum(m.get("acceptance_rate", 0.0) for m in metrics) / n,
+        }
+
+    return {
+        "phase_id": EXTERNAL_PANEL_ID,
+        "dataset_family": family,
+        "status": status,
+        "deterministic_mode": deterministic_mode,
+        "smoke": smoke,
+        "prompt_source": prompt_source,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "manifest": build_run_manifest(
+            model_name=",".join(models_evaluated) if models_evaluated else "none",
+            compressor_names=list(compressor_list),
+            draft_lengths=[draft_len],
+            prompt_suite=f"{family}_{prompt_source}",
+            max_new_tokens=max(mnt_list) if mnt_list else 0,
+        ),
+        "models_evaluated": list(models_evaluated),
+        "models_blocked": dict(models_blocked),
+        "context_buckets": list(bucket_list),
+        "max_new_tokens_values": list(mnt_list),
+        "compressors": list(compressor_list),
+        "total_cells": len(cells),
+        "cells_run": len(ok_cells),
+        "cells_skipped": len(cells) - len(ok_cells),
+        "exactkv_failures": sum(1 for c in ok_cells if c.get("exactkv_failure")),
+        "compressor_summary": _aggregate_compressor_metrics(ok_cells),
+        "bucket_summary": bucket_summary,
+        "category_summary": _aggregate_by_category(ok_cells),
+        "cells": list(cells),
+        "limitations_note": (
+            f"External {family} panel measures ExactKV drift metrics only. "
+            "This is not an official LongBench/RULER/BFCL/HumanEval/MBPP score reproduction."
+        ),
+        "reproducible_cli_command": (
+            f"python3 scripts/run_external_panel.py --family {family} --device cuda --dtype float16"
+        ),
+    }
+
+
 def run_external_panel(
     family: str,
     *,
@@ -142,6 +257,8 @@ def run_external_panel(
     local_files_only: bool = False,
     smoke: bool = False,
     store_top_k_logits: bool = False,
+    resume_json: Path | str | None = None,
+    checkpoint_json: Path | str | None = None,
 ) -> dict[str, Any]:
     family = family.lower()
     if smoke:
@@ -177,6 +294,8 @@ def run_external_panel(
 
     cells: list[dict[str, Any]] = []
     cell_idx = 0
+    resume_index = load_external_panel_resume_index(resume_json)
+    checkpoint_path = Path(checkpoint_json) if checkpoint_json else None
     expected_cells = (
         len(models_evaluated or [])
         * len(base_prompts)
@@ -222,6 +341,25 @@ def run_external_panel(
                         continue
 
                     for mnt in mnt_list:
+                        resume_key = external_cell_resume_key(
+                            model_name=model_name,
+                            prompt_id=str(prompt_entry["prompt_id"]),
+                            context_bucket=bucket,
+                            compressor_name=compressor_name,
+                            max_new_tokens=mnt,
+                        )
+                        if resume_key in resume_index:
+                            cells.append(resume_index[resume_key])
+                            cell_idx += 1
+                            if not deterministic_mode:
+                                print(
+                                    f"[{family}] cell {cell_idx}/{expected_cells} RESUME "
+                                    f"model={model_name} task={base.get('category')} "
+                                    f"ctx={bucket} comp={compressor_name} mnt={mnt}",
+                                    flush=True,
+                                )
+                            continue
+
                         if deterministic_mode:
                             cell = build_deterministic_phase_a_cell(
                                 model_name=model_name,
@@ -275,61 +413,37 @@ def run_external_panel(
                                 f"ctx={bucket} comp={compressor_name} mnt={mnt}",
                                 flush=True,
                             )
+                        if checkpoint_path is not None:
+                            partial = _build_external_panel_report(
+                                family=family,
+                                cells=cells,
+                                status="benchmark_in_progress",
+                                deterministic_mode=deterministic_mode,
+                                smoke=smoke,
+                                prompt_source=prompt_source,
+                                models_evaluated=models_evaluated,
+                                models_blocked=models_blocked,
+                                bucket_list=bucket_list,
+                                mnt_list=mnt_list,
+                                compressor_list=compressor_list,
+                                draft_len=draft_len,
+                            )
+                            write_external_panel_outputs(partial, json_path=checkpoint_path)
 
-    ok_cells = [c for c in cells if c.get("status") == "ok"]
-    by_bucket: dict[str, list[Mapping[str, Any]]] = defaultdict(list)
-    for c in ok_cells:
-        b = c.get("context_bucket")
-        if b is not None:
-            by_bucket[str(int(b))].append(c)
-
-    bucket_summary: dict[str, Any] = {}
-    for b, bucket_cells in sorted(by_bucket.items(), key=lambda x: int(x[0])):
-        metrics = [c.get("metrics") or {} for c in bucket_cells]
-        n = max(len(metrics), 1)
-        div = sum(1 for m in metrics if m.get("token_level_divergence"))
-        bucket_summary[b] = {
-            "num_cells": len(bucket_cells),
-            "divergence_rate": div / n,
-            "mean_acceptance_rate": sum(m.get("acceptance_rate", 0.0) for m in metrics) / n,
-        }
-
-    return {
-        "phase_id": EXTERNAL_PANEL_ID,
-        "dataset_family": family,
-        "status": "benchmark_complete",
-        "deterministic_mode": deterministic_mode,
-        "smoke": smoke,
-        "prompt_source": prompt_source,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "manifest": build_run_manifest(
-            model_name=",".join(models_evaluated) if models_evaluated else "none",
-            compressor_names=list(compressor_list),
-            draft_lengths=[draft_len],
-            prompt_suite=f"{family}_{prompt_source}",
-            max_new_tokens=max(mnt_list) if mnt_list else 0,
-        ),
-        "models_evaluated": models_evaluated,
-        "models_blocked": models_blocked,
-        "context_buckets": bucket_list,
-        "max_new_tokens_values": mnt_list,
-        "compressors": list(compressor_list),
-        "total_cells": len(cells),
-        "cells_run": len(ok_cells),
-        "cells_skipped": len(cells) - len(ok_cells),
-        "exactkv_failures": sum(1 for c in ok_cells if c.get("exactkv_failure")),
-        "compressor_summary": _aggregate_compressor_metrics(ok_cells),
-        "bucket_summary": bucket_summary,
-        "category_summary": _aggregate_by_category(ok_cells),
-        "cells": cells,
-        "limitations_note": (
-            f"External {family} panel measures ExactKV drift metrics only. "
-            "This is not an official LongBench/RULER/BFCL/HumanEval/MBPP score reproduction."
-        ),
-        "reproducible_cli_command": (
-            f"python3 scripts/run_external_panel.py --family {family} --device cuda --dtype float16"
-        ),
-    }
+    return _build_external_panel_report(
+        family=family,
+        cells=cells,
+        status="benchmark_complete",
+        deterministic_mode=deterministic_mode,
+        smoke=smoke,
+        prompt_source=prompt_source,
+        models_evaluated=models_evaluated,
+        models_blocked=models_blocked,
+        bucket_list=bucket_list,
+        mnt_list=mnt_list,
+        compressor_list=compressor_list,
+        draft_len=draft_len,
+    )
 
 
 def write_external_panel_outputs(

@@ -1,7 +1,8 @@
 # ExactKV — LinkedIn Posts (3 variants)
 
 All three are claim-safe. Numbers trace to on-disk release artifacts.
-Each includes the required caveats.
+Each includes the required caveats (Phase F microbenchmark; stored tensor byte ratios;
+SpectralQuant fallback/proxy; Shard probe-first; not production; does not reproduce VeriCache).
 
 ---
 
@@ -116,5 +117,9 @@ What I think makes it interesting:
   validated (87.5% MBPP drift, exactkv_failures=0); full grid running on both models.
 
 Process, correctness, and reproducibility over hype.
+
+→ https://github.com/utkarshg20/ExactKV  
+→ Technical report: https://github.com/utkarshg20/ExactKV/blob/main/paper/ExactKV_Technical_Report.md  
+→ Landing page: https://github.com/utkarshg20/ExactKV/blob/main/site/index.html
 
 #SoftwareEngineering #MachineLearning #OpenSource

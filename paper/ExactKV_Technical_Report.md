@@ -33,10 +33,10 @@ producing different tokens than the full-precision cache would have.
 
 ExactKV is a compressor-agnostic **crash-test framework with leaderboard-style reporting**
 that measures **first-divergence index**, draft acceptance, verifier agreement,
-and **`exactkv_failure`** under verifier-mediated (draft/verify/commit) semantics.
+and drift structure under verifier-mediated (draft/verify/commit) semantics.
 
 Across **8,132 GPU cells** on Llama-3.1-8B and Mistral-7B (Appendix benchmark card),
-all panels report **`exactkv_failures = 0`**. Four main findings emerge:
+four main findings emerge:
 
 1. **Task type dominates drift.** `int4_sim` divergence spans 6% (MBPP code) → 11%
 (BFCL short-gen) → 50% (BFCL long-gen) → **90%** (HF LongBench reading), while
@@ -51,21 +51,28 @@ cells identifies: near-tie noise (int8, mean lossy rank 2.4, fdi=22); distributi
 (int4_sim, rank 3.5, fdi=8); attention destruction (H2O-style, rank 6.7, fdi=1). Three
 forensic case studies with full top-5 logit traces confirm each mechanism.
 
-4. **ExactKV preserves 100% of downstream validity.** Despite 50% token drift,
-ExactKV preserves all 106/106 full-KV valid BFCL tool calls across both models.
-Tool-call validity is maintained across all four BFCL task categories (simple 37%,
-parallel 30%, multi-turn 23%, AST-eval 15% baseline valid rate).
+4. **Downstream validity is preserved when full-KV is valid.** Despite high token drift,
+ExactKV preserves **318/318** full-KV valid BFCL tool calls (v2.7 panel) and **264/264**
+in v3.0 BFCL subsets — but full-KV validity itself is modest (26–37% on BFCL). This is
+preservation of full-KV quality, not high absolute task success.
 
-`int6_sim` (6-bit per-tensor) is GPU-validated non-catastrophic: 0% divergence on BFCL
-and MBPP, 37.5% on HF LongBench — cleanly between int8 (15%) and int4_sim (86%).
-`int4_per_vec_sim` (KIVI/KVQuant-style per-vector INT4) achieves 0% divergence on
-structured-output and code tasks, and 55.6% on LongBench — non-catastrophic but higher
-than int6_sim on extreme long-context (8K) reading. Per-vector granularity helps on
-structured tasks, while bit-width still matters at 8K LongBench context.
-GPU-validated on both Mistral-7B-Instruct-v0.3 and Llama-3.1-8B (1,568 cells total,
-`exactkv_failures=0`). Results are **not** official benchmark scores, production
-serving claims, or a reproduction of VeriCache [vericache2026] throughput-oriented
-serving. ExactKV does **not** claim novelty for compressed-KV draft plus full-KV verify.
+**Correctness invariant:** `exactkv_failures = 0` on all 8,132 cells — the verifier
+implementation is sound under our semantics. This is expected when verify/commit logic
+is correct; it is **not** a claim that compression is safe without verification.
+
+**Non-catastrophic (defined):** divergence rate **≤ 10%** on structured tasks (BFCL/MBPP
+at default mnt≤32) **and** mean acceptance **≥ 0.90**, or 0% divergence on those tasks.
+Under this definition, `int8`, `int6_sim`, and `int4_per_vec_sim` qualify on code/tool
+tasks; `int4_sim` and H2O-style eviction do not on reading/long-gen.
+
+`int4_per_vec_sim` is a **KIVI/KVQuant-inspired granularity baseline** (per-vector INT4
+layout), not a reproduction of either production system. GPU-validated on both models
+(1,568 v3.0 cells). Faithful external adapters (SnapKV via kvpress, KIVI offline r32)
+are evaluated separately as **upstream stress tests** (§6.17, Appendix) — not headline
+success stories until full-grid results land.
+
+Results are **not** official benchmark scores, production serving claims, or a reproduction
+of VeriCache [vericache2026] throughput-oriented serving.
 
 ¹ **Six built-in compressor classes:** `noop` (baseline), `int8`, `int6_sim`,
 `int4_per_vec_sim`, `int4_sim`, and H2O-style eviction (`h2o_sim` family counted as one
@@ -341,6 +348,10 @@ Reproduce: `bash scripts/run_external_gpu_workflow.sh`,
 ---
 
 ## 6. Results, validated compressors
+
+§6 is organized by **claim type** (drift panels, downstream validity, scaling,
+compressor curve) — not by internal release version. Version labels (v2.6–v3.0)
+appear only in Appendix D and artifact paths.
 
 Table 1: built-in compressors with direct ExactKV integration (`noop`, `int8`,
 `int4_sim`). Aggregates from `compressor_summary` in `reports/scale_7b/raw.json`
@@ -776,7 +787,7 @@ and first-divergence index provide a quantitative fingerprint of the failure mod
 
 ---
 
-## 6.5 ExactKV-HF-LongBench Drift Panel (v2.6, real HF, both models)
+## 6.5 HF LongBench reading-compression drift (real HuggingFace prompts)
 
 **Status:** **Complete.** Both models, 720 cells, `exactkv_failures=0`.
 Artifacts: `reports/external_panels/hf_longbench_v26_{Llama_3_1_8B,Mistral_7B}_raw.json`,
@@ -895,7 +906,7 @@ Three mechanistically distinct failure modes are confirmed (see §6.10):
 
 ---
 
-## 6.7 BFCL Tool-Call Validity Panel (v2.7)
+## 6.7 BFCL tool-call downstream validity
 
 **Status:** **Complete.** 1,200 cells, both models, `exactkv_failures=0`.
 
@@ -954,7 +965,7 @@ median fdi=8) even in short structured tool-call sequences.
 
 ---
 
-## 6.9 Cross-Panel Divergence Analysis: Task-Type and Generation-Length Sensitivity
+## 6.8 Cross-panel divergence: task-type and generation-length sensitivity
 
 This section synthesises divergence rates across all completed ExactKV panels to reveal
 the dominant factors driving KV compression drift.
@@ -996,7 +1007,7 @@ Script: `python3 scripts/analyze_panel_divergence.py --all-compressors --markdow
 
 ---
 
-## 6.8 H2O-Style Token-Eviction Compressor Panel (v2.8)
+## 6.9 H2O-style token-eviction drift
 
 **Status:** **Complete.** 800 cells, both models, `exactkv_failures=0`.
 
@@ -1329,11 +1340,37 @@ meaning ExactKV speculatively accepts the lossy draft for most of the generation
 before detecting and correcting the divergent suffix. `int8` achieves 97–100% on the
 same tasks, confirming that near-tie-noise divergence is rare and late.
 
+### 6.11.4 LongBench answer-overlap diagnostic (not official LongBench scores)
+
+Token drift and per-token acceptance do not directly measure whether generated
+text overlaps LongBench reference answers. We add a **diagnostic overlap pack**:
+max token-F1 between each output path (full-KV, lossy, ExactKV) and HF reference
+answers, keyed by `prompt_id` via `benchmarks/prompts/longbench_export.jsonl`.
+Script: `python3 scripts/build_longbench_overlap_pack.py --write`.
+
+**Table 4i-d — LongBench answer overlap (HF LongBench v2.6 panel, 720 cells scored)**
+
+| Compressor | n | Mean F1 (full-KV) | Mean F1 (lossy) | Mean F1 (ExactKV) | ExactKV = full |
+|-----------|--:|------------------:|----------------:|------------------:|---------------:|
+| noop | 240 | 0.043 | 0.043 | 0.043 | **100%** |
+| int8 | 240 | 0.043 | 0.042 | 0.043 | **100%** |
+| int4_sim | 240 | 0.043 | 0.044 | 0.043 | **100%** |
+
+**Interpretation:** Absolute F1 is low (~4%) because this panel uses
+`max_new_tokens ∈ {32, 64}` — outputs are mostly preamble, not final answers.
+The diagnostic value is **relative**: compressors do not degrade overlap vs
+full-KV, and ExactKV **preserves full-KV overlap in 100% of cells** (matching
+the BFCL validity preservation pattern in §6.11.1). This is **not** an official
+LongBench leaderboard score; it confirms that drift correction does not silently
+trade away answer-bearing text on the cells where overlap is measurable.
+
+Artifact: `reports/external_panels/longbench_overlap_pack.md`.
+
 ---
 
 ## 6.12 Scaling Analysis: Context-Length and Generation-Length Sensitivity
 
-### 6.12.1 Context-length scaling (LongBench v2.6)
+### 6.12.1 Context-length scaling (HF LongBench)
 
 **Table 4j — Divergence rate by context bucket (HF LongBench v2.6, 80 cells each)**
 
@@ -1452,7 +1489,7 @@ Mistral: 0%/0%/55.6% (MBPP/BFCL/LB). Llama: 0%/0%/56.9%. Script: `exactkv/compre
 
 ---
 
-## 6.15 v3.0 GPU Validation Panel (int6_sim + int4_per_vec_sim)
+## 6.15 Extended compressor validation (`int6_sim` and `int4_per_vec_sim`)
 
 **Status: Complete (both models). Mistral-7B-Instruct-v0.3: 784 cells. Llama-3.1-8B: 784 cells. Total: 1,568 v3.0 cells.** Source: `reports/external_panels/v30/`.
 
@@ -1547,58 +1584,45 @@ from the v2.8 LongBench panel (both models, `h2o_sim_75`).
 *Table 6.16 — Core benchmark curve. v3.0 quantisation compressors: both-model mean
 (Mistral/Llama). H2O: v2.8 LongBench panel. `exactkv_failures=0` throughout.*
 
-### 6.17 Faithful external compressor integration (Phase D3)
+### 6.17 Faithful external compressor panel (Appendix — upstream stress tests)
 
-The headline v3.0 panel uses ExactKV built-in simulations. Phase D3 adds **faithful
-external adapters** that wrap upstream compressor algorithms (not ExactKV tensor
+> **Paper positioning:** The headline study (§6, Table 6.16) uses built-in compressors
+> plus real `int8`. This section tests **upstream faithful adapters** — not to claim
+> they are non-catastrophic winners, but to ask: *do real published compressors also
+> drift heavily under ExactKV's token-level crash test?*
+
+The headline v3.0 panel uses ExactKV built-in simulations plus real `int8`. Phase D3 adds
+**faithful external adapters** that wrap upstream compressor algorithms (not ExactKV tensor
 approximations). See `docs/FAITHFUL_COMPRESSOR_INTEGRATION.md`.
 
-| Compressor | Backend | Faithful policy | Production CUDA |
-|------------|---------|-----------------|-----------------|
-| `kivi_offline_r32` | jy-yuan/KIVI `models.utils_quant` | K2/V2 quant + **r=32 fp16 residual window** | No (simulate path) |
-| `snapkv_experimental` | kvpress `SnapKVPress` | Replay-prefill eviction | No |
-| `kvquant_sim` | KVQuant `QuantLinearSim` | Pre-RoPE simquant (Qwen validated) | No |
-| `kivi_offline` | KIVI simulate, **no residual** | Incomplete vs KIVI paper — diagnostic only | No |
+**Three roles in the faithful panel (not three successes):**
 
-**Why `kivi_offline` failed (§6.4.6):** The 640-cell panel used uniform full-sequence
-quantization without KIVI's streaming residual fp16 window — an **incomplete adapter
-policy**, not evidence about KIVI production quality. Phase D3 implements
-`residual_length=32` (KIVI default) as `kivi_offline_r32`.
+| Role | Compressor | What it tests |
+|------|------------|---------------|
+| Real baseline | `int8` | Non-catastrophic **real** quantizer (built-in, not external) |
+| External stress test | `snapkv_experimental` | Real kvpress SnapKVPress — does upstream eviction drift? |
+| Integration diagnostic | `kivi_offline_r32` | KIVI quant + r=32 on post-RoPE offline path — adapter completeness |
 
-**GPU smoke (Mistral-7B, MBPP HF, 48 cells, `exactkv_failures=0`):**
+**GPU smoke (Mistral-7B, MBPP HF, 48 cells):**
 
 | Compressor | Div. rate | Mean accept. | Notes |
 |------------|----------:|-------------:|-------|
-| `int8` | 0% | 1.000 | Control |
-| `snapkv_experimental` | **87.5%** | 0.541 | Real kvpress SnapKVPress (A5000: shared model, no deepcopy) |
-| `kivi_offline_r32` | **100%** | 0.023 | Real KIVI quant math + r=32; post-RoPE offline path still catastrophic |
+| `int8` | 0% | 1.000 | Real baseline — non-catastrophic |
+| `snapkv_experimental` | **87.5%** | 0.541 | Real kvpress — **high drift**, verifier holds |
+| `kivi_offline_r32` | **100%** | 0.023 | Catastrophic on offline path — diagnostic only |
 
 Source: `reports/external_panels/faithful/mbpp_mistral_smoke_raw.json`.
 
-**Interpretation:** `snapkv_experimental` is the first **working faithful external adapter**
-on the panel grid — real upstream eviction via kvpress, non-trivial drift (87.5% on MBPP),
-and verifier correction throughout (`exactkv_failures=0`). `kivi_offline_r32` confirms
-that residual fp16 alone does not fix post-RoPE offline KIVI integration; production
-KIVI CUDA or pre-RoPE KVQuant simquant remain the paths to faithful KIVI/KVQuant claims.
-**`int4_per_vec_sim`** remains the validated KIVI/KVQuant-style quant baseline in the
-headline v3.0 curve (Table 6.16).
+**Interpretation (honest):** SnapKV is the first **working** faithful external adapter on
+the grid, but 87.5% MBPP drift is **not** a non-catastrophic success — it shows that even
+real upstream eviction can fail hard under token-level verification. KIVI r32 confirms the
+offline post-RoPE path remains broken. **`int4_per_vec_sim`** remains the headline
+KIVI/KVQuant-**inspired** granularity baseline in Table 6.16 until production KIVI CUDA
+or KVQuant simquant adapters land.
 
-**Panel script:**
-
-```bash
-bash scripts/setup_faithful_compressor_env.sh   # KIVI clone + kvpress
-bash scripts/run_faithful_compressor_panel.sh # v3.0-style grid, both models
-# Artifacts: reports/external_panels/faithful/
-```
-
-Compressors: `int8` (control), `kivi_offline_r32`, `snapkv_experimental`. Grid mirrors
-v3.0 (LongBench 2048/4096/8192, BFCL mnt 16–256, MBPP). Results will extend Table 6.16
-with **real upstream compressor** data points alongside built-in sims.
-
-**Claim boundary:** Tier-A adapters use real upstream quant/eviction math but not
-production CUDA/Triton kernels. KIVI production path remains blocked (Exp 024:
-`dequant_cuda` / `kivi_gemv` build failure). KVQuant Llama-8B requires isolated
-`transformers~=4.44` venv + calibration pickle (future).
+**Full grid (in progress):** ~612 cells/model × 2 models (LongBench + BFCL + MBPP) on RunPod.
+Checkpoints resume via `reports/external_panels/faithful/*_raw.json`. When complete, this
+section updates with task-stratified SnapKV vs `int8` — the comparison reviewers should see.
 
 ---
 
@@ -1885,7 +1909,7 @@ algorithmic accuracy. KVQuant and SnapKV production kernel integrations remain f
 
 **SnapKV** [li2024snapkv] selects important KV entries by clustering observation
 windows; it is an eviction/selection method rather than quantization. The ExactKV
-`h2o_sim` compressor family (§6.8, H2O-style eviction panel) models the Heavy Hitter Oracle
+`h2o_sim` compressor family (§6.9, H2O-style eviction panel) models the Heavy Hitter Oracle
 eviction policy [zhang2023h2o], which is the same compressor class as SnapKV. ExactKV's
 eviction results (100% LongBench divergence even at 75% retention) quantify the
 worst-case cost of this class on reading tasks.
@@ -1915,8 +1939,8 @@ drift measurements, **not** official benchmark scores.
 | VeriCache [vericache2026] | Lossless serving via compressed draft + full-KV verify | Algorithmic overlap; serving system vs. measurement framework — see §10–11 |
 | KVQuant [hooper2024kvquant] | Per-channel INT4 KV quant | Motivates `int4_per_vec_sim`; adapter available (`kivi_offline` diagnostic) |
 | KIVI [liu2024kivi] | Asymmetric 2-bit per-channel KV quant | Same; `kivi_offline` shows 100% divergence in offline integration (§6.4.6, KIVI panel) |
-| SnapKV [li2024snapkv] | KV eviction/selection | Modeled by `h2o_sim` class; eviction results in §6.8 (H2O panel, v2.8) |
-| H2O [zhang2023h2o] | Heavy Hitter Oracle eviction | Direct inspiration for `h2o_sim`; 100% LongBench divergence (§6.8, v2.8) |
+| SnapKV [li2024snapkv] | KV eviction/selection | Modeled by `h2o_sim` class; eviction results in §6.9 (H2O panel) |
+| H2O [zhang2023h2o] | Heavy Hitter Oracle eviction | Direct inspiration for `h2o_sim`; 100% LongBench divergence (§6.9) |
 | CacheGen [liu2024cachegen] | KV compression + streaming | Different task (network bandwidth) |
 | LMCache [lmcache2025] | KV storage/offload | Different task (reuse/serving) |
 | Speculative decoding [leviathan2023speculative] | Draft/verify for speedup | ExactKV uses verify semantics for measurement only, no throughput claim |
@@ -2034,7 +2058,7 @@ Claim boundary: `kivi_offline` uses real KIVI quantizer math (simulate path,
 | **BFCL tool-call validity panel** (mnt=128/256, full JSON generation) | **Completed v2.7** (1,200 cells, both models, §6.7); int4_sim 50.3% divergence; `exactkv_failures=0` |
 | **Expand MBPP beyond 6-prompt pilot** + safe pass@1 / test execution | Pilot GPU smoke done (`mbpp_gpu_raw.json`) |
 | **ExactKV-HF-LongBench Drift Panel v2.6** | **Complete** (720 cells, both models). Key finding: int4_sim = 90.4% divergence; int8 = 24.6%. `exactkv_failures=0`. |
-| **H2O-style token-eviction compressor** (v2.8) | **Complete** (800 cells, 5 eviction variants, both models, §6.8); 100% divergence at all budgets; `exactkv_failures=0` |
+| **H2O-style token-eviction compressor** | **Complete** (800 cells, 5 eviction variants, both models, §6.9); 100% divergence at all budgets; `exactkv_failures=0` |
 | **Top-k logit autopsy at divergence** | **Complete** (1,103 divergent cells, §6.10); three failure modes identified |
 | **Rerun Mistral on main external panels** (LongBench/RULER/BFCL/HumanEval) | Failed in first workflow (disk quota); succeeded later for MBPP only |
 | **HELMET holistic long-context panel** | Not implemented |
@@ -2344,6 +2368,22 @@ same panel grid; they are not counted as separate 784-cell panels.
 ## Appendix C: Claim decision table
 
 [`release_synthesis/claim_decision_table.md`](../release_synthesis/claim_decision_table.md)
+
+## Appendix D: Internal panel lineage (version labels)
+
+Internal release labels map to artifact directories; they are **not** part of the
+main narrative. Use this table when tracing provenance in `reports/external_panels/`.
+
+| Label | Panel | Artifact prefix | Cells | §6 reference |
+|-------|-------|-----------------|------:|--------------|
+| v2.6 | HF LongBench (real HF, both models) | `hf_longbench_v26_*` | 720 | §6.5 |
+| v2.7 | BFCL tool-call validity (`mnt=128/256`) | `bfcl_validity_v27_*` | 1,200 | §6.7 |
+| v2.8 | H2O-style token eviction | `h2o_v28_*` | 800 | §6.9 |
+| v3.0 | `int6_sim` + `int4_per_vec_sim` validation | `v30/*` | 1,568 | §6.15 |
+| Faithful | Upstream adapters (KIVI, SnapKV, KnormPress) | `faithful/*` | separate | §6.17 |
+
+Headline total **8,132 cells** = pre-v3.0 panels (6,564) + v3.0 (784 × 2 models).
+Faithful-panel cells are tracked separately until merged (see §6.17).
 
 ---
 

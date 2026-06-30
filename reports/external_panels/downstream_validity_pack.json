@@ -1,0 +1,411 @@
+{
+  "panels": [
+    {
+      "path": "reports/external_panels/bfcl_validity_v27_merged_raw.json",
+      "dataset_family": "bfcl",
+      "overall": {
+        "downstream_metric": "bfcl_json_tool_call",
+        "cells_ok": 1200,
+        "divergence_rate": 0.17,
+        "full_kv_valid": 318,
+        "exactkv_valid": 318,
+        "full_kv_valid_rate": 0.265,
+        "exactkv_valid_rate": 0.265,
+        "valid_preserved_among_full_kv_valid": 318,
+        "valid_lost_among_full_kv_valid": 0,
+        "preservation_rate_given_full_valid": 1.0,
+        "mean_acceptance_rate": 0.9968599811048104
+      },
+      "by_compressor": {
+        "int4_sim": {
+          "downstream_metric": "bfcl_json_tool_call",
+          "cells_ok": 400,
+          "divergence_rate": 0.5025,
+          "full_kv_valid": 106,
+          "exactkv_valid": 106,
+          "full_kv_valid_rate": 0.265,
+          "exactkv_valid_rate": 0.265,
+          "valid_preserved_among_full_kv_valid": 106,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": 1.0,
+          "mean_acceptance_rate": 0.9906188918188087
+        },
+        "int8": {
+          "downstream_metric": "bfcl_json_tool_call",
+          "cells_ok": 400,
+          "divergence_rate": 0.0075,
+          "full_kv_valid": 106,
+          "exactkv_valid": 106,
+          "full_kv_valid_rate": 0.265,
+          "exactkv_valid_rate": 0.265,
+          "valid_preserved_among_full_kv_valid": 106,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": 1.0,
+          "mean_acceptance_rate": 0.9999610514956225
+        },
+        "noop": {
+          "downstream_metric": "bfcl_json_tool_call",
+          "cells_ok": 400,
+          "divergence_rate": 0.0,
+          "full_kv_valid": 106,
+          "exactkv_valid": 106,
+          "full_kv_valid_rate": 0.265,
+          "exactkv_valid_rate": 0.265,
+          "valid_preserved_among_full_kv_valid": 106,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": 1.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "cells_annotated": 1200
+    },
+    {
+      "path": "reports/external_panels/v30/bfcl_Llama_3_1_8B_raw.json",
+      "dataset_family": "bfcl",
+      "overall": {
+        "downstream_metric": "bfcl_json_tool_call",
+        "cells_ok": 400,
+        "divergence_rate": 0.15,
+        "full_kv_valid": 148,
+        "exactkv_valid": 148,
+        "full_kv_valid_rate": 0.37,
+        "exactkv_valid_rate": 0.37,
+        "valid_preserved_among_full_kv_valid": 148,
+        "valid_lost_among_full_kv_valid": 0,
+        "preservation_rate_given_full_valid": 1.0,
+        "mean_acceptance_rate": 0.9986492856215071
+      },
+      "by_compressor": {
+        "int4_per_vec_sim": {
+          "downstream_metric": "bfcl_json_tool_call",
+          "cells_ok": 100,
+          "divergence_rate": 0.0,
+          "full_kv_valid": 37,
+          "exactkv_valid": 37,
+          "full_kv_valid_rate": 0.37,
+          "exactkv_valid_rate": 0.37,
+          "valid_preserved_among_full_kv_valid": 37,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": 1.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "int4_sim": {
+          "downstream_metric": "bfcl_json_tool_call",
+          "cells_ok": 100,
+          "divergence_rate": 0.6,
+          "full_kv_valid": 37,
+          "exactkv_valid": 37,
+          "full_kv_valid_rate": 0.37,
+          "exactkv_valid_rate": 0.37,
+          "valid_preserved_among_full_kv_valid": 37,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": 1.0,
+          "mean_acceptance_rate": 0.9945971424860284
+        },
+        "int6_sim": {
+          "downstream_metric": "bfcl_json_tool_call",
+          "cells_ok": 100,
+          "divergence_rate": 0.0,
+          "full_kv_valid": 37,
+          "exactkv_valid": 37,
+          "full_kv_valid_rate": 0.37,
+          "exactkv_valid_rate": 0.37,
+          "valid_preserved_among_full_kv_valid": 37,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": 1.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "int8": {
+          "downstream_metric": "bfcl_json_tool_call",
+          "cells_ok": 100,
+          "divergence_rate": 0.0,
+          "full_kv_valid": 37,
+          "exactkv_valid": 37,
+          "full_kv_valid_rate": 0.37,
+          "exactkv_valid_rate": 0.37,
+          "valid_preserved_among_full_kv_valid": 37,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": 1.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "cells_annotated": 400
+    },
+    {
+      "path": "reports/external_panels/v30/bfcl_Mistral_7B_Instruct_v0_3_raw.json",
+      "dataset_family": "bfcl",
+      "overall": {
+        "downstream_metric": "bfcl_json_tool_call",
+        "cells_ok": 400,
+        "divergence_rate": 0.1125,
+        "full_kv_valid": 116,
+        "exactkv_valid": 116,
+        "full_kv_valid_rate": 0.29,
+        "exactkv_valid_rate": 0.29,
+        "valid_preserved_among_full_kv_valid": 116,
+        "valid_lost_among_full_kv_valid": 0,
+        "preservation_rate_given_full_valid": 1.0,
+        "mean_acceptance_rate": 0.9974030409801692
+      },
+      "by_compressor": {
+        "int4_per_vec_sim": {
+          "downstream_metric": "bfcl_json_tool_call",
+          "cells_ok": 100,
+          "divergence_rate": 0.0,
+          "full_kv_valid": 29,
+          "exactkv_valid": 29,
+          "full_kv_valid_rate": 0.29,
+          "exactkv_valid_rate": 0.29,
+          "valid_preserved_among_full_kv_valid": 29,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": 1.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "int4_sim": {
+          "downstream_metric": "bfcl_json_tool_call",
+          "cells_ok": 100,
+          "divergence_rate": 0.45,
+          "full_kv_valid": 29,
+          "exactkv_valid": 29,
+          "full_kv_valid_rate": 0.29,
+          "exactkv_valid_rate": 0.29,
+          "valid_preserved_among_full_kv_valid": 29,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": 1.0,
+          "mean_acceptance_rate": 0.9896121639206767
+        },
+        "int6_sim": {
+          "downstream_metric": "bfcl_json_tool_call",
+          "cells_ok": 100,
+          "divergence_rate": 0.0,
+          "full_kv_valid": 29,
+          "exactkv_valid": 29,
+          "full_kv_valid_rate": 0.29,
+          "exactkv_valid_rate": 0.29,
+          "valid_preserved_among_full_kv_valid": 29,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": 1.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "int8": {
+          "downstream_metric": "bfcl_json_tool_call",
+          "cells_ok": 100,
+          "divergence_rate": 0.0,
+          "full_kv_valid": 29,
+          "exactkv_valid": 29,
+          "full_kv_valid_rate": 0.29,
+          "exactkv_valid_rate": 0.29,
+          "valid_preserved_among_full_kv_valid": 29,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": 1.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "cells_annotated": 400
+    },
+    {
+      "path": "reports/external_panels/v30/mbpp_Llama_3_1_8B_raw.json",
+      "dataset_family": "mbpp",
+      "overall": {
+        "downstream_metric": "python_ast_syntax",
+        "cells_ok": 96,
+        "divergence_rate": 0.03125,
+        "full_kv_valid": 12,
+        "exactkv_valid": 12,
+        "full_kv_valid_rate": 0.125,
+        "exactkv_valid_rate": 0.125,
+        "valid_preserved_among_full_kv_valid": 12,
+        "valid_lost_among_full_kv_valid": 0,
+        "preservation_rate_given_full_valid": 1.0,
+        "mean_acceptance_rate": 0.9990234375
+      },
+      "by_compressor": {
+        "int4_per_vec_sim": {
+          "downstream_metric": "python_ast_syntax",
+          "cells_ok": 24,
+          "divergence_rate": 0.0,
+          "full_kv_valid": 3,
+          "exactkv_valid": 3,
+          "full_kv_valid_rate": 0.125,
+          "exactkv_valid_rate": 0.125,
+          "valid_preserved_among_full_kv_valid": 3,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": 1.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "int4_sim": {
+          "downstream_metric": "python_ast_syntax",
+          "cells_ok": 24,
+          "divergence_rate": 0.125,
+          "full_kv_valid": 3,
+          "exactkv_valid": 3,
+          "full_kv_valid_rate": 0.125,
+          "exactkv_valid_rate": 0.125,
+          "valid_preserved_among_full_kv_valid": 3,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": 1.0,
+          "mean_acceptance_rate": 0.99609375
+        },
+        "int6_sim": {
+          "downstream_metric": "python_ast_syntax",
+          "cells_ok": 24,
+          "divergence_rate": 0.0,
+          "full_kv_valid": 3,
+          "exactkv_valid": 3,
+          "full_kv_valid_rate": 0.125,
+          "exactkv_valid_rate": 0.125,
+          "valid_preserved_among_full_kv_valid": 3,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": 1.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "int8": {
+          "downstream_metric": "python_ast_syntax",
+          "cells_ok": 24,
+          "divergence_rate": 0.0,
+          "full_kv_valid": 3,
+          "exactkv_valid": 3,
+          "full_kv_valid_rate": 0.125,
+          "exactkv_valid_rate": 0.125,
+          "valid_preserved_among_full_kv_valid": 3,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": 1.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "cells_annotated": 96
+    },
+    {
+      "path": "reports/external_panels/v30/mbpp_Mistral_7B_Instruct_v0_3_raw.json",
+      "dataset_family": "mbpp",
+      "overall": {
+        "downstream_metric": "python_ast_syntax",
+        "cells_ok": 96,
+        "divergence_rate": 0.0,
+        "full_kv_valid": 0,
+        "exactkv_valid": 0,
+        "full_kv_valid_rate": 0.0,
+        "exactkv_valid_rate": 0.0,
+        "valid_preserved_among_full_kv_valid": 0,
+        "valid_lost_among_full_kv_valid": 0,
+        "preservation_rate_given_full_valid": null,
+        "mean_acceptance_rate": 1.0
+      },
+      "by_compressor": {
+        "int4_per_vec_sim": {
+          "downstream_metric": "python_ast_syntax",
+          "cells_ok": 24,
+          "divergence_rate": 0.0,
+          "full_kv_valid": 0,
+          "exactkv_valid": 0,
+          "full_kv_valid_rate": 0.0,
+          "exactkv_valid_rate": 0.0,
+          "valid_preserved_among_full_kv_valid": 0,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": null,
+          "mean_acceptance_rate": 1.0
+        },
+        "int4_sim": {
+          "downstream_metric": "python_ast_syntax",
+          "cells_ok": 24,
+          "divergence_rate": 0.0,
+          "full_kv_valid": 0,
+          "exactkv_valid": 0,
+          "full_kv_valid_rate": 0.0,
+          "exactkv_valid_rate": 0.0,
+          "valid_preserved_among_full_kv_valid": 0,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": null,
+          "mean_acceptance_rate": 1.0
+        },
+        "int6_sim": {
+          "downstream_metric": "python_ast_syntax",
+          "cells_ok": 24,
+          "divergence_rate": 0.0,
+          "full_kv_valid": 0,
+          "exactkv_valid": 0,
+          "full_kv_valid_rate": 0.0,
+          "exactkv_valid_rate": 0.0,
+          "valid_preserved_among_full_kv_valid": 0,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": null,
+          "mean_acceptance_rate": 1.0
+        },
+        "int8": {
+          "downstream_metric": "python_ast_syntax",
+          "cells_ok": 24,
+          "divergence_rate": 0.0,
+          "full_kv_valid": 0,
+          "exactkv_valid": 0,
+          "full_kv_valid_rate": 0.0,
+          "exactkv_valid_rate": 0.0,
+          "valid_preserved_among_full_kv_valid": 0,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": null,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "cells_annotated": 96
+    },
+    {
+      "path": "reports/external_panels/faithful/mbpp_mistral_smoke_raw.json",
+      "dataset_family": "mbpp",
+      "overall": {
+        "downstream_metric": "python_ast_syntax",
+        "cells_ok": 48,
+        "divergence_rate": 0.625,
+        "full_kv_valid": 0,
+        "exactkv_valid": 0,
+        "full_kv_valid_rate": 0.0,
+        "exactkv_valid_rate": 0.0,
+        "valid_preserved_among_full_kv_valid": 0,
+        "valid_lost_among_full_kv_valid": 0,
+        "preservation_rate_given_full_valid": null,
+        "mean_acceptance_rate": 0.5216008192582429
+      },
+      "by_compressor": {
+        "int8": {
+          "downstream_metric": "python_ast_syntax",
+          "cells_ok": 16,
+          "divergence_rate": 0.0,
+          "full_kv_valid": 0,
+          "exactkv_valid": 0,
+          "full_kv_valid_rate": 0.0,
+          "exactkv_valid_rate": 0.0,
+          "valid_preserved_among_full_kv_valid": 0,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": null,
+          "mean_acceptance_rate": 1.0
+        },
+        "kivi_offline_r32": {
+          "downstream_metric": "python_ast_syntax",
+          "cells_ok": 16,
+          "divergence_rate": 1.0,
+          "full_kv_valid": 0,
+          "exactkv_valid": 0,
+          "full_kv_valid_rate": 0.0,
+          "exactkv_valid_rate": 0.0,
+          "valid_preserved_among_full_kv_valid": 0,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": null,
+          "mean_acceptance_rate": 0.023430242371477877
+        },
+        "snapkv_experimental": {
+          "downstream_metric": "python_ast_syntax",
+          "cells_ok": 16,
+          "divergence_rate": 0.875,
+          "full_kv_valid": 0,
+          "exactkv_valid": 0,
+          "full_kv_valid_rate": 0.0,
+          "exactkv_valid_rate": 0.0,
+          "valid_preserved_among_full_kv_valid": 0,
+          "valid_lost_among_full_kv_valid": 0,
+          "preservation_rate_given_full_valid": null,
+          "mean_acceptance_rate": 0.5413722154032509
+        }
+      },
+      "cells_annotated": 48
+    }
+  ],
+  "note": "Downstream validity is diagnostic only \u2014 not official BFCL/MBPP/HumanEval scores. BFCL: balanced-brace JSON tool-call scan. MBPP/HumanEval: ast.parse on extracted Python."
+}

@@ -1,0 +1,96 @@
+{
+  "panels": [
+    {
+      "dataset_family": "longbench",
+      "cells_scored": 720,
+      "cells_missing_reference": 0,
+      "by_compressor": {
+        "int4_sim": {
+          "cells_scored": 240,
+          "mean_full_max_f1": 0.04292440633052973,
+          "mean_lossy_max_f1": 0.04445484025588776,
+          "mean_exactkv_max_f1": 0.04292440633052973,
+          "exactkv_matches_full_rate": 1.0
+        },
+        "int8": {
+          "cells_scored": 240,
+          "mean_full_max_f1": 0.04292440633052973,
+          "mean_lossy_max_f1": 0.041537526401035946,
+          "mean_exactkv_max_f1": 0.04292440633052973,
+          "exactkv_matches_full_rate": 1.0
+        },
+        "noop": {
+          "cells_scored": 240,
+          "mean_full_max_f1": 0.04292440633052973,
+          "mean_lossy_max_f1": 0.04292440633052973,
+          "mean_exactkv_max_f1": 0.04292440633052973,
+          "exactkv_matches_full_rate": 1.0
+        }
+      },
+      "note": "Diagnostic max token-F1 vs HF LongBench reference answers \u2014 NOT official LongBench scores. Short max_new_tokens limits answer overlap; use for relative compressor comparison only.",
+      "path": "reports/external_panels/hf_longbench_v26_merged_raw.json"
+    },
+    {
+      "dataset_family": "longbench",
+      "cells_scored": 360,
+      "cells_missing_reference": 0,
+      "by_compressor": {
+        "int4_sim": {
+          "cells_scored": 120,
+          "mean_full_max_f1": 0.03724401423789568,
+          "mean_lossy_max_f1": 0.03983645353963087,
+          "mean_exactkv_max_f1": 0.03724401423789568,
+          "exactkv_matches_full_rate": 1.0
+        },
+        "int8": {
+          "cells_scored": 120,
+          "mean_full_max_f1": 0.03724401423789568,
+          "mean_lossy_max_f1": 0.036665481671183345,
+          "mean_exactkv_max_f1": 0.03724401423789568,
+          "exactkv_matches_full_rate": 1.0
+        },
+        "noop": {
+          "cells_scored": 120,
+          "mean_full_max_f1": 0.03724401423789568,
+          "mean_lossy_max_f1": 0.03724401423789568,
+          "mean_exactkv_max_f1": 0.03724401423789568,
+          "exactkv_matches_full_rate": 1.0
+        }
+      },
+      "note": "Diagnostic max token-F1 vs HF LongBench reference answers \u2014 NOT official LongBench scores. Short max_new_tokens limits answer overlap; use for relative compressor comparison only.",
+      "path": "reports/external_panels/hf_longbench_v26_Llama_3_1_8B_raw.json"
+    },
+    {
+      "dataset_family": "longbench",
+      "cells_scored": 360,
+      "cells_missing_reference": 0,
+      "by_compressor": {
+        "int4_sim": {
+          "cells_scored": 120,
+          "mean_full_max_f1": 0.04860479842316377,
+          "mean_lossy_max_f1": 0.04907322697214465,
+          "mean_exactkv_max_f1": 0.04860479842316377,
+          "exactkv_matches_full_rate": 1.0
+        },
+        "int8": {
+          "cells_scored": 120,
+          "mean_full_max_f1": 0.04860479842316377,
+          "mean_lossy_max_f1": 0.04640957113088855,
+          "mean_exactkv_max_f1": 0.04860479842316377,
+          "exactkv_matches_full_rate": 1.0
+        },
+        "noop": {
+          "cells_scored": 120,
+          "mean_full_max_f1": 0.04860479842316377,
+          "mean_lossy_max_f1": 0.04860479842316377,
+          "mean_exactkv_max_f1": 0.04860479842316377,
+          "exactkv_matches_full_rate": 1.0
+        }
+      },
+      "note": "Diagnostic max token-F1 vs HF LongBench reference answers \u2014 NOT official LongBench scores. Short max_new_tokens limits answer overlap; use for relative compressor comparison only.",
+      "path": "reports/external_panels/hf_longbench_v26_Mistral_7B_raw.json"
+    }
+  ],
+  "note": "Diagnostic max token-F1 vs HF LongBench reference answers \u2014 NOT official LongBench scores. Short max_new_tokens limits answer overlap; use for relative compressor comparison only.",
+  "reference_index_size": 20
+}

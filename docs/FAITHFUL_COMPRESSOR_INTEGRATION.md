@@ -15,7 +15,9 @@ tensor approximations).
 |------|------------|---------|----------------------|----------------|
 | **A — Faithful quant math** | `kivi_offline_r32` | jy-yuan/KIVI `models.utils_quant` | Yes (simulate path + r=32 streaming policy) | No |
 | **A — Faithful eviction** | `snapkv_experimental` | kvpress `SnapKVPress` | Partial (kvpress replay, not paper-exact) | No |
+| **A — Faithful eviction** | `kvpress_knorm_experimental` | kvpress `KnormPress` | Partial (kvpress replay; Exp 005 ~0.97 accept) | No |
 | **B — Faithful simquant** | `kvquant_sim` | KVQuant `QuantLinearSim` | Yes (pre-RoPE simquant) | No |
+| **B — Faithful quant (Python)** | `turboquant_experimental` | TheTom/turboquant_plus | Yes (offline NumPy bridge; Exp 008) | No |
 | **C — Diagnostic (incomplete policy)** | `kivi_offline` | KIVI simulate, no residual window | Algorithm incomplete vs Kinds KIVI | No |
 | **D — Blocked** | KIVI production CUDA | `dequant_cuda`, `kivi_gemv` | N/A | Blocked (Exp 024) |
 
@@ -73,6 +75,34 @@ control.
 
 **Claim boundary:** Restricted experimental adapter — not paper-exact SnapKV, not
 production SnapKV serving.
+
+---
+
+## 3b. KnormPress experimental (`kvpress_knorm_experimental`)
+
+Same kvpress replay pattern as SnapKV but uses `KnormPress` (Exp 005 validated,
+~0.97 mean acceptance on core suite). **Best candidate** for a faithful external
+compressor that may show non-catastrophic drift on structured tasks.
+
+Wired in `evidence_plus_panel.py`. Included in wave-2 smoke:
+
+```bash
+bash scripts/run_faithful_external_wave2_smoke.sh
+```
+
+---
+
+## 3c. TurboQuant Python (`turboquant_experimental`)
+
+Offline NumPy `KVCacheCompressor` bridge (Exp 008, `exactkv_failures=0`, accept ~0.435
+on core suite). Requires:
+
+```bash
+INSTALL_TURBOQUANT=1 bash scripts/setup_faithful_compressor_env.sh
+export EXACTKV_TURBOQUANT_ROOT=/tmp/turboquant_plus
+```
+
+Included in wave-2 smoke for side-by-side comparison with KnormPress and SnapKV.
 
 ---
 

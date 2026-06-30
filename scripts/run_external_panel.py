@@ -25,6 +25,10 @@ import sys
 from pathlib import Path
 
 _ROOT = Path(__file__).resolve().parents[1]
+_SCRIPT_DIR = str(Path(__file__).resolve().parent)
+# scripts/exactkv.py shadows the exactkv package if this dir stays on sys.path.
+if _SCRIPT_DIR in sys.path:
+    sys.path.remove(_SCRIPT_DIR)
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
@@ -80,6 +84,16 @@ def main() -> int:
         default="",
         help="Override output JSON path (default reports/external_panels/<family>_raw.json)",
     )
+    parser.add_argument(
+        "--resume-json",
+        default="",
+        help="Skip cells already present in this JSON (defaults to --output-json when set)",
+    )
+    parser.add_argument(
+        "--checkpoint-json",
+        default="",
+        help="Write in-progress report after each cell (defaults to --output-json when set)",
+    )
     args = parser.parse_args()
 
     models = [m.strip() for m in args.models.split(",") if m.strip()] or None
@@ -87,6 +101,10 @@ def main() -> int:
     buckets = _parse_int_list(args.context_buckets) if args.context_buckets else None
     mnt = _parse_int_list(args.max_new_tokens) if args.max_new_tokens else None
     subsets = [s.strip() for s in args.longbench_subsets.split(",") if s.strip()] or None
+
+    json_path = Path(args.output_json) if args.output_json else None
+    resume_path = Path(args.resume_json) if args.resume_json else json_path
+    checkpoint_path = Path(args.checkpoint_json) if args.checkpoint_json else json_path
 
     report = run_external_panel(
         args.family,
@@ -103,6 +121,8 @@ def main() -> int:
         local_files_only=args.local_files_only,
         smoke=args.smoke,
         store_top_k_logits=args.store_top_k_logits,
+        resume_json=resume_path,
+        checkpoint_json=checkpoint_path,
     )
 
     json_path = Path(args.output_json) if args.output_json else None

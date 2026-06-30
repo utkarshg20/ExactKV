@@ -4,7 +4,9 @@
 KV-cache compression exactness.** It measures token-level drift, first divergence,
 acceptance rate, verifier agreement, and exactness failures across compressors and
 models. It is a **research-grade evaluation framework — not a production serving
-system — and does not reproduce VeriCache.**
+system — and does not reproduce VeriCache.** SpectralQuant runs in fallback/proxy
+mode when the real dependency is unavailable. Shard is a probe-first heuristic, not
+a full Shard / ShardCache integration.
 
 ## What was released
 
