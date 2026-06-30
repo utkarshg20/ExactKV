@@ -1603,26 +1603,48 @@ approximations). See `docs/FAITHFUL_COMPRESSOR_INTEGRATION.md`.
 | External stress test | `snapkv_experimental` | Real kvpress SnapKVPress — does upstream eviction drift? |
 | Integration diagnostic | `kivi_offline_r32` | KIVI quant + r=32 on post-RoPE offline path — adapter completeness |
 
-**GPU smoke (Mistral-7B, MBPP HF, 48 cells):**
+**Status (2026-06-30):** Mistral-7B wave-1 **partial** — **362 cells** complete
+(LongBench 216/216, BFCL 98 checkpointed/in progress, MBPP smoke 48/48).
+Llama-3.1-8B queued (`faithful_llama` tmux); wave-2 (KnormPress, TurboQuant) queued
+separately. Artifacts: `reports/external_panels/faithful/*_raw.json`,
+`reports/external_panels/faithful/summary.md`. **`exactkv_failures=0`** on all
+completed cells.
 
-| Compressor | Div. rate | Mean accept. | Notes |
-|------------|----------:|-------------:|-------|
-| `int8` | 0% | 1.000 | Real baseline — non-catastrophic |
-| `snapkv_experimental` | **87.5%** | 0.541 | Real kvpress — **high drift**, verifier holds |
-| `kivi_offline_r32` | **100%** | 0.023 | Catastrophic on offline path — diagnostic only |
+**Table 6.17a — Faithful panel, Mistral-7B (task-stratified, partial grid)**
 
-Source: `reports/external_panels/faithful/mbpp_mistral_smoke_raw.json`.
+| Task family | Cells | `int8` div. | `int8` accept. | `snapkv_experimental` div. | SnapKV accept. | `kivi_offline_r32` div. | KIVI accept. |
+|-------------|------:|------------:|---------------:|---------------------------:|---------------:|------------------------:|-------------:|
+| HF LongBench | 216 | 15.3% | 0.985 | **100.0%** | 0.360 | **100.0%** | 0.052 |
+| BFCL (partial) | 98 | 0.0% | 1.000 | **100.0%** | 0.400 | **100.0%** | 0.032 |
+| MBPP smoke | 48 | 0.0% | 1.000 | **87.5%** | 0.541 | **100.0%** | 0.023 |
+| **Combined (362)** | **362** | **8.6%** | **0.991** | **97.5%** | **0.404** | **100.0%** | **0.042** |
 
-**Interpretation (honest):** SnapKV is the first **working** faithful external adapter on
-the grid, but 87.5% MBPP drift is **not** a non-catastrophic success — it shows that even
-real upstream eviction can fail hard under token-level verification. KIVI r32 confirms the
-offline post-RoPE path remains broken. **`int4_per_vec_sim`** remains the headline
-KIVI/KVQuant-**inspired** granularity baseline in Table 6.16 until production KIVI CUDA
-or KVQuant simquant adapters land.
+Sources: `longbench_Mistral_7B_Instruct_v0_3_raw.json` (216),
+`bfcl_Mistral_7B_Instruct_v0_3_raw.json` (98, checkpoint),
+`mbpp_mistral_smoke_raw.json` (48).
 
-**Full grid (in progress):** ~612 cells/model × 2 models (LongBench + BFCL + MBPP) on RunPod.
-Checkpoints resume via `reports/external_panels/faithful/*_raw.json`. When complete, this
-section updates with task-stratified SnapKV vs `int8` — the comparison reviewers should see.
+**Interpretation (honest):**
+
+1. **`int8` remains the only non-catastrophic real compressor** on this partial grid
+   (8.6% combined drift, 0.991 mean acceptance) — consistent with v3.0 headline panels.
+
+2. **`snapkv_experimental` is the first working faithful external adapter** on the full
+   LongBench grid (real kvpress SnapKVPress), but **97.5% combined drift** is a stress-test
+   failure mode, not a headline win. MBPP smoke (87.5%) is lower than LongBench/BFCL (100%),
+   mirroring the task-type sensitivity pattern in §6.8.
+
+3. **`kivi_offline_r32` is catastrophic on every cell** (100% drift, acceptance ≈ 0.04) —
+   confirming the offline post-RoPE simulate path is an integration diagnostic only, not
+   production KIVI. **`int4_per_vec_sim`** remains the headline KIVI/KVQuant-**inspired**
+   granularity baseline in Table 6.16 until production KIVI CUDA or KVQuant simquant adapters land.
+
+4. **Verifier holds throughout:** despite 97–100% SnapKV/KIVI lossy-path drift,
+   `exactkv_failures=0` on all 362 cells — ExactKV output matches full-KV on every cell.
+
+**Still running:** full Mistral BFCL grid (~300 cells target), Llama faithful wave-1,
+wave-2 external smoke (KnormPress, TurboQuant vs int8). Checkpoints resume via
+`--resume-json` on `run_external_panel.py`. When complete, update this table with
+both models and downstream validity packs (`build_downstream_validity_pack.py`).
 
 ---
 

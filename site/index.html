@@ -392,9 +392,9 @@
       </table>
     </div>
     <div class="quant-insight">
-      <strong>First working faithful external adapter:</strong> <code>snapkv_experimental</code> runs real kvpress eviction on the panel grid — non-trivial drift, verifier holds (<code>exactkv_failures=0</code>). KIVI offline (even with residual fp16) remains catastrophic on the post-RoPE simulate path; production KIVI CUDA is not claimed.
+      <strong>Partial Mistral grid (362 cells, exactkv_failures=0):</strong> LongBench 216 complete — SnapKV <strong>100%</strong> drift (accept 0.36); BFCL 98 checkpointed — SnapKV 100% (accept 0.40); MBPP smoke 48 — SnapKV 87.5% (accept 0.54). <code>int8</code> stays non-catastrophic (8.6% combined). KIVI r32 catastrophic on every cell (adapter diagnostic only).
     </div>
-    <p class="fine">Source: <code>reports/external_panels/faithful/mbpp_mistral_smoke_raw.json</code> (48 cells). Full LongBench/BFCL/MBPP grid (~612 cells × 2 models) running on RunPod. Not production serving; not official benchmark scores.</p>
+    <p class="fine">Source: <code>reports/external_panels/faithful/summary.md</code>. Llama wave-1 + wave-2 (KnormPress, TurboQuant) queued on RunPod. Not production serving; not official benchmark scores.</p>
   </div>
 </section>
 
