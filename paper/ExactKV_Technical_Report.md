@@ -1,6 +1,6 @@
 # When Does Compressed KV Start Lying? Token-Level Drift in KV Cache Compression
 
-**ExactKV Technical Report (v3.0 — complete: 7,348 GPU cells, five benchmark families, h2o_sim + int6_sim + int4_per_vec_sim GPU-validated)**
+**ExactKV Technical Report (v3.0 — complete: 8,132 GPU cells, five benchmark families, h2o_sim + int6_sim + int4_per_vec_sim GPU-validated)**
 
 *All quantitative values are read from on-disk artifacts, primarily
 `reports/scale_7b/raw.json`, `reports/evidence_plus/raw.json`,
@@ -35,7 +35,7 @@ ExactKV is a compressor-agnostic **crash-test framework with leaderboard-style r
 that measures **first-divergence index**, draft acceptance, verifier agreement,
 and **`exactkv_failure`** under verifier-mediated (draft/verify/commit) semantics.
 
-Across **7,348 completed GPU cells** (Llama-3.1-8B and Mistral-7B, five benchmark
+Across **8,132 completed GPU cells** (Llama-3.1-8B and Mistral-7B, five benchmark
 families, six compressor variants) all panels report **`exactkv_failures = 0`**. Four
 main findings emerge:
 
@@ -63,8 +63,8 @@ and MBPP, 37.5% on HF LongBench — cleanly between int8 (15%) and int4_sim (86%
 structured-output and code tasks, and 55.6% on LongBench — non-catastrophic but higher
 than int6_sim on extreme long-context (8K) reading. Per-vector granularity eliminates
 drift on BFCL/MBPP but does not fully compensate for 4-bit resolution at 8K context.
-Validated on Mistral-7B-Instruct-v0.3 (784 cells, `exactkv_failures=0`); Llama-3.1-8B
-validation in progress (v3.1). Results are **not** official benchmark scores, production
+GPU-validated on both Mistral-7B-Instruct-v0.3 and Llama-3.1-8B (1,568 cells total,
+`exactkv_failures=0`). Results are **not** official benchmark scores, production
 serving claims, or a reproduction of VeriCache [vericache2026] throughput-oriented
 serving. ExactKV does **not** claim novelty for compressed-KV draft plus full-KV verify.
 
@@ -92,7 +92,7 @@ verifier agreement, and exactness failures per cell.
 1. A **compressor-agnostic crash-test framework** with leaderboard-style reporting
    that measures token-level drift, first-divergence index, acceptance rate, and
    exactness failures across compressors and models (§3–5).
-2. **7,348 GPU cells** across Llama-3.1-8B and Mistral-7B, five benchmark families,
+2. **8,132 GPU cells** across Llama-3.1-8B and Mistral-7B, five benchmark families,
    six compressor variants, with `exactkv_failures = 0` throughout (§6).
 3. Empirical evidence that **task type dominates drift** (6% code → 90% reading for
    int4_sim) and **generation length scales it within a task** (9% → 62% on BFCL,
@@ -145,7 +145,7 @@ deployment throughput or reproduce VeriCache's system design. See Section 10.
 | 3 | **Eviction > quantization drift** | H2O-style 75% kept → 100% LongBench divergence |
 | 4 | **Three distinct failure modes** | int8: near-tie (rank 2.4, fdi=22); int4_sim: distribution shift (rank 3.5, fdi=8); H2O: attention destruction (rank 6.7, fdi=1) |
 | 5 | **100% downstream validity preserved** | ExactKV preserves all 106/106 valid BFCL tool calls despite 50% drift |
-| 6 | **Zero correctness failures** | exactkv_failures=0 across all 7,348 GPU cells |
+| 6 | **Zero correctness failures** | exactkv_failures=0 across all 8,132 GPU cells |
 
 ---
 
@@ -383,7 +383,6 @@ Divergence rate and acceptance must be read together — they are not redundant 
 should not be collapsed into a single "quality" score without context. For example,
 `int4_sim` at `max_new_tokens=16` can show first divergence at index 8 with
 acceptance 0.94: how late drift occurs determines how much of the draft is still useful.
-score without context.
 
 Top leaderboard rows (Llama-3.1-8B): `noop` 1.00, `int8` 1.00, `int4_sim` ~0.86.
 Full table: `reports/public_release/leaderboard_final.json`.
@@ -1381,8 +1380,8 @@ it sits at the expected intermediate point on the compression curve.
 confirming the quantization-error interpolation. On structured tasks (BFCL/MBPP), the
 error reduction is sufficient to eliminate divergence entirely.
 
-**Claim boundary:** GPU-validated on Mistral-7B (v3.0, `exactkv_failures=0`).
-Llama-3.1-8B validation in progress (v3.1). Script: `exactkv/compressors/int6_sim.py`.
+**Claim boundary:** GPU-validated on both models (v3.0, 1,568 total cells, `exactkv_failures=0`).
+Mistral: 0%/0%/37.5% (MBPP/BFCL/LB). Llama: 0%/0%/47.2%. Script: `exactkv/compressors/int6_sim.py`.
 
 ---
 
@@ -1412,15 +1411,16 @@ contamination entirely.
 Per-vector INT4 achieves **6× lower error than per-tensor INT4** while still providing
 theoretical 4× compression (0.25× fp16). It is closer to int8 than to int4_sim.
 
-**GPU-validated divergence profile (Mistral-7B v3.0, 196 cells):**
+**Predicted vs observed v3.0 divergence (both models, task-family means):**
 
-| Task family | int8 | int4_per_vec_sim | int6_sim | int4_sim |
-|------------|-----:|-----------------:|---------:|---------:|
-| MBPP code | 0% | **0%** | 0% | 0% |
-| BFCL (short/long-gen) | 0% | **0%** | 0% | 45.0% |
-| HF LongBench | 15.3% | **55.6%** | 37.5% | 86.1% |
+| Task family | int8 (obs.) | int4_per_vec (predicted) | int4_per_vec (obs.) | int6_sim (obs.) | int4_sim (obs.) |
+|------------|------------:|-------------------------:|--------------------:|----------------:|----------------:|
+| MBPP code | 0% | ~0–2% | **0%** | 0% | 6.3% |
+| BFCL tool-call | 0% | ~1–4% | **0%** | 0% | 52.5% |
+| HF LongBench | 18.1% | ~30–50% | **56.3%** | 42.4% | 85.4% |
 
-*Prior analytical prediction: ~30–50% LongBench. Actual: 55.6% — within prediction range, upper end.*
+*Prior analytical prediction for LongBench: ~30–50%. Observed both-model mean: 56.3%
+— within range, upper end. Prediction held on BFCL/MBPP (0% observed vs ~0–4% predicted).*
 
 **Key insight — granularity outweighs bit-width (task-conditional):** `int4_per_vec_sim`
 (4-bit per-vector) matches int8 exactly on BFCL and MBPP, and achieves 30pp lower divergence
@@ -1428,16 +1428,14 @@ than per-tensor `int4_sim` on LongBench (55.6% vs 86.1%). However, `int6_sim` (6
 per-tensor, higher MAE) achieves *lower* LongBench divergence (37.5% vs 55.6%) — because
 at 8K context, bit-width contributes meaningfully alongside granularity.
 
-**Claim boundary:** GPU-validated on Mistral-7B (v3.0, 784 total cells, `exactkv_failures=0`).
-Llama-3.1-8B validation in progress (v3.1). Script: `exactkv/compressors/int4_per_vec_sim.py`.
+**Claim boundary:** GPU-validated on both models (v3.0, 1,568 total cells, `exactkv_failures=0`).
+Mistral: 0%/0%/55.6% (MBPP/BFCL/LB). Llama: 0%/0%/56.9%. Script: `exactkv/compressors/int4_per_vec_sim.py`.
 
 ---
 
 ## 6.15 v3.0 GPU Validation Panel (int6_sim + int4_per_vec_sim)
 
-**Status: Complete (Mistral-7B-Instruct-v0.3, 784 cells).** Llama-3.1-8B pending
-HuggingFace auth on the current RunPod instance (gated model — v3.1 will include both
-models once resolved). Source: `reports/external_panels/v30/`.
+**Status: Complete (both models). Mistral-7B-Instruct-v0.3: 784 cells. Llama-3.1-8B: 784 cells. Total: 1,568 v3.0 cells.** Source: `reports/external_panels/v30/`.
 
 **v3.0 divergence results — Mistral-7B-Instruct-v0.3:**
 
@@ -1460,35 +1458,75 @@ models once resolved). Source: `reports/external_panels/v30/`.
 
 *Table 6.15a — v3.0 GPU panel results (Mistral-7B, 784 cells). `exactkv_failures=0` throughout.*
 
+**v3.0 divergence results — Llama-3.1-8B:**
+
+| Family | Compressor | Cells | Divergence Rate | Acceptance | exactkv_failures |
+|--------|------------|------:|----------------:|-----------:|-----------------:|
+| mbpp | `int8` | 24 | 0.0% | 1.000 | 0 |
+| mbpp | `int6_sim` | 24 | 0.0% | 1.000 | 0 |
+| mbpp | `int4_per_vec_sim` | 24 | 0.0% | 1.000 | 0 |
+| mbpp | `int4_sim` | 24 | 12.5% | 0.996 | 0 |
+|       |            |      |                 |            |                  |
+| bfcl | `int8` | 100 | 0.0% | 1.000 | 0 |
+| bfcl | `int6_sim` | 100 | 0.0% | 1.000 | 0 |
+| bfcl | `int4_per_vec_sim` | 100 | 0.0% | 1.000 | 0 |
+| bfcl | `int4_sim` | 100 | 60.0% | 0.995 | 0 |
+|       |            |      |                 |            |                  |
+| longbench | `int8` | 72 | 20.8% | 0.988 | 0 |
+| longbench | `int6_sim` | 72 | 47.2% | 0.957 | 0 |
+| longbench | `int4_per_vec_sim` | 72 | 56.9% | 0.935 | 0 |
+| longbench | `int4_sim` | 72 | 84.7% | 0.825 | 0 |
+
+*Table 6.15b — v3.0 GPU panel results (Llama-3.1-8B, 784 cells). `exactkv_failures=0` throughout.*
+
 **Interpretation:**
 
-The results confirm both compressors as non-catastrophic under verifier-mediated semantics,
-with important nuance on long-context reading:
+Both models confirm the same qualitative story with consistent absolute ordering.
+`exactkv_failures = 0` across all 1,568 v3.0 cells.
 
-- **int6_sim**: 0% divergence on MBPP and BFCL; **37.5%** on HF LongBench reading
-  (2K–8K context). Falls cleanly between `int8` (15.3%) and `int4_sim` (86.1%),
+**Cross-model summary (Mistral / Llama):**
+
+| Task | int8 | int6_sim | int4_per_vec_sim | int4_sim |
+|------|-----:|---------:|-----------------:|---------:|
+| MBPP | 0% / 0% | 0% / 0% | 0% / 0% | 0% / 12.5% |
+| BFCL | 0% / 0% | 0% / 0% | 0% / 0% | 45% / 60% |
+| LongBench | 15.3% / 20.8% | 37.5% / 47.2% | 55.6% / 56.9% | 86.1% / 84.7% |
+
+- **int6_sim**: 0% on MBPP/BFCL across both models. On LongBench: 37.5% (Mistral)
+  and 47.2% (Llama) — cleanly between `int8` and `int4_sim` on both models,
   confirming the analytical quantization-error prediction. A faithful intermediate
-  compressor for structured and code-generation tasks.
+  compressor for structured and code tasks.
 
-- **int4_per_vec_sim**: 0% divergence on MBPP and BFCL — **matching int8 on
-  structured-output and code tasks**. On LongBench, however, **55.6%** — higher
-  than `int6_sim` (37.5%) despite lower MAE (2.06× vs 4.10× int8). This is a
-  nuanced result: **per-vector granularity eliminates drift on short-context structured
-  tasks but does not fully compensate for 4-bit resolution loss on extreme
-  long-context (8K) reading tasks.** The claim "granularity outweighs bit-width"
-  holds for BFCL and MBPP; it is task-conditional on LongBench.
+- **int4_per_vec_sim**: 0% on MBPP/BFCL across both models — **matching int8
+  exactly on structured and code tasks**. On LongBench: 55.6% (Mistral) and 56.9%
+  (Llama). Despite lower MAE (2.06× int8 vs 4.10× for int6_sim), it shows *higher*
+  long-context drift than int6_sim. **Per-vector granularity eliminates drift on
+  structured tasks but 4-bit resolution loss accumulates at 8K context.** The claim
+  "granularity outweighs bit-width" is task-conditional: it holds fully on
+  BFCL/MBPP and partially on LongBench (86% → 57%, a 29pp improvement, but
+  not as good as int6_sim's 37%).
 
-- **Ordering on LongBench**: `int8 (15.3%) < int6_sim (37.5%) < int4_per_vec_sim
-  (55.6%) < int4_sim (86.1%)` — a clean monotonic degradation across the
-  quantization-error axis, with `int4_per_vec_sim` confirmed non-catastrophic
-  (drift exists but verifier corrects all).
+- **Monotonic ordering on LongBench (both models)**: `int8 < int6_sim < int4_per_vec_sim < int4_sim` — a clean degradation across the quantization-error axis. All four are confirmed non-catastrophic (verifier corrects all divergent cells, `exactkv_failures=0`).
 
-- `exactkv_failures = 0` across all 784 cells including every divergent LongBench
-  cell — the verifier-mediated loop holds for all three failure regimes.
+- `exactkv_failures = 0` across all 1,568 v3.0 cells (784 per model) including every
+  divergent LongBench cell — the verifier-mediated loop holds for all three failure regimes.
 
----
+### 6.16 Core benchmark curve (compressor comparison)
 
-## 8. Divergence case studies
+Table 6.16 summarises divergence rates across the full compressor spectrum on the v3.0
+panel grid (both models combined, task-family averages). H2O-style eviction values are
+from the v2.8 LongBench panel (both models, `h2o_sim_75`).
+
+| Compressor | MBPP | BFCL | HF LongBench | Class |
+|------------|-----:|-----:|-------------:|-------|
+| `int8` | 0% | 0% | 18.1% | Quantization (8-bit) |
+| `int6_sim` | 0% | 0% | 42.4% | Quantization (6-bit) |
+| `int4_per_vec_sim` | 0% | 0% | 56.3% | Quantization (4-bit, per-vector) |
+| `int4_sim` | 6.3% | 52.5% | 85.4% | Quantization (4-bit, per-tensor) |
+| `h2o_sim_75` | — | — | **100%** | Eviction (75% kept) |
+
+*Table 6.16 — Core benchmark curve. v3.0 quantisation compressors: both-model mean
+(Mistral/Llama). H2O: v2.8 LongBench panel. `exactkv_failures=0` throughout.*
 
 The table below uses fields saved in `reports/scale_7b/raw.json` (release panel,
 Llama-3.1-8B unless noted). Top-5 logits are **not** stored in the release
@@ -2127,8 +2165,8 @@ Source of truth (all artifacts):
 | `reports/external_panels/hf_longbench_v26_merged_raw.json` | HF LongBench v2.6 (both models) | 720 |
 | `reports/external_panels/bfcl_validity_v27_merged_raw.json` | BFCL validity v2.7 (both models) | 1,200 |
 | `reports/external_panels/h2o_v28_merged_raw.json` | H2O-style eviction v2.8 (both models) | 800 |
-| `reports/external_panels/v30/` | v3.0 int6_sim + int4_per_vec_sim (Mistral-7B) | 784 |
-| **Total** | | **7,348** |
+| `reports/external_panels/v30/` | v3.0 int6_sim + int4_per_vec_sim (both models) | 1,568 |
+| **Total** | | **8,132** |
 
 ---
 
@@ -2146,7 +2184,7 @@ are accepted, and whether verifier-mediated execution still ends exact.
 
 On the 1,500-cell release panel, built-in `int8`/`noop` show no lossy divergence,
 `int4_sim` drifts in 52% of cells while the verifier maintains
-`exactkv_failures = 0`. Across **7,348 total cells**, the picture has become clearer:
+`exactkv_failures = 0`. Across **8,132 total cells**, the picture has become clearer:
 int4_sim divergence is **task-dependent** — 6% on Python code (MBPP), 11% on
 tool-calling (BFCL short-gen), 50% on tool-calling (BFCL long-gen at mnt=128/256),
 and **90% on open-text reading/summarization (HF LongBench, 2K–8K context)**.
@@ -2156,7 +2194,7 @@ of KV compression drift**. The v2.8 H2O-style token-eviction panel adds a new di
 **eviction-class compressors produce near-universal divergence (100%) on reading tasks
 even at mild keep_ratio=0.75**, far exceeding int4_sim at matched memory budgets. Mean
 acceptance rate for H2O is ~0.35 (diverges at token 1) vs. ~0.84 for int4_sim.
-The verifier maintains `exactkv_failures = 0` across all 7,348 cells — including all
+The verifier maintains `exactkv_failures = 0` across all 8,132 cells — including all
 100% H2O divergence cases. **ExactKV catches every compressor failure type.**
 
 Top-k logit analysis (§6.10) over 1,103 divergent cells reveals three mechanistically
@@ -2174,13 +2212,12 @@ evidence to explain *why*.
 
 Two new compressors extend the compression curve: `int6_sim` (6-bit per-tensor)
 and `int4_per_vec_sim` (4-bit per-vector, KIVI/KVQuant-style). The v3.0 GPU panel
-(Mistral-7B, 784 cells) validates both as non-catastrophic: `int6_sim` achieves 0%
-divergence on BFCL/MBPP and 37.5% on LongBench; `int4_per_vec_sim` achieves 0% on
-BFCL/MBPP and 55.6% on LongBench — establishing both as the first non-catastrophic
-int4/int6 compressors in the ExactKV framework. The per-vector granularity result is
-task-conditional: it eliminates drift on structured tasks, but 4-bit resolution still
-accumulates error at 8K context. `exactkv_failures = 0` throughout. Llama-3.1-8B
-validation is in progress (v3.1).
+(both models, 1,568 cells, `exactkv_failures=0`) validates both as non-catastrophic:
+`int6_sim` achieves 0% divergence on BFCL/MBPP and 37–47% on LongBench (Mistral/Llama);
+`int4_per_vec_sim` achieves 0% on BFCL/MBPP and 56–57% on LongBench — establishing both
+as the first non-catastrophic int4/int6 compressors in the ExactKV framework. The
+per-vector granularity result is task-conditional: it eliminates drift on structured
+tasks, but 4-bit resolution still accumulates error at 8K context on both models.
 
 ---
 
@@ -2201,8 +2238,18 @@ validation is in progress (v3.1).
 | **HF LongBench v2.6 (real HF)** | `hf_longbench_v26_merged_raw.json` | No | Llama-3.1-8B, Mistral-7B | noop, int8, int4_sim | **720** | 2, 4, 8 | 0 |
 | **BFCL validity v2.7 (both models)** | `bfcl_validity_v27_merged_raw.json` | No | Llama-3.1-8B, Mistral-7B | noop, int8, int4_sim | **1,200** | 1, 2 | 0 |
 | **H2O-style eviction v2.8** | `h2o_v28_merged_raw.json` | No | Llama-3.1-8B, Mistral-7B | noop, int4_sim, h2o_sim, h2o_sim_75, h2o_sim_25 | **800** | 2, 4 | 0 |
+| **v3.0 int6_sim + int4_per_vec_sim** | `v30/longbench_Mistral_*`, `v30/bfcl_Mistral_*`, `v30/mbpp_Mistral_*` | No | Mistral-7B only | int8, int6_sim, int4_per_vec_sim, int4_sim | **784** | 2, 4, 8 + BFCL/MBPP | 0 |
+| **v3.0 int6_sim + int4_per_vec_sim** | `v30/longbench_Llama_*`, `v30/bfcl_Llama_*`, `v30/mbpp_Llama_*` | No | Llama-3.1-8B only | int8, int6_sim, int4_per_vec_sim, int4_sim | **784** | 2, 4, 8 + BFCL/MBPP | 0 |
+| | | | | **Subtotal (pre-v3.0)** | **6,564** | | |
+| | | | | **Subtotal (v3.0 panels)** | **1,568** | | |
+| | | | | **Grand total** | **8,132** | | **0** |
 
-**Total: 7,348 completed GPU cells, `exactkv_failures = 0` throughout.** (3,844 v2.5.4 + 720 v2.6 + 1,200 v2.7 + 800 v2.8 H2O + 784 v3.0 Mistral int6_sim/int4_per_vec_sim)
+**Total: 8,132 completed GPU cells, `exactkv_failures = 0` throughout.**
+
+Reconciliation: **6,564 + 784 + 784 = 8,132**. Each v3.0 row is one model × four
+compressors (`int8`, `int6_sim`, `int4_per_vec_sim`, `int4_sim`) × three task families
+(LongBench 288 + BFCL 400 + MBPP 96 = 784 cells per model). Both compressors share the
+same panel grid; they are not counted as separate 784-cell panels.
 
 **All totals count only fully completed panels.** Queued or planned panels (InfiniteBench 100K+, HELMET, KVQuant/SnapKV adapters) are excluded from all cell counts and claims.
 
@@ -2213,7 +2260,7 @@ validation is in progress (v3.1).
 1,524 tracked artifacts, curated release-grade set in
 [`release_synthesis/artifact_inventory.md`](../release_synthesis/artifact_inventory.md).
 
-## Appendix B: Claim decision table
+## Appendix C: Claim decision table
 
 [`release_synthesis/claim_decision_table.md`](../release_synthesis/claim_decision_table.md)
 

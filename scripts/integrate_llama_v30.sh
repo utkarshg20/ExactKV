@@ -19,7 +19,7 @@ SITE="$REPO/site/index.html"
 
 echo "==> Downloading Llama v3.0 results from RunPod..."
 rsync -avz --progress \
-  runpod-a5000:/workspace/reports/external_panels/v30/ \
+  runpod-a5000:/workspace/ExactKV/reports/external_panels/v30/ \
   "$V30_DIR/" \
   --include="llama_*.json" \
   --include="*_Llama_*.json" \
@@ -29,7 +29,7 @@ rsync -avz --progress \
   2>/dev/null || {
     echo "Note: rsync partial — copying all v30 files instead"
     rsync -avz --progress \
-      runpod-a5000:/workspace/reports/external_panels/v30/ \
+      runpod-a5000:/workspace/ExactKV/reports/external_panels/v30/ \
       "$V30_DIR/"
   }
 
@@ -43,24 +43,26 @@ compressors = ["int8", "int6_sim", "int4_per_vec_sim", "int4_sim"]
 
 # Try to find Llama-specific files
 for f in sorted(v30_dir.glob("*.json")):
-    if "llama" not in f.name.lower() and "Llama" not in f.name:
+    if f.name == "llama_v30_parsed.json":
+        continue
+    if "llama" not in f.name.lower():
         continue
     try:
         data = json.loads(f.read_text())
     except Exception:
         continue
-    
-    # Try compressor_summary format
+
+    fam = f.name.split("_")[0].lower()
+    if fam not in results:
+        continue
+
+    # compressor_summary format (family from filename)
     if "compressor_summary" in data:
-        for family, family_data in data.get("compressor_summary", {}).items():
-            family_lower = family.lower()
-            for key in results:
-                if key in family_lower:
-                    for comp, metrics in family_data.items():
-                        if comp in compressors:
-                            dr = metrics.get("divergence_rate", metrics.get("drift_rate", None))
-                            if dr is not None:
-                                results[key][comp] = round(float(dr) * 100, 1)
+        for comp, metrics in data.get("compressor_summary", {}).items():
+            if comp in compressors:
+                dr = metrics.get("divergence_rate", metrics.get("drift_rate"))
+                if dr is not None:
+                    results[fam][comp] = round(float(dr) * 100, 1)
     
     # Try flat cell format
     cells = data if isinstance(data, list) else data.get("cells", data.get("results", []))

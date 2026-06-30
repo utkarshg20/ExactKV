@@ -20,7 +20,7 @@ from compressed KV, verify against the full-KV reference, accept the matching
 prefix, correct on mismatch — and records the **first-divergence index**,
 **acceptance rate**, **verifier agreement**, and **exactness failures** per cell.
 
-**7,348 completed GPU cells. exactkv_failures = 0 throughout.**
+**8,132 completed GPU cells. exactkv_failures = 0 throughout.**
 
 Four main findings:
 
@@ -41,15 +41,14 @@ Four main findings:
    all 106/106 full-KV valid BFCL tool calls are preserved by the verifier (both
    models, all four task categories).
 
-**v3.0 GPU panel (Mistral-7B, 784 cells):** int6_sim and int4_per_vec_sim both show
-0% divergence on BFCL and MBPP. On HF LongBench: int6_sim 37.5%, int4_per_vec_sim
-55.6% — both non-catastrophic, exactkv_failures=0. Per-vector granularity eliminates
+**v3.0 GPU panel (both models, 1,568 cells):** int6_sim and int4_per_vec_sim both show
+0% divergence on BFCL and MBPP. On HF LongBench: int6_sim 37–47%, int4_per_vec_sim
+56–57% — both non-catastrophic, exactkv_failures=0. Per-vector granularity eliminates
 drift on structured tasks; bit-width still matters at 8K context.
 
 Caveats: ExactKV is a research-grade evaluation framework, not a production serving
 system, and does not reproduce VeriCache. Phase F kernel results are a microbenchmark
 only. Compression ratios are stored byte ratios, not active GPU memory savings.
-Llama-3.1-8B v3.0 validation in progress.
 
 #LLM #Inference #KVCache #MLSystems #Evaluation
 
@@ -64,14 +63,14 @@ your output drifts.
 token where a compressed cache diverges from the full-KV verifier, explains *why*
 it fails, and checks whether downstream tasks survive.
 
-The receipts (7,348 GPU cells, exactkv_failures = 0):
+The receipts (8,132 GPU cells, exactkv_failures = 0):
 
 → int4_sim: 6% drift on code, **90% on reading/summarization** — same model, different task  
 → H2O-style eviction at 75% kept: **100% divergence** on LongBench (worse than int4)  
 → Generation length alone: 9% → **62%** drift as output budget grows 16→256 tokens  
 → Three failure modes, three forensic logit traces. One verifier that catches them all.  
 → Despite 50% token drift: **106/106 full-KV valid tool calls preserved**  
-→ int6_sim + int4_per_vec_sim: **0% divergence on BFCL/MBPP** (Mistral v3.0 GPU-validated)  
+→ int6_sim + int4_per_vec_sim: **0% divergence on BFCL/MBPP** (both models, GPU-validated)  
 
 Not a production system. Not a VeriCache reproduction. Not a memory-savings claim.
 An honest, reproducible measurement of when compressed KV starts lying.
@@ -97,14 +96,14 @@ comparing methods.
 
 What I think makes it interesting:
 - It's built around **correctness first** — a verifier checks every token.
-- It's **reproducible**: 7,348 GPU cells across five benchmark families, with
+- It's **reproducible**: 8,132 GPU cells across five benchmark families, with
   every published number tracing to a saved artifact, one-command regeneration.
 - It's **honest about limits**: it's a research evaluation framework, not a
   production system — it documents exactly what it does and does not prove.
 - It found something real: the same compressor diverges **6% on code but 90% on
   reading tasks** — task type, not just quantization level, is the dominant driver.
-- New compressors (int6_sim, int4_per_vec_sim) GPU-validated as non-catastrophic
-  on structured tasks — with a nuanced finding on long-context reading.
+- New compressors (int6_sim, int4_per_vec_sim) GPU-validated on **both models** as
+  non-catastrophic on structured tasks — with a nuanced finding on long-context reading.
 
 Process, correctness, and reproducibility over hype.
 

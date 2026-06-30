@@ -25,7 +25,7 @@ Everyone reports average quality. ExactKV reports the first wrong token.
 ---
 
 **3/**
-**7,348 completed GPU cells. exactkv_failures = 0.**
+**8,132 completed GPU cells. exactkv_failures = 0.**
 
 Llama-3.1-8B + Mistral-7B across five benchmark families:
 LongBench (reading/summarization), BFCL (tool-calling), MBPP (code), RULER, HumanEval.
@@ -87,19 +87,16 @@ Drift ≠ task failure — but only because the verifier catches it.
 ---
 
 **8/**
-**v3.0 GPU results: two new compressors validated (Mistral-7B, 784 cells).**
+**v3.0 GPU results: int6_sim + int4_per_vec_sim validated on both models (1,568 cells).**
 
-`int6_sim` (6-bit per-tensor):
-- BFCL / MBPP: **0% divergence**
-- LongBench: **37.5%** (vs 86.1% for int4_sim)
+Both models, both new compressors, `exactkv_failures = 0`:
 
-`int4_per_vec_sim` (4-bit per-vector, KIVI/KVQuant-style):
-- BFCL / MBPP: **0% divergence** — matches int8
-- LongBench: **55.6%** — non-catastrophic but higher than int6_sim
+`int6_sim` (6-bit): **0%** BFCL/MBPP · LongBench **37–47%**  
+`int4_per_vec_sim` (4-bit per-vector): **0%** BFCL/MBPP · LongBench **56–57%**
 
 Key nuance: per-vector granularity eliminates drift on structured tasks, but 4-bit resolution still matters at 8K context. "Granularity > bit-width" is task-conditional.
 
-exactkv_failures = 0 throughout.
+Reconciliation: 6,564 + 784 + 784 = **8,132 total cells**.
 
 ---
 
@@ -120,7 +117,6 @@ Full technical report: `paper/ExactKV_Technical_Report.md`
 - **Not** a production serving system; does **not** reproduce VeriCache  
 - Phase F int8/int4 ratios = **kernel microbenchmark only** (not end-to-end)  
 - Compression ratios = **stored tensor byte ratios** (no VRAM savings claim)  
-- v3.0 Llama-3.1-8B panels in progress (HF auth resolved, running now)  
 - External panels are **drift measurements**, not official benchmark scores  
 
 ---
