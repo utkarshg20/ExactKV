@@ -10,6 +10,7 @@ LlamaForCausalLM_KIVI, no CUDA/Triton pack kernels, no flash-attn, no kivi_gemv.
 from __future__ import annotations
 
 import os
+import sys
 from typing import Any
 
 import torch
@@ -22,8 +23,16 @@ from exactkv.compressors.base import CompressorCapabilities
 from exactkv.runtime.model_runtime import ModelRuntime
 
 
+def _ensure_kivi_on_path() -> None:
+    """Prepend KIVI repo root from ``EXACTKV_KIVI_ROOT`` without global PYTHONPATH."""
+    root = os.environ.get("EXACTKV_KIVI_ROOT", "").strip()
+    if root and root not in sys.path:
+        sys.path.insert(0, root)
+
+
 def _import_kivi_utils() -> tuple[Any, Any, Any]:
     """Lazy import of upstream KIVI quant helpers (jy-yuan/KIVI models/utils_quant.py)."""
+    _ensure_kivi_on_path()
     try:
         from models.utils_quant import (  # noqa: PLC0415
             dequantize_by_channel_and_unpack_cache,
@@ -33,7 +42,7 @@ def _import_kivi_utils() -> tuple[Any, Any, Any]:
     except ImportError as exc:
         raise ImportError(
             "KIVI models.utils_quant is not importable. Clone https://github.com/jy-yuan/KIVI "
-            "and set PYTHONPATH to the repo root (e.g. PYTHONPATH=/tmp/kivi_research). "
+            "and set EXACTKV_KIVI_ROOT to the repo root (e.g. EXACTKV_KIVI_ROOT=/tmp/kivi_research). "
             "Full KIVI pip install is not required for the offline simulate path."
         ) from exc
     return (
@@ -144,10 +153,46 @@ def _tensor_bytes(obj: Any) -> int:
 
 def _layer_payload_bytes(layer: dict) -> int:
     total = 0
-    for key in ("k_quant", "k_scale", "k_mn", "v_quant", "v_scale", "v_mn"):
+    for key in (
+        "k_quant",
+        "k_scale",
+        "k_mn",
+        "v_quant",
+        "v_scale",
+        "v_mn",
+        "k_residual",
+        "v_residual",
+    ):
         if key in layer:
             total += _tensor_bytes(layer[key])
     return total
+
+
+def _split_residual(
+    tensor: torch.Tensor,
+    residual_length: int,
+) -> tuple[torch.Tensor | None, torch.Tensor | None]:
+    """Split (B, H, S, D) into quantizable prefix and fp16 residual suffix."""
+    if residual_length <= 0:
+        return tensor, None
+    seq_len = int(tensor.shape[2])
+    if seq_len <= residual_length:
+        return None, tensor
+    split = seq_len - residual_length
+    return tensor[:, :, :split, :], tensor[:, :, split:, :]
+
+
+def _merge_prefix_residual(
+    prefix: torch.Tensor | None,
+    residual: torch.Tensor | None,
+) -> torch.Tensor:
+    if prefix is None:
+        if residual is None:
+            raise ValueError("Both prefix and residual are None")
+        return residual
+    if residual is None:
+        return prefix
+    return torch.cat([prefix, residual], dim=2)
 
 
 def _compress_layer_k(
@@ -249,6 +294,7 @@ class KIVIOfflineAdapter(BackendAdapter):
         k_bits: int = 2,
         v_bits: int = 2,
         group_size: int = 32,
+        residual_length: int = 0,
     ) -> None:
         (
             self._quantize_k_cache,
@@ -261,11 +307,15 @@ class KIVIOfflineAdapter(BackendAdapter):
         self._k_bits = k_bits
         self._v_bits = v_bits
         self._group_size = group_size
+        self._residual_length = max(int(residual_length), 0)
 
         k_label = f"kivi_k{k_bits}_offline"
         v_label = f"kivi_v{v_bits}_offline"
         asymmetric = k_bits != v_bits
-        self.name = f"kivi_offline_k{k_bits}_v{v_bits}"
+        if self._residual_length > 0:
+            self.name = f"kivi_offline_k{k_bits}_v{v_bits}_r{self._residual_length}"
+        else:
+            self.name = f"kivi_offline_k{k_bits}_v{v_bits}"
 
         self.capabilities = CompressorCapabilities(
             name=self.name,
@@ -290,8 +340,13 @@ class KIVIOfflineAdapter(BackendAdapter):
                 "math (upstream simulate branch hardcodes CUDA). "
                 "Not KIVI production CUDA/Triton path. Not packed-bit storage. "
                 "Not LlamaForCausalLM_KIVI or MistralForCausalLM_KIVI. "
-                "Residual fp16 window not implemented in Phase D2. "
-                "Not in the default compressor registry. "
+                + (
+                    f"Residual fp16 window: last {self._residual_length} tokens "
+                    f"kept in fp16 (KIVI streaming policy). "
+                    if self._residual_length > 0
+                    else "Residual fp16 window not enabled (uniform quant over full seq). "
+                )
+                + "Not in the default compressor registry. "
                 "supports_real_bytes_claim=False: stores unpacked quant codes and scale tensors. "
                 "Byte accounting counts actual stored torch payloads honestly. "
                 "Draft may diverge from full KV; verification uses authoritative full state only. "
@@ -334,29 +389,49 @@ class KIVIOfflineAdapter(BackendAdapter):
                     f"Layer {layer_idx}: head_dim={head_dim} != expected {self._head_dim}"
                 )
 
-            k_q, k_scale, k_mn, k_shape = _compress_layer_k(
-                k,
-                group_size=self._group_size,
-                k_bits=self._k_bits,
-                quantize_k_cache=self._quantize_k_cache,
-            )
-            v_q, v_scale, v_mn, v_shape = _compress_layer_v(
-                v,
-                group_size=self._group_size,
-                v_bits=self._v_bits,
-                process_input_fn=self._process_input,
-            )
+            k_prefix, k_residual = _split_residual(k, self._residual_length)
+            v_prefix, v_residual = _split_residual(v, self._residual_length)
 
-            layer_data = {
-                "k_quant": k_q.detach().cpu(),
-                "k_scale": k_scale.detach().cpu(),
-                "k_mn": k_mn.detach().cpu(),
-                "k_shape": tuple(k_shape),
-                "v_quant": v_q.detach().cpu(),
-                "v_scale": v_scale.detach().cpu(),
-                "v_mn": v_mn.detach().cpu(),
-                "v_shape": tuple(v_shape),
+            layer_data: dict[str, Any] = {
+                "k_shape": tuple(k.shape),
+                "v_shape": tuple(v.shape),
             }
+
+            if k_prefix is not None:
+                k_q, k_scale, k_mn, k_shape = _compress_layer_k(
+                    k_prefix,
+                    group_size=self._group_size,
+                    k_bits=self._k_bits,
+                    quantize_k_cache=self._quantize_k_cache,
+                )
+                layer_data.update(
+                    {
+                        "k_quant": k_q.detach().cpu(),
+                        "k_scale": k_scale.detach().cpu(),
+                        "k_mn": k_mn.detach().cpu(),
+                        "k_quant_shape": tuple(k_shape),
+                    },
+                )
+            if k_residual is not None:
+                layer_data["k_residual"] = k_residual.detach().cpu()
+
+            if v_prefix is not None:
+                v_q, v_scale, v_mn, v_shape = _compress_layer_v(
+                    v_prefix,
+                    group_size=self._group_size,
+                    v_bits=self._v_bits,
+                    process_input_fn=self._process_input,
+                )
+                layer_data.update(
+                    {
+                        "v_quant": v_q.detach().cpu(),
+                        "v_scale": v_scale.detach().cpu(),
+                        "v_mn": v_mn.detach().cpu(),
+                        "v_quant_shape": tuple(v_shape),
+                    },
+                )
+            if v_residual is not None:
+                layer_data["v_residual"] = v_residual.detach().cpu()
             stored_bytes += _layer_payload_bytes(layer_data)
             layers.append(layer_data)
 
@@ -367,6 +442,7 @@ class KIVIOfflineAdapter(BackendAdapter):
             "k_bits": self._k_bits,
             "v_bits": self._v_bits,
             "group_size": self._group_size,
+            "residual_length": self._residual_length,
             "dtype": k_tensors[0].dtype,
             "device": k_tensors[0].device,
             "__stored_kv_bytes__": stored_bytes,
@@ -386,22 +462,54 @@ class KIVIOfflineAdapter(BackendAdapter):
             k_shape = torch.Size(layer["k_shape"])
             v_shape = torch.Size(layer["v_shape"])
 
-            k_hat = _decompress_layer_k(
-                layer["k_quant"].to(device=device, dtype=dtype),
-                layer["k_scale"].to(device=device, dtype=dtype),
-                layer["k_mn"].to(device=device, dtype=dtype),
-                k_shape,
-                group_size=group_size,
-                k_bits=k_bits,
-                dequantize_k_cache=self._dequantize_k_cache,
+            if "k_quant" in layer:
+                k_quant_shape = torch.Size(layer["k_quant_shape"])
+                k_prefix_hat = _decompress_layer_k(
+                    layer["k_quant"].to(device=device, dtype=dtype),
+                    layer["k_scale"].to(device=device, dtype=dtype),
+                    layer["k_mn"].to(device=device, dtype=dtype),
+                    k_quant_shape,
+                    group_size=group_size,
+                    k_bits=k_bits,
+                    dequantize_k_cache=self._dequantize_k_cache,
+                )
+            else:
+                k_prefix_hat = None
+
+            k_residual = (
+                layer["k_residual"].to(device=device, dtype=dtype)
+                if "k_residual" in layer
+                else None
             )
-            v_hat = _decompress_layer_v(
-                layer["v_quant"].to(device=device, dtype=dtype),
-                layer["v_scale"].to(device=device, dtype=dtype),
-                layer["v_mn"].to(device=device, dtype=dtype),
-                v_shape,
-                group_size=group_size,
+            k_hat = _merge_prefix_residual(k_prefix_hat, k_residual)
+            if k_hat.shape != k_shape:
+                raise ValueError(
+                    f"Materialized K shape {k_hat.shape} != expected {k_shape}"
+                )
+
+            if "v_quant" in layer:
+                v_quant_shape = torch.Size(layer["v_quant_shape"])
+                v_prefix_hat = _decompress_layer_v(
+                    layer["v_quant"].to(device=device, dtype=dtype),
+                    layer["v_scale"].to(device=device, dtype=dtype),
+                    layer["v_mn"].to(device=device, dtype=dtype),
+                    v_quant_shape,
+                    group_size=group_size,
+                )
+            else:
+                v_prefix_hat = None
+
+            v_residual = (
+                layer["v_residual"].to(device=device, dtype=dtype)
+                if "v_residual" in layer
+                else None
             )
+            v_hat = _merge_prefix_residual(v_prefix_hat, v_residual)
+            if v_hat.shape != v_shape:
+                raise ValueError(
+                    f"Materialized V shape {v_hat.shape} != expected {v_shape}"
+                )
+
             k_tensors.append(k_hat)
             v_tensors.append(v_hat)
 
@@ -469,6 +577,7 @@ def create_kivi_offline_adapter(
     k_bits: int = 2,
     v_bits: int = 2,
     group_size: int = 32,
+    residual_length: int = 0,
 ) -> KIVIOfflineAdapter:
     """Factory for the restricted KIVI offline adapter (not in default registry)."""
     return KIVIOfflineAdapter(
@@ -477,4 +586,5 @@ def create_kivi_offline_adapter(
         k_bits=k_bits,
         v_bits=v_bits,
         group_size=group_size,
+        residual_length=residual_length,
     )

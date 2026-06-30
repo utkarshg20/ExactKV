@@ -1,0 +1,1709 @@
+{
+  "generated_at": "2026-06-26T21:08:07.146973+00:00",
+  "claim_boundary": "ExactKV drift panels on external benchmark prompts. Not official LongBench/RULER/BFCL/HumanEval leaderboard scores.",
+  "merged_groups": {
+    "longbench_pilot": {
+      "merged_path": "reports/external_panels/longbench_pilot_merged_raw.json",
+      "cells_run": 216,
+      "total_cells": 216,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.06481481481481481,
+      "mean_acceptance_rate": 0.9940896918531722,
+      "timing": {
+        "mean_ms": 6327.629,
+        "p90_ms": 8682.867,
+        "count": 216
+      },
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B",
+        "mistralai/Mistral-7B-Instruct-v0.3"
+      ]
+    },
+    "ruler_2048_4096": {
+      "merged_path": "reports/external_panels/ruler_2048_4096_merged_raw.json",
+      "cells_run": 144,
+      "total_cells": 144,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.0763888888888889,
+      "mean_acceptance_rate": 0.9950732818379877,
+      "timing": {
+        "mean_ms": 6341.886,
+        "p90_ms": 8681.769,
+        "count": 144
+      },
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B",
+        "mistralai/Mistral-7B-Instruct-v0.3"
+      ]
+    },
+    "ruler_8192": {
+      "merged_path": "reports/external_panels/ruler_8192_merged_raw.json",
+      "cells_run": 72,
+      "total_cells": 72,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.09722222222222222,
+      "mean_acceptance_rate": 0.9946144966825113,
+      "timing": {
+        "mean_ms": 12054.189,
+        "p90_ms": 13625.374,
+        "count": 72
+      },
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B",
+        "mistralai/Mistral-7B-Instruct-v0.3"
+      ]
+    },
+    "bfcl": {
+      "merged_path": "reports/external_panels/bfcl_merged_raw.json",
+      "cells_run": 144,
+      "total_cells": 144,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.041666666666666664,
+      "mean_acceptance_rate": 0.9995659722222222,
+      "timing": {
+        "mean_ms": 4651.801,
+        "p90_ms": 6333.347,
+        "count": 144
+      },
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B",
+        "mistralai/Mistral-7B-Instruct-v0.3"
+      ]
+    },
+    "humaneval": {
+      "merged_path": "reports/external_panels/humaneval_merged_raw.json",
+      "cells_run": 72,
+      "total_cells": 72,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.0,
+      "mean_acceptance_rate": 1.0,
+      "timing": {
+        "mean_ms": 5699.336,
+        "p90_ms": 6324.916,
+        "count": 72
+      },
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B",
+        "mistralai/Mistral-7B-Instruct-v0.3"
+      ]
+    }
+  },
+  "per_file_summaries": [
+    {
+      "source_path": "reports/external_panels/longbench_pilot_Llama_3_1_8B_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "longbench",
+      "deterministic_mode": false,
+      "smoke": false,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B"
+      ],
+      "context_buckets": [
+        2048,
+        4096
+      ],
+      "max_new_tokens_values": [
+        16,
+        32
+      ],
+      "total_cells": 72,
+      "cells_run": 72,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.08333333333333333,
+      "mean_acceptance_rate": 0.9942067736185383,
+      "timing": {
+        "mean_ms": 6422.296,
+        "p90_ms": 8759.823,
+        "count": 72
+      },
+      "bucket_summary": {
+        "2048": {
+          "num_cells": 36,
+          "divergence_rate": 0.08333333333333333,
+          "mean_acceptance_rate": 0.9950485244602891
+        },
+        "4096": {
+          "num_cells": 36,
+          "divergence_rate": 0.08333333333333333,
+          "mean_acceptance_rate": 0.9933650227767874
+        }
+      },
+      "category_summary": {
+        "gov_report": {
+          "num_cells": 12,
+          "divergence_rate": 0.25,
+          "mean_acceptance_rate": 0.9800950683303625
+        },
+        "hotpotqa": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "lcc": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "narrativeqa": {
+          "num_cells": 12,
+          "divergence_rate": 0.08333333333333333,
+          "mean_acceptance_rate": 1.0
+        },
+        "passage_retrieval_en": {
+          "num_cells": 12,
+          "divergence_rate": 0.16666666666666666,
+          "mean_acceptance_rate": 0.9851455733808675
+        },
+        "trec": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "compressor_summary": {
+        "int4_sim": {
+          "num_cells": 24,
+          "mean_acceptance_rate": 0.9826203208556149,
+          "mean_verifier_agreement_score": 0.9826203208556149,
+          "divergence_rate": 0.25,
+          "divergence_stability_score": 0.75,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": 8.0,
+          "mean_compression_ratio": 0.25
+        },
+        "int8": {
+          "num_cells": 24,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.25
+        },
+        "noop": {
+          "num_cells": 24,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 1.0
+        }
+      },
+      "generated_at": "2026-06-26T19:27:10.907715+00:00",
+      "limitations_note": "External longbench panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval score reproduction."
+    },
+    {
+      "source_path": "reports/external_panels/longbench_pilot_Mistral_7B_Instruct_v0_3_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "longbench",
+      "deterministic_mode": false,
+      "smoke": false,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "mistralai/Mistral-7B-Instruct-v0.3"
+      ],
+      "context_buckets": [
+        2048,
+        4096
+      ],
+      "max_new_tokens_values": [
+        16,
+        32
+      ],
+      "total_cells": 72,
+      "cells_run": 72,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.027777777777777776,
+      "mean_acceptance_rate": 0.9938555283224402,
+      "timing": {
+        "mean_ms": 6138.296,
+        "p90_ms": 8384.741,
+        "count": 72
+      },
+      "bucket_summary": {
+        "2048": {
+          "num_cells": 36,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "4096": {
+          "num_cells": 36,
+          "divergence_rate": 0.05555555555555555,
+          "mean_acceptance_rate": 0.9877110566448801
+        }
+      },
+      "category_summary": {
+        "gov_report": {
+          "num_cells": 12,
+          "divergence_rate": 0.16666666666666666,
+          "mean_acceptance_rate": 0.9921875
+        },
+        "hotpotqa": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "lcc": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 0.9787581699346406
+        },
+        "narrativeqa": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 0.9921875
+        },
+        "passage_retrieval_en": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "trec": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "compressor_summary": {
+        "int4_sim": {
+          "num_cells": 24,
+          "mean_acceptance_rate": 0.9815665849673203,
+          "mean_verifier_agreement_score": 0.9815665849673203,
+          "divergence_rate": 0.08333333333333333,
+          "divergence_stability_score": 0.9166666666666666,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": 11.0,
+          "mean_compression_ratio": 0.25
+        },
+        "int8": {
+          "num_cells": 24,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.25
+        },
+        "noop": {
+          "num_cells": 24,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 1.0
+        }
+      },
+      "generated_at": "2026-06-26T20:48:53.463726+00:00",
+      "limitations_note": "External longbench panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval score reproduction."
+    },
+    {
+      "source_path": "reports/external_panels/longbench_pilot_merged_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "longbench",
+      "deterministic_mode": false,
+      "smoke": null,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B"
+      ],
+      "context_buckets": null,
+      "max_new_tokens_values": null,
+      "total_cells": 72,
+      "cells_run": 72,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.08333333333333333,
+      "mean_acceptance_rate": 0.9942067736185383,
+      "timing": {
+        "mean_ms": 6422.296,
+        "p90_ms": 8759.823,
+        "count": 72
+      },
+      "bucket_summary": {
+        "2048": {
+          "num_cells": 36,
+          "divergence_rate": 0.08333333333333333,
+          "mean_acceptance_rate": 0.9950485244602891
+        },
+        "4096": {
+          "num_cells": 36,
+          "divergence_rate": 0.08333333333333333,
+          "mean_acceptance_rate": 0.9933650227767874
+        }
+      },
+      "category_summary": {
+        "gov_report": {
+          "num_cells": 12,
+          "divergence_rate": 0.25,
+          "mean_acceptance_rate": 0.9800950683303625
+        },
+        "hotpotqa": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "lcc": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "narrativeqa": {
+          "num_cells": 12,
+          "divergence_rate": 0.08333333333333333,
+          "mean_acceptance_rate": 1.0
+        },
+        "passage_retrieval_en": {
+          "num_cells": 12,
+          "divergence_rate": 0.16666666666666666,
+          "mean_acceptance_rate": 0.9851455733808675
+        },
+        "trec": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "compressor_summary": null,
+      "generated_at": "2026-06-26T19:51:20.989821+00:00",
+      "limitations_note": "Merged ExactKV drift panel on external benchmark prompts. Not official LongBench/RULER/BFCL/HumanEval scores."
+    },
+    {
+      "source_path": "reports/external_panels/ruler_2048_4096_Llama_3_1_8B_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "ruler",
+      "deterministic_mode": false,
+      "smoke": false,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B"
+      ],
+      "context_buckets": [
+        2048,
+        4096
+      ],
+      "max_new_tokens_values": [
+        16,
+        32
+      ],
+      "total_cells": 48,
+      "cells_run": 48,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.08333333333333333,
+      "mean_acceptance_rate": 0.9926099227569817,
+      "timing": {
+        "mean_ms": 6436.317,
+        "p90_ms": 8792.586,
+        "count": 48
+      },
+      "bucket_summary": {
+        "2048": {
+          "num_cells": 24,
+          "divergence_rate": 0.041666666666666664,
+          "mean_acceptance_rate": 0.9963235294117646
+        },
+        "4096": {
+          "num_cells": 24,
+          "divergence_rate": 0.125,
+          "mean_acceptance_rate": 0.9888963161021985
+        }
+      },
+      "category_summary": {
+        "common_words_extraction": {
+          "num_cells": 12,
+          "divergence_rate": 0.08333333333333333,
+          "mean_acceptance_rate": 0.9926470588235294
+        },
+        "niah_multi": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "niah_single": {
+          "num_cells": 12,
+          "divergence_rate": 0.16666666666666666,
+          "mean_acceptance_rate": 0.9851455733808675
+        },
+        "variable_tracking": {
+          "num_cells": 12,
+          "divergence_rate": 0.08333333333333333,
+          "mean_acceptance_rate": 0.9926470588235294
+        }
+      },
+      "compressor_summary": {
+        "int4_sim": {
+          "num_cells": 16,
+          "mean_acceptance_rate": 0.9778297682709447,
+          "mean_verifier_agreement_score": 0.9778297682709447,
+          "divergence_rate": 0.25,
+          "divergence_stability_score": 0.75,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": 14.5,
+          "mean_compression_ratio": 0.25
+        },
+        "int8": {
+          "num_cells": 16,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.25
+        },
+        "noop": {
+          "num_cells": 16,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 1.0
+        }
+      },
+      "generated_at": "2026-06-26T19:33:41.128030+00:00",
+      "limitations_note": "External ruler panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval score reproduction."
+    },
+    {
+      "source_path": "reports/external_panels/ruler_2048_4096_Mistral_7B_Instruct_v0_3_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "ruler",
+      "deterministic_mode": false,
+      "smoke": false,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "mistralai/Mistral-7B-Instruct-v0.3"
+      ],
+      "context_buckets": [
+        2048,
+        4096
+      ],
+      "max_new_tokens_values": [
+        16,
+        32
+      ],
+      "total_cells": 48,
+      "cells_run": 48,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.0625,
+      "mean_acceptance_rate": 1.0,
+      "timing": {
+        "mean_ms": 6153.025,
+        "p90_ms": 8397.195,
+        "count": 48
+      },
+      "bucket_summary": {
+        "2048": {
+          "num_cells": 24,
+          "divergence_rate": 0.125,
+          "mean_acceptance_rate": 1.0
+        },
+        "4096": {
+          "num_cells": 24,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "category_summary": {
+        "common_words_extraction": {
+          "num_cells": 12,
+          "divergence_rate": 0.16666666666666666,
+          "mean_acceptance_rate": 1.0
+        },
+        "niah_multi": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "niah_single": {
+          "num_cells": 12,
+          "divergence_rate": 0.08333333333333333,
+          "mean_acceptance_rate": 1.0
+        },
+        "variable_tracking": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "compressor_summary": {
+        "int4_sim": {
+          "num_cells": 16,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.1875,
+          "divergence_stability_score": 0.8125,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": 12.666666666666666,
+          "mean_compression_ratio": 0.25
+        },
+        "int8": {
+          "num_cells": 16,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.25
+        },
+        "noop": {
+          "num_cells": 16,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 1.0
+        }
+      },
+      "generated_at": "2026-06-26T20:54:47.767860+00:00",
+      "limitations_note": "External ruler panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval score reproduction."
+    },
+    {
+      "source_path": "reports/external_panels/ruler_2048_4096_merged_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "ruler",
+      "deterministic_mode": false,
+      "smoke": null,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B"
+      ],
+      "context_buckets": null,
+      "max_new_tokens_values": null,
+      "total_cells": 48,
+      "cells_run": 48,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.08333333333333333,
+      "mean_acceptance_rate": 0.9926099227569817,
+      "timing": {
+        "mean_ms": 6436.317,
+        "p90_ms": 8792.586,
+        "count": 48
+      },
+      "bucket_summary": {
+        "2048": {
+          "num_cells": 24,
+          "divergence_rate": 0.041666666666666664,
+          "mean_acceptance_rate": 0.9963235294117646
+        },
+        "4096": {
+          "num_cells": 24,
+          "divergence_rate": 0.125,
+          "mean_acceptance_rate": 0.9888963161021985
+        }
+      },
+      "category_summary": {
+        "common_words_extraction": {
+          "num_cells": 12,
+          "divergence_rate": 0.08333333333333333,
+          "mean_acceptance_rate": 0.9926470588235294
+        },
+        "niah_multi": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "niah_single": {
+          "num_cells": 12,
+          "divergence_rate": 0.16666666666666666,
+          "mean_acceptance_rate": 0.9851455733808675
+        },
+        "variable_tracking": {
+          "num_cells": 12,
+          "divergence_rate": 0.08333333333333333,
+          "mean_acceptance_rate": 0.9926470588235294
+        }
+      },
+      "compressor_summary": null,
+      "generated_at": "2026-06-26T19:51:21.021562+00:00",
+      "limitations_note": "Merged ExactKV drift panel on external benchmark prompts. Not official LongBench/RULER/BFCL/HumanEval scores."
+    },
+    {
+      "source_path": "reports/external_panels/ruler_8192_Llama_3_1_8B_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "ruler",
+      "deterministic_mode": false,
+      "smoke": false,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B"
+      ],
+      "context_buckets": [
+        8192
+      ],
+      "max_new_tokens_values": [
+        16,
+        32
+      ],
+      "total_cells": 24,
+      "cells_run": 24,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.08333333333333333,
+      "mean_acceptance_rate": 0.9925727866904337,
+      "timing": {
+        "mean_ms": 12231.604,
+        "p90_ms": 13639.786,
+        "count": 24
+      },
+      "bucket_summary": {
+        "8192": {
+          "num_cells": 24,
+          "divergence_rate": 0.08333333333333333,
+          "mean_acceptance_rate": 0.9925727866904337
+        }
+      },
+      "category_summary": {
+        "common_words_extraction": {
+          "num_cells": 6,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "niah_multi": {
+          "num_cells": 6,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "niah_single": {
+          "num_cells": 6,
+          "divergence_rate": 0.3333333333333333,
+          "mean_acceptance_rate": 0.9702911467617351
+        },
+        "variable_tracking": {
+          "num_cells": 6,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "compressor_summary": {
+        "int4_sim": {
+          "num_cells": 8,
+          "mean_acceptance_rate": 0.9777183600713013,
+          "mean_verifier_agreement_score": 0.9777183600713013,
+          "divergence_rate": 0.25,
+          "divergence_stability_score": 0.75,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": 10.0,
+          "mean_compression_ratio": 0.25
+        },
+        "int8": {
+          "num_cells": 8,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.25
+        },
+        "noop": {
+          "num_cells": 8,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 1.0
+        }
+      },
+      "generated_at": "2026-06-26T19:39:58.018314+00:00",
+      "limitations_note": "External ruler panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval score reproduction."
+    },
+    {
+      "source_path": "reports/external_panels/ruler_8192_Mistral_7B_Instruct_v0_3_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "ruler",
+      "deterministic_mode": false,
+      "smoke": false,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "mistralai/Mistral-7B-Instruct-v0.3"
+      ],
+      "context_buckets": [
+        8192
+      ],
+      "max_new_tokens_values": [
+        16,
+        32
+      ],
+      "total_cells": 24,
+      "cells_run": 24,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.125,
+      "mean_acceptance_rate": 0.9986979166666666,
+      "timing": {
+        "mean_ms": 11699.36,
+        "p90_ms": 13050.724,
+        "count": 24
+      },
+      "bucket_summary": {
+        "8192": {
+          "num_cells": 24,
+          "divergence_rate": 0.125,
+          "mean_acceptance_rate": 0.9986979166666666
+        }
+      },
+      "category_summary": {
+        "common_words_extraction": {
+          "num_cells": 6,
+          "divergence_rate": 0.3333333333333333,
+          "mean_acceptance_rate": 1.0
+        },
+        "niah_multi": {
+          "num_cells": 6,
+          "divergence_rate": 0.16666666666666666,
+          "mean_acceptance_rate": 0.9947916666666666
+        },
+        "niah_single": {
+          "num_cells": 6,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "variable_tracking": {
+          "num_cells": 6,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "compressor_summary": {
+        "int4_sim": {
+          "num_cells": 8,
+          "mean_acceptance_rate": 0.99609375,
+          "mean_verifier_agreement_score": 0.99609375,
+          "divergence_rate": 0.375,
+          "divergence_stability_score": 0.625,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": 11.0,
+          "mean_compression_ratio": 0.25
+        },
+        "int8": {
+          "num_cells": 8,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.25
+        },
+        "noop": {
+          "num_cells": 8,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 1.0
+        }
+      },
+      "generated_at": "2026-06-26T21:00:28.976899+00:00",
+      "limitations_note": "External ruler panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval score reproduction."
+    },
+    {
+      "source_path": "reports/external_panels/ruler_8192_merged_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "ruler",
+      "deterministic_mode": false,
+      "smoke": null,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B"
+      ],
+      "context_buckets": null,
+      "max_new_tokens_values": null,
+      "total_cells": 24,
+      "cells_run": 24,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.08333333333333333,
+      "mean_acceptance_rate": 0.9925727866904337,
+      "timing": {
+        "mean_ms": 12231.604,
+        "p90_ms": 13639.786,
+        "count": 24
+      },
+      "bucket_summary": {
+        "8192": {
+          "num_cells": 24,
+          "divergence_rate": 0.08333333333333333,
+          "mean_acceptance_rate": 0.9925727866904337
+        }
+      },
+      "category_summary": {
+        "common_words_extraction": {
+          "num_cells": 6,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "niah_multi": {
+          "num_cells": 6,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "niah_single": {
+          "num_cells": 6,
+          "divergence_rate": 0.3333333333333333,
+          "mean_acceptance_rate": 0.9702911467617351
+        },
+        "variable_tracking": {
+          "num_cells": 6,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "compressor_summary": null,
+      "generated_at": "2026-06-26T19:51:21.045163+00:00",
+      "limitations_note": "Merged ExactKV drift panel on external benchmark prompts. Not official LongBench/RULER/BFCL/HumanEval scores."
+    },
+    {
+      "source_path": "reports/external_panels/bfcl_Llama_3_1_8B_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "bfcl",
+      "deterministic_mode": false,
+      "smoke": false,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B"
+      ],
+      "context_buckets": [
+        1024,
+        2048
+      ],
+      "max_new_tokens_values": [
+        16,
+        32
+      ],
+      "total_cells": 48,
+      "cells_run": 48,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.0625,
+      "mean_acceptance_rate": 0.9993489583333334,
+      "timing": {
+        "mean_ms": 4715.217,
+        "p90_ms": 6342.236,
+        "count": 48
+      },
+      "bucket_summary": {
+        "1024": {
+          "num_cells": 24,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 0.9986979166666666
+        },
+        "2048": {
+          "num_cells": 24,
+          "divergence_rate": 0.125,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "category_summary": {
+        "tool_call": {
+          "num_cells": 48,
+          "divergence_rate": 0.0625,
+          "mean_acceptance_rate": 0.9993489583333334
+        }
+      },
+      "compressor_summary": {
+        "int4_sim": {
+          "num_cells": 16,
+          "mean_acceptance_rate": 0.998046875,
+          "mean_verifier_agreement_score": 0.998046875,
+          "divergence_rate": 0.1875,
+          "divergence_stability_score": 0.8125,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": 8.0,
+          "mean_compression_ratio": 0.25
+        },
+        "int8": {
+          "num_cells": 16,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.25
+        },
+        "noop": {
+          "num_cells": 16,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 1.0
+        }
+      },
+      "generated_at": "2026-06-26T19:45:03.080418+00:00",
+      "limitations_note": "External bfcl panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval score reproduction."
+    },
+    {
+      "source_path": "reports/external_panels/bfcl_Mistral_7B_Instruct_v0_3_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "bfcl",
+      "deterministic_mode": false,
+      "smoke": false,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "mistralai/Mistral-7B-Instruct-v0.3"
+      ],
+      "context_buckets": [
+        1024,
+        2048
+      ],
+      "max_new_tokens_values": [
+        16,
+        32
+      ],
+      "total_cells": 48,
+      "cells_run": 48,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.0,
+      "mean_acceptance_rate": 1.0,
+      "timing": {
+        "mean_ms": 4524.971,
+        "p90_ms": 6084.093,
+        "count": 48
+      },
+      "bucket_summary": {
+        "1024": {
+          "num_cells": 24,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "2048": {
+          "num_cells": 24,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "category_summary": {
+        "tool_call": {
+          "num_cells": 48,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "compressor_summary": {
+        "int4_sim": {
+          "num_cells": 16,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.25
+        },
+        "int8": {
+          "num_cells": 16,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.25
+        },
+        "noop": {
+          "num_cells": 16,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 1.0
+        }
+      },
+      "generated_at": "2026-06-26T21:05:03.108764+00:00",
+      "limitations_note": "External bfcl panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval score reproduction."
+    },
+    {
+      "source_path": "reports/external_panels/bfcl_merged_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "bfcl",
+      "deterministic_mode": false,
+      "smoke": null,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B"
+      ],
+      "context_buckets": null,
+      "max_new_tokens_values": null,
+      "total_cells": 48,
+      "cells_run": 48,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.0625,
+      "mean_acceptance_rate": 0.9993489583333334,
+      "timing": {
+        "mean_ms": 4715.217,
+        "p90_ms": 6342.236,
+        "count": 48
+      },
+      "bucket_summary": {
+        "1024": {
+          "num_cells": 24,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 0.9986979166666666
+        },
+        "2048": {
+          "num_cells": 24,
+          "divergence_rate": 0.125,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "category_summary": {
+        "ast_eval": {
+          "num_cells": 12,
+          "divergence_rate": 0.16666666666666666,
+          "mean_acceptance_rate": 0.9973958333333334
+        },
+        "multi_turn": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "parallel": {
+          "num_cells": 12,
+          "divergence_rate": 0.08333333333333333,
+          "mean_acceptance_rate": 1.0
+        },
+        "simple": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "compressor_summary": null,
+      "generated_at": "2026-06-26T19:51:21.067584+00:00",
+      "limitations_note": "Merged ExactKV drift panel on external benchmark prompts. Not official LongBench/RULER/BFCL/HumanEval scores."
+    },
+    {
+      "source_path": "reports/external_panels/humaneval_Llama_3_1_8B_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "humaneval",
+      "deterministic_mode": false,
+      "smoke": false,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B"
+      ],
+      "context_buckets": [
+        1024,
+        2048
+      ],
+      "max_new_tokens_values": [
+        32
+      ],
+      "total_cells": 24,
+      "cells_run": 24,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.0,
+      "mean_acceptance_rate": 1.0,
+      "timing": {
+        "mean_ms": 5790.775,
+        "p90_ms": 6382.807,
+        "count": 24
+      },
+      "bucket_summary": {
+        "1024": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "2048": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "category_summary": {
+        "code_completion": {
+          "num_cells": 24,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "compressor_summary": {
+        "int4_sim": {
+          "num_cells": 8,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.25
+        },
+        "int8": {
+          "num_cells": 8,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.25
+        },
+        "noop": {
+          "num_cells": 8,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 1.0
+        }
+      },
+      "generated_at": "2026-06-26T19:48:35.880759+00:00",
+      "limitations_note": "External humaneval panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval score reproduction."
+    },
+    {
+      "source_path": "reports/external_panels/humaneval_Mistral_7B_Instruct_v0_3_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "humaneval",
+      "deterministic_mode": false,
+      "smoke": false,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "mistralai/Mistral-7B-Instruct-v0.3"
+      ],
+      "context_buckets": [
+        1024,
+        2048
+      ],
+      "max_new_tokens_values": [
+        32
+      ],
+      "total_cells": 24,
+      "cells_run": 24,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.0,
+      "mean_acceptance_rate": 1.0,
+      "timing": {
+        "mean_ms": 5516.457,
+        "p90_ms": 6073.265,
+        "count": 24
+      },
+      "bucket_summary": {
+        "1024": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "2048": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "category_summary": {
+        "code_completion": {
+          "num_cells": 24,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "compressor_summary": {
+        "int4_sim": {
+          "num_cells": 8,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.25
+        },
+        "int8": {
+          "num_cells": 8,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.25
+        },
+        "noop": {
+          "num_cells": 8,
+          "mean_acceptance_rate": 1.0,
+          "mean_verifier_agreement_score": 1.0,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 1.0
+        }
+      },
+      "generated_at": "2026-06-26T21:08:05.687924+00:00",
+      "limitations_note": "External humaneval panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval score reproduction."
+    },
+    {
+      "source_path": "reports/external_panels/humaneval_merged_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "humaneval",
+      "deterministic_mode": false,
+      "smoke": null,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B"
+      ],
+      "context_buckets": null,
+      "max_new_tokens_values": null,
+      "total_cells": 24,
+      "cells_run": 24,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.0,
+      "mean_acceptance_rate": 1.0,
+      "timing": {
+        "mean_ms": 5790.775,
+        "p90_ms": 6382.807,
+        "count": 24
+      },
+      "bucket_summary": {
+        "1024": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        },
+        "2048": {
+          "num_cells": 12,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "category_summary": {
+        "code": {
+          "num_cells": 24,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 1.0
+        }
+      },
+      "compressor_summary": null,
+      "generated_at": "2026-06-26T19:51:21.090353+00:00",
+      "limitations_note": "Merged ExactKV drift panel on external benchmark prompts. Not official LongBench/RULER/BFCL/HumanEval scores."
+    },
+    {
+      "source_path": "reports/external_panels/longbench_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "longbench",
+      "deterministic_mode": true,
+      "smoke": true,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "Qwen/Qwen2.5-0.5B"
+      ],
+      "context_buckets": [
+        512
+      ],
+      "max_new_tokens_values": [
+        16
+      ],
+      "total_cells": 4,
+      "cells_run": 4,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.0,
+      "mean_acceptance_rate": 0.7575,
+      "timing": {
+        "mean_ms": 1.0,
+        "p90_ms": 1.0,
+        "count": 4
+      },
+      "bucket_summary": {
+        "512": {
+          "num_cells": 4,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 0.7575
+        }
+      },
+      "category_summary": {
+        "hotpotqa": {
+          "num_cells": 2,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 0.835
+        },
+        "narrativeqa": {
+          "num_cells": 2,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 0.6799999999999999
+        }
+      },
+      "compressor_summary": {
+        "int8": {
+          "num_cells": 2,
+          "mean_acceptance_rate": 0.69,
+          "mean_verifier_agreement_score": 0.5,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.657125
+        },
+        "noop": {
+          "num_cells": 2,
+          "mean_acceptance_rate": 0.825,
+          "mean_verifier_agreement_score": 0.625,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.3528125
+        }
+      },
+      "generated_at": "2026-06-26T19:06:06.289411+00:00",
+      "limitations_note": "External longbench panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval score reproduction."
+    },
+    {
+      "source_path": "reports/external_panels/ruler_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "ruler",
+      "deterministic_mode": true,
+      "smoke": true,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "Qwen/Qwen2.5-0.5B"
+      ],
+      "context_buckets": [
+        512
+      ],
+      "max_new_tokens_values": [
+        16
+      ],
+      "total_cells": 4,
+      "cells_run": 4,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.0,
+      "mean_acceptance_rate": 0.73,
+      "timing": {
+        "mean_ms": 1.0,
+        "p90_ms": 1.0,
+        "count": 4
+      },
+      "bucket_summary": {
+        "512": {
+          "num_cells": 4,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 0.73
+        }
+      },
+      "category_summary": {
+        "niah_multi": {
+          "num_cells": 2,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 0.72
+        },
+        "niah_single": {
+          "num_cells": 2,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 0.74
+        }
+      },
+      "compressor_summary": {
+        "int8": {
+          "num_cells": 2,
+          "mean_acceptance_rate": 0.7,
+          "mean_verifier_agreement_score": 0.5,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.49750000000000005
+        },
+        "noop": {
+          "num_cells": 2,
+          "mean_acceptance_rate": 0.76,
+          "mean_verifier_agreement_score": 0.625,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.38740624999999995
+        }
+      },
+      "generated_at": "2026-06-26T19:06:09.272829+00:00",
+      "limitations_note": "External ruler panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval score reproduction."
+    },
+    {
+      "source_path": "reports/external_panels/bfcl_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "bfcl",
+      "deterministic_mode": true,
+      "smoke": true,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "Qwen/Qwen2.5-0.5B"
+      ],
+      "context_buckets": [
+        512
+      ],
+      "max_new_tokens_values": [
+        16
+      ],
+      "total_cells": 4,
+      "cells_run": 4,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.0,
+      "mean_acceptance_rate": 0.695,
+      "timing": {
+        "mean_ms": 1.0,
+        "p90_ms": 1.0,
+        "count": 4
+      },
+      "bucket_summary": {
+        "512": {
+          "num_cells": 4,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 0.695
+        }
+      },
+      "category_summary": {
+        "parallel": {
+          "num_cells": 2,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 0.74
+        },
+        "simple": {
+          "num_cells": 2,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 0.6499999999999999
+        }
+      },
+      "compressor_summary": {
+        "int8": {
+          "num_cells": 2,
+          "mean_acceptance_rate": 0.695,
+          "mean_verifier_agreement_score": 0.5,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.26668749999999997
+        },
+        "noop": {
+          "num_cells": 2,
+          "mean_acceptance_rate": 0.6950000000000001,
+          "mean_verifier_agreement_score": 0.625,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.45590625
+        }
+      },
+      "generated_at": "2026-06-26T19:06:13.104908+00:00",
+      "limitations_note": "External bfcl panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval score reproduction."
+    },
+    {
+      "source_path": "reports/external_panels/humaneval_raw.json",
+      "phase_id": "external_benchmark_panel",
+      "dataset_family": "humaneval",
+      "deterministic_mode": true,
+      "smoke": true,
+      "prompt_source": "pilot",
+      "models_evaluated": [
+        "Qwen/Qwen2.5-0.5B"
+      ],
+      "context_buckets": [
+        512
+      ],
+      "max_new_tokens_values": [
+        16
+      ],
+      "total_cells": 4,
+      "cells_run": 4,
+      "cells_skipped": 0,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.0,
+      "mean_acceptance_rate": 0.78,
+      "timing": {
+        "mean_ms": 1.0,
+        "p90_ms": 1.0,
+        "count": 4
+      },
+      "bucket_summary": {
+        "512": {
+          "num_cells": 4,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 0.78
+        }
+      },
+      "category_summary": {
+        "code": {
+          "num_cells": 4,
+          "divergence_rate": 0.0,
+          "mean_acceptance_rate": 0.78
+        }
+      },
+      "compressor_summary": {
+        "int8": {
+          "num_cells": 2,
+          "mean_acceptance_rate": 0.73,
+          "mean_verifier_agreement_score": 0.625,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.47253124999999996
+        },
+        "noop": {
+          "num_cells": 2,
+          "mean_acceptance_rate": 0.8300000000000001,
+          "mean_verifier_agreement_score": 0.75,
+          "divergence_rate": 0.0,
+          "divergence_stability_score": 1.0,
+          "exactkv_failure_rate": 0.0,
+          "mean_first_divergence_index": null,
+          "mean_compression_ratio": 0.27409375
+        }
+      },
+      "generated_at": "2026-06-26T19:06:16.024230+00:00",
+      "limitations_note": "External humaneval panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval score reproduction."
+    }
+  ],
+  "workflow_steps": [
+    {
+      "step": "longbench_pilot_Llama_3_1_8B",
+      "status": "ok",
+      "detail": "log=reports/external_panels/logs/longbench_pilot_Llama_3_1_8B_20260626T191812Z.log",
+      "ts": "2026-06-26T19:27:11.901363+00:00"
+    },
+    {
+      "step": "longbench_hf_Llama_3_1_8B",
+      "status": "skipped",
+      "detail": "datasets not installed",
+      "ts": "2026-06-26T19:27:11.992467+00:00"
+    },
+    {
+      "step": "ruler_2048_4096_Llama_3_1_8B",
+      "status": "ok",
+      "detail": "log=reports/external_panels/logs/ruler_2048_4096_Llama_3_1_8B_20260626T191812Z.log",
+      "ts": "2026-06-26T19:33:42.062183+00:00"
+    },
+    {
+      "step": "ruler_8192_Llama_3_1_8B",
+      "status": "ok",
+      "detail": "log=reports/external_panels/logs/ruler_8192_Llama_3_1_8B_20260626T191812Z.log",
+      "ts": "2026-06-26T19:39:58.934707+00:00"
+    },
+    {
+      "step": "bfcl_Llama_3_1_8B",
+      "status": "ok",
+      "detail": "log=reports/external_panels/logs/bfcl_Llama_3_1_8B_20260626T191812Z.log",
+      "ts": "2026-06-26T19:45:04.329586+00:00"
+    },
+    {
+      "step": "humaneval_Llama_3_1_8B",
+      "status": "ok",
+      "detail": "log=reports/external_panels/logs/humaneval_Llama_3_1_8B_20260626T191812Z.log",
+      "ts": "2026-06-26T19:48:36.792763+00:00"
+    },
+    {
+      "step": "longbench_pilot_Mistral_7B_Instruct_v0_3",
+      "status": "failed",
+      "detail": "exit=1 log=reports/external_panels/logs/longbench_pilot_Mistral_7B_Instruct_v0_3_20260626T191812Z.log",
+      "ts": "2026-06-26T19:49:20.537030+00:00"
+    },
+    {
+      "step": "longbench_hf_Mistral_7B_Instruct_v0_3",
+      "status": "skipped",
+      "detail": "datasets not installed",
+      "ts": "2026-06-26T19:49:20.633424+00:00"
+    },
+    {
+      "step": "ruler_2048_4096_Mistral_7B_Instruct_v0_3",
+      "status": "failed",
+      "detail": "exit=1 log=reports/external_panels/logs/ruler_2048_4096_Mistral_7B_Instruct_v0_3_20260626T191812Z.log",
+      "ts": "2026-06-26T19:50:00.794869+00:00"
+    },
+    {
+      "step": "bfcl_Mistral_7B_Instruct_v0_3",
+      "status": "failed",
+      "detail": "exit=1 log=reports/external_panels/logs/bfcl_Mistral_7B_Instruct_v0_3_20260626T191812Z.log",
+      "ts": "2026-06-26T19:50:41.042629+00:00"
+    },
+    {
+      "step": "humaneval_Mistral_7B_Instruct_v0_3",
+      "status": "failed",
+      "detail": "exit=1 log=reports/external_panels/logs/humaneval_Mistral_7B_Instruct_v0_3_20260626T191812Z.log",
+      "ts": "2026-06-26T19:51:20.882768+00:00"
+    }
+  ],
+  "failed_steps": [
+    {
+      "step": "longbench_pilot_Mistral_7B_Instruct_v0_3",
+      "status": "failed",
+      "detail": "exit=1 log=reports/external_panels/logs/longbench_pilot_Mistral_7B_Instruct_v0_3_20260626T191812Z.log",
+      "ts": "2026-06-26T19:49:20.537030+00:00"
+    },
+    {
+      "step": "ruler_2048_4096_Mistral_7B_Instruct_v0_3",
+      "status": "failed",
+      "detail": "exit=1 log=reports/external_panels/logs/ruler_2048_4096_Mistral_7B_Instruct_v0_3_20260626T191812Z.log",
+      "ts": "2026-06-26T19:50:00.794869+00:00"
+    },
+    {
+      "step": "bfcl_Mistral_7B_Instruct_v0_3",
+      "status": "failed",
+      "detail": "exit=1 log=reports/external_panels/logs/bfcl_Mistral_7B_Instruct_v0_3_20260626T191812Z.log",
+      "ts": "2026-06-26T19:50:41.042629+00:00"
+    },
+    {
+      "step": "humaneval_Mistral_7B_Instruct_v0_3",
+      "status": "failed",
+      "detail": "exit=1 log=reports/external_panels/logs/humaneval_Mistral_7B_Instruct_v0_3_20260626T191812Z.log",
+      "ts": "2026-06-26T19:51:20.882768+00:00"
+    }
+  ],
+  "skipped_steps": [
+    {
+      "step": "longbench_hf_Llama_3_1_8B",
+      "status": "skipped",
+      "detail": "datasets not installed",
+      "ts": "2026-06-26T19:27:11.992467+00:00"
+    },
+    {
+      "step": "longbench_hf_Mistral_7B_Instruct_v0_3",
+      "status": "skipped",
+      "detail": "datasets not installed",
+      "ts": "2026-06-26T19:49:20.633424+00:00"
+    }
+  ],
+  "skipped_merge_groups": [
+    "longbench_hf"
+  ]
+}

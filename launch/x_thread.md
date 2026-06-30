@@ -1,129 +1,73 @@
 # ExactKV — X / Twitter Thread
 
-> Claim-safe launch thread. Every number traces to on-disk release artifacts.
-> Strong but evidence-bounded. No "beats X", no "first ever", no speedup/memory claims.
+> Claim-safe. Numbers from release artifacts. No "beats X", no speedup/VRAM claims.
 
 ---
 
 **1/**
 KV compression looks fine — until the first wrong token.
 
-I built **ExactKV**: a crash-test framework that measures *exactly* when a compressed KV cache starts lying, why it fails, and whether downstream tasks are actually affected.
+**ExactKV** crash-tests compressed KV: when drift starts, why, and whether downstream survives.
 
 ---
 
 **2/**
-The setup:
+Compressed KV drafts tokens → full-KV verifier checks each one → log first divergence.
 
-→ draft tokens from **compressed** KV  
-→ verify each against the **full-KV** reference  
-→ accept the matching prefix, correct on mismatch  
-→ log the *first divergence*, the mechanism, and any downstream impact
-
-Everyone reports average quality. ExactKV reports the first wrong token.
+Not average quality. **The first wrong token.**
 
 ---
 
 **3/**
-**8,132 completed GPU cells. exactkv_failures = 0.**
+**8,132 GPU cells. exactkv_failures = 0.**
 
-Llama-3.1-8B + Mistral-7B across five benchmark families:
-LongBench (reading/summarization), BFCL (tool-calling), MBPP (code), RULER, HumanEval.
-
-Six compressors: noop, int8, int4_sim, H2O-style eviction, int6_sim, int4_per_vec_sim.
-
-Source: `reports/scale_7b/raw.json` + `reports/external_panels/`
+Llama-3.1-8B + Mistral-7B · LongBench, BFCL, MBPP, RULER, HumanEval.
 
 ---
 
 **4/**
-**Finding 1: Task type dominates drift.**
+Same `int4_sim`, same model — drift depends on task:
 
-int4_sim divergence is *not* a single number:
+Code **6%** → BFCL **11%** → LongBench **90%**
 
-- MBPP code: **6%**
-- BFCL short tool-calling: **11%**
-- BFCL long-gen (mnt=256): **50%**
-- HF LongBench reading: **90%**
-
-H2O-style eviction at 75% kept: **100%** on LongBench — *worse* than int4_sim at matched memory budget.
+H2O-style eviction (75% kept): **100%** on LongBench.
 
 ---
 
 **5/**
-**Finding 2: Generation length is the within-task driver.**
+Same task, longer generation = more drift.
 
-On BFCL, int4_sim divergence scales **7x** from generation budget:
-
-mnt=16 → 9%  
-mnt=32 → 17%  
-mnt=128 → 45%  
-mnt=256 → **62%**
-
-int8 stays near-zero throughout. Same task, same context — generation budget alone explains the gap.
+BFCL `int4_sim`: **9%** (16 tok) → **62%** (256 tok). int8 ≈ flat.
 
 ---
 
 **6/**
-**Finding 3: Three distinct failure modes.**
+Three failure modes (1,103 divergent cells):
 
-Top-k logit autopsy over **1,103 divergent cells**:
+int8 = near-tie noise · int4 = distribution shift · H2O = attention destruction
 
-**Near-tie noise** (int8): 66% near-tie, mean lossy rank 2.4, fdi=22  
-**Distribution shift** (int4_sim): 83% flip, rank 3.5, fdi=8  
-**Attention destruction** (H2O-style): 100% flip, rank 6.7, fdi=1
-
-Three compressor classes. Three different failure signatures. The same verifier corrects all three.
+Same verifier fixes all three.
 
 ---
 
 **7/**
-**Finding 4: ExactKV preserves 100% of downstream validity.**
-
-Despite 50% token drift, the verifier protects **106/106 full-KV valid BFCL tool calls** (both models, all four task categories: simple, parallel, multi-turn, AST-eval).
-
-Drift ≠ task failure — but only because the verifier catches it.
+Despite 50% token drift: **106/106** valid BFCL tool calls preserved.
 
 ---
 
 **8/**
-**v3.0 GPU results: int6_sim + int4_per_vec_sim validated on both models (1,568 cells).**
+v3.0: `int6_sim` + `int4_per_vec_sim` → **0%** on code/tool tasks (both models).
 
-Both models, both new compressors, `exactkv_failures = 0`:
-
-`int6_sim` (6-bit): **0%** BFCL/MBPP · LongBench **37–47%**  
-`int4_per_vec_sim` (4-bit per-vector): **0%** BFCL/MBPP · LongBench **56–57%**
-
-Key nuance: per-vector granularity eliminates drift on structured tasks, but 4-bit resolution still matters at 8K context. "Granularity > bit-width" is task-conditional.
-
-Reconciliation: 6,564 + 784 + 784 = **8,132 total cells**.
+First upstream adapter: **SnapKV** (kvpress), 87.5% MBPP drift on smoke. Verifier still holds.
 
 ---
 
 **9/**
-Reproduce it:
-
-```
-python3 scripts/exactkv_repro.py --reports-only
-bash scripts/build_paper_pdf.sh
-```
-
-Full technical report: `paper/ExactKV_Technical_Report.md`
+Caveats: research eval only · not VeriCache · not prod serving · drift ≠ official benchmark scores.
 
 ---
 
-**10/** Read this before you cite anything:
+**10/**
+Report + repro in repo. Link in reply.
 
-- **Not** a production serving system; does **not** reproduce VeriCache  
-- Phase F int8/int4 ratios = **kernel microbenchmark only** (not end-to-end)  
-- Compression ratios = **stored tensor byte ratios** (no VRAM savings claim)  
-- External panels are **drift measurements**, not official benchmark scores  
-
----
-
-**11/**
-The strongest honest version of this:
-
-**ExactKV tells you exactly when compressed KV cache behavior stops matching the verifier, why it fails, and what it means for downstream tasks.**
-
-Token-level drift evidence. Three failure-mode signatures. Public leaderboard. Hard claim boundaries.
+**ExactKV tells you when compressed KV stops matching full-KV greedy — and why.**

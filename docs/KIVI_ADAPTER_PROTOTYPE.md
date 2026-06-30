@@ -70,7 +70,7 @@ PYTHONPATH=/tmp/kivi_research pytest tests/test_kivi_adapter.py -q
 | `LlamaForCausalLM_KIVI` / `MistralForCausalLM_KIVI` | **Not implemented** |
 | `flash-attn` integration | **Not implemented** |
 | Packed-bit storage / `supports_real_bytes_claim=True` | **Not implemented** |
-| Residual fp16 window (`residual_length`) | **Deferred** — name is `kivi_offline_k2_v2` without `r32` suffix |
+| Residual fp16 window (`residual_length`) | **Implemented (Phase D3)** — `kivi_offline_k2_v2_r32` via `residual_length=32`; legacy `kivi_offline` retained as diagnostic |
 | KVQuant | **Not implemented** |
 | Experiment 009 | **Not run** |
 | Default registry entry | **Not added** |

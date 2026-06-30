@@ -39,8 +39,13 @@ PHASE_A_MODELS: tuple[str, ...] = (
 PHASE_A_BUILTIN_COMPRESSORS: tuple[str, ...] = (
     "noop",
     "int8",
+    "int6_sim",
+    "int4_per_vec_sim",
     "int4_sim",
     "k8_v4_sim",
+    "h2o_sim",
+    "h2o_sim_75",
+    "h2o_sim_25",
 )
 
 PHASE_A_EXTENDED_COMPRESSORS: tuple[str, ...] = (

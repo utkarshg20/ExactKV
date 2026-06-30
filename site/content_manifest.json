@@ -1,0 +1,38 @@
+{
+  "schema": "exactkv.site.content_manifest.v1",
+  "generated_from": ["reports/scale_7b/raw.json", "reports/public_release/leaderboard_final.json", "reports/public_release/demo_cards.md", "docs/CLAIM_BOUNDARIES.md"],
+  "sections": [
+    {"id": "hero", "title": "Hero"},
+    {"id": "what", "title": "What it is"},
+    {"id": "why", "title": "Why it matters"},
+    {"id": "results", "title": "Key results"},
+    {"id": "leaderboard", "title": "Leaderboard"},
+    {"id": "demos", "title": "Demo cards"},
+    {"id": "methodology", "title": "Methodology"},
+    {"id": "lineage", "title": "Project lineage"},
+    {"id": "priorart", "title": "Prior art"},
+    {"id": "limitations", "title": "Limitations"},
+    {"id": "reproduce", "title": "Reproduce"},
+    {"id": "links", "title": "Links"}
+  ],
+  "leaderboard_rows": [
+    {"rank": 1, "compressor": "noop", "model": "Llama-3.1-8B", "score": 1.000, "acceptance": 1.000, "divergence": 0.000, "availability": "available"},
+    {"rank": 2, "compressor": "int8", "model": "Llama-3.1-8B", "score": 1.000, "acceptance": 1.000, "divergence": 0.000, "availability": "available"},
+    {"rank": 3, "compressor": "noop", "model": "Mistral-7B", "score": 1.000, "acceptance": 1.000, "divergence": 0.000, "availability": "available"},
+    {"rank": 4, "compressor": "int8", "model": "Mistral-7B", "score": 0.983, "acceptance": 1.000, "divergence": 0.173, "availability": "available"},
+    {"rank": 5, "compressor": "int4_sim", "model": "Llama-3.1-8B", "score": 0.859, "acceptance": 0.852, "divergence": 0.520, "availability": "available"},
+    {"rank": 6, "compressor": "spectralquant", "model": "Llama-3.1-8B", "score": 0.859, "acceptance": 0.852, "divergence": 0.520, "availability": "mock_fallback"},
+    {"rank": 7, "compressor": "int4_sim", "model": "Mistral-7B", "score": 0.851, "acceptance": 0.837, "divergence": 0.507, "availability": "available"},
+    {"rank": 8, "compressor": "spectralquant", "model": "Mistral-7B", "score": 0.851, "acceptance": 0.837, "divergence": 0.507, "availability": "mock_fallback"},
+    {"rank": 9, "compressor": "shard", "model": "Llama-3.1-8B", "score": 0.732, "acceptance": 0.632, "divergence": 0.227, "availability": "probe_only"},
+    {"rank": 10, "compressor": "shard", "model": "Mistral-7B", "score": 0.727, "acceptance": 0.623, "divergence": 0.247, "availability": "probe_only"}
+  ],
+  "demo_cards": [
+    {"id": "stable_noop", "title": "Stable case (noop)", "model": "Llama-3.1-8B", "metric": "acceptance 1.0, 0 failures", "caveat": "Exactness baseline; not serving throughput."},
+    {"id": "strong_int8", "title": "Strong INT8", "model": "Llama-3.1-8B", "metric": "acceptance 1.0, 0 failures", "caveat": "Compression ratio is a stored tensor byte ratio; not active GPU memory savings."},
+    {"id": "int4_drift", "title": "INT4 drift case", "model": "Llama-3.1-8B", "metric": "acceptance 0.5; verifier corrects", "caveat": "Simulated int4 container; illustrates drift metrics."},
+    {"id": "shard_probe", "title": "Shard probe-first", "model": "Llama-3.1-8B", "metric": "acceptance 0.25", "caveat": "probe_only=true; not real Shard / ShardCache integration."},
+    {"id": "spectralquant_fallback", "title": "SpectralQuant fallback/proxy", "model": "Llama-3.1-8B", "metric": "acceptance 0.5", "caveat": "backend_tier=MOCK; not real SpectralQuant."},
+    {"id": "historical_structured", "title": "Historical structured-output drift", "model": "Qwen2.5-0.5B", "metric": "first divergence index 1", "caveat": "Historical panel (phaseA_benchmark.json); not the 1500-cell headline."}
+  ]
+}

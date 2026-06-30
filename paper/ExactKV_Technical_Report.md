@@ -35,9 +35,8 @@ ExactKV is a compressor-agnostic **crash-test framework with leaderboard-style r
 that measures **first-divergence index**, draft acceptance, verifier agreement,
 and **`exactkv_failure`** under verifier-mediated (draft/verify/commit) semantics.
 
-Across **8,132 completed GPU cells** (Llama-3.1-8B and Mistral-7B, five benchmark
-families, six built-in compressor classes¹) all panels report **`exactkv_failures = 0`**. Four
-main findings emerge:
+Across **8,132 GPU cells** on Llama-3.1-8B and Mistral-7B (Appendix benchmark card),
+all panels report **`exactkv_failures = 0`**. Four main findings emerge:
 
 1. **Task type dominates drift.** `int4_sim` divergence spans 6% (MBPP code) → 11%
 (BFCL short-gen) → 50% (BFCL long-gen) → **90%** (HF LongBench reading), while
@@ -70,7 +69,8 @@ serving. ExactKV does **not** claim novelty for compressed-KV draft plus full-KV
 
 ¹ **Six built-in compressor classes:** `noop` (baseline), `int8`, `int6_sim`,
 `int4_per_vec_sim`, `int4_sim`, and H2O-style eviction (`h2o_sim` family counted as one
-class). `kivi_offline` is an external adapter diagnostic (§6.4.6), evaluated separately.
+class). External adapters (`kivi_offline`, `kivi_offline_r32`, SnapKV) are evaluated
+separately (§6.4.6, §6.17).
 
 ---
 
@@ -730,9 +730,9 @@ RunPod **RTX A5000**, June 2026, `deterministic_mode=false`.
 | MBPP HF | real HF (google-research-datasets/mbpp, 20 prompts) | Llama-3.1-8B | 512, 1024 | 16, 32 | noop, int8, int4_sim, kivi_offline |
 
 **Claim boundary:** `kivi_offline` uses real upstream KIVI quantizer math
-(`models.utils_quant` simulate path, `is_simulated=False`) but
-`supports_real_bytes_claim=False` (no CUDA/Triton kernels). This is **not** KIVI
-production serving. Drift measurement only.
+(`models.utils_quant` simulate path, `is_simulated=False`) but **without** KIVI's
+residual fp16 window — an incomplete adapter policy (see §6.17 for faithful
+`kivi_offline_r32`). `supports_real_bytes_claim=False`. Not KIVI production serving.
 
 **Results:**
 
@@ -1547,6 +1547,59 @@ from the v2.8 LongBench panel (both models, `h2o_sim_75`).
 *Table 6.16 — Core benchmark curve. v3.0 quantisation compressors: both-model mean
 (Mistral/Llama). H2O: v2.8 LongBench panel. `exactkv_failures=0` throughout.*
 
+### 6.17 Faithful external compressor integration (Phase D3)
+
+The headline v3.0 panel uses ExactKV built-in simulations. Phase D3 adds **faithful
+external adapters** that wrap upstream compressor algorithms (not ExactKV tensor
+approximations). See `docs/FAITHFUL_COMPRESSOR_INTEGRATION.md`.
+
+| Compressor | Backend | Faithful policy | Production CUDA |
+|------------|---------|-----------------|-----------------|
+| `kivi_offline_r32` | jy-yuan/KIVI `models.utils_quant` | K2/V2 quant + **r=32 fp16 residual window** | No (simulate path) |
+| `snapkv_experimental` | kvpress `SnapKVPress` | Replay-prefill eviction | No |
+| `kvquant_sim` | KVQuant `QuantLinearSim` | Pre-RoPE simquant (Qwen validated) | No |
+| `kivi_offline` | KIVI simulate, **no residual** | Incomplete vs KIVI paper — diagnostic only | No |
+
+**Why `kivi_offline` failed (§6.4.6):** The 640-cell panel used uniform full-sequence
+quantization without KIVI's streaming residual fp16 window — an **incomplete adapter
+policy**, not evidence about KIVI production quality. Phase D3 implements
+`residual_length=32` (KIVI default) as `kivi_offline_r32`.
+
+**GPU smoke (Mistral-7B, MBPP HF, 48 cells, `exactkv_failures=0`):**
+
+| Compressor | Div. rate | Mean accept. | Notes |
+|------------|----------:|-------------:|-------|
+| `int8` | 0% | 1.000 | Control |
+| `snapkv_experimental` | **87.5%** | 0.541 | Real kvpress SnapKVPress (A5000: shared model, no deepcopy) |
+| `kivi_offline_r32` | **100%** | 0.023 | Real KIVI quant math + r=32; post-RoPE offline path still catastrophic |
+
+Source: `reports/external_panels/faithful/mbpp_mistral_smoke_raw.json`.
+
+**Interpretation:** `snapkv_experimental` is the first **working faithful external adapter**
+on the panel grid — real upstream eviction via kvpress, non-trivial drift (87.5% on MBPP),
+and verifier correction throughout (`exactkv_failures=0`). `kivi_offline_r32` confirms
+that residual fp16 alone does not fix post-RoPE offline KIVI integration; production
+KIVI CUDA or pre-RoPE KVQuant simquant remain the paths to faithful KIVI/KVQuant claims.
+**`int4_per_vec_sim`** remains the validated KIVI/KVQuant-style quant baseline in the
+headline v3.0 curve (Table 6.16).
+
+**Panel script:**
+
+```bash
+bash scripts/setup_faithful_compressor_env.sh   # KIVI clone + kvpress
+bash scripts/run_faithful_compressor_panel.sh # v3.0-style grid, both models
+# Artifacts: reports/external_panels/faithful/
+```
+
+Compressors: `int8` (control), `kivi_offline_r32`, `snapkv_experimental`. Grid mirrors
+v3.0 (LongBench 2048/4096/8192, BFCL mnt 16–256, MBPP). Results will extend Table 6.16
+with **real upstream compressor** data points alongside built-in sims.
+
+**Claim boundary:** Tier-A adapters use real upstream quant/eviction math but not
+production CUDA/Triton kernels. KIVI production path remains blocked (Exp 024:
+`dequant_cuda` / `kivi_gemv` build failure). KVQuant Llama-8B requires isolated
+`transformers~=4.44` venv + calibration pickle (future).
+
 ---
 
 ## 8. Divergence case studies (release panel)
@@ -1965,7 +2018,8 @@ Reproduce:
 
 ```bash
 export PYTHONPATH=/tmp/kivi_research  # jy-yuan/KIVI clone
-bash scripts/run_kivi_external_panel.sh
+bash scripts/run_kivi_external_panel.sh          # legacy diagnostic (no r32)
+bash scripts/run_faithful_compressor_panel.sh      # faithful: kivi_offline_r32 + SnapKV
 ```
 
 Claim boundary: `kivi_offline` uses real KIVI quantizer math (simulate path,
@@ -1985,7 +2039,7 @@ Claim boundary: `kivi_offline` uses real KIVI quantizer math (simulate path,
 | **Rerun Mistral on main external panels** (LongBench/RULER/BFCL/HumanEval) | Failed in first workflow (disk quota); succeeded later for MBPP only |
 | **HELMET holistic long-context panel** | Not implemented |
 | **InfiniteBench 100K+ stress** | Not run, pending verifier memory/runtime stability |
-| **KVQuant/SnapKV integrations** (production kernels) | Adapters exist; KIVI offline done at simulate tier; faithful production integration future work |
+| **KVQuant/SnapKV integrations** (production kernels) | Adapters exist; KIVI r32 + SnapKV panel wired (§6.17); GPU validation pending; KIVI CUDA blocked (Exp 024) |
 | **RULER 16K/32K scaling** | 2K/4K/8K pilot done |
 | **HumanEval/MBPP pass@1 impact** | Requires safe sandboxing; extend beyond BFCL downstream validity to MBPP pass@1/syntax and LongBench answer-overlap |
 | **Confidence intervals** | Wilson CIs added for all external panels |

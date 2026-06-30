@@ -38,7 +38,10 @@ from exactkv.compressors.asymmetric_sim import (
 )
 from exactkv.compressors.backend_adapter import BackendAdapter, PassThroughBackendAdapter
 from exactkv.compressors.debug_noise import DebugNoiseCompressor
+from exactkv.compressors.h2o_sim import H2OSimCompressor
+from exactkv.compressors.int4_per_vec_sim import Int4PerVecSimCompressor
 from exactkv.compressors.int4_sim import Int4SimCompressor
+from exactkv.compressors.int6_sim import Int6SimCompressor
 from exactkv.compressors.int8 import Int8Compressor
 from exactkv.compressors.layer_aware_sim import (
     K8V4Boundary2V8SimCompressor,
@@ -56,6 +59,8 @@ from exactkv.compressors.registry import (
 # V1–V3 symmetric compressors (idempotent on re-import)
 register_compressor("noop", NoOpCompressor)
 register_compressor("int8", Int8Compressor)
+register_compressor("int6_sim", Int6SimCompressor)
+register_compressor("int4_per_vec_sim", Int4PerVecSimCompressor)
 register_compressor("int4_sim", Int4SimCompressor)
 register_compressor("debug_noise", DebugNoiseCompressor)
 
@@ -78,10 +83,17 @@ register_compressor("k8_v4_boundary4_v8_sim", K8V4Boundary4V8SimCompressor)
 # V6 backend adapter PoC
 register_compressor("backend_passthrough", PassThroughBackendAdapter)
 
+# V8 token-dropping compressors (H2O-style sink + recency eviction)
+register_compressor("h2o_sim",        H2OSimCompressor)
+register_compressor("h2o_sim_75",     lambda: H2OSimCompressor(keep_ratio=0.75))
+register_compressor("h2o_sim_25",     lambda: H2OSimCompressor(keep_ratio=0.25))
+
 __all__ = [
     # V1–V3
     "NoOpCompressor",
     "Int8Compressor",
+    "Int6SimCompressor",
+    "Int4PerVecSimCompressor",
     "Int4SimCompressor",
     "DebugNoiseCompressor",
     # V4
@@ -101,6 +113,8 @@ __all__ = [
     # V6 backend adapter
     "BackendAdapter",
     "PassThroughBackendAdapter",
+    # V8 token-dropping
+    "H2OSimCompressor",
     # registry
     "register_compressor",
     "get_compressor",

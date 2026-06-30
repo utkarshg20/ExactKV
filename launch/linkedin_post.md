@@ -43,8 +43,14 @@ Four main findings:
 
 **v3.0 GPU panel (both models, 1,568 cells):** int6_sim and int4_per_vec_sim both show
 0% divergence on BFCL and MBPP. On HF LongBench: int6_sim 37–47%, int4_per_vec_sim
-56–57% — both non-catastrophic, exactkv_failures=0. Per-vector granularity eliminates
-drift on structured tasks; bit-width still matters at 8K context.
+56–57% — both non-catastrophic, exactkv_failures=0. Per-vector granularity helps on
+structured tasks; bit-width still matters at 8K context.
+
+**Phase D3 — faithful external adapters:** First working upstream integration on the
+same crash-test grid: **SnapKV via kvpress** (`snapkv_experimental`, 87.5% MBPP drift
+on Mistral smoke, acceptance 0.54, exactkv_failures=0). KIVI offline r32 remains
+catastrophic on the post-RoPE simulate path (adapter diagnostic, not production KIVI).
+Full LongBench/BFCL/MBPP faithful grid in progress on both models.
 
 Caveats: ExactKV is a research-grade evaluation framework, not a production serving
 system, and does not reproduce VeriCache. Phase F kernel results are a microbenchmark
@@ -71,6 +77,8 @@ The receipts (8,132 GPU cells, exactkv_failures = 0):
 → Three failure modes, three forensic logit traces. One verifier that catches them all.  
 → Despite 50% token drift: **106/106 full-KV valid tool calls preserved**  
 → int6_sim + int4_per_vec_sim: **0% divergence on BFCL/MBPP** (both models, GPU-validated)  
+→ **SnapKV via kvpress** (faithful external adapter): **87.5%** MBPP drift on Mistral smoke — real upstream library, verifier holds  
+→ KIVI offline r32: adapter diagnostic only (post-RoPE path catastrophic; not production KIVI)  
 
 Not a production system. Not a VeriCache reproduction. Not a memory-savings claim.
 An honest, reproducible measurement of when compressed KV starts lying.
@@ -104,6 +112,8 @@ What I think makes it interesting:
   reading tasks** — task type, not just quantization level, is the dominant driver.
 - New compressors (int6_sim, int4_per_vec_sim) GPU-validated on **both models** as
   non-catastrophic on structured tasks — with a nuanced finding on long-context reading.
+- **Faithful external adapters (Phase D3):** SnapKV via kvpress integrated and GPU-smoke
+  validated (87.5% MBPP drift, exactkv_failures=0); full grid running on both models.
 
 Process, correctness, and reproducibility over hype.
 

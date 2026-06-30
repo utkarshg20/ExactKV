@@ -88,8 +88,13 @@ on LongBench (86% → 57%, a 29pp improvement), but bit-width still matters at 8
 | **Underlying project / evidence quality** | **9.65/10** |
 | **With faithful production KIVI/KVQuant kernel** | **9.7+/10** |
 
-Path to 9.7+: validate one production-faithful compressor (KIVI CUDA/Triton, KVQuant,
-or SnapKV kernel) under the same ExactKV panel grid — not more smoke experiments.
+**Phase D3 (June 2026):** Faithful external adapters wired — `kivi_offline_r32` (KIVI
+simulate + r=32), `snapkv_experimental` (kvpress). GPU smoke: SnapKV 87.5% MBPP
+divergence (real library); KIVI r32 still catastrophic on post-RoPE offline path.
+Full Mistral/Llama grid: `bash scripts/run_faithful_compressor_panel.sh` on RunPod
+(Llama requires `hf auth login`).
+
+Path to 9.7+: SnapKV LongBench/BFCL full grid + optional KIVI production CUDA (Exp 024 blocked).
 
 ## Benchmark source of truth
 

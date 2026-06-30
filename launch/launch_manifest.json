@@ -1,0 +1,41 @@
+{
+  "schema": "exactkv.launch.manifest.v1",
+  "tagline": "ExactKV tells you exactly when compressed KV cache behavior stops matching the verifier.",
+  "benchmark_source_of_truth": "reports/scale_7b/raw.json",
+  "headline": {
+    "total_cells": 1500,
+    "models": ["meta-llama/Llama-3.1-8B", "mistralai/Mistral-7B-Instruct-v0.3"],
+    "exactkv_failures": 0,
+    "deterministic_mode": false
+  },
+  "assets": {
+    "x_thread": "launch/x_thread.md",
+    "linkedin_post": "launch/linkedin_post.md",
+    "short_announcement": "launch/short_announcement.md",
+    "technical_report": "paper/ExactKV_Technical_Report.md",
+    "website": "site/index.html",
+    "leaderboard": "reports/public_release/leaderboard_final.json",
+    "demo_cards": "reports/public_release/demo_cards.md",
+    "claim_boundaries": "docs/CLAIM_BOUNDARIES.md",
+    "evidence_ledger": "release_synthesis/evidence_ledger.md",
+    "claim_decision_table": "release_synthesis/claim_decision_table.md"
+  },
+  "linkedin_variants": ["technical_research", "punchy_startup", "recruiter_friendly"],
+  "required_caveats": [
+    "not a production serving system",
+    "does not reproduce VeriCache",
+    "Phase F = kernel microbenchmark only (not end-to-end speedup)",
+    "compression ratios = stored tensor byte ratios (not active GPU memory savings)",
+    "SpectralQuant = fallback/proxy",
+    "Shard = probe-first heuristic",
+    "exactkv_failures=0 is a hard gate on the tested panel only",
+    "sequential model execution (volume constraint)"
+  ],
+  "forbidden_claims": [
+    "production ready", "first ever", "first and only", "nothing like this exists",
+    "active GPU memory savings", "VRAM savings", "end-to-end speedup", "faster inference",
+    "beats VeriCache", "reproduces VeriCache", "beats TurboQuant", "beats Shard",
+    "real SpectralQuant", "real Shard", "fastest", "SOTA"
+  ],
+  "generated_at": "2026-06-26T00:00:00+00:00"
+}

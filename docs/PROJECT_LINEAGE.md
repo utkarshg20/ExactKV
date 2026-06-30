@@ -2,11 +2,11 @@
 
 > **ExactKV did not start at Phase A.** The formal A–J release pipeline formalized, scaled, packaged, and validated a much larger pre-release research arc spanning experiments, demos, safety ladders, runtime probes, and claim-boundary work.
 
-Generated: 2026-06-25T22:37:16.459181+00:00
+Generated: 2026-06-26T14:58:00.590242+00:00
 
 ## 1. Executive summary
 
-ExactKV evolved over a long research arc before the formal Phase A–J release pipeline. The repository contains **1176** catalogued meaningful artifacts, including approximately **1145** pre–Phase A–J bucket entries, **121** experiment documents, and **31** phase documents discovered from the file tree — not from memory.
+ExactKV evolved over a long research arc before the formal Phase A–J release pipeline. The repository contains **1214** catalogued meaningful artifacts, including approximately **1177** pre–Phase A–J bucket entries, **121** experiment documents, and **31** phase documents discovered from the file tree — not from memory.
 
 Phase A–J **formalized** cross-compressor benchmarking, kernel microbenchmarks, truth-engine divergence authority, public leaderboard packaging, novelty audit, and release gates. It did **not** originate verifier-mediated exactness, trace-level drift measurement, or demo-driven failure-case development.
 
@@ -28,10 +28,10 @@ Tooling: `exactkv/platform/project_archaeology.py` · `scripts/build_project_lin
 | Era (bucket) | Artifacts found |
 |--------------|----------------:|
 | `early_foundation` | 11 |
-| `verifier_core` | 155 |
+| `verifier_core` | 163 |
 | `trace_correctness` | 19 |
 | `compression_simulation` | 12 |
-| `structured_output_demos` | 329 |
+| `structured_output_demos` | 331 |
 | `v_series_demos` | 15 |
 | `benchmark_prototypes` | 23 |
 | `safety_ladder` | 42 |
@@ -48,8 +48,9 @@ Tooling: `exactkv/platform/project_archaeology.py` · `scripts/build_project_lin
 | `kernel_phase_E_F` | 4 |
 | `truth_engine_phase_G` | 5 |
 | `evidence_gate_R0_R1` | 4 |
-| `novelty_release_phase_I_J` | 4 |
-| `unknown` | 231 |
+| `novelty_release_phase_I_J` | 5 |
+| `launch_phase_K_preparation` | 5 |
+| `unknown` | 253 |
 
 ## 4. Early problem framing
 

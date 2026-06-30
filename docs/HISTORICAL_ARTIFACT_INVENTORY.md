@@ -1,22 +1,22 @@
 # ExactKV Historical Artifact Inventory
 
-Generated: 2026-06-25T22:37:16.458539+00:00
+Generated: 2026-06-26T14:58:00.589448+00:00
 
 Evidence-based inventory from git-tracked files, document titles, and report metadata.
 Version arc: **V1–V21** (see [`VERSION_LINEAGE.md`](VERSION_LINEAGE.md)).
 This inventory is **not** limited to Phase A–J.
 
-**Total artifacts catalogued:** 1176
+**Total artifacts catalogued:** 1214
 
 ## Summary by chronological bucket
 
 | Bucket | Count |
 |--------|------:|
 | `early_foundation` | 11 |
-| `verifier_core` | 155 |
+| `verifier_core` | 163 |
 | `trace_correctness` | 19 |
 | `compression_simulation` | 12 |
-| `structured_output_demos` | 329 |
+| `structured_output_demos` | 331 |
 | `v_series_demos` | 15 |
 | `benchmark_prototypes` | 23 |
 | `safety_ladder` | 42 |
@@ -33,8 +33,9 @@ This inventory is **not** limited to Phase A–J.
 | `kernel_phase_E_F` | 4 |
 | `truth_engine_phase_G` | 5 |
 | `evidence_gate_R0_R1` | 4 |
-| `novelty_release_phase_I_J` | 4 |
-| `unknown` | 231 |
+| `novelty_release_phase_I_J` | 5 |
+| `launch_phase_K_preparation` | 5 |
+| `unknown` | 253 |
 
 ## Inventory (sample by bucket)
 
@@ -1540,6 +1541,13 @@ This inventory is **not** limited to Phase A–J.
 - **Purpose:** code_structured.jsonl
 - **Release use:** historical
 
+### `docs/CLAIM_BOUNDARIES.md`
+- **Type:** doc
+- **Bucket:** novelty_release_phase_I_J
+- **Subsystem:** claim_audit
+- **Purpose:** ExactKV Claim Boundaries (Phase J)
+- **Release use:** historical
+
 ### `docs/COMPRESSOR_INTERFACE.md`
 - **Type:** doc
 - **Bucket:** compression_simulation
@@ -1597,6 +1605,13 @@ This inventory is **not** limited to Phase A–J.
 - **Purpose:** ExactKV Novelty Audit (Phase I)
 - **Release use:** historical
 
+### `docs/PROJECT_LINEAGE.md`
+- **Type:** doc
+- **Bucket:** launch_phase_K_preparation
+- **Subsystem:** unknown
+- **Purpose:** ExactKV Project Lineage
+- **Release use:** historical
+
 ### `docs/PUBLIC_VISUAL_PACKAGE.md`
 - **Type:** doc
 - **Bucket:** visualization_layer
@@ -1609,6 +1624,13 @@ This inventory is **not** limited to Phase A–J.
 - **Bucket:** compression_simulation
 - **Subsystem:** compressor
 - **Purpose:** Related Work: KV Cache Compression, Quantization, Eviction, and Serving
+- **Release use:** historical
+
+### `docs/RELEASE_CHECKLIST.md`
+- **Type:** doc
+- **Bucket:** launch_phase_K_preparation
+- **Subsystem:** release
+- **Purpose:** ExactKV Release Checklist (Phase J)
 - **Release use:** historical
 
 ### `docs/RELEASE_EVIDENCE_STATUS.md`
@@ -2120,6 +2142,27 @@ This inventory is **not** limited to Phase A–J.
 - **Bucket:** novelty_release_phase_I_J
 - **Subsystem:** test_infra
 - **Purpose:** test_novelty_audit.py
+- **Release use:** historical
+
+### `scripts/build_project_lineage.py`
+- **Type:** script
+- **Bucket:** launch_phase_K_preparation
+- **Subsystem:** unknown
+- **Purpose:** build_project_lineage.py
+- **Release use:** historical
+
+### `scripts/check_project_lineage.py`
+- **Type:** script
+- **Bucket:** launch_phase_K_preparation
+- **Subsystem:** unknown
+- **Purpose:** check_project_lineage.py
+- **Release use:** historical
+
+### `tests/test_project_lineage.py`
+- **Type:** test
+- **Bucket:** launch_phase_K_preparation
+- **Subsystem:** test_infra
+- **Purpose:** test_project_lineage.py
 - **Release use:** historical
 
 ## Version-lineage entries requiring manual source attachment

@@ -176,6 +176,12 @@ class TestKiviAdapterUnit:
         assert isinstance(kivi_adapter_unit, KIVIOfflineAdapter)
         assert kivi_adapter_unit.name == "kivi_offline_k2_v2"
 
+    def test_factory_r32_name(self, kivi_runtime):
+        from exactkv.compressors.kivi_adapter import create_kivi_offline_adapter
+
+        adapter = create_kivi_offline_adapter(kivi_runtime, head_dim=64, residual_length=32)
+        assert adapter.name == "kivi_offline_k2_v2_r32"
+
     def test_capabilities_include_backend_identity(self, kivi_adapter_unit):
         caps = kivi_adapter_unit.capabilities
         assert caps.backend_name == "kivi"

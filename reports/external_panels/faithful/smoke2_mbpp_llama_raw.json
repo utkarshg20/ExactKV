@@ -1,0 +1,53 @@
+{
+  "phase_id": "external_benchmark_panel",
+  "dataset_family": "mbpp",
+  "status": "benchmark_complete",
+  "deterministic_mode": false,
+  "smoke": false,
+  "prompt_source": "hf",
+  "generated_at": "2026-06-30T14:38:33.561646+00:00",
+  "manifest": {
+    "model_name": "none",
+    "prompt_suite": "mbpp_hf",
+    "compressor_names": [
+      "int8",
+      "snapkv_experimental"
+    ],
+    "draft_lengths": [
+      4
+    ],
+    "max_new_tokens": 16,
+    "seed": 0,
+    "dtype": "float32",
+    "device": "auto",
+    "timestamp": "2026-06-30T14:38:33",
+    "git_commit": null,
+    "exactkv_version": "0.1.0",
+    "transformers_version": "5.2.0",
+    "torch_version": "2.8.0+cu128"
+  },
+  "models_evaluated": [],
+  "models_blocked": {
+    "meta-llama/Llama-3.1-8B": "You are trying to access a gated repo.\nMake sure to have access to it at https://huggingface.co/meta-llama/Llama-3.1-8B.\n401 Client Error. (Request ID: Root=1-6a43d4e2-4268c66f2a5eb72119946929;95122ad"
+  },
+  "context_buckets": [
+    512
+  ],
+  "max_new_tokens_values": [
+    16
+  ],
+  "compressors": [
+    "int8",
+    "snapkv_experimental"
+  ],
+  "total_cells": 0,
+  "cells_run": 0,
+  "cells_skipped": 0,
+  "exactkv_failures": 0,
+  "compressor_summary": {},
+  "bucket_summary": {},
+  "category_summary": {},
+  "cells": [],
+  "limitations_note": "External mbpp panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval/MBPP score reproduction.",
+  "reproducible_cli_command": "python3 scripts/run_external_panel.py --family mbpp --device cuda --dtype float16"
+}

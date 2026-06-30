@@ -1,0 +1,1606 @@
+{
+  "generated_at": "2026-06-27T16:07:35.232497+00:00",
+  "claim_boundary": "ExactKV drift panels only. Not official LongBench/RULER/BFCL/HumanEval scores.",
+  "artifact_sources": {
+    "longbench_pilot": "/Users/utkarshgupta/Documents/ExactKV/reports/external_panels/longbench_pilot_merged_raw.json",
+    "ruler_2048_4096": "/Users/utkarshgupta/Documents/ExactKV/reports/external_panels/ruler_2048_4096_merged_raw.json",
+    "ruler_8192": "/Users/utkarshgupta/Documents/ExactKV/reports/external_panels/ruler_8192_merged_raw.json",
+    "bfcl": "/Users/utkarshgupta/Documents/ExactKV/reports/external_panels/bfcl_merged_raw.json",
+    "humaneval": "/Users/utkarshgupta/Documents/ExactKV/reports/external_panels/humaneval_merged_raw.json"
+  },
+  "totals": {
+    "external_gpu_cells_ok": 216,
+    "external_gpu_cells_all_statuses": 216,
+    "cells_non_ok": 0,
+    "divergent_cells": 15,
+    "exactkv_failures_gpu": 0,
+    "divergence_rate_overall": 0.06944444444444445,
+    "divergence_rate_overall_ci95": {
+      "lower": 0.0425,
+      "upper": 0.1114,
+      "mid": 0.077
+    },
+    "acceptance_overall": {
+      "mean": 0.995457,
+      "median": 1.0,
+      "min": 0.882353,
+      "p90": 1.0,
+      "p95": 1.0,
+      "max": 1.0,
+      "count": 216
+    },
+    "acceptance_full_rate_ci95": {
+      "lower": 0.9054,
+      "upper": 0.9679,
+      "mid": 0.9367
+    },
+    "timing_overall_ms": {
+      "mean": 6621.370528,
+      "median": 6332.5865,
+      "min": 3089.33,
+      "p90": 10827.967,
+      "p95": 12854.34,
+      "max": 13691.905,
+      "count": 216
+    },
+    "first_divergence_histogram_overall": {
+      "2": 4,
+      "4": 4,
+      "10": 2,
+      "16": 1,
+      "18": 2,
+      "25": 1,
+      "29": 1
+    }
+  },
+  "by_panel": {
+    "longbench_pilot": {
+      "cells_ok": 72,
+      "dataset_family": "longbench",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B"
+      ],
+      "context_buckets": null,
+      "max_new_tokens_values": null,
+      "compressors": null,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.08333333333333333,
+      "divergence_rate_ci95": {
+        "lower": 0.0388,
+        "upper": 0.1701,
+        "mid": 0.1044
+      },
+      "acceptance": {
+        "mean": 0.994207,
+        "median": 1.0,
+        "min": 0.882353,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 72
+      },
+      "acceptance_full_rate_ci95": {
+        "lower": 0.8475,
+        "upper": 0.97,
+        "mid": 0.9087
+      },
+      "timing_ms": {
+        "mean": 6422.296153,
+        "median": 6402.9815,
+        "min": 4036.199,
+        "p90": 8781.113,
+        "p95": 8811.58,
+        "max": 8822.778,
+        "count": 72
+      },
+      "first_divergence_histogram": {
+        "2": 2,
+        "4": 2,
+        "18": 2
+      }
+    },
+    "ruler_2048_4096": {
+      "cells_ok": 48,
+      "dataset_family": "ruler",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B"
+      ],
+      "context_buckets": null,
+      "max_new_tokens_values": null,
+      "compressors": null,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.08333333333333333,
+      "divergence_rate_ci95": {
+        "lower": 0.0329,
+        "upper": 0.1955,
+        "mid": 0.1142
+      },
+      "acceptance": {
+        "mean": 0.99261,
+        "median": 1.0,
+        "min": 0.882353,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 48
+      },
+      "acceptance_full_rate_ci95": {
+        "lower": 0.8045,
+        "upper": 0.9671,
+        "mid": 0.8858
+      },
+      "timing_ms": {
+        "mean": 6436.317167,
+        "median": 6404.785,
+        "min": 4081.291,
+        "p90": 8792.586,
+        "p95": 8813.62,
+        "max": 8843.402,
+        "count": 48
+      },
+      "first_divergence_histogram": {
+        "2": 2,
+        "25": 1,
+        "29": 1
+      }
+    },
+    "ruler_8192": {
+      "cells_ok": 24,
+      "dataset_family": "ruler",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B"
+      ],
+      "context_buckets": null,
+      "max_new_tokens_values": null,
+      "compressors": null,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.08333333333333333,
+      "divergence_rate_ci95": {
+        "lower": 0.0232,
+        "upper": 0.2585,
+        "mid": 0.1408
+      },
+      "acceptance": {
+        "mean": 0.992573,
+        "median": 1.0,
+        "min": 0.882353,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 24
+      },
+      "acceptance_full_rate_ci95": {
+        "lower": 0.7415,
+        "upper": 0.9768,
+        "mid": 0.8592
+      },
+      "timing_ms": {
+        "mean": 12231.604042,
+        "median": 12025.1095,
+        "min": 10729.17,
+        "p90": 13662.393,
+        "p95": 13679.764,
+        "max": 13691.905,
+        "count": 24
+      },
+      "first_divergence_histogram": {
+        "10": 2
+      }
+    },
+    "bfcl": {
+      "cells_ok": 48,
+      "dataset_family": "bfcl",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B"
+      ],
+      "context_buckets": null,
+      "max_new_tokens_values": null,
+      "compressors": null,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.0625,
+      "divergence_rate_ci95": {
+        "lower": 0.0215,
+        "upper": 0.1684,
+        "mid": 0.0949
+      },
+      "acceptance": {
+        "mean": 0.999349,
+        "median": 1.0,
+        "min": 0.96875,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 48
+      },
+      "acceptance_full_rate_ci95": {
+        "lower": 0.891,
+        "upper": 0.9963,
+        "mid": 0.9437
+      },
+      "timing_ms": {
+        "mean": 4715.216604,
+        "median": 4698.584,
+        "min": 3089.33,
+        "p90": 6342.236,
+        "p95": 6394.29,
+        "max": 6406.956,
+        "count": 48
+      },
+      "first_divergence_histogram": {
+        "4": 2,
+        "16": 1
+      }
+    },
+    "humaneval": {
+      "cells_ok": 24,
+      "dataset_family": "humaneval",
+      "models_evaluated": [
+        "meta-llama/Llama-3.1-8B"
+      ],
+      "context_buckets": null,
+      "max_new_tokens_values": null,
+      "compressors": null,
+      "exactkv_failures": 0,
+      "divergence_rate": 0.0,
+      "divergence_rate_ci95": {
+        "lower": 0.0,
+        "upper": 0.138,
+        "mid": 0.069
+      },
+      "acceptance": {
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 24
+      },
+      "acceptance_full_rate_ci95": {
+        "lower": 0.862,
+        "upper": 1.0,
+        "mid": 0.931
+      },
+      "timing_ms": {
+        "mean": 5790.774708,
+        "median": 5853.552,
+        "min": 5136.378,
+        "p90": 6391.841,
+        "p95": 6394.293,
+        "max": 6396.331,
+        "count": 24
+      },
+      "first_divergence_histogram": {}
+    }
+  },
+  "by_model": {
+    "meta-llama/Llama-3.1-8B": {
+      "cells": 216,
+      "divergence_rate": 0.06944444444444445,
+      "divergence_rate_ci95": {
+        "lower": 0.0425,
+        "upper": 0.1114,
+        "mid": 0.077
+      },
+      "acceptance": {
+        "mean": 0.995457,
+        "median": 1.0,
+        "min": 0.882353,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 216
+      },
+      "timing_ms": {
+        "mean": 6621.370528,
+        "median": 6332.5865,
+        "min": 3089.33,
+        "p90": 10827.967,
+        "p95": 12854.34,
+        "max": 13691.905,
+        "count": 216
+      },
+      "exactkv_failures": 0,
+      "first_divergence_histogram": {
+        "2": 4,
+        "4": 4,
+        "10": 2,
+        "16": 1,
+        "18": 2,
+        "25": 1,
+        "29": 1
+      }
+    }
+  },
+  "by_compressor": {
+    "noop": {
+      "cells": 72,
+      "divergence_rate": 0.0,
+      "divergence_rate_ci95": {
+        "lower": 0.0,
+        "upper": 0.0507,
+        "mid": 0.0253
+      },
+      "acceptance": {
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 72
+      },
+      "timing_ms": {
+        "mean": 6571.515264,
+        "median": 6305.3155,
+        "min": 3100.109,
+        "p90": 10790.922,
+        "p95": 10992.448,
+        "max": 13425.278,
+        "count": 72
+      },
+      "exactkv_failures": 0,
+      "first_divergence_histogram": {}
+    },
+    "int8": {
+      "cells": 72,
+      "divergence_rate": 0.0,
+      "divergence_rate_ci95": {
+        "lower": 0.0,
+        "upper": 0.0507,
+        "mid": 0.0253
+      },
+      "acceptance": {
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 72
+      },
+      "timing_ms": {
+        "mean": 6651.411222,
+        "median": 6392.516,
+        "min": 3131.381,
+        "p90": 10729.17,
+        "p95": 11195.879,
+        "max": 13679.764,
+        "count": 72
+      },
+      "exactkv_failures": 0,
+      "first_divergence_histogram": {}
+    },
+    "int4_sim": {
+      "cells": 72,
+      "divergence_rate": 0.20833333333333334,
+      "divergence_rate_ci95": {
+        "lower": 0.1305,
+        "upper": 0.3157,
+        "mid": 0.2231
+      },
+      "acceptance": {
+        "mean": 0.98637,
+        "median": 1.0,
+        "min": 0.882353,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 72
+      },
+      "timing_ms": {
+        "mean": 6641.185097,
+        "median": 6360.9095,
+        "min": 3089.33,
+        "p90": 10886.115,
+        "p95": 11192.406,
+        "max": 13691.905,
+        "count": 72
+      },
+      "exactkv_failures": 0,
+      "first_divergence_histogram": {
+        "2": 4,
+        "4": 4,
+        "10": 2,
+        "16": 1,
+        "18": 2,
+        "25": 1,
+        "29": 1
+      }
+    }
+  },
+  "by_context_bucket": {
+    "2048": {
+      "cells": 96,
+      "divergence_rate": 0.07291666666666667,
+      "divergence_rate_ci95": {
+        "lower": 0.0358,
+        "upper": 0.1429,
+        "mid": 0.0893
+      },
+      "acceptance": {
+        "mean": 0.997224,
+        "median": 1.0,
+        "min": 0.882353,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 96
+      },
+      "timing_ms": {
+        "mean": 5384.08125,
+        "median": 6191.9335,
+        "min": 3937.751,
+        "p90": 6399.135,
+        "p95": 6406.956,
+        "max": 6428.245,
+        "count": 96
+      },
+      "exactkv_failures": 0,
+      "first_divergence_histogram": {
+        "4": 4,
+        "16": 1,
+        "18": 1,
+        "25": 1
+      }
+    },
+    "4096": {
+      "cells": 60,
+      "divergence_rate": 0.1,
+      "divergence_rate_ci95": {
+        "lower": 0.0466,
+        "upper": 0.2015,
+        "mid": 0.1241
+      },
+      "acceptance": {
+        "mean": 0.991578,
+        "median": 1.0,
+        "min": 0.882353,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 60
+      },
+      "timing_ms": {
+        "mean": 7590.241233,
+        "median": 7443.4005,
+        "min": 6149.531,
+        "p90": 8812.586,
+        "p95": 8817.886,
+        "max": 8843.402,
+        "count": 60
+      },
+      "exactkv_failures": 0,
+      "first_divergence_histogram": {
+        "2": 4,
+        "18": 1,
+        "29": 1
+      }
+    },
+    "8192": {
+      "cells": 24,
+      "divergence_rate": 0.08333333333333333,
+      "divergence_rate_ci95": {
+        "lower": 0.0232,
+        "upper": 0.2585,
+        "mid": 0.1408
+      },
+      "acceptance": {
+        "mean": 0.992573,
+        "median": 1.0,
+        "min": 0.882353,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 24
+      },
+      "timing_ms": {
+        "mean": 12231.604042,
+        "median": 12025.1095,
+        "min": 10729.17,
+        "p90": 13662.393,
+        "p95": 13679.764,
+        "max": 13691.905,
+        "count": 24
+      },
+      "exactkv_failures": 0,
+      "first_divergence_histogram": {
+        "10": 2
+      }
+    },
+    "1024": {
+      "cells": 36,
+      "divergence_rate": 0.0,
+      "divergence_rate_ci95": {
+        "lower": 0.0,
+        "upper": 0.0964,
+        "mid": 0.0482
+      },
+      "acceptance": {
+        "mean": 0.999132,
+        "median": 1.0,
+        "min": 0.96875,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 36
+      },
+      "timing_ms": {
+        "mean": 4565.868417,
+        "median": 5195.599,
+        "min": 3089.33,
+        "p90": 5312.189,
+        "p95": 5325.789,
+        "max": 5570.054,
+        "count": 36
+      },
+      "exactkv_failures": 0,
+      "first_divergence_histogram": {}
+    }
+  },
+  "by_max_new_tokens": {
+    "16": {
+      "cells": 96,
+      "divergence_rate": 0.052083333333333336,
+      "divergence_rate_ci95": {
+        "lower": 0.0224,
+        "upper": 0.1162,
+        "mid": 0.0693
+      },
+      "acceptance": {
+        "mean": 0.995098,
+        "median": 1.0,
+        "min": 0.882353,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 96
+      },
+      "timing_ms": {
+        "mean": 5630.607813,
+        "median": 4246.233,
+        "min": 3089.33,
+        "p90": 10827.967,
+        "p95": 11105.799,
+        "max": 11195.879,
+        "count": 96
+      },
+      "exactkv_failures": 0,
+      "first_divergence_histogram": {
+        "2": 2,
+        "4": 2,
+        "10": 1
+      }
+    },
+    "32": {
+      "cells": 120,
+      "divergence_rate": 0.08333333333333333,
+      "divergence_rate_ci95": {
+        "lower": 0.0459,
+        "upper": 0.1466,
+        "mid": 0.0963
+      },
+      "acceptance": {
+        "mean": 0.995744,
+        "median": 1.0,
+        "min": 0.911765,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 120
+      },
+      "timing_ms": {
+        "mean": 7413.9807,
+        "median": 6382.3815,
+        "min": 5136.378,
+        "p90": 8843.402,
+        "p95": 13429.741,
+        "max": 13691.905,
+        "count": 120
+      },
+      "exactkv_failures": 0,
+      "first_divergence_histogram": {
+        "2": 2,
+        "4": 2,
+        "10": 1,
+        "16": 1,
+        "18": 2,
+        "25": 1,
+        "29": 1
+      }
+    }
+  },
+  "by_category": {
+    "longbench/narrativeqa": {
+      "cells": 12,
+      "divergence_rate": 0.08333333333333333,
+      "acceptance": {
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 12
+      },
+      "exactkv_failures": 0
+    },
+    "longbench/hotpotqa": {
+      "cells": 12,
+      "divergence_rate": 0.0,
+      "acceptance": {
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 12
+      },
+      "exactkv_failures": 0
+    },
+    "longbench/gov_report": {
+      "cells": 12,
+      "divergence_rate": 0.25,
+      "acceptance": {
+        "mean": 0.980095,
+        "median": 1.0,
+        "min": 0.882353,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 12
+      },
+      "exactkv_failures": 0
+    },
+    "longbench/trec": {
+      "cells": 12,
+      "divergence_rate": 0.0,
+      "acceptance": {
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 12
+      },
+      "exactkv_failures": 0
+    },
+    "longbench/passage_retrieval_en": {
+      "cells": 12,
+      "divergence_rate": 0.16666666666666666,
+      "acceptance": {
+        "mean": 0.985146,
+        "median": 1.0,
+        "min": 0.882353,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 12
+      },
+      "exactkv_failures": 0
+    },
+    "longbench/lcc": {
+      "cells": 12,
+      "divergence_rate": 0.0,
+      "acceptance": {
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 12
+      },
+      "exactkv_failures": 0
+    },
+    "ruler/niah_single": {
+      "cells": 18,
+      "divergence_rate": 0.2222222222222222,
+      "acceptance": {
+        "mean": 0.980194,
+        "median": 1.0,
+        "min": 0.882353,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 18
+      },
+      "exactkv_failures": 0
+    },
+    "ruler/niah_multi": {
+      "cells": 18,
+      "divergence_rate": 0.0,
+      "acceptance": {
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 18
+      },
+      "exactkv_failures": 0
+    },
+    "ruler/variable_tracking": {
+      "cells": 18,
+      "divergence_rate": 0.05555555555555555,
+      "acceptance": {
+        "mean": 0.995098,
+        "median": 1.0,
+        "min": 0.911765,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 18
+      },
+      "exactkv_failures": 0
+    },
+    "ruler/common_words_extraction": {
+      "cells": 18,
+      "divergence_rate": 0.05555555555555555,
+      "acceptance": {
+        "mean": 0.995098,
+        "median": 1.0,
+        "min": 0.911765,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 18
+      },
+      "exactkv_failures": 0
+    },
+    "bfcl/simple": {
+      "cells": 12,
+      "divergence_rate": 0.0,
+      "acceptance": {
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 12
+      },
+      "exactkv_failures": 0
+    },
+    "bfcl/parallel": {
+      "cells": 12,
+      "divergence_rate": 0.08333333333333333,
+      "acceptance": {
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 12
+      },
+      "exactkv_failures": 0
+    },
+    "bfcl/multi_turn": {
+      "cells": 12,
+      "divergence_rate": 0.0,
+      "acceptance": {
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 12
+      },
+      "exactkv_failures": 0
+    },
+    "bfcl/ast_eval": {
+      "cells": 12,
+      "divergence_rate": 0.16666666666666666,
+      "acceptance": {
+        "mean": 0.997396,
+        "median": 1.0,
+        "min": 0.96875,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 12
+      },
+      "exactkv_failures": 0
+    },
+    "humaneval/code": {
+      "cells": 24,
+      "divergence_rate": 0.0,
+      "acceptance": {
+        "mean": 1.0,
+        "median": 1.0,
+        "min": 1.0,
+        "p90": 1.0,
+        "p95": 1.0,
+        "max": 1.0,
+        "count": 24
+      },
+      "exactkv_failures": 0
+    }
+  },
+  "by_panel_compressor": {
+    "longbench_pilot": {
+      "noop": {
+        "cells": 24,
+        "divergence_rate": 0.0,
+        "divergence_rate_ci95": {
+          "lower": 0.0,
+          "upper": 0.138,
+          "mid": 0.069
+        },
+        "acceptance": {
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "p90": 1.0,
+          "p95": 1.0,
+          "max": 1.0,
+          "count": 24
+        },
+        "acceptance_full_rate_ci95": {
+          "lower": 0.862,
+          "upper": 1.0,
+          "mid": 0.931
+        },
+        "mean_first_divergence": null,
+        "exactkv_failures": 0
+      },
+      "int8": {
+        "cells": 24,
+        "divergence_rate": 0.0,
+        "divergence_rate_ci95": {
+          "lower": 0.0,
+          "upper": 0.138,
+          "mid": 0.069
+        },
+        "acceptance": {
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "p90": 1.0,
+          "p95": 1.0,
+          "max": 1.0,
+          "count": 24
+        },
+        "acceptance_full_rate_ci95": {
+          "lower": 0.862,
+          "upper": 1.0,
+          "mid": 0.931
+        },
+        "mean_first_divergence": null,
+        "exactkv_failures": 0
+      },
+      "int4_sim": {
+        "cells": 24,
+        "divergence_rate": 0.25,
+        "divergence_rate_ci95": {
+          "lower": 0.12,
+          "upper": 0.449,
+          "mid": 0.2845
+        },
+        "acceptance": {
+          "mean": 0.98262,
+          "median": 1.0,
+          "min": 0.882353,
+          "p90": 1.0,
+          "p95": 1.0,
+          "max": 1.0,
+          "count": 24
+        },
+        "acceptance_full_rate_ci95": {
+          "lower": 0.5953,
+          "upper": 0.9076,
+          "mid": 0.7514
+        },
+        "mean_first_divergence": 8,
+        "exactkv_failures": 0
+      }
+    },
+    "ruler_2048_4096": {
+      "noop": {
+        "cells": 16,
+        "divergence_rate": 0.0,
+        "divergence_rate_ci95": {
+          "lower": 0.0,
+          "upper": 0.1936,
+          "mid": 0.0968
+        },
+        "acceptance": {
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "p90": 1.0,
+          "p95": 1.0,
+          "max": 1.0,
+          "count": 16
+        },
+        "acceptance_full_rate_ci95": {
+          "lower": 0.8064,
+          "upper": 1.0,
+          "mid": 0.9032
+        },
+        "mean_first_divergence": null,
+        "exactkv_failures": 0
+      },
+      "int8": {
+        "cells": 16,
+        "divergence_rate": 0.0,
+        "divergence_rate_ci95": {
+          "lower": 0.0,
+          "upper": 0.1936,
+          "mid": 0.0968
+        },
+        "acceptance": {
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "p90": 1.0,
+          "p95": 1.0,
+          "max": 1.0,
+          "count": 16
+        },
+        "acceptance_full_rate_ci95": {
+          "lower": 0.8064,
+          "upper": 1.0,
+          "mid": 0.9032
+        },
+        "mean_first_divergence": null,
+        "exactkv_failures": 0
+      },
+      "int4_sim": {
+        "cells": 16,
+        "divergence_rate": 0.25,
+        "divergence_rate_ci95": {
+          "lower": 0.1018,
+          "upper": 0.495,
+          "mid": 0.2984
+        },
+        "acceptance": {
+          "mean": 0.97783,
+          "median": 1.0,
+          "min": 0.882353,
+          "p90": 1.0,
+          "p95": 1.0,
+          "max": 1.0,
+          "count": 16
+        },
+        "acceptance_full_rate_ci95": {
+          "lower": 0.505,
+          "upper": 0.8982,
+          "mid": 0.7016
+        },
+        "mean_first_divergence": 14.5,
+        "exactkv_failures": 0
+      }
+    },
+    "ruler_8192": {
+      "noop": {
+        "cells": 8,
+        "divergence_rate": 0.0,
+        "divergence_rate_ci95": {
+          "lower": 0.0,
+          "upper": 0.3244,
+          "mid": 0.1622
+        },
+        "acceptance": {
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "p90": 1.0,
+          "p95": 1.0,
+          "max": 1.0,
+          "count": 8
+        },
+        "acceptance_full_rate_ci95": {
+          "lower": 0.6756,
+          "upper": 1.0,
+          "mid": 0.8378
+        },
+        "mean_first_divergence": null,
+        "exactkv_failures": 0
+      },
+      "int8": {
+        "cells": 8,
+        "divergence_rate": 0.0,
+        "divergence_rate_ci95": {
+          "lower": 0.0,
+          "upper": 0.3244,
+          "mid": 0.1622
+        },
+        "acceptance": {
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "p90": 1.0,
+          "p95": 1.0,
+          "max": 1.0,
+          "count": 8
+        },
+        "acceptance_full_rate_ci95": {
+          "lower": 0.6756,
+          "upper": 1.0,
+          "mid": 0.8378
+        },
+        "mean_first_divergence": null,
+        "exactkv_failures": 0
+      },
+      "int4_sim": {
+        "cells": 8,
+        "divergence_rate": 0.25,
+        "divergence_rate_ci95": {
+          "lower": 0.0715,
+          "upper": 0.5907,
+          "mid": 0.3311
+        },
+        "acceptance": {
+          "mean": 0.977718,
+          "median": 1.0,
+          "min": 0.882353,
+          "p90": 1.0,
+          "p95": 1.0,
+          "max": 1.0,
+          "count": 8
+        },
+        "acceptance_full_rate_ci95": {
+          "lower": 0.4093,
+          "upper": 0.9285,
+          "mid": 0.6689
+        },
+        "mean_first_divergence": 10,
+        "exactkv_failures": 0
+      }
+    },
+    "bfcl": {
+      "noop": {
+        "cells": 16,
+        "divergence_rate": 0.0,
+        "divergence_rate_ci95": {
+          "lower": 0.0,
+          "upper": 0.1936,
+          "mid": 0.0968
+        },
+        "acceptance": {
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "p90": 1.0,
+          "p95": 1.0,
+          "max": 1.0,
+          "count": 16
+        },
+        "acceptance_full_rate_ci95": {
+          "lower": 0.8064,
+          "upper": 1.0,
+          "mid": 0.9032
+        },
+        "mean_first_divergence": null,
+        "exactkv_failures": 0
+      },
+      "int8": {
+        "cells": 16,
+        "divergence_rate": 0.0,
+        "divergence_rate_ci95": {
+          "lower": 0.0,
+          "upper": 0.1936,
+          "mid": 0.0968
+        },
+        "acceptance": {
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "p90": 1.0,
+          "p95": 1.0,
+          "max": 1.0,
+          "count": 16
+        },
+        "acceptance_full_rate_ci95": {
+          "lower": 0.8064,
+          "upper": 1.0,
+          "mid": 0.9032
+        },
+        "mean_first_divergence": null,
+        "exactkv_failures": 0
+      },
+      "int4_sim": {
+        "cells": 16,
+        "divergence_rate": 0.1875,
+        "divergence_rate_ci95": {
+          "lower": 0.0659,
+          "upper": 0.4301,
+          "mid": 0.248
+        },
+        "acceptance": {
+          "mean": 0.998047,
+          "median": 1.0,
+          "min": 0.96875,
+          "p90": 1.0,
+          "p95": 1.0,
+          "max": 1.0,
+          "count": 16
+        },
+        "acceptance_full_rate_ci95": {
+          "lower": 0.7167,
+          "upper": 0.9889,
+          "mid": 0.8528
+        },
+        "mean_first_divergence": 8,
+        "exactkv_failures": 0
+      }
+    },
+    "humaneval": {
+      "noop": {
+        "cells": 8,
+        "divergence_rate": 0.0,
+        "divergence_rate_ci95": {
+          "lower": 0.0,
+          "upper": 0.3244,
+          "mid": 0.1622
+        },
+        "acceptance": {
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "p90": 1.0,
+          "p95": 1.0,
+          "max": 1.0,
+          "count": 8
+        },
+        "acceptance_full_rate_ci95": {
+          "lower": 0.6756,
+          "upper": 1.0,
+          "mid": 0.8378
+        },
+        "mean_first_divergence": null,
+        "exactkv_failures": 0
+      },
+      "int8": {
+        "cells": 8,
+        "divergence_rate": 0.0,
+        "divergence_rate_ci95": {
+          "lower": 0.0,
+          "upper": 0.3244,
+          "mid": 0.1622
+        },
+        "acceptance": {
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "p90": 1.0,
+          "p95": 1.0,
+          "max": 1.0,
+          "count": 8
+        },
+        "acceptance_full_rate_ci95": {
+          "lower": 0.6756,
+          "upper": 1.0,
+          "mid": 0.8378
+        },
+        "mean_first_divergence": null,
+        "exactkv_failures": 0
+      },
+      "int4_sim": {
+        "cells": 8,
+        "divergence_rate": 0.0,
+        "divergence_rate_ci95": {
+          "lower": 0.0,
+          "upper": 0.3244,
+          "mid": 0.1622
+        },
+        "acceptance": {
+          "mean": 1.0,
+          "median": 1.0,
+          "min": 1.0,
+          "p90": 1.0,
+          "p95": 1.0,
+          "max": 1.0,
+          "count": 8
+        },
+        "acceptance_full_rate_ci95": {
+          "lower": 0.6756,
+          "upper": 1.0,
+          "mid": 0.8378
+        },
+        "mean_first_divergence": null,
+        "exactkv_failures": 0
+      }
+    }
+  },
+  "by_panel_bucket_timing": {
+    "longbench_pilot": {
+      "2048": {
+        "cells": 36,
+        "divergence_rate": 0.08333333333333333,
+        "timing_ms": {
+          "mean": 5259.054806,
+          "median": 5250.8245,
+          "min": 4036.199,
+          "p90": 6406.828,
+          "p95": 6412.701,
+          "max": 6428.245,
+          "count": 36
+        }
+      },
+      "4096": {
+        "cells": 36,
+        "divergence_rate": 0.08333333333333333,
+        "timing_ms": {
+          "mean": 7585.5375,
+          "median": 7441.715,
+          "min": 6149.531,
+          "p90": 8812.586,
+          "p95": 8814.06,
+          "max": 8822.778,
+          "count": 36
+        }
+      }
+    },
+    "ruler_2048_4096": {
+      "2048": {
+        "cells": 24,
+        "divergence_rate": 0.041666666666666664,
+        "timing_ms": {
+          "mean": 5275.3375,
+          "median": 5331.593,
+          "min": 4081.291,
+          "p90": 6404.849,
+          "p95": 6410.237,
+          "max": 6425.279,
+          "count": 24
+        }
+      },
+      "4096": {
+        "cells": 24,
+        "divergence_rate": 0.125,
+        "timing_ms": {
+          "mean": 7597.296833,
+          "median": 7515.455,
+          "min": 6240.569,
+          "p90": 8813.62,
+          "p95": 8817.886,
+          "max": 8843.402,
+          "count": 24
+        }
+      }
+    },
+    "ruler_8192": {
+      "8192": {
+        "cells": 24,
+        "divergence_rate": 0.08333333333333333,
+        "timing_ms": {
+          "mean": 12231.604042,
+          "median": 12025.1095,
+          "min": 10729.17,
+          "p90": 13662.393,
+          "p95": 13679.764,
+          "max": 13691.905,
+          "count": 24
+        }
+      }
+    },
+    "bfcl": {
+      "1024": {
+        "cells": 24,
+        "divergence_rate": 0.0,
+        "timing_ms": {
+          "mean": 4212.192125,
+          "median": 4331.999,
+          "min": 3089.33,
+          "p90": 5292.121,
+          "p95": 5306.41,
+          "max": 5327.89,
+          "count": 24
+        }
+      },
+      "2048": {
+        "cells": 24,
+        "divergence_rate": 0.125,
+        "timing_ms": {
+          "mean": 5218.241083,
+          "median": 4943.2155,
+          "min": 3937.751,
+          "p90": 6394.29,
+          "p95": 6403.346,
+          "max": 6406.956,
+          "count": 24
+        }
+      }
+    },
+    "humaneval": {
+      "1024": {
+        "cells": 12,
+        "divergence_rate": 0.0,
+        "timing_ms": {
+          "mean": 5273.221,
+          "median": 5263.6365,
+          "min": 5136.378,
+          "p90": 5325.789,
+          "p95": 5325.789,
+          "max": 5570.054,
+          "count": 12
+        }
+      },
+      "2048": {
+        "cells": 12,
+        "divergence_rate": 0.0,
+        "timing_ms": {
+          "mean": 6308.328417,
+          "median": 6322.984,
+          "min": 6137.05,
+          "p90": 6394.293,
+          "p95": 6394.293,
+          "max": 6396.331,
+          "count": 12
+        }
+      }
+    }
+  },
+  "bfcl_tool_call_validity": {
+    "bfcl": {
+      "noop": {
+        "cells": 16,
+        "valid_tool_call_rate": 0.0,
+        "valid_tool_call_ci95": {
+          "lower": 0.0,
+          "upper": 0.1936,
+          "mid": 0.0968
+        },
+        "partial_json_rate": 0.5625,
+        "no_json_rate": 0.4375
+      },
+      "int8": {
+        "cells": 16,
+        "valid_tool_call_rate": 0.0,
+        "valid_tool_call_ci95": {
+          "lower": 0.0,
+          "upper": 0.1936,
+          "mid": 0.0968
+        },
+        "partial_json_rate": 0.5625,
+        "no_json_rate": 0.4375
+      },
+      "int4_sim": {
+        "cells": 16,
+        "valid_tool_call_rate": 0.0,
+        "valid_tool_call_ci95": {
+          "lower": 0.0,
+          "upper": 0.1936,
+          "mid": 0.0968
+        },
+        "partial_json_rate": 0.5625,
+        "no_json_rate": 0.4375
+      },
+      "__all__": {
+        "cells": 48,
+        "valid_tool_call_rate": 0.0,
+        "valid_tool_call_ci95": {
+          "lower": 0.0,
+          "upper": 0.0741,
+          "mid": 0.0371
+        },
+        "partial_json_rate": 0.5625,
+        "no_json_rate": 0.4375
+      },
+      "__diagnostic__": {
+        "max_new_tokens_used": [
+          16,
+          32
+        ],
+        "note": "BFCL smoke panels used short max_new_tokens for drift measurement. Completeness of JSON tool calls requires max_new_tokens >= 128. partial_json_rate = fraction that began but did not complete JSON. Re-run with --max-new-tokens 128,256 for validity scoring."
+      }
+    }
+  },
+  "divergent_rankings_prompt_ids": {
+    "by_earliest_first_divergence": [
+      "lb_passage_retrieval_001_ctx4096",
+      "lb_passage_retrieval_001_ctx4096",
+      "ruler_niah_single_4k_ctx4096",
+      "ruler_niah_single_4k_ctx4096",
+      "lb_gov_report_001_ctx2048",
+      "lb_gov_report_001_ctx2048",
+      "bfcl_ast_001_ctx2048",
+      "bfcl_ast_001_ctx2048",
+      "ruler_niah_single_4k_ctx8192",
+      "ruler_niah_single_4k_ctx8192",
+      "bfcl_parallel_001_ctx2048",
+      "lb_narrativeqa_001_ctx2048",
+      "lb_gov_report_001_ctx4096",
+      "ruler_common_words_32k_ctx2048",
+      "ruler_variable_tracking_16k_ctx4096"
+    ],
+    "by_lowest_acceptance": [
+      "lb_gov_report_001_ctx2048",
+      "lb_passage_retrieval_001_ctx4096",
+      "ruler_niah_single_4k_ctx4096",
+      "ruler_niah_single_4k_ctx8192",
+      "ruler_variable_tracking_16k_ctx4096",
+      "ruler_common_words_32k_ctx2048",
+      "lb_gov_report_001_ctx2048",
+      "lb_gov_report_001_ctx4096",
+      "lb_passage_retrieval_001_ctx4096",
+      "ruler_niah_single_4k_ctx4096",
+      "ruler_niah_single_4k_ctx8192",
+      "lb_narrativeqa_001_ctx2048",
+      "bfcl_parallel_001_ctx2048",
+      "bfcl_ast_001_ctx2048",
+      "bfcl_ast_001_ctx2048"
+    ],
+    "by_highest_context_bucket": [
+      "ruler_niah_single_4k_ctx8192",
+      "ruler_niah_single_4k_ctx8192",
+      "lb_gov_report_001_ctx4096",
+      "lb_passage_retrieval_001_ctx4096",
+      "lb_passage_retrieval_001_ctx4096",
+      "ruler_niah_single_4k_ctx4096",
+      "ruler_niah_single_4k_ctx4096",
+      "ruler_variable_tracking_16k_ctx4096",
+      "lb_narrativeqa_001_ctx2048",
+      "lb_gov_report_001_ctx2048",
+      "lb_gov_report_001_ctx2048",
+      "ruler_common_words_32k_ctx2048",
+      "bfcl_parallel_001_ctx2048",
+      "bfcl_ast_001_ctx2048",
+      "bfcl_ast_001_ctx2048"
+    ],
+    "by_tool_code_risk": [
+      "bfcl_ast_001_ctx2048",
+      "bfcl_ast_001_ctx2048",
+      "bfcl_parallel_001_ctx2048",
+      "lb_passage_retrieval_001_ctx4096",
+      "lb_passage_retrieval_001_ctx4096",
+      "ruler_niah_single_4k_ctx4096",
+      "ruler_niah_single_4k_ctx4096",
+      "lb_gov_report_001_ctx2048",
+      "lb_gov_report_001_ctx2048",
+      "ruler_niah_single_4k_ctx8192",
+      "ruler_niah_single_4k_ctx8192",
+      "lb_narrativeqa_001_ctx2048",
+      "lb_gov_report_001_ctx4096",
+      "ruler_common_words_32k_ctx2048",
+      "ruler_variable_tracking_16k_ctx4096"
+    ]
+  },
+  "summary_all_crosscheck": {
+    "longbench_pilot": {
+      "summary_cells_run": 216,
+      "computed_cells_ok": 72,
+      "match": false,
+      "summary_exactkv_failures": 0,
+      "computed_exactkv_failures": 0,
+      "summary_divergence_rate": 0.06481481481481481,
+      "computed_divergence_rate": 0.08333333333333333
+    },
+    "ruler_2048_4096": {
+      "summary_cells_run": 144,
+      "computed_cells_ok": 48,
+      "match": false,
+      "summary_exactkv_failures": 0,
+      "computed_exactkv_failures": 0,
+      "summary_divergence_rate": 0.0763888888888889,
+      "computed_divergence_rate": 0.08333333333333333
+    },
+    "ruler_8192": {
+      "summary_cells_run": 72,
+      "computed_cells_ok": 24,
+      "match": false,
+      "summary_exactkv_failures": 0,
+      "computed_exactkv_failures": 0,
+      "summary_divergence_rate": 0.09722222222222222,
+      "computed_divergence_rate": 0.08333333333333333
+    },
+    "bfcl": {
+      "summary_cells_run": 144,
+      "computed_cells_ok": 48,
+      "match": false,
+      "summary_exactkv_failures": 0,
+      "computed_exactkv_failures": 0,
+      "summary_divergence_rate": 0.041666666666666664,
+      "computed_divergence_rate": 0.0625
+    },
+    "humaneval": {
+      "summary_cells_run": 72,
+      "computed_cells_ok": 24,
+      "match": false,
+      "summary_exactkv_failures": 0,
+      "computed_exactkv_failures": 0,
+      "summary_divergence_rate": 0.0,
+      "computed_divergence_rate": 0.0
+    }
+  },
+  "offline_artifacts_excluded": [
+    {
+      "file": "reports/external_panels/longbench_raw.json",
+      "cells_run": 4,
+      "family": "longbench",
+      "smoke": true
+    },
+    {
+      "file": "reports/external_panels/humaneval_raw.json",
+      "cells_run": 4,
+      "family": "humaneval",
+      "smoke": true
+    },
+    {
+      "file": "reports/external_panels/bfcl_raw.json",
+      "cells_run": 4,
+      "family": "bfcl",
+      "smoke": true
+    },
+    {
+      "file": "reports/external_panels/mbpp_raw.json",
+      "cells_run": 4,
+      "family": "mbpp",
+      "smoke": true
+    },
+    {
+      "file": "reports/external_panels/ruler_raw.json",
+      "cells_run": 4,
+      "family": "ruler",
+      "smoke": true
+    }
+  ],
+  "validation": {
+    "all_merged_deterministic_mode_false": true,
+    "exactkv_failures_zero_all_merged_reports": true,
+    "exactkv_failures_zero_per_cell": true,
+    "divergence_only_int4_sim": true,
+    "non_int4_divergent_cells": 0,
+    "noop_int8_divergence_count": 0,
+    "int4_sim_cells": 72,
+    "int4_sim_divergent_cells": 15,
+    "int4_sim_divergence_rate": 0.20833333333333334,
+    "non_ok_cell_statuses": []
+  },
+  "contradictions": [
+    "summary_all cell count mismatch for longbench_pilot",
+    "summary_all cell count mismatch for ruler_2048_4096",
+    "summary_all cell count mismatch for ruler_8192",
+    "summary_all cell count mismatch for bfcl",
+    "summary_all cell count mismatch for humaneval"
+  ],
+  "per_file_meta": {
+    "/Users/utkarshgupta/Documents/ExactKV/reports/external_panels/longbench_pilot_merged_raw.json": {
+      "panel": "longbench_pilot",
+      "deterministic_mode": false,
+      "cells_total": 72,
+      "cells_ok": 72,
+      "exactkv_failures_reported": 0,
+      "generated_at": "2026-06-26T19:52:54.352499+00:00"
+    },
+    "/Users/utkarshgupta/Documents/ExactKV/reports/external_panels/ruler_2048_4096_merged_raw.json": {
+      "panel": "ruler_2048_4096",
+      "deterministic_mode": false,
+      "cells_total": 48,
+      "cells_ok": 48,
+      "exactkv_failures_reported": 0,
+      "generated_at": "2026-06-26T19:52:54.360302+00:00"
+    },
+    "/Users/utkarshgupta/Documents/ExactKV/reports/external_panels/ruler_8192_merged_raw.json": {
+      "panel": "ruler_8192",
+      "deterministic_mode": false,
+      "cells_total": 24,
+      "cells_ok": 24,
+      "exactkv_failures_reported": 0,
+      "generated_at": "2026-06-26T19:52:54.365337+00:00"
+    },
+    "/Users/utkarshgupta/Documents/ExactKV/reports/external_panels/bfcl_merged_raw.json": {
+      "panel": "bfcl",
+      "deterministic_mode": false,
+      "cells_total": 48,
+      "cells_ok": 48,
+      "exactkv_failures_reported": 0,
+      "generated_at": "2026-06-26T19:52:54.370413+00:00"
+    },
+    "/Users/utkarshgupta/Documents/ExactKV/reports/external_panels/humaneval_merged_raw.json": {
+      "panel": "humaneval",
+      "deterministic_mode": false,
+      "cells_total": 24,
+      "cells_ok": 24,
+      "exactkv_failures_reported": 0,
+      "generated_at": "2026-06-26T19:52:54.373965+00:00"
+    }
+  }
+}

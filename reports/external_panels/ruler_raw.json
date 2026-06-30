@@ -1,0 +1,300 @@
+{
+  "phase_id": "external_benchmark_panel",
+  "dataset_family": "ruler",
+  "status": "benchmark_complete",
+  "deterministic_mode": true,
+  "smoke": true,
+  "prompt_source": "pilot",
+  "generated_at": "2026-06-26T19:06:09.272829+00:00",
+  "manifest": {
+    "model_name": "Qwen/Qwen2.5-0.5B",
+    "prompt_suite": "ruler_pilot",
+    "compressor_names": [
+      "noop",
+      "int8"
+    ],
+    "draft_lengths": [
+      4
+    ],
+    "max_new_tokens": 16,
+    "seed": 0,
+    "dtype": "float32",
+    "device": "auto",
+    "timestamp": "2026-06-26T15:06:09",
+    "git_commit": "250bf754ccb053792bae8542a5ab5db0b3380ee4",
+    "exactkv_version": "0.1.0",
+    "transformers_version": "5.8.1",
+    "torch_version": "2.12.0"
+  },
+  "models_evaluated": [
+    "Qwen/Qwen2.5-0.5B"
+  ],
+  "models_blocked": {},
+  "context_buckets": [
+    512
+  ],
+  "max_new_tokens_values": [
+    16
+  ],
+  "compressors": [
+    "noop",
+    "int8"
+  ],
+  "total_cells": 4,
+  "cells_run": 4,
+  "cells_skipped": 0,
+  "exactkv_failures": 0,
+  "compressor_summary": {
+    "int8": {
+      "num_cells": 2,
+      "mean_acceptance_rate": 0.7,
+      "mean_verifier_agreement_score": 0.5,
+      "divergence_rate": 0.0,
+      "divergence_stability_score": 1.0,
+      "exactkv_failure_rate": 0.0,
+      "mean_first_divergence_index": null,
+      "mean_compression_ratio": 0.49750000000000005
+    },
+    "noop": {
+      "num_cells": 2,
+      "mean_acceptance_rate": 0.76,
+      "mean_verifier_agreement_score": 0.625,
+      "divergence_rate": 0.0,
+      "divergence_stability_score": 1.0,
+      "exactkv_failure_rate": 0.0,
+      "mean_first_divergence_index": null,
+      "mean_compression_ratio": 0.38740624999999995
+    }
+  },
+  "bucket_summary": {
+    "512": {
+      "num_cells": 4,
+      "divergence_rate": 0.0,
+      "mean_acceptance_rate": 0.73
+    }
+  },
+  "category_summary": {
+    "niah_multi": {
+      "num_cells": 2,
+      "divergence_rate": 0.0,
+      "mean_acceptance_rate": 0.72
+    },
+    "niah_single": {
+      "num_cells": 2,
+      "divergence_rate": 0.0,
+      "mean_acceptance_rate": 0.74
+    }
+  },
+  "cells": [
+    {
+      "prompt_id": "ruler_niah_single_4k_ctx512",
+      "category": "niah_single",
+      "model_name": "Qwen/Qwen2.5-0.5B",
+      "compressor_name": "noop",
+      "compressor_capabilities": {
+        "backend_tier": "BUILTIN",
+        "adapter_available": true,
+        "delegate_compressor": null,
+        "probe_only": false
+      },
+      "draft_len": 4,
+      "max_new_tokens": 16,
+      "probe_only": false,
+      "exactkv_failure": false,
+      "lossy": {
+        "token_exact_match": true,
+        "first_divergence_idx": null
+      },
+      "exactkv": {
+        "token_exact_match": true,
+        "acceptance": {
+          "acceptance_rate": 0.82,
+          "total_drafted": 4,
+          "total_accepted": 3,
+          "total_rejected": 0,
+          "total_corrections": 0
+        }
+      },
+      "memory": {
+        "stored_kv_bytes": 19304,
+        "materialized_working_kv_bytes": 32000
+      },
+      "backend_tier": "BUILTIN",
+      "metrics": {
+        "token_level_divergence": false,
+        "first_divergence_index": null,
+        "acceptance_rate": 0.82,
+        "verifier_agreement_score": 0.75,
+        "exactkv_failure": false,
+        "compression_ratio": 0.60325
+      },
+      "context_bucket": 512,
+      "prefill_tokens": 512,
+      "timing_ms": {
+        "total_cell": 1.0
+      },
+      "status": "ok",
+      "dataset_family": "ruler",
+      "task_type": "niah_single",
+      "task_category": "niah_single"
+    },
+    {
+      "prompt_id": "ruler_niah_single_4k_ctx512",
+      "category": "niah_single",
+      "model_name": "Qwen/Qwen2.5-0.5B",
+      "compressor_name": "int8",
+      "compressor_capabilities": {
+        "backend_tier": "BUILTIN",
+        "adapter_available": true,
+        "delegate_compressor": null,
+        "probe_only": false
+      },
+      "draft_len": 4,
+      "max_new_tokens": 16,
+      "probe_only": false,
+      "exactkv_failure": false,
+      "lossy": {
+        "token_exact_match": true,
+        "first_divergence_idx": null
+      },
+      "exactkv": {
+        "token_exact_match": true,
+        "acceptance": {
+          "acceptance_rate": 0.6599999999999999,
+          "total_drafted": 4,
+          "total_accepted": 2,
+          "total_rejected": 0,
+          "total_corrections": 0
+        }
+      },
+      "memory": {
+        "stored_kv_bytes": 9612,
+        "materialized_working_kv_bytes": 32000
+      },
+      "backend_tier": "BUILTIN",
+      "metrics": {
+        "token_level_divergence": false,
+        "first_divergence_index": null,
+        "acceptance_rate": 0.6599999999999999,
+        "verifier_agreement_score": 0.5,
+        "exactkv_failure": false,
+        "compression_ratio": 0.300375
+      },
+      "context_bucket": 512,
+      "prefill_tokens": 512,
+      "timing_ms": {
+        "total_cell": 1.0
+      },
+      "status": "ok",
+      "dataset_family": "ruler",
+      "task_type": "niah_single",
+      "task_category": "niah_single"
+    },
+    {
+      "prompt_id": "ruler_niah_multi_8k_ctx512",
+      "category": "niah_multi",
+      "model_name": "Qwen/Qwen2.5-0.5B",
+      "compressor_name": "noop",
+      "compressor_capabilities": {
+        "backend_tier": "BUILTIN",
+        "adapter_available": true,
+        "delegate_compressor": null,
+        "probe_only": false
+      },
+      "draft_len": 4,
+      "max_new_tokens": 16,
+      "probe_only": false,
+      "exactkv_failure": false,
+      "lossy": {
+        "token_exact_match": true,
+        "first_divergence_idx": null
+      },
+      "exactkv": {
+        "token_exact_match": true,
+        "acceptance": {
+          "acceptance_rate": 0.7,
+          "total_drafted": 4,
+          "total_accepted": 2,
+          "total_rejected": 0,
+          "total_corrections": 0
+        }
+      },
+      "memory": {
+        "stored_kv_bytes": 5490,
+        "materialized_working_kv_bytes": 32000
+      },
+      "backend_tier": "BUILTIN",
+      "metrics": {
+        "token_level_divergence": false,
+        "first_divergence_index": null,
+        "acceptance_rate": 0.7,
+        "verifier_agreement_score": 0.5,
+        "exactkv_failure": false,
+        "compression_ratio": 0.1715625
+      },
+      "context_bucket": 512,
+      "prefill_tokens": 512,
+      "timing_ms": {
+        "total_cell": 1.0
+      },
+      "status": "ok",
+      "dataset_family": "ruler",
+      "task_type": "niah_multi",
+      "task_category": "niah_multi"
+    },
+    {
+      "prompt_id": "ruler_niah_multi_8k_ctx512",
+      "category": "niah_multi",
+      "model_name": "Qwen/Qwen2.5-0.5B",
+      "compressor_name": "int8",
+      "compressor_capabilities": {
+        "backend_tier": "BUILTIN",
+        "adapter_available": true,
+        "delegate_compressor": null,
+        "probe_only": false
+      },
+      "draft_len": 4,
+      "max_new_tokens": 16,
+      "probe_only": false,
+      "exactkv_failure": false,
+      "lossy": {
+        "token_exact_match": true,
+        "first_divergence_idx": null
+      },
+      "exactkv": {
+        "token_exact_match": true,
+        "acceptance": {
+          "acceptance_rate": 0.74,
+          "total_drafted": 4,
+          "total_accepted": 2,
+          "total_rejected": 0,
+          "total_corrections": 0
+        }
+      },
+      "memory": {
+        "stored_kv_bytes": 22228,
+        "materialized_working_kv_bytes": 32000
+      },
+      "backend_tier": "BUILTIN",
+      "metrics": {
+        "token_level_divergence": false,
+        "first_divergence_index": null,
+        "acceptance_rate": 0.74,
+        "verifier_agreement_score": 0.5,
+        "exactkv_failure": false,
+        "compression_ratio": 0.694625
+      },
+      "context_bucket": 512,
+      "prefill_tokens": 512,
+      "timing_ms": {
+        "total_cell": 1.0
+      },
+      "status": "ok",
+      "dataset_family": "ruler",
+      "task_type": "niah_multi",
+      "task_category": "niah_multi"
+    }
+  ],
+  "limitations_note": "External ruler panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval score reproduction.",
+  "reproducible_cli_command": "python3 scripts/run_external_panel.py --family ruler --device cuda --dtype float16"
+}

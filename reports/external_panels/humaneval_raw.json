@@ -1,0 +1,295 @@
+{
+  "phase_id": "external_benchmark_panel",
+  "dataset_family": "humaneval",
+  "status": "benchmark_complete",
+  "deterministic_mode": true,
+  "smoke": true,
+  "prompt_source": "pilot",
+  "generated_at": "2026-06-26T19:06:16.024230+00:00",
+  "manifest": {
+    "model_name": "Qwen/Qwen2.5-0.5B",
+    "prompt_suite": "humaneval_pilot",
+    "compressor_names": [
+      "noop",
+      "int8"
+    ],
+    "draft_lengths": [
+      4
+    ],
+    "max_new_tokens": 16,
+    "seed": 0,
+    "dtype": "float32",
+    "device": "auto",
+    "timestamp": "2026-06-26T15:06:16",
+    "git_commit": "250bf754ccb053792bae8542a5ab5db0b3380ee4",
+    "exactkv_version": "0.1.0",
+    "transformers_version": "5.8.1",
+    "torch_version": "2.12.0"
+  },
+  "models_evaluated": [
+    "Qwen/Qwen2.5-0.5B"
+  ],
+  "models_blocked": {},
+  "context_buckets": [
+    512
+  ],
+  "max_new_tokens_values": [
+    16
+  ],
+  "compressors": [
+    "noop",
+    "int8"
+  ],
+  "total_cells": 4,
+  "cells_run": 4,
+  "cells_skipped": 0,
+  "exactkv_failures": 0,
+  "compressor_summary": {
+    "int8": {
+      "num_cells": 2,
+      "mean_acceptance_rate": 0.73,
+      "mean_verifier_agreement_score": 0.625,
+      "divergence_rate": 0.0,
+      "divergence_stability_score": 1.0,
+      "exactkv_failure_rate": 0.0,
+      "mean_first_divergence_index": null,
+      "mean_compression_ratio": 0.47253124999999996
+    },
+    "noop": {
+      "num_cells": 2,
+      "mean_acceptance_rate": 0.8300000000000001,
+      "mean_verifier_agreement_score": 0.75,
+      "divergence_rate": 0.0,
+      "divergence_stability_score": 1.0,
+      "exactkv_failure_rate": 0.0,
+      "mean_first_divergence_index": null,
+      "mean_compression_ratio": 0.27409375
+    }
+  },
+  "bucket_summary": {
+    "512": {
+      "num_cells": 4,
+      "divergence_rate": 0.0,
+      "mean_acceptance_rate": 0.78
+    }
+  },
+  "category_summary": {
+    "code": {
+      "num_cells": 4,
+      "divergence_rate": 0.0,
+      "mean_acceptance_rate": 0.78
+    }
+  },
+  "cells": [
+    {
+      "prompt_id": "he_pilot_001_ctx512",
+      "category": "code",
+      "model_name": "Qwen/Qwen2.5-0.5B",
+      "compressor_name": "noop",
+      "compressor_capabilities": {
+        "backend_tier": "BUILTIN",
+        "adapter_available": true,
+        "delegate_compressor": null,
+        "probe_only": false
+      },
+      "draft_len": 4,
+      "max_new_tokens": 16,
+      "probe_only": false,
+      "exactkv_failure": false,
+      "lossy": {
+        "token_exact_match": true,
+        "first_divergence_idx": null
+      },
+      "exactkv": {
+        "token_exact_match": true,
+        "acceptance": {
+          "acceptance_rate": 0.79,
+          "total_drafted": 4,
+          "total_accepted": 3,
+          "total_rejected": 0,
+          "total_corrections": 0
+        }
+      },
+      "memory": {
+        "stored_kv_bytes": 4178,
+        "materialized_working_kv_bytes": 32000
+      },
+      "backend_tier": "BUILTIN",
+      "metrics": {
+        "token_level_divergence": false,
+        "first_divergence_index": null,
+        "acceptance_rate": 0.79,
+        "verifier_agreement_score": 0.75,
+        "exactkv_failure": false,
+        "compression_ratio": 0.1305625
+      },
+      "context_bucket": 512,
+      "prefill_tokens": 512,
+      "timing_ms": {
+        "total_cell": 1.0
+      },
+      "status": "ok",
+      "dataset_family": "humaneval",
+      "task_type": "code",
+      "task_category": "code"
+    },
+    {
+      "prompt_id": "he_pilot_001_ctx512",
+      "category": "code",
+      "model_name": "Qwen/Qwen2.5-0.5B",
+      "compressor_name": "int8",
+      "compressor_capabilities": {
+        "backend_tier": "BUILTIN",
+        "adapter_available": true,
+        "delegate_compressor": null,
+        "probe_only": false
+      },
+      "draft_len": 4,
+      "max_new_tokens": 16,
+      "probe_only": false,
+      "exactkv_failure": false,
+      "lossy": {
+        "token_exact_match": true,
+        "first_divergence_idx": null
+      },
+      "exactkv": {
+        "token_exact_match": true,
+        "acceptance": {
+          "acceptance_rate": 0.77,
+          "total_drafted": 4,
+          "total_accepted": 3,
+          "total_rejected": 0,
+          "total_corrections": 0
+        }
+      },
+      "memory": {
+        "stored_kv_bytes": 19714,
+        "materialized_working_kv_bytes": 32000
+      },
+      "backend_tier": "BUILTIN",
+      "metrics": {
+        "token_level_divergence": false,
+        "first_divergence_index": null,
+        "acceptance_rate": 0.77,
+        "verifier_agreement_score": 0.75,
+        "exactkv_failure": false,
+        "compression_ratio": 0.6160625
+      },
+      "context_bucket": 512,
+      "prefill_tokens": 512,
+      "timing_ms": {
+        "total_cell": 1.0
+      },
+      "status": "ok",
+      "dataset_family": "humaneval",
+      "task_type": "code",
+      "task_category": "code"
+    },
+    {
+      "prompt_id": "he_pilot_002_ctx512",
+      "category": "code",
+      "model_name": "Qwen/Qwen2.5-0.5B",
+      "compressor_name": "noop",
+      "compressor_capabilities": {
+        "backend_tier": "BUILTIN",
+        "adapter_available": true,
+        "delegate_compressor": null,
+        "probe_only": false
+      },
+      "draft_len": 4,
+      "max_new_tokens": 16,
+      "probe_only": false,
+      "exactkv_failure": false,
+      "lossy": {
+        "token_exact_match": true,
+        "first_divergence_idx": null
+      },
+      "exactkv": {
+        "token_exact_match": true,
+        "acceptance": {
+          "acceptance_rate": 0.87,
+          "total_drafted": 4,
+          "total_accepted": 3,
+          "total_rejected": 0,
+          "total_corrections": 0
+        }
+      },
+      "memory": {
+        "stored_kv_bytes": 13364,
+        "materialized_working_kv_bytes": 32000
+      },
+      "backend_tier": "BUILTIN",
+      "metrics": {
+        "token_level_divergence": false,
+        "first_divergence_index": null,
+        "acceptance_rate": 0.87,
+        "verifier_agreement_score": 0.75,
+        "exactkv_failure": false,
+        "compression_ratio": 0.417625
+      },
+      "context_bucket": 512,
+      "prefill_tokens": 512,
+      "timing_ms": {
+        "total_cell": 1.0
+      },
+      "status": "ok",
+      "dataset_family": "humaneval",
+      "task_type": "code",
+      "task_category": "code"
+    },
+    {
+      "prompt_id": "he_pilot_002_ctx512",
+      "category": "code",
+      "model_name": "Qwen/Qwen2.5-0.5B",
+      "compressor_name": "int8",
+      "compressor_capabilities": {
+        "backend_tier": "BUILTIN",
+        "adapter_available": true,
+        "delegate_compressor": null,
+        "probe_only": false
+      },
+      "draft_len": 4,
+      "max_new_tokens": 16,
+      "probe_only": false,
+      "exactkv_failure": false,
+      "lossy": {
+        "token_exact_match": true,
+        "first_divergence_idx": null
+      },
+      "exactkv": {
+        "token_exact_match": true,
+        "acceptance": {
+          "acceptance_rate": 0.69,
+          "total_drafted": 4,
+          "total_accepted": 2,
+          "total_rejected": 0,
+          "total_corrections": 0
+        }
+      },
+      "memory": {
+        "stored_kv_bytes": 10528,
+        "materialized_working_kv_bytes": 32000
+      },
+      "backend_tier": "BUILTIN",
+      "metrics": {
+        "token_level_divergence": false,
+        "first_divergence_index": null,
+        "acceptance_rate": 0.69,
+        "verifier_agreement_score": 0.5,
+        "exactkv_failure": false,
+        "compression_ratio": 0.329
+      },
+      "context_bucket": 512,
+      "prefill_tokens": 512,
+      "timing_ms": {
+        "total_cell": 1.0
+      },
+      "status": "ok",
+      "dataset_family": "humaneval",
+      "task_type": "code",
+      "task_category": "code"
+    }
+  ],
+  "limitations_note": "External humaneval panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval score reproduction.",
+  "reproducible_cli_command": "python3 scripts/run_external_panel.py --family humaneval --device cuda --dtype float16"
+}

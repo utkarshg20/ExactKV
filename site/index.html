@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ExactKV — Token-level drift evidence for KV-cache compression</title>
-<meta name="description" content="ExactKV is a compressor-agnostic crash-test framework measuring exactly when compressed KV caches diverge from full-precision — across 7,348 GPU cells, five benchmark families, and three distinct failure modes." />
+<meta name="description" content="ExactKV is a compressor-agnostic crash-test framework measuring exactly when compressed KV caches diverge from full-precision — across 8,132 GPU cells, five benchmark families, and three distinct failure modes." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -19,6 +19,7 @@
       <a href="#findings">Findings</a>
       <a href="#divergence">Divergence</a>
       <a href="#failure-modes">Failure modes</a>
+      <a href="#faithful-external">External adapters</a>
       <a href="#leaderboard">Leaderboard</a>
       <a href="#reproduce">Reproduce</a>
     </nav>
@@ -43,7 +44,7 @@
       <a class="btn btn-ghost" href="#reproduce">Reproduce</a>
     </div>
     <div class="hero-stats">
-      <div class="hstat"><span class="hnum">7,348</span><span class="hcap">GPU cells</span></div>
+      <div class="hstat"><span class="hnum">8,132</span><span class="hcap">GPU cells</span></div>
       <div class="hstat-div"></div>
       <div class="hstat"><span class="hnum">0</span><span class="hcap">exactkv_failures</span></div>
       <div class="hstat-div"></div>
@@ -209,7 +210,7 @@
         </tbody>
       </table>
     </div>
-    <p class="fine">Measured cells: int8/int4_sim/h2o_sim are GPU-validated. int6_sim and int4_per_vec_sim are GPU-validated on Mistral-7B (v3.0, 784 cells); Llama-3.1-8B pending v3.1. Not official benchmark scores.</p>
+    <p class="fine">Measured cells: int8/int4_sim/h2o_sim are GPU-validated. int6_sim and int4_per_vec_sim are GPU-validated on both models (v3.0, 1,568 cells, exactkv_failures=0). Not official benchmark scores.</p>
     <div class="legend-row">
       <span class="badge b-green">0–10%</span> low divergence &nbsp;
       <span class="badge b-yellow">10–30%</span> moderate &nbsp;
@@ -273,7 +274,7 @@
     </div>
 
     <div class="same-verifier">
-      <p><strong>The same ExactKV verifier corrects all three failure modes.</strong> <code>exactkv_failures = 0</code> across all 7,348 cells — including every 100%-divergent H2O cell. Drift and exactness failure are not the same thing.</p>
+      <p><strong>The same ExactKV verifier corrects all three failure modes.</strong> <code>exactkv_failures = 0</code> across all 8,132 cells — including every 100%-divergent H2O cell. Drift and exactness failure are not the same thing.</p>
     </div>
   </div>
 </section>
@@ -336,12 +337,69 @@
     <div class="quant-insight">
       <strong>Key insight:</strong> <code>int4_per_vec_sim</code> (4-bit per-vector) has <strong>6× lower quantization error</strong> than <code>int4_sim</code> (4-bit per-tensor) at the <em>same memory budget</em>. Per-vector granularity eliminates cross-head contamination from outlier attention heads. KV tensors with outlier heads are the norm in 7–8B models.
     </div>
-    <p class="fine">MAE measured on realistic KV shape [1, 32, 512, 64] with simulated outlier heads (first 4 heads 5× larger). int6_sim and int4_per_vec_sim are simulations stored as fp16. GPU drift panels completed for Mistral-7B (v3.0); Llama-3.1-8B pending. Inspired by per-vector/per-channel granularity in KVQuant and KIVI.</p>
+    <p class="fine">MAE measured on realistic KV shape [1, 32, 512, 64] with simulated outlier heads (first 4 heads 5× larger). int6_sim and int4_per_vec_sim are simulations stored as fp16. GPU drift panels completed for both models (v3.0, 1,568 cells). Inspired by per-vector/per-channel granularity in KVQuant and KIVI.</p>
+  </div>
+</section>
+
+<!-- ─── FAITHFUL EXTERNAL ADAPTERS ─────────────────────────────────────────── -->
+<section id="faithful-external" class="band">
+  <div class="wrap">
+    <p class="section-label">Phase D3 · Faithful external adapters</p>
+    <h2>Real upstream compressors on the same crash-test grid</h2>
+    <p class="section-sub">Built-in sims cover the design-space curve. Phase D3 wires <strong>upstream libraries</strong> (KIVI quant math, kvpress SnapKV) as restricted adapters — separate from the 8,132-cell headline panel.</p>
+
+    <div class="quant-table-wrap">
+      <table class="qtable">
+        <thead>
+          <tr>
+            <th>Adapter</th>
+            <th>Backend</th>
+            <th>MBPP smoke (Mistral)</th>
+            <th>Mean accept.</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>int8</code></td>
+            <td>built-in</td>
+            <td>0%</td>
+            <td>1.000</td>
+            <td><span class="tag ok">control</span></td>
+          </tr>
+          <tr class="qrow-highlight qrow-best">
+            <td><code>snapkv_experimental</code></td>
+            <td>kvpress SnapKVPress</td>
+            <td><strong>87.5%</strong></td>
+            <td>0.541</td>
+            <td><span class="tag ok">GPU smoke</span></td>
+          </tr>
+          <tr>
+            <td><code>int4_per_vec_sim</code></td>
+            <td>ExactKV sim (KIVI/KVQuant-style)</td>
+            <td>0%</td>
+            <td>≈1.0</td>
+            <td><span class="tag ok">v3.0 panel</span></td>
+          </tr>
+          <tr>
+            <td><code>kivi_offline_r32</code></td>
+            <td>KIVI <code>utils_quant</code> + r=32 window</td>
+            <td>100%</td>
+            <td>0.023</td>
+            <td><span class="tag warn">adapter diagnostic</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="quant-insight">
+      <strong>First working faithful external adapter:</strong> <code>snapkv_experimental</code> runs real kvpress eviction on the panel grid — non-trivial drift, verifier holds (<code>exactkv_failures=0</code>). KIVI offline (even with residual fp16) remains catastrophic on the post-RoPE simulate path; production KIVI CUDA is not claimed.
+    </div>
+    <p class="fine">Source: <code>reports/external_panels/faithful/mbpp_mistral_smoke_raw.json</code> (48 cells). Full LongBench/BFCL/MBPP grid (~612 cells × 2 models) running on RunPod. Not production serving; not official benchmark scores.</p>
   </div>
 </section>
 
 <!-- ─── LEADERBOARD ───────────────────────────────────────────────────────── -->
-<section id="leaderboard" class="band">
+<section id="leaderboard" class="band band-alt">
   <div class="wrap">
     <p class="section-label">Leaderboard</p>
     <h2>Compressor rankings</h2>
@@ -367,12 +425,12 @@
           <tr><td>6</td><td><code>int4_sim</code></td><td>Mistral-7B</td><td><span class="score-bar"><span class="sb-fill sb-mid" style="--pct:85.1%"></span>0.851</span></td><td>0.837</td><td>0.507</td><td><span class="tag ok">validated</span></td></tr>
           <tr><td>—</td><td><code>int6_sim</code></td><td>Mistral-7B</td><td><span class="score-bar"><span class="sb-fill" style="--pct:96.4%"></span>0.964</span></td><td>0.964</td><td>0.375</td><td><span class="tag ok">v3.0</span></td></tr>
           <tr><td>—</td><td><code>int4_per_vec_sim</code></td><td>Mistral-7B</td><td><span class="score-bar"><span class="sb-fill" style="--pct:93.0%"></span>0.930</span></td><td>0.930</td><td>0.556</td><td><span class="tag ok">v3.0</span></td></tr>
-          <tr class="lb-pending"><td>—</td><td><code>int6_sim</code></td><td>Llama-3.1-8B</td><td colspan="3" style="color:var(--faint);font-style:italic">v3.1 in progress</td><td><span class="tag analytical">pending</span></td></tr>
-          <tr class="lb-pending"><td>—</td><td><code>int4_per_vec_sim</code></td><td>Llama-3.1-8B</td><td colspan="3" style="color:var(--faint);font-style:italic">v3.1 in progress</td><td><span class="tag analytical">pending</span></td></tr>
+          <tr><td>—</td><td><code>int6_sim</code></td><td>Llama-3.1-8B</td><td><span class="score-bar"><span class="sb-fill" style="--pct:95.7%"></span>0.957</span></td><td>0.957</td><td>0.472</td><td><span class="tag ok">v3.0</span></td></tr>
+          <tr><td>—</td><td><code>int4_per_vec_sim</code></td><td>Llama-3.1-8B</td><td><span class="score-bar"><span class="sb-fill" style="--pct:93.5%"></span>0.935</span></td><td>0.935</td><td>0.569</td><td><span class="tag ok">v3.0</span></td></tr>
         </tbody>
       </table>
     </div>
-    <p class="fine">Headline panel source: <code>reports/scale_7b/raw.json</code>. Divergence rates from <code>reports/external_panels/</code> vary by task family — see the divergence table above. int6_sim and int4_per_vec_sim are v3.0 GPU-validated on Mistral-7B (784 cells, exactkv_failures=0). Llama-3.1-8B pending v3.1.</p>
+    <p class="fine">Headline panel source: <code>reports/scale_7b/raw.json</code>. Divergence rates from <code>reports/external_panels/</code> vary by task family — see the divergence table above. int6_sim and int4_per_vec_sim are GPU-validated on both models (v3.0, 1,568 cells, exactkv_failures=0).</p>
   </div>
 </section>
 
@@ -453,6 +511,14 @@
         <div class="claim-icon">no</div>
         <p>Does not reproduce VeriCache; not an implementation of VeriCache semantics</p>
       </div>
+      <div class="claim claim-yes">
+        <div class="claim-icon">yes</div>
+        <p>Faithful external adapter integration (SnapKV via kvpress; KIVI offline diagnostic)</p>
+      </div>
+      <div class="claim claim-no">
+        <div class="claim-icon">no</div>
+        <p>Not production KIVI CUDA/Triton; KIVI offline post-RoPE is an adapter diagnostic only</p>
+      </div>
       <div class="claim claim-no">
         <div class="claim-icon">no</div>
         <p>Phase F kernel ratios are microbenchmarks only — not end-to-end speedup</p>
@@ -489,8 +555,14 @@ bash scripts/build_paper_pdf.sh   # requires tectonic</code></pre>
 python3 scripts/summarize_v30_panel.py \
   --output reports/external_panels/v30/summary.md</code></pre>
       </div>
+      <div class="repro-block">
+        <p class="repro-label">GPU — faithful external adapters</p>
+        <pre class="code"><code>bash scripts/setup_faithful_compressor_env.sh
+bash scripts/run_faithful_compressor_panel.sh
+# Artifacts: reports/external_panels/faithful/</code></pre>
+      </div>
     </div>
-    <p class="fine">Source of truth: <code>reports/scale_7b/raw.json</code> (headline panel) + <code>reports/external_panels/</code>. See <code>docs/REPRODUCIBILITY.md</code>.</p>
+    <p class="fine">Source of truth: <code>reports/scale_7b/raw.json</code> (headline panel) + <code>reports/external_panels/</code> (v3.0, faithful). See <code>docs/REPRODUCIBILITY.md</code> and <code>docs/FAITHFUL_COMPRESSOR_INTEGRATION.md</code>.</p>
   </div>
 </section>
 
@@ -514,7 +586,7 @@ python3 scripts/summarize_v30_panel.py \
 <footer class="foot">
   <div class="wrap">
     <p><strong>ExactKV</strong> — when does compressed KV start lying? Token-level drift evidence, three failure-mode signatures, and hard claim boundaries.</p>
-    <p class="fine">v3.0 · 7,348 GPU cells · exactkv_failures = 0. Every metric traces to <code>reports/scale_7b/raw.json</code>. © <span id="year"></span> ExactKV Project.</p>
+    <p class="fine">v3.0 · 8,132 GPU cells · exactkv_failures = 0. Every metric traces to <code>reports/scale_7b/raw.json</code>. © <span id="year"></span> ExactKV Project.</p>
   </div>
 </footer>
 

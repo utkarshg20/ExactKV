@@ -1,0 +1,62 @@
+{
+  "schema": "exactkv.release_synthesis.project_lineage.v1",
+  "note": "Reconstructed from repo evidence only (git ls-files, git log, scope statements, report metadata). Two distinct numbering systems: version arc V1-V21 and formal release arc Phase A-K + gates R0-R2.",
+  "benchmark_source_of_truth": "reports/scale_7b/raw.json",
+  "headline_evidence": {
+    "total_cells": 1500,
+    "models": ["meta-llama/Llama-3.1-8B", "mistralai/Mistral-7B-Instruct-v0.3"],
+    "exactkv_failures": 0,
+    "deterministic_mode": false,
+    "compressors": ["noop", "int8", "int4_sim", "spectralquant", "shard"]
+  },
+  "version_arc": [
+    {"id": "V1", "status": "verified", "theme": "Correctness prototype", "evidence": ["docs/V1_SCOPE_STATEMENT.md", "tag:v0.1.0-phase1"], "confidence": "high"},
+    {"id": "V2", "status": "verified", "theme": "Framework generalization", "evidence": ["docs/RELEASE_NOTES_V0.2.0.md", "tag:v0.2.0"], "confidence": "high"},
+    {"id": "V3", "status": "verified", "theme": "Benchmark seriously", "evidence": ["docs/RELEASE_NOTES_V0.3.0.md", "tag:v0.3.0"], "confidence": "high"},
+    {"id": "V4", "status": "verified", "theme": "Asymmetric K/V compression", "evidence": ["docs/RELEASE_NOTES_V0.4.0.md", "tag:v0.4.0"], "confidence": "high"},
+    {"id": "V5", "status": "verified", "theme": "Workspace-aware memory accounting", "evidence": ["docs/RELEASE_NOTES_V0.5.0.md", "tag:v0.5.0"], "confidence": "high"},
+    {"id": "V6", "status": "verified", "theme": "Backend adapter interface", "evidence": ["docs/RELEASE_NOTES_V0.6.0.md", "tag:v0.6.0"], "confidence": "high"},
+    {"id": "V7", "status": "verified", "theme": "Layer-aware V policies", "evidence": ["docs/RELEASE_NOTES_V0.7.0.md", "tag:v0.7.0"], "confidence": "high"},
+    {"id": "V8", "status": "verified", "theme": "Serving harness", "evidence": ["docs/RELEASE_NOTES_V0.8.0.md", "tag:v0.8.0"], "confidence": "high"},
+    {"id": "V9", "status": "verified", "theme": "Real backend gauntlet", "evidence": ["docs/RELEASE_NOTES_V0.9.0.md", "tag:v0.9.0"], "confidence": "high"},
+    {"id": "V10", "status": "verified", "theme": "Suite hardening", "evidence": ["docs/RELEASE_NOTES_V0.10.0.md", "tag:v0.10.0"], "confidence": "high"},
+    {"id": "V11", "status": "verified", "theme": "Launch hardening", "evidence": ["docs/RELEASE_NOTES_V0.11.0.md", "tag:v0.11.0"], "confidence": "high"},
+    {"id": "V12", "status": "verified", "theme": "Deferred work completion gauntlet", "evidence": ["docs/V12_SCOPE_STATEMENT.md"], "confidence": "high"},
+    {"id": "V13", "status": "verified", "theme": "Practicality proof; span verification; demos; external methods", "evidence": ["docs/V13_SCOPE_STATEMENT.md"], "confidence": "high"},
+    {"id": "V14", "status": "partial", "theme": "CUDA restored verifier & GPU memory diagnostics", "evidence": ["docs/EXPERIMENT_055_EXPERIMENTAL_RESTORED_VERIFIER_CLI.md", "docs/EXPERIMENT_057_GPU_MEMORY_ACCOUNTING.md"], "caveat": "No V14 scope file; inferred from Phase 14 docs.", "confidence": "medium"},
+    {"id": "V15", "status": "partial", "theme": "vLLM feasibility probes (no-go)", "evidence": ["docs/EXPERIMENT_059_VLLM_FEASIBILITY_PROBE.md"], "caveat": "No V15 scope file; inferred.", "confidence": "medium"},
+    {"id": "V16", "status": "partial", "theme": "Shadow observers & streaming quant feasibility", "evidence": ["docs/EXPERIMENT_066_STREAMING_QUANT_ATTENTION_FEASIBILITY.md"], "caveat": "No V16 scope file; inferred.", "confidence": "medium"},
+    {"id": "V17", "status": "partial", "theme": "Claim-safe demo & broader validation", "evidence": ["docs/EXPERIMENT_086_CLAIM_SAFE_DEMO_PACKAGING.md"], "caveat": "No V17 scope file; inferred.", "confidence": "medium"},
+    {"id": "V18", "status": "partial", "theme": "Integration safety & L3 draft-shadow no-commit", "evidence": ["docs/EXPERIMENT_090_INTEGRATION_SAFETY_SPEC.md"], "caveat": "No V18 scope file; inferred; no-commit.", "confidence": "medium"},
+    {"id": "V19", "status": "partial", "theme": "L3 round-log proposal source", "evidence": ["docs/EXPERIMENT_095_ROUND_LOG_DRAFT_PROPOSAL_SOURCE.md"], "caveat": "No V19 scope file; inferred.", "confidence": "medium"},
+    {"id": "V20", "status": "partial", "theme": "L4 pre-gate & verifier-mediated design", "evidence": ["docs/EXPERIMENT_098_PRE_L4_SAFETY_GATE_REVIEW.md"], "caveat": "No V20 scope file; inferred; dry-run.", "confidence": "medium"},
+    {"id": "V21", "status": "partial", "theme": "L4 scaffolds & trace-only dry-run", "evidence": ["docs/EXPERIMENT_102_L4_NOOP_OPT_IN_SCAFFOLD.md"], "caveat": "No V21 scope file; inferred; no runtime commit.", "confidence": "medium"}
+  ],
+  "release_arc": [
+    {"id": "A", "role": "Cross-model scale benchmark", "outputs": ["reports/phaseA_benchmark.json", "reports/scale_7b/raw.json"], "status": "PASS"},
+    {"id": "B", "role": "Leaderboard", "outputs": ["reports/leaderboard.json", "reports/scale_7b/leaderboard.json"], "status": "PASS"},
+    {"id": "C", "role": "Publication visuals", "outputs": ["docs/PUBLIC_VISUAL_PACKAGE.md"], "status": "PASS"},
+    {"id": "D", "role": "Runtime probe", "outputs": ["reports/phaseD_runtime_probe.json"], "status": "PASS"},
+    {"id": "E-F", "role": "KV compression kernels (F = microbenchmark only)", "outputs": ["reports/phaseF_kernel_benchmark.json"], "status": "PASS", "caveat": "Kernel microbenchmark; not end-to-end."},
+    {"id": "G", "role": "Unified truth engine", "outputs": ["reports/phaseG_unified_truth.json"], "status": "PASS"},
+    {"id": "H+", "role": "Platform + 7B/8B scale", "outputs": ["reports/benchmark.json", "reports/scale_7b/raw.json"], "status": "PASS"},
+    {"id": "I", "role": "Novelty audit + claim lock", "outputs": ["docs/NOVELTY_AUDIT.md", "reports/novelty_audit.json"], "status": "PASS"},
+    {"id": "J", "role": "Release freeze + reproducibility", "outputs": ["docs/CLAIM_BOUNDARIES.md", "docs/METRIC_DEFINITIONS.md"], "status": "PASS"},
+    {"id": "K", "role": "Launch pack + technical report", "outputs": ["reports/public_release/", "docs/EXACTKV_TECHNICAL_REPORT.md"], "status": "PASS"}
+  ],
+  "gates": [
+    {"id": "R0", "role": "Evidence integrity", "output": "reports/release_evidence_status.json", "status": "PASS"},
+    {"id": "R1", "role": "Mistral leaderboard repair", "output": "reports/public_release/leaderboard_final.json", "status": "PASS"},
+    {"id": "R2", "role": "Lineage archaeology", "output": "docs/PROJECT_LINEAGE.md", "status": "PASS"}
+  ],
+  "superseded": [
+    {"artifact": "reports/phaseA_benchmark.json", "reason": "336-cell panel replaced by scale_7b 1500-cell as public headline"}
+  ],
+  "not_claimed": [
+    "vLLM / LMCache integration (probes only)",
+    "production serving / throughput / end-to-end speedup",
+    "active GPU memory / VRAM savings (unless directly measured)",
+    "real SpectralQuant / full Shard integration",
+    "L4 runtime commit paths (dry-run / scaffold only)"
+  ]
+}

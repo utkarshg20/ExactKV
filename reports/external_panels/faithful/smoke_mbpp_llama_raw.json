@@ -1,0 +1,383 @@
+{
+  "phase_id": "external_benchmark_panel",
+  "dataset_family": "mbpp",
+  "status": "benchmark_complete",
+  "deterministic_mode": false,
+  "smoke": false,
+  "prompt_source": "hf",
+  "generated_at": "2026-06-30T03:45:21.379458+00:00",
+  "manifest": {
+    "model_name": "meta-llama/Llama-3.1-8B",
+    "prompt_suite": "mbpp_hf",
+    "compressor_names": [
+      "int8",
+      "kivi_offline_r32"
+    ],
+    "draft_lengths": [
+      4
+    ],
+    "max_new_tokens": 16,
+    "seed": 0,
+    "dtype": "float32",
+    "device": "auto",
+    "timestamp": "2026-06-30T03:45:21",
+    "git_commit": null,
+    "exactkv_version": "0.1.0",
+    "transformers_version": "5.12.1",
+    "torch_version": "2.8.0+cu128"
+  },
+  "models_evaluated": [
+    "meta-llama/Llama-3.1-8B"
+  ],
+  "models_blocked": {},
+  "context_buckets": [
+    512
+  ],
+  "max_new_tokens_values": [
+    16
+  ],
+  "compressors": [
+    "int8",
+    "kivi_offline_r32"
+  ],
+  "total_cells": 2,
+  "cells_run": 2,
+  "cells_skipped": 0,
+  "exactkv_failures": 0,
+  "compressor_summary": {
+    "int8": {
+      "num_cells": 1,
+      "mean_acceptance_rate": 1.0,
+      "mean_verifier_agreement_score": 1.0,
+      "divergence_rate": 0.0,
+      "divergence_stability_score": 1.0,
+      "exactkv_failure_rate": 0.0,
+      "mean_first_divergence_index": null,
+      "mean_compression_ratio": 0.25
+    },
+    "kivi_offline_r32": {
+      "num_cells": 1,
+      "mean_acceptance_rate": 0.0,
+      "mean_verifier_agreement_score": 0.0,
+      "divergence_rate": 1.0,
+      "divergence_stability_score": 0.0,
+      "exactkv_failure_rate": 0.0,
+      "mean_first_divergence_index": 0.0,
+      "mean_compression_ratio": 1.0907041910331383
+    }
+  },
+  "bucket_summary": {
+    "512": {
+      "num_cells": 2,
+      "divergence_rate": 0.5,
+      "mean_acceptance_rate": 0.5
+    }
+  },
+  "category_summary": {
+    "code": {
+      "num_cells": 2,
+      "divergence_rate": 0.5,
+      "mean_acceptance_rate": 0.5
+    }
+  },
+  "cells": [
+    {
+      "prompt_id": "mbpp_601_ctx512",
+      "prompt": "ExactKV evidence-plus panel: deterministic filler for long-context KV drift. Lossy compressed KV may diverge token-by-token from full-KV greedy decoding. Write a function to find the longest chain which can be formed from the given set of pairs. ExactKV evidence-plus panel: deterministic filler for long-context KV drift. Lossy compressed KV may diverge token-by-token from full-KV greedy decoding. Write a function to find the longest chain which can be formed from the given set of pairs. segment_0. ExactKV evidence-plus panel: deterministic filler for long-context KV drift. Lossy compressed KV may diverge token-by-token from full-KV greedy decoding. Write a function to find the longest chain which can be formed from the given set of pairs. segment_1. ExactKV evidence-plus panel: deterministic filler for long-context KV drift. Lossy compressed KV may diverge token-by-token from full-KV greedy decoding. Write a function to find the longest chain which can be formed from the given set of pairs. segment_2. ExactKV evidence-plus panel: deterministic filler for long-context KV drift. Lossy compressed KV may diverge token-by-token from full-KV greedy decoding. Write a function to find the longest chain which can be formed from the given set of pairs. segment_3. ExactKV evidence-plus panel: deterministic filler for long-context KV drift. Lossy compressed KV may diverge token-by-token from full-KV greedy decoding. Write a function to find the longest chain which can be formed from the given set of pairs. segment_4. ExactKV evidence-plus panel: deterministic filler for long-context KV drift. Lossy compressed KV may diverge token-by-token from full-KV greedy decoding. Write a function to find the longest chain which can be formed from the given set of pairs. segment_5. ExactKV evidence-plus panel: deterministic filler for long-context KV drift. Lossy compressed KV may diverge token-by-token from full-KV greedy decoding. Write a function to find the longest chain which can be formed from the given set of pairs. segment_6. ExactKV evidence-plus panel: deterministic filler for long-context KV drift. Lossy compressed KV may diverge token-by-token from full-KV greedy decoding. Write a function to find the longest chain which can be formed from the given set of pairs. segment_7. ExactKV evidence-plus panel: deterministic filler for long-context KV drift. Lossy compressed KV may diverge token-by-token from full-KV greedy decoding",
+      "category": "code",
+      "model_name": "meta-llama/Llama-3.1-8B",
+      "compressor_name": "int8",
+      "compressor_capabilities": {
+        "name": "int8",
+        "compressor_type": "quantization",
+        "is_simulated": false,
+        "supports_real_bytes_claim": true,
+        "supports_token_dropping": false,
+        "supports_quantization": true,
+        "key_bit_width": 8,
+        "value_bit_width": 8,
+        "key_bit_width_label": null,
+        "value_bit_width_label": null,
+        "asymmetric": false,
+        "notes": "Per-tensor symmetric INT8 quantisation (scale = max(|x|) / 127). Compressed storage is genuinely INT8 (1 B/element vs 4 B for fp32). V1 materialises back to fp32 for inference; a production backend would keep INT8 in-kernel.",
+        "backend_name": null,
+        "backend_version": null,
+        "adapter_name": null,
+        "adapter_version": null
+      },
+      "draft_len": 4,
+      "max_new_tokens": 16,
+      "full": {
+        "output_ids": [
+          13,
+          9842,
+          264,
+          734,
+          311,
+          1505,
+          279,
+          22807,
+          8957,
+          902,
+          649,
+          387,
+          14454,
+          505,
+          279,
+          2728
+        ],
+        "output_text": ". Write a function to find the longest chain which can be formed from the given"
+      },
+      "lossy": {
+        "output_ids": [
+          13,
+          9842,
+          264,
+          734,
+          311,
+          1505,
+          279,
+          22807,
+          8957,
+          902,
+          649,
+          387,
+          14454,
+          505,
+          279,
+          2728
+        ],
+        "output_text": ". Write a function to find the longest chain which can be formed from the given",
+        "token_exact_match": true,
+        "first_divergence_idx": null
+      },
+      "exactkv": {
+        "output_ids": [
+          13,
+          9842,
+          264,
+          734,
+          311,
+          1505,
+          279,
+          22807,
+          8957,
+          902,
+          649,
+          387,
+          14454,
+          505,
+          279,
+          2728
+        ],
+        "output_text": ". Write a function to find the longest chain which can be formed from the given",
+        "token_exact_match": true,
+        "acceptance": {
+          "total_rounds": 4,
+          "total_drafted": 16,
+          "total_accepted": 16,
+          "total_rejected": 0,
+          "total_corrections": 0,
+          "acceptance_rate": 1.0,
+          "avg_accepted_per_round": 4.0,
+          "avg_drafted_per_round": 4.0
+        }
+      },
+      "memory": {
+        "full_bytes": 67239936,
+        "compressed_bytes": 33620480,
+        "compression_ratio": 0.5000076145224172,
+        "memory_reduction_factor": 1.999969542374172,
+        "stored_kv_bytes": 33619968,
+        "materialized_working_kv_bytes": 134479872,
+        "metadata_bytes": 512,
+        "temporary_workspace_bytes": 0,
+        "total_kv_footprint_bytes": 168100352,
+        "supports_real_bytes_claim": true,
+        "is_simulated": false,
+        "memory_claim_note": "Real-storage compressor ('int8'): stored_kv_bytes reflects genuine quantised storage. materialized_working_kv_bytes == full_bytes (dequantised for attention). supports_real_bytes_claim=True."
+      },
+      "exactkv_failure": false,
+      "backend_tier": "BUILTIN",
+      "probe_only": false,
+      "metrics": {
+        "token_level_divergence": false,
+        "first_divergence_index": null,
+        "acceptance_rate": 1.0,
+        "verifier_agreement_score": 1.0,
+        "exactkv_failure": false,
+        "compression_ratio": 0.25
+      },
+      "timing_ms": {
+        "total_cell": 2949.248
+      },
+      "context_bucket": 512,
+      "prefill_tokens": 512,
+      "base_prompt_id": "mbpp_601",
+      "status": "ok",
+      "dataset_family": "mbpp",
+      "task_type": "code",
+      "task_category": "code",
+      "task_id": "601",
+      "test_list": [
+        "assert max_chain_length([Pair(5, 24), Pair(15, 25),Pair(27, 40), Pair(50, 60)], 4) == 3",
+        "assert max_chain_length([Pair(1, 2), Pair(3, 4),Pair(5, 6), Pair(7, 8)], 4) == 4",
+        "assert max_chain_length([Pair(19, 10), Pair(11, 12),Pair(13, 14), Pair(15, 16), Pair(31, 54)], 5) == 5"
+      ],
+      "source": "hf",
+      "source_dataset": "google-research-datasets/mbpp",
+      "prompt_source": "hf"
+    },
+    {
+      "prompt_id": "mbpp_601_ctx512",
+      "category": "code",
+      "model_name": "meta-llama/Llama-3.1-8B",
+      "compressor_name": "kivi_offline_r32",
+      "compressor_capabilities": {
+        "name": "kivi_offline_k2_v2_r32",
+        "compressor_type": "quantization",
+        "is_simulated": false,
+        "supports_real_bytes_claim": false,
+        "supports_token_dropping": false,
+        "supports_quantization": true,
+        "key_bit_width": 2,
+        "value_bit_width": 2,
+        "key_bit_width_label": "kivi_k2_offline",
+        "value_bit_width_label": "kivi_v2_offline",
+        "asymmetric": false,
+        "notes": "Restricted V9 Phase D2 offline KIVI adapter (PYTHONPATH to jy-yuan/KIVI only). Uses upstream models.utils_quant simulate quant/dequant on post-RoPE HF cache tensors. V per-token path uses CPU-safe port of KIVI quantize_and_pack simulate math (upstream simulate branch hardcodes CUDA). Not KIVI production CUDA/Triton path. Not packed-bit storage. Not LlamaForCausalLM_KIVI or MistralForCausalLM_KIVI. Residual fp16 window: last 32 tokens kept in fp16 (KIVI streaming policy). Not in the default compressor registry. supports_real_bytes_claim=False: stores unpacked quant codes and scale tensors. Byte accounting counts actual stored torch payloads honestly. Draft may diverge from full KV; verification uses authoritative full state only. Not KVQuant. No throughput, latency, or production-readiness claims.",
+        "backend_name": "kivi",
+        "backend_version": "876b4d2d08e3",
+        "adapter_name": "KIVIOfflineAdapter",
+        "adapter_version": "0.1.0",
+        "phase_a_compressor_name": "kivi_offline_r32",
+        "backend_tier": "RESTRICTED_ADAPTER",
+        "adapter_available": true
+      },
+      "draft_len": 4,
+      "max_new_tokens": 16,
+      "full": {
+        "output_ids": [
+          13,
+          9842,
+          264,
+          734,
+          311,
+          1505,
+          279,
+          22807,
+          8957,
+          902,
+          649,
+          387,
+          14454,
+          505,
+          279,
+          2728
+        ],
+        "output_text": ". Write a function to find the longest chain which can be formed from the given"
+      },
+      "lossy": {
+        "output_ids": [
+          18369,
+          18369,
+          18369,
+          18369,
+          18369,
+          18369,
+          18369,
+          18369,
+          18369,
+          18369,
+          18369,
+          18369,
+          18369,
+          18369,
+          18369,
+          13
+        ],
+        "output_text": "ockeyockeyockeyockeyockeyockeyockeyockeyockeyockeyockeyockeyockeyockeyockey.",
+        "token_exact_match": false,
+        "first_divergence_idx": 0
+      },
+      "exactkv": {
+        "output_ids": [
+          13,
+          9842,
+          264,
+          734,
+          311,
+          1505,
+          279,
+          22807,
+          8957,
+          902,
+          649,
+          387,
+          14454,
+          505,
+          279,
+          2728
+        ],
+        "output_text": ". Write a function to find the longest chain which can be formed from the given",
+        "token_exact_match": true,
+        "acceptance": {
+          "total_rounds": 16,
+          "total_drafted": 58,
+          "total_accepted": 0,
+          "total_rejected": 58,
+          "total_corrections": 16,
+          "acceptance_rate": 0.0,
+          "avg_accepted_per_round": 0.0,
+          "avg_drafted_per_round": 3.625
+        }
+      },
+      "memory": {
+        "full_bytes": 67239936,
+        "compressed_bytes": 73338880,
+        "compression_ratio": 1.0907041910331383,
+        "memory_reduction_factor": 0.916838871823513,
+        "stored_kv_bytes": 73338880,
+        "materialized_working_kv_bytes": 67239936,
+        "metadata_bytes": 0,
+        "temporary_workspace_bytes": 16809984,
+        "total_kv_footprint_bytes": 157388800,
+        "supports_real_bytes_claim": false,
+        "is_simulated": false,
+        "memory_claim_note": "Real-storage compressor ('kivi_offline_k2_v2_r32'): stored_kv_bytes reflects genuine quantised storage. materialized_working_kv_bytes == full_bytes (dequantised for attention). supports_real_bytes_claim=True."
+      },
+      "exactkv_failure": false,
+      "backend_tier": "RESTRICTED_ADAPTER",
+      "probe_only": false,
+      "metrics": {
+        "token_level_divergence": true,
+        "first_divergence_index": 0,
+        "acceptance_rate": 0.0,
+        "verifier_agreement_score": 0.0,
+        "exactkv_failure": false,
+        "compression_ratio": 1.0907041910331383
+      },
+      "timing_ms": {
+        "total_cell": 4913.02
+      },
+      "context_bucket": 512,
+      "prefill_tokens": 512,
+      "base_prompt_id": "mbpp_601",
+      "status": "ok",
+      "dataset_family": "mbpp",
+      "task_type": "code",
+      "task_category": "code",
+      "task_id": "601",
+      "test_list": [
+        "assert max_chain_length([Pair(5, 24), Pair(15, 25),Pair(27, 40), Pair(50, 60)], 4) == 3",
+        "assert max_chain_length([Pair(1, 2), Pair(3, 4),Pair(5, 6), Pair(7, 8)], 4) == 4",
+        "assert max_chain_length([Pair(19, 10), Pair(11, 12),Pair(13, 14), Pair(15, 16), Pair(31, 54)], 5) == 5"
+      ],
+      "source": "hf",
+      "source_dataset": "google-research-datasets/mbpp",
+      "prompt_source": "hf"
+    }
+  ],
+  "limitations_note": "External mbpp panel measures ExactKV drift metrics only. This is not an official LongBench/RULER/BFCL/HumanEval/MBPP score reproduction.",
+  "reproducible_cli_command": "python3 scripts/run_external_panel.py --family mbpp --device cuda --dtype float16"
+}

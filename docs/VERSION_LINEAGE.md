@@ -1,6 +1,6 @@
 # ExactKV Version Lineage (V1–V21)
 
-Generated: 2026-06-25T22:37:16.459392+00:00
+Generated: 2026-06-26T14:58:00.590506+00:00
 
 The **version arc** (V1–V21) spans pre-formal-release research milestones. It is **distinct** from formal release phases A–K and from the authoritative **1500-cell** benchmark (`reports/scale_7b/raw.json`).
 
@@ -321,3 +321,11 @@ V14–V21 lack dedicated `V{N}_SCOPE_STATEMENT.md` files. Evidence is drawn from
 - **V19** (partial): No V19_SCOPE_STATEMENT.md; version inferred from Phase 19 / experiment docs. Historical lineage only — not release benchmark evidence.
 - **V20** (partial): No V20_SCOPE_STATEMENT.md; version inferred from Phase 20 / experiment docs. Historical lineage only — not release benchmark evidence.
 - **V21** (partial): No V21_SCOPE_STATEMENT.md; version inferred from Phase 21 / experiment docs. Historical lineage only — not release benchmark evidence.
+
+## Technical Report Versions (paper release arc)
+
+| Version | Date | Changes | Cells |
+|---------|------|---------|------:|
+| v2.5.3 | 2026-06-26 | Abstract typo fix, int8/Mistral leaderboard contradiction resolved | 3,844 |
+| v2.5.4 | 2026-06-27 | Paper hygiene: 360→1560 totals, BFCL repro command, Case P formatting, All Panels appendix | 3,844 |
+| **v2.6** | **2026-06-28** | **720-cell real HF LongBench drift panel (both models), 600-cell BFCL validity v2.7 Llama. Key finding: task type dominates int4_sim divergence (6% code → 90% reading).** | **5,164+** |
