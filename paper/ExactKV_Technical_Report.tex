@@ -18,13 +18,13 @@
 
 \title{\textbf{When Does Compressed KV Start Lying?}\\[0.4em]
 \large Token-Level Drift in KV Cache Compression}
-\author{ExactKV Project\\Technical Report (v2.9)}
+\author{ExactKV Project\\Technical Report (v3.0)}
 \date{June 2026}
 
 \begin{document}
 \maketitle
 \begin{center}
-\small\textit{Quantitative values from \texttt{reports/scale\_7b/raw.json}, \texttt{reports/evidence\_plus/raw.json}, and \texttt{reports/external\_panels/summary\_all.json}. Claim boundaries: \texttt{docs/CLAIM\_BOUNDARIES.md}.}
+\small\textit{Quantitative values from \texttt{reports/scale\_7b/raw.json}, \texttt{reports/evidence\_plus/raw.json}, \texttt{reports/external\_panels/} (including \texttt{v30/}), and \texttt{reports/public\_release/leaderboard\_final.json}. Claim boundaries: \texttt{docs/CLAIM\_BOUNDARIES.md}.}
 \end{center}
 
 \begin{abstract}
@@ -34,7 +34,11 @@ that measures first-divergence index, draft acceptance, and \texttt{exactkv\_fai
 under verifier-mediated semantics.
 
 Across \textbf{8,132 completed GPU cells} (Llama-3.1-8B and Mistral-7B, five benchmark
-families) all panels report \texttt{exactkv\_failures=0}. Four main findings:
+families, six built-in compressor classes\footnote{\texttt{noop}, \texttt{int8},
+\texttt{int6\_sim}, \texttt{int4\_per\_vec\_sim}, \texttt{int4\_sim}, and H2O-style
+eviction (\texttt{h2o\_sim} family). \texttt{kivi\_offline} is an external adapter
+diagnostic (Table~\ref{tab:kivi-panel}), evaluated separately.})
+all panels report \texttt{exactkv\_failures=0}. Four main findings:
 
 \begin{enumerate}
 \item \textbf{Task type dominates.} \texttt{int4\_sim}: 6\% (MBPP code) $\to$ 11\% (BFCL short)
@@ -85,14 +89,14 @@ failures per cell.
   reporting for token-level drift, first-divergence index, acceptance rate, and
   exactness failures across compressors and models (\S3--5).
 \item \textbf{8,132 GPU cells} across Llama-3.1-8B and Mistral-7B, five
-  benchmark families, six compressor variants, with \texttt{exactkv\_failures=0}
+  benchmark families, six built-in compressor classes, with \texttt{exactkv\_failures=0}
   throughout (\S6).
 \item Empirical evidence that \textbf{task type dominates drift} (6\% code
   $\to$ 90\% reading for \texttt{int4\_sim}) and \textbf{generation length
   scales it} (9\% $\to$ 62\% on BFCL, 7$\times$) (\S6.4--6.12).
 \item A \textbf{logit autopsy} over 1,103 divergent cells identifying three
   mechanistically distinct failure modes: near-tie noise (int8), distribution
-  shift (int4\_sim), and attention destruction (H2O eviction) (\S6.10, \S8).
+  shift (int4\_sim), and attention destruction (H2O eviction) (\S\ref{sec:autopsy-main}, \S\ref{sec:forensic-cases}).
 \item \textbf{Downstream validity measurement}: despite 50\% token drift, all
   106/106 full-KV valid BFCL tool calls are preserved (\S6.11).
 \item \textbf{GPU validation} of \texttt{int6\_sim} and \texttt{int4\_per\_vec\_sim}
@@ -283,11 +287,12 @@ divergence\_stability=1.000. \texttt{spectralquant}
 \end{table}
 
 \subsection{Metric interpretation}
+\begin{sloppypar}
 Divergence rate and acceptance rate measure \emph{different} failure modes. Low
-lossy-path divergence does not imply high verifier acceptance (and vice versa).
 lossy-path divergence does not imply high verifier acceptance (and vice versa).
 Example: \texttt{int4\_sim} at \texttt{max\_new\_tokens=16} can show first
 divergence at index 8 with acceptance 0.94 --- how late drift occurs matters.
+\end{sloppypar}
 \subsection{Evidence-plus long-context panel}
 \textbf{Source:} \texttt{reports/evidence\_plus/raw.json} (RunPod A5000, June 2026).
 144 cells = $2 \times 6 \times 2 \times 3 \times 2$, prefill buckets 512/1024,
@@ -523,6 +528,7 @@ Artifact: \texttt{bfcl\_validity\_v27\_merged\_raw.json}.}
 
 \FloatBarrier
 \section{H2O-Style Token-Eviction Panel (v2.8 — Complete, 800 cells)}
+\label{sec:h2o-panel}
 
 \textbf{Status:} Complete. 800 cells, 5 eviction variants, both models,
 \texttt{exactkv\_failures=0}. Artifact: \texttt{h2o\_v28\_merged\_raw.json}.
@@ -838,6 +844,12 @@ h2o\_sim\_75    & ---  & ---  & 100\%  & Eviction (75\% kept) \\
 
 \FloatBarrier
 
+\section{Forensic Divergence Case Studies}
+\label{sec:forensic-cases}
+
+Three representative cells from the logit autopsy (Section~\ref{sec:autopsy-main})
+illustrate the mechanistic failure modes in detail.
+
 \subsection{Forensic Case A --- int8: Near-tie noise}
 
 \begin{table}[htbp]
@@ -916,7 +928,8 @@ top-5 entirely --- the evicted tokens included factual anchors. Collapsed repres
 not a near-tie or distribution shift. \texttt{exactkv\_failure=0}.}
 \end{table}
 
-\noindent The table below lists additional historical cases from the release panel.
+\section{Divergence Case Studies (Release Panel)}
+\label{sec:release-cases}
 
 \begin{table}[htbp]
 \centering\footnotesize
@@ -1019,11 +1032,11 @@ per-channel KV quantization with a CUDA kernel. Both directly motivate
 \texttt{int4\_per\_vec\_sim}, which simulates per-vector granularity without a
 production kernel. The \texttt{kivi\_offline} adapter (real KIVI quantizer math, no
 CUDA/Triton kernels) revealed 100\% divergence in the current offline integration
-(\S6.4.6) --- a diagnostic, not a claim about KIVI's algorithmic accuracy.
+(Table~\ref{tab:kivi-panel}) --- a diagnostic, not a claim about KIVI's algorithmic accuracy.
 SnapKV~\citep{li2024snapkv} selects important KV entries by eviction; the
 \texttt{h2o\_sim} family models the H2O Heavy Hitter Oracle
 policy~\citep{zhang2023h2o} from the same compressor class and shows 100\%
-LongBench divergence even at 75\% retention (\S6.8).
+LongBench divergence even at 75\% retention (Section~\ref{sec:h2o-panel}).
 
 \paragraph{KV storage and streaming.}
 CacheGen~\citep{liu2024cachegen} compresses KV caches for network streaming and

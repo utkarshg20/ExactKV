@@ -5,7 +5,7 @@
 *All quantitative values are read from on-disk artifacts, primarily
 `reports/scale_7b/raw.json`, `reports/evidence_plus/raw.json`,
 `reports/external_panels/summary_all.json`, `reports/external_panels/*_merged_raw.json`,
-`reports/public_release/leaderboard_final.json`,
+`reports/external_panels/v30/`, `reports/public_release/leaderboard_final.json`,
 `reports/phaseF_kernel_benchmark.json`, and `docs/METRIC_DEFINITIONS.md`. No
 results are invented. Claim boundaries follow `docs/CLAIM_BOUNDARIES.md` and the
 [`claim decision table`](../release_synthesis/claim_decision_table.md).*
@@ -36,7 +36,7 @@ that measures **first-divergence index**, draft acceptance, verifier agreement,
 and **`exactkv_failure`** under verifier-mediated (draft/verify/commit) semantics.
 
 Across **8,132 completed GPU cells** (Llama-3.1-8B and Mistral-7B, five benchmark
-families, six compressor variants) all panels report **`exactkv_failures = 0`**. Four
+families, six built-in compressor classes¹) all panels report **`exactkv_failures = 0`**. Four
 main findings emerge:
 
 1. **Task type dominates drift.** `int4_sim` divergence spans 6% (MBPP code) → 11%
@@ -68,6 +68,10 @@ GPU-validated on both Mistral-7B-Instruct-v0.3 and Llama-3.1-8B (1,568 cells tot
 serving claims, or a reproduction of VeriCache [vericache2026] throughput-oriented
 serving. ExactKV does **not** claim novelty for compressed-KV draft plus full-KV verify.
 
+¹ **Six built-in compressor classes:** `noop` (baseline), `int8`, `int6_sim`,
+`int4_per_vec_sim`, `int4_sim`, and H2O-style eviction (`h2o_sim` family counted as one
+class). `kivi_offline` is an external adapter diagnostic (§6.4.6), evaluated separately.
+
 ---
 
 ## 2. Introduction
@@ -93,14 +97,15 @@ verifier agreement, and exactness failures per cell.
    that measures token-level drift, first-divergence index, acceptance rate, and
    exactness failures across compressors and models (§3–5).
 2. **8,132 GPU cells** across Llama-3.1-8B and Mistral-7B, five benchmark families,
-   six compressor variants, with `exactkv_failures = 0` throughout (§6).
+   six built-in compressor classes (`noop`, `int8`, `int6_sim`, `int4_per_vec_sim`,
+   `int4_sim`, H2O-style eviction), with `exactkv_failures = 0` throughout (§6).
 3. Empirical evidence that **task type dominates drift** (6% code → 90% reading for
    int4_sim) and **generation length scales it within a task** (9% → 62% on BFCL,
    7×), two axes that aggregate benchmarks do not resolve (§6.4–6.12).
 4. A **logit autopsy** over 1,103 divergent cells identifying three mechanistically
    distinct failure modes: near-tie noise (int8), distribution shift (int4_sim),
-   and attention destruction (H2O-style eviction), each with forensic case studies
-   (§6.10, §8).
+  and attention destruction (H2O-style eviction), each with forensic case studies
+  (§6.10, §7).
 5. **Downstream validity measurement**: despite 50% token drift, all 106/106 full-KV
    valid BFCL tool calls are preserved under verifier-mediated execution (§6.11).
 6. **GPU validation of two new compressors** (int6_sim, int4_per_vec_sim) confirming
@@ -1149,7 +1154,14 @@ eviction fundamentally disrupts the attention distribution from the first genera
 token. The lossy model is effectively operating on a corrupted context representation
 that bears little resemblance to the full-KV prediction.
 
-### Forensic Case A — int8: Near-tie noise (NarrativeQA, 4K context)
+---
+
+## 7. Forensic divergence case studies
+
+Three representative cells from the logit autopsy (§6.10) illustrate the mechanistic
+failure modes in detail.
+
+### 7.1 Forensic Case A — int8: Near-tie noise (NarrativeQA, 4K context)
 
 > **Compressor:** int8 | **Task:** NarrativeQA reading comprehension | **Context:** 4,096 tokens | **Model:** Llama-3.1-8B | **First divergence:** token 53
 
@@ -1170,7 +1182,7 @@ the token-level trajectory diverges, and ExactKV correctly falls back.
 
 ---
 
-### Forensic Case B — int4_sim: Distribution shift (NarrativeQA, 2K context)
+### 7.2 Forensic Case B — int4_sim: Distribution shift (NarrativeQA, 2K context)
 
 > **Compressor:** int4_sim | **Task:** NarrativeQA reading comprehension | **Context:** 2,048 tokens | **Model:** Llama-3.1-8B | **First divergence:** token 1
 
@@ -1192,7 +1204,7 @@ is systematically biased toward narrative-style continuations by the compressed 
 
 ---
 
-### Forensic Case C — H2O-style: Attention destruction (HotpotQA, 2K context)
+### 7.3 Forensic Case C — H2O-style: Attention destruction (HotpotQA, 2K context)
 
 > **Compressor:** h2o_sim (50% kept) | **Task:** HotpotQA multi-hop reasoning | **Context:** 2,048 tokens | **Model:** Llama-3.1-8B | **First divergence:** token 1
 
@@ -1214,7 +1226,7 @@ correctly. This is **not** a probability shift; it is a collapsed representation
 **ExactKV action:** Detects divergence at token 1 (fdi=1, the earliest possible), commits
 full-KV output. `exactkv_failure=0`.
 
-### Key takeaway
+### 7.4 Key takeaway
 
 The logit autopsy confirms three distinct failure modes:
 1. **Near-tie noise (int8):** Small quantization error flips closely-contested decisions. Rare on structured tasks; more common on open-text where the model is uncertain.
@@ -1528,6 +1540,10 @@ from the v2.8 LongBench panel (both models, `h2o_sim_75`).
 *Table 6.16 — Core benchmark curve. v3.0 quantisation compressors: both-model mean
 (Mistral/Llama). H2O: v2.8 LongBench panel. `exactkv_failures=0` throughout.*
 
+---
+
+## 8. Divergence case studies (release panel)
+
 The table below uses fields saved in `reports/scale_7b/raw.json` (release panel,
 Llama-3.1-8B unless noted). Top-5 logits are **not** stored in the release
 artifact. Historical Qwen panel rows are illustrative only (not headline panel).
@@ -1803,16 +1819,16 @@ proposes asymmetric 2-bit per-channel quantization of KV caches with a CUDA kern
 Both methods directly motivate ExactKV's `int4_per_vec_sim` compressor, which simulates
 the per-vector granularity insight without a production kernel. ExactKV evaluates these
 designs as compressors-under-test: the `kivi_offline` adapter uses real KIVI quantizer
-math and revealed 100% divergence in the current offline integration (§6.4.6) — a
-diagnostic result, not a claim about KIVI's algorithmic accuracy. KVQuant and SnapKV
-production kernel integrations remain future work.
+math and revealed 100% divergence in the current offline integration
+(§6.4.6, KIVI offline panel) — a diagnostic result, not a claim about KIVI's
+algorithmic accuracy. KVQuant and SnapKV production kernel integrations remain future work.
 
 **SnapKV** [li2024snapkv] selects important KV entries by clustering observation
 windows; it is an eviction/selection method rather than quantization. The ExactKV
-`h2o_sim` compressor family (§6.8) models the Heavy Hitter Oracle eviction policy
-[zhang2023h2o], which is the same compressor class as SnapKV. ExactKV's eviction
-results (100% LongBench divergence even at 75% retention) quantify the worst-case
-cost of this class on reading tasks.
+`h2o_sim` compressor family (§6.8, H2O-style eviction panel) models the Heavy Hitter Oracle
+eviction policy [zhang2023h2o], which is the same compressor class as SnapKV. ExactKV's
+eviction results (100% LongBench divergence even at 75% retention) quantify the
+worst-case cost of this class on reading tasks.
 
 ### 12.3 KV storage and streaming
 
@@ -1838,9 +1854,9 @@ drift measurements, **not** official benchmark scores.
 |--------|----------|---------------------|
 | VeriCache [vericache2026] | Lossless serving via compressed draft + full-KV verify | Algorithmic overlap; serving system vs. measurement framework — see §10–11 |
 | KVQuant [hooper2024kvquant] | Per-channel INT4 KV quant | Motivates `int4_per_vec_sim`; adapter available (`kivi_offline` diagnostic) |
-| KIVI [liu2024kivi] | Asymmetric 2-bit per-channel KV quant | Same; `kivi_offline` shows 100% divergence in offline integration (§6.4.6) |
-| SnapKV [li2024snapkv] | KV eviction/selection | Modeled by `h2o_sim` class; eviction results in §6.8 |
-| H2O [zhang2023h2o] | Heavy Hitter Oracle eviction | Direct inspiration for `h2o_sim`; 100% LongBench divergence (§6.8) |
+| KIVI [liu2024kivi] | Asymmetric 2-bit per-channel KV quant | Same; `kivi_offline` shows 100% divergence in offline integration (§6.4.6, KIVI panel) |
+| SnapKV [li2024snapkv] | KV eviction/selection | Modeled by `h2o_sim` class; eviction results in §6.8 (H2O panel, v2.8) |
+| H2O [zhang2023h2o] | Heavy Hitter Oracle eviction | Direct inspiration for `h2o_sim`; 100% LongBench divergence (§6.8, v2.8) |
 | CacheGen [liu2024cachegen] | KV compression + streaming | Different task (network bandwidth) |
 | LMCache [lmcache2025] | KV storage/offload | Different task (reuse/serving) |
 | Speculative decoding [leviathan2023speculative] | Draft/verify for speedup | ExactKV uses verify semantics for measurement only, no throughput claim |
