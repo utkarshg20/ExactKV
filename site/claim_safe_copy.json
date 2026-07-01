@@ -13,6 +13,7 @@
     {"label": "Core leaderboard panel", "value": "1,500", "note": "reports/scale_7b/raw.json — compressor rankings source"},
     {"label": "Models evaluated", "value": "Llama-3.1-8B + Mistral-7B", "note": "meta-llama/Llama-3.1-8B, mistralai/Mistral-7B-Instruct-v0.3"},
     {"label": "ExactKV failures", "value": "0", "note": "on all cited completed panels"},
+    {"label": "Faithful adapter smoke", "value": "864", "note": "wave-1, separate from 8,132 headline; reports/external_panels/faithful/"},
     {"label": "First-divergence", "value": "token-level", "note": "Phase G canonical FirstDivergenceAuthority"}
   ],
   "required_caveats": [

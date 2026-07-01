@@ -34,7 +34,7 @@ We also wired **real upstream adapters** (kvpress SnapKV, KIVI r32) into the sam
 
 Not to crown a winner: **int8** is still the only non-catastrophic real compressor (~8–9% drift). Faithful SnapKV: **~90–97%** drift. KIVI offline: **100%** (integration diagnostic, not production KIVI). **Exactness failures: 0** throughout.
 
-KnormPress + TurboQuant wave-2 smoke ran on RunPod (MBPP leg reached 64/64 before pod went offline). Full artifact pull pending. Early MBPP checkpoint only, not claim-ready.
+KnormPress + TurboQuant wave-2 smoke (128 cells, Mistral only) interrupted when RunPod stopped. Checking whether the network volume still has MBPP 64/64 + partial BFCL; otherwise wave-2 rerun only (~1–2 hr). Early 20-cell MBPP checkpoint locally — not claim-ready.
 
 Open source. Repro in the repo. More compressors + benchmarks welcome.
 

@@ -90,13 +90,14 @@ on LongBench (86% → 57%, a 29pp improvement), but bit-width still matters at 8
 | **Underlying project / evidence quality** | **9.65/10** |
 | **With faithful production KIVI/KVQuant kernel** | **9.7+/10** |
 
-**Phase D3 (June 2026):** Faithful external adapters wired — `kivi_offline_r32` (KIVI
-simulate + r=32), `snapkv_experimental` (kvpress). GPU smoke: SnapKV 87.5% MBPP
-divergence (real library); KIVI r32 still catastrophic on post-RoPE offline path.
-Full Mistral/Llama grid: `bash scripts/run_faithful_compressor_panel.sh` on RunPod
-(Llama requires `hf auth login`).
+**Phase D3 (June 2026):** Faithful external adapter smoke **complete** — **864 GPU cells**
+(both models: LongBench + BFCL + MBPP). **`int8`** is the only non-catastrophic real
+compressor (~8–9% combined drift). Faithful SnapKV via kvpress runs end-to-end but shows
+**90–97% drift** (stress-test failure mode). KIVI offline r32: **100%** on every cell
+(adapter diagnostic only). Wave-2 KnormPress/TurboQuant smoke (128 cells, Mistral) rerun
+in progress. Artifacts: `reports/external_panels/faithful/`.
 
-Path to 9.7+: SnapKV LongBench/BFCL full grid + optional KIVI production CUDA (Exp 024 blocked).
+Path to stronger faithful story: complete wave-2 pull + optional KIVI production CUDA (Exp 024 blocked).
 
 ## Benchmark source of truth
 

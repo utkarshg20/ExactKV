@@ -22,6 +22,7 @@ share/python-wheels/
 
 # Virtual environments
 .venv/
+.venv-*/
 .venv-turboquant/
 .venv-kvpress/
 .venv-kvpress312/
@@ -43,6 +44,18 @@ htmlcov/
 *.swp
 *.swo
 .DS_Store
+
+# LaTeX build artifacts
+*.blg
+*.aux
+*.bcf
+*.run.xml
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# Accidental stdlib shadow (RunPod import collision)
+platform/
 
 # Model weights / HF cache (never commit these)
 *.bin

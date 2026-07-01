@@ -4,8 +4,8 @@
 #   RUNPOD_HOST=203.57.40.169 RUNPOD_PORT=10113 bash scripts/sync_to_runpod.sh
 set -euo pipefail
 
-HOST="${RUNPOD_HOST:-203.57.40.169}"
-PORT="${RUNPOD_PORT:-10113}"
+HOST="${RUNPOD_HOST:-203.57.40.101}"
+PORT="${RUNPOD_PORT:-10003}"
 USER="${RUNPOD_USER:-root}"
 KEY="${RUNPOD_SSH_KEY:-$HOME/.ssh/runpod_exactkv}"
 REMOTE="${RUNPOD_REMOTE:-/workspace/ExactKV}"
@@ -15,13 +15,16 @@ SSH="ssh -p $PORT -i $KEY -o StrictHostKeyChecking=accept-new"
 RSYNC_SSH="ssh -p $PORT -i $KEY -o StrictHostKeyChecking=accept-new"
 
 echo "==> Syncing $ROOT -> $USER@$HOST:$REMOTE"
-rsync -avz --delete \
+rsync -avz --no-owner --no-group \
   -e "$RSYNC_SSH" \
   --exclude '.git' \
   --exclude '__pycache__' \
   --exclude '*.pyc' \
   --exclude '.venv' \
+  --exclude '.venv-*' \
+  --exclude '.pytest_cache' \
   --exclude 'reports/scale_7b' \
+  --exclude '.DS_Store' \
   "$ROOT/" "$USER@$HOST:$REMOTE/"
 
 echo "==> Remote bootstrap"

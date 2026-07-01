@@ -16,6 +16,8 @@
   <div class="nav-inner">
     <a class="brand" href="#top">ExactKV</a>
     <nav class="nav-links">
+      <a href="#case-studies">Cases</a>
+      <a href="#leaderboard">Leaderboard</a>
       <a href="https://github.com/utkarshg20/ExactKV">GitHub</a>
       <a href="https://github.com/utkarshg20/ExactKV/blob/main/paper/ExactKV_Technical_Report.md">Report</a>
       <a href="#reproduce">Reproduce</a>
@@ -343,30 +345,39 @@ I had never see</div>
       Claim boundary: H2O-style simulation, not faithful H2O GPU kernel. Still useful as a class diagnostic.
     </p>
 
-    <h2>13. Faithful upstream adapters (partial)</h2>
+    <h2>13. Faithful upstream adapters (864 cells, wave-1 complete)</h2>
     <p>
-      Built-in sims map the design space. Phase D3 wires real upstream algorithms on the same grid, separate artifact tree (<code>reports/external_panels/faithful/</code>), not merged into the 8,132 headline until explicitly integrated.
+      Built-in sims map the design space. Phase D3 wires real upstream algorithms on the same crash-test grid, in a separate artifact tree (<code>reports/external_panels/faithful/</code>), not merged into the 8,132 headline total. These are <strong>adapter smoke tests</strong>: they ask whether ExactKV can run real upstream code paths and how much they drift, not which compressor wins.
     </p>
 
     <div class="article-table-wrap">
       <table class="article-table">
         <thead>
-          <tr><th>Adapter</th><th>Backend</th><th>Mistral partial drift</th><th>Role</th></tr>
+          <tr><th>Role</th><th>Compressor</th><th>Mistral (432 cells)</th><th>Llama (432 cells)</th></tr>
         </thead>
         <tbody>
-          <tr><td><code>int8</code></td><td>built-in</td><td class="num">8.6%</td><td>Real baseline</td></tr>
-          <tr><td><code>snapkv_experimental</code></td><td>kvpress SnapKVPress</td><td class="num">97.5%</td><td>External stress test</td></tr>
-          <tr><td><code>kivi_offline_r32</code></td><td>KIVI quant + r=32 window</td><td class="num">100%</td><td>Adapter diagnostic</td></tr>
-          <tr><td><code>kvpress_knorm_experimental</code></td><td>kvpress KnormPress</td><td class="num">queued</td><td>Wave-2 candidate</td></tr>
-          <tr><td><code>turboquant_experimental</code></td><td>turboquant_plus</td><td class="num">queued</td><td>Wave-2 candidate</td></tr>
+          <tr><td>Real baseline</td><td><code>int8</code></td><td class="num">7.6%</td><td class="num">9.0%</td></tr>
+          <tr><td>Adapter smoke</td><td><code>snapkv_experimental</code></td><td class="num">97.2%</td><td class="num">90.3%</td></tr>
+          <tr><td>Integration diagnostic</td><td><code>kivi_offline_r32</code></td><td class="num">100%</td><td class="num">100%</td></tr>
         </tbody>
       </table>
     </div>
     <p>
-      SnapKV is the first working faithful external adapter on the full LongBench grid, but 97.5% drift is a stress-test result, not a success story. KnormPress (~0.97 acceptance in Exp 005) is the best candidate for a non-catastrophic faithful external. Llama wave-1 and wave-2 panels were running on RunPod at time of writing.
+      <strong>864 GPU cells</strong> (432 per model: LongBench 216, BFCL 120, MBPP 96). <code>exactkv_failures=0</code> throughout. <code>int8</code> is the only non-catastrophic real compressor (~8–9% combined drift). Faithful SnapKV runs end-to-end via kvpress but shows <strong>90–97% drift</strong> — a stress-test failure mode, not a deployment win. KIVI offline r32 is catastrophic on every cell (adapter diagnostic only, not production KIVI).
+    </p>
+    <p>
+      <strong>Wave-2 smoke</strong> (KnormPress + TurboQuant vs int8/SnapKV, 128 cells target, Mistral only) was interrupted when the RunPod instance stopped. Local repo holds a 20-cell MBPP checkpoint only; full tables pending volume recovery or rerun. See technical report §6.17.1.
     </p>
 
-    <h2>14. The 8,132-cell inventory</h2>
+    <h2 id="case-studies">14. Divergence case studies</h2>
+    <p>
+      Token-level snapshots from external panels: full-KV greedy output, lossy compressed draft, and ExactKV verifier output on the same cell. These are drift smoke tests, not official benchmark scores.
+    </p>
+    <div id="case-studies-root" class="case-studies-grid">
+      <p class="viz-caption">Loading case studies…</p>
+    </div>
+
+    <h2>15. The 8,132-cell inventory</h2>
     <p>
       Headline total = completed GPU panels with <code>exactkv_failures=0</code>. Not official benchmark scores.
     </p>
@@ -384,12 +395,13 @@ I had never see</div>
           <tr><td>H2O-style eviction</td><td class="num">800</td><td>Both</td><td>Eviction class</td></tr>
           <tr><td>v3.0 int6 + int4_per_vec</td><td class="num">1,568</td><td>Both</td><td>Compressor curve extension</td></tr>
           <tr><td>MBPP + pilots + evidence-plus</td><td class="num">~1,144</td><td>Mixed</td><td>Code/smoke supplements</td></tr>
+          <tr><td>Faithful adapter panel (wave-1)</td><td class="num">864</td><td>Both</td><td>Upstream adapter smoke (separate tree)</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="viz-caption">Reconciliation: 6,564 pre-v3.0 + 784 + 784 v3.0 = 8,132. Full card in the technical report Appendix A.</p>
+    <p class="viz-caption">Reconciliation: 6,564 pre-v3.0 + 784 + 784 v3.0 = 8,132 headline. Faithful wave-1 (864) tracked separately in §6.17. Full card in the technical report Appendix A.</p>
 
-    <h2 id="leaderboard">15. Core compressor leaderboard</h2>
+    <h2 id="leaderboard">16. Core compressor leaderboard</h2>
     <p>
       Rankings from the <strong>1,500-cell</strong> scale panel (<code>reports/scale_7b/raw.json</code>). Score = 0.35·acceptance + 0.25·verifier_agreement + 0.20·(1−norm. First divergence) + 0.10·(1−failure rate) + 0.10·stability.
     </p>
@@ -409,9 +421,9 @@ I had never see</div>
         </tbody>
       </table>
     </div>
-    <p class="viz-caption">Full JSON: <a href="https://github.com/utkarshg20/ExactKV/blob/main/reports/public_release/leaderboard_final.json">leaderboard_final.json</a>. Registry slots labeled fallback/proxy or probe-first are not headline evidence.</p>
+    <p class="viz-caption" id="leaderboard-caption">Full JSON: <a href="https://github.com/utkarshg20/ExactKV/blob/main/reports/public_release/leaderboard_final.json">leaderboard_final.json</a>. Registry slots labeled fallback/proxy or probe-first are not headline evidence.</p>
 
-    <h2>16. What we measure but do not claim</h2>
+    <h2>17. What we measure but do not claim</h2>
     <ul>
       <li>Not a production serving system. No throughput or active GPU memory savings claims.</li>
       <li>Does not reproduce VeriCache. Inspired by draft/verify semantics only.</li>
@@ -436,7 +448,7 @@ I had never see</div>
       </div>
     </details>
 
-    <h2 id="reproduce">17. Reproduce it</h2>
+    <h2 id="reproduce">18. Reproduce it</h2>
     <p>Every published number traces to an on-disk artifact. One-command regeneration where possible.</p>
 
     <div class="article-pre"><code># No GPU: verify artifacts + claim safety

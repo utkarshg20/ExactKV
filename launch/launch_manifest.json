@@ -5,6 +5,7 @@
   "external_panels_source": "reports/external_panels/",
   "headline": {
     "total_cells_external": 8132,
+    "faithful_wave1_cells": 864,
     "core_leaderboard_cells": 1500,
     "models": ["meta-llama/Llama-3.1-8B", "mistralai/Mistral-7B-Instruct-v0.3"],
     "exactkv_failures": 0,

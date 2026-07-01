@@ -1632,10 +1632,10 @@ Mistral-7B only. **128 cells target** (64 MBPP + 64 BFCL smoke, 4 prompts each).
 `int8` vs `kvpress_knorm_experimental` vs `turboquant_experimental` vs
 `snapkv_experimental`. Diagnostic only, not merged into the 8,132 headline total.
 
-**Pull status (2026-07-01):** RunPod instance **offline** at pull time (`connection refused`).
-Local repo holds a **20-cell MBPP checkpoint** only. Last live pod telemetry before
-disconnect: **MBPP 64/64 complete**, **BFCL ~29/64 in progress**. Complete wave-2 tables
-pending `bash scripts/pull_faithful_from_runpod.sh` after pod restart.
+**Pull status (2026-07-01):** Wave-2 rerun launched on a new RunPod volume after the
+previous instance stopped. Local repo holds a **20-cell MBPP checkpoint** only (not
+claim-ready). Complete wave-2 tables pending
+`bash scripts/pull_faithful_from_runpod.sh` after the 128-cell smoke finishes.
 
 **Table 6.17.1a, Wave-2 MBPP smoke, Mistral (partial local checkpoint, 20/64 cells)**
 
@@ -2089,7 +2089,7 @@ Claim boundary: `kivi_offline` / `kivi_offline_r32` use real KIVI quantizer math
 | **Rerun Mistral on main external panels** (LongBench/RULER/BFCL/HumanEval) | Failed in first workflow (disk quota). Succeeded later for MBPP only |
 | **HELMET holistic long-context panel** | Not implemented |
 | **InfiniteBench 100K+ stress** | Not run, pending verifier memory/runtime stability |
-| **KVQuant/SnapKV integrations** (production kernels) | Adapters exist. KIVI r32 + SnapKV panel wired (§6.17). GPU validation pending. KIVI CUDA blocked (Exp 024) |
+| **KVQuant/SnapKV integrations** (production kernels) | Wave-1 adapter smoke **complete** (864 cells, §6.17). Wave-2 KnormPress/TurboQuant pending. Production KIVI CUDA blocked (Exp 024) |
 | **RULER 16K/32K scaling** | 2K/4K/8K pilot done |
 | **HumanEval/MBPP pass@1 impact** | Requires safe sandboxing. Extend beyond BFCL downstream validity to MBPP pass@1/syntax and LongBench answer-overlap |
 | **Confidence intervals** | Wilson CIs added for all external panels |
@@ -2428,8 +2428,8 @@ are in **Appendix A**. Version labels in **Appendix D**.
 | BFCL validity v2.7 merged | `reports/external_panels/bfcl_validity_v27_merged_raw.json` | 1,200 |
 | H2O eviction v2.8 merged | `reports/external_panels/h2o_v28_merged_raw.json` | 800 |
 | v3.0 validation (both models) | `reports/external_panels/v30/` | 1,568 |
-| Faithful adapter panel (wave-1, both models) | `reports/external_panels/faithful/` | 864 |
-| Faithful wave-2 smoke (Mistral) | `reports/external_panels/faithful/wave2/` | partial (20/128 local) |
+| Faithful adapter panel (wave-1) | `reports/external_panels/faithful/` | 864 |
+| Faithful wave-2 smoke (Mistral) | `reports/external_panels/faithful/wave2/` | rerun in progress (20/128 local checkpoint) |
 | External case-study pack | `reports/external_panels/case_studies_extracted.json` | 15+1 |
 | LongBench overlap pack | `reports/external_panels/longbench_overlap_pack.{json,md}` | 720 |
 | Phase-F kernel microbenchmark | `reports/phaseF_kernel_benchmark.json` |, |

@@ -516,3 +516,38 @@ details.article-details .detail-body { margin-top: 14px; font-size: 0.9rem; colo
 .article-body hr {
   border: none; border-top: 1px solid var(--line); margin: 3em 0;
 }
+
+.case-studies-grid {
+  display: flex; flex-direction: column; gap: 20px; margin: 1.5em 0 2em;
+}
+.case-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius-lg);
+  padding: 18px 20px;
+}
+.case-card h3 {
+  font-size: 0.95rem; margin: 0 0 8px; font-weight: 600;
+}
+.case-meta { font-size: 0.82rem; color: var(--muted); margin: 0 0 14px; }
+.case-cols {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+}
+@media (max-width: 900px) {
+  .case-cols { grid-template-columns: 1fr; }
+}
+.case-col pre {
+  font-family: var(--mono); font-size: 0.72rem; line-height: 1.45;
+  background: #060608; border-radius: 6px; padding: 10px 12px;
+  margin: 6px 0 0; overflow-x: auto; white-space: pre-wrap; word-break: break-word;
+  color: #d4d8e8; max-height: 140px;
+}
+.case-col-lossy pre { border-left: 2px solid var(--red); }
+.case-label {
+  font-family: var(--mono); font-size: 0.65rem; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--faint);
+}
+.tier-tag {
+  font-family: var(--mono); font-size: 0.65rem; color: var(--faint);
+  margin-left: 6px;
+}
+.row-muted td { color: var(--muted); }
+.row-muted code { opacity: 0.85; }
