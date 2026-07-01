@@ -45,8 +45,19 @@ while true; do
   if echo "$OUT" | grep -q "SSH_FAIL"; then
     echo "[$TS] ssh_fail — will retry" >> "$MONITOR"
   elif echo "$OUT" | grep -q "FAITHFUL_LLAMA_DONE"; then
-    echo "[$TS] all_done" >> "$MONITOR"
-    exit 0
+    LLAMA_OK=$(ssh -o ConnectTimeout=15 -o BatchMode=yes "$SSH_HOST" 'python3 -c "
+import glob, json, os
+n = 0
+for p in glob.glob(\"/workspace/ExactKV/reports/external_panels/faithful/*Llama*_raw.json\"):
+    d = json.load(open(p))
+    n += sum(1 for c in d.get(\"cells\", []) if c.get(\"status\") == \"ok\")
+print(n)
+"' 2>/dev/null || echo 0)
+    if [[ "${LLAMA_OK:-0}" -gt 0 ]]; then
+      echo "[$TS] all_done llama_ok=$LLAMA_OK" >> "$MONITOR"
+      exit 0
+    fi
+    echo "[$TS] llama_done_but_empty ok=$LLAMA_OK — keep polling" >> "$MONITOR"
   fi
 
   sleep "$INTERVAL"

@@ -3,593 +3,469 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>ExactKV — Token-level drift evidence for KV-cache compression</title>
-<meta name="description" content="ExactKV is a compressor-agnostic crash-test framework measuring exactly when compressed KV caches diverge from full-precision — across 8,132 GPU cells, five benchmark families, and three distinct failure modes." />
+<title>ExactKV: When does compressed KV start lying?</title>
+<meta name="description" content="A crash-test for LLM KV-cache compression: token-level drift, three failure modes, and 8,132 GPU cells on Llama + Mistral." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800;900&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body class="article-page">
 
 <header class="nav">
   <div class="nav-inner">
     <a class="brand" href="#top">ExactKV</a>
     <nav class="nav-links">
-      <a href="#findings">Findings</a>
-      <a href="#divergence">Divergence</a>
-      <a href="#failure-modes">Failure modes</a>
-      <a href="#faithful-external">External adapters</a>
-      <a href="#leaderboard">Leaderboard</a>
+      <a href="https://github.com/utkarshg20/ExactKV">GitHub</a>
+      <a href="https://github.com/utkarshg20/ExactKV/blob/main/paper/ExactKV_Technical_Report.md">Report</a>
       <a href="#reproduce">Reproduce</a>
     </nav>
   </div>
 </header>
 
-<main id="top">
+<article class="article-wrap" id="top">
+  <header class="article-header">
+    <h1>When does compressed KV start lying?</h1>
+    <p class="article-sub">A crash-test for LLM KV-cache compression, measuring the first token where compressed memory diverges from full precision, why it happens, and whether downstream tasks survive.</p>
+    <p class="article-meta">ExactKV · June 2026 · <a href="https://github.com/utkarshg20/ExactKV">github</a></p>
+  </header>
 
-<!-- ─── HERO ─────────────────────────────────────────────────────────────── -->
-<section class="hero">
-  <div class="hero-inner">
-    <p class="eyebrow">KV-cache compression · crash-test &amp; leaderboard · v3.0</p>
-    <h1>When does compressed KV<br>start lying?</h1>
-    <p class="lede">
-      ExactKV measures exactly where a compressed KV cache first diverges from
-      full precision — the token, the mechanism, and the downstream impact.
-      Not aggregate quality. <strong>The first wrong token.</strong>
+  <div class="tldr">
+    <div class="tldr-label">Summary</div>
+    <strong>ExactKV</strong> is a compressor-agnostic evaluation framework. It asks: <em>when</em> does a compressed KV cache first produce a different token than full-precision greedy decoding? We ran <strong>8,132 GPU cells</strong> on Llama-3.1-8B and Mistral-7B. Same 4× compressor (<code>int4_sim</code>): <strong>~6% token drift on code, ~90% on reading</strong>: task type dominates, not model family. Logit autopsy over 1,103 divergent cells reveals three mechanistic failure modes. The verifier preserves full-KV outputs (<code>exactkv_failures=0</code>) and keeps valid tool calls intact (106/106). ExactKV measures compressors. It is not a compression method. Research eval only, not production serving, does not reproduce VeriCache.
+  </div>
+
+  <div class="article-body">
+
+    <h2>1. Where this started</h2>
+    <p>
+      KV-cache compression is everywhere. Int8 baselines, int4 quantizers, token eviction (H2O, SnapKV), low-rank projections (KIVI, KVTC), asymmetric K/V treatments. Papers report average quality, compression ratios, throughput wins. Production teams ship compressed caches and assume the model “mostly works.”
     </p>
-    <div class="cta-row">
-      <a class="btn btn-primary" href="https://github.com/utkarshg20/ExactKV/blob/main/paper/ExactKV_Technical_Report.md">Technical report</a>
-      <a class="btn btn-ghost" href="#findings">See the findings</a>
-      <a class="btn btn-ghost" href="#reproduce">Reproduce</a>
+    <p>
+      Under greedy decoding, that assumption is fragile. One perturbed logit can flip the argmax. After that flip, the trajectory is a different sequence, different tokens, different JSON fields, different answers. The question is not whether compression saves memory. It is <em>when</em> the compressed path stops matching the reference, and <em>what mechanism</em> caused the flip.
+    </p>
+
+    <h3>The KV memory ratio</h3>
+    <p>
+      For a decoder-only transformer at sequence length <em>T</em>, KV cache size scales as:
+    </p>
+    <div class="article-pre"><code>|KV| = 2 · L · H_kv · d · T · bytes(fp16)
+
+Llama-3.1-8B: L=32, H_kv=8, d=128
+  T=8192  → ~1.07 GB KV (fp16)
+  T=128K  → ~16 GB KV, comparable to model weights</code></div>
+    <p>
+      Compression papers chase 4×–10× stored-byte reductions. ExactKV does not build those compressors. It crash-tests them: same prompt, same model, full-KV reference vs lossy compressed path vs verifier-corrected path, and logs the split.
+    </p>
+
+    <h2>2. What benchmarks usually miss</h2>
+    <p>
+      Official leaderboard scores (LongBench F1, MBPP pass@1, BFCL accuracy) answer “how good is the output?” ExactKV answers “where did the compressed KV path branch?” Those are related but not the same.
+    </p>
+    <p>
+      A compressor can drift on 50% of cells and still preserve every valid tool call. If a verifier corrects the suffix back to full-KV. A compressor can look fine on aggregate quality while failing catastrophically at token 0. Crash-testing catches both.
+    </p>
+    <div class="article-callout article-callout-warn">
+      <strong>Claim boundary:</strong> ExactKV external panels measure <em>drift</em>, not official benchmark scores. We use LongBench, BFCL, and MBPP prompts as stress tests, not as leaderboard submissions.
     </div>
-    <div class="hero-stats">
-      <div class="hstat"><span class="hnum">8,132</span><span class="hcap">GPU cells</span></div>
-      <div class="hstat-div"></div>
-      <div class="hstat"><span class="hnum">0</span><span class="hcap">exactkv failures</span></div>
-      <div class="hstat-div"></div>
-      <div class="hstat"><span class="hnum">5</span><span class="hcap">benchmark families</span></div>
-      <div class="hstat-div"></div>
-      <div class="hstat"><span class="hnum">3</span><span class="hcap">failure modes</span></div>
+
+    <h2>3. ExactKV vs serving-system papers</h2>
+    <p>
+      VeriCache and similar systems ask: can we draft from compressed KV, verify against full precision, and recover lossless outputs <em>fast enough to serve</em>? ExactKV asks a different question: <em>when</em> does compressed KV diverge, how often, on what tasks, with what logit signature, across compressors?
+    </p>
+    <p>
+      We are inspired by draft/verify semantics. We do <strong>not</strong> reproduce VeriCache’s cross-resource staggering, CPU full-KV staging, or throughput claims. Phase F kernel numbers in the repo are a <strong>kernel microbenchmark only</strong>, not end-to-end speedup.
+    </p>
+    <p>
+      Compression <em>implementation</em> papers (Shard, TurboQuant, KIVI, SnapKV) and compression <em>measurement</em> (ExactKV) are complementary. A method can achieve strong quality at 10× stored bytes while still showing early token drift under greedy argmax, or vice versa. We publish the drift evidence. We do not claim their compression ratios or throughput.
+    </p>
+
+    <h2>4. Three paths, four metrics</h2>
+    <p>Every ExactKV cell runs:</p>
+    <ul>
+      <li><strong>Full-KV</strong>: uncompressed reference (greedy argmax).</li>
+      <li><strong>Lossy</strong>: compressed KV only, no correction.</li>
+      <li><strong>ExactKV</strong>: draft from compressed KV, verify each token, accept prefix, correct on mismatch.</li>
+    </ul>
+    <p>Recorded per cell:</p>
+    <ul>
+      <li><strong>first-divergence index</strong>: first token where lossy ≠ full-KV.</li>
+      <li><strong>acceptance rate</strong>: fraction of drafted tokens accepted before mismatch.</li>
+      <li><strong>token-level divergence</strong>: did lossy path diverge at all?</li>
+      <li><strong>exactkv_failure</strong>: did final ExactKV output ≠ full-KV? (hard gate: 0 on all cited panels.)</li>
+    </ul>
+
+    <div class="article-pre"><code>for each draft token t from compressed KV:
+    if t == full_KV_argmax_at_t:
+        accept t
+    else:
+        record first_divergence_index
+        emit full_KV token, correct suffix
+        break</code></div>
+
+    <p>
+      <strong>Divergence rate and acceptance rate are not redundant.</strong> A compressor can diverge rarely but reject drafts often (near-tie noise). Another can diverge on 90% of cells but still accept 85% of tokens before the flip (late drift). Read them together.
+    </p>
+
+    <h2>5. The int4 surprise: same model, different task</h2>
+    <p>
+      The headline split is <code>int4_sim</code> (4× per-tensor simulated quantization) on Llama-3.1-8B and Mistral-7B-Instruct across task families:
+    </p>
+
+    <div class="viz-panel">
+      <div class="viz-title">Lossy-path token drift rate (<code>int4_sim</code>)</div>
+      <div class="viz-row">
+        <span class="viz-label">MBPP code</span>
+        <span class="viz-track"><span class="viz-fill viz-green" style="--w:6%"></span></span>
+        <span class="viz-pct">6%</span>
+      </div>
+      <div class="viz-row">
+        <span class="viz-label">BFCL short-gen</span>
+        <span class="viz-track"><span class="viz-fill viz-yellow" style="--w:11%"></span></span>
+        <span class="viz-pct">11%</span>
+      </div>
+      <div class="viz-row">
+        <span class="viz-label">BFCL long-gen</span>
+        <span class="viz-track"><span class="viz-fill viz-yellow" style="--w:50%"></span></span>
+        <span class="viz-pct">50%</span>
+      </div>
+      <div class="viz-row">
+        <span class="viz-label">HF LongBench</span>
+        <span class="viz-track"><span class="viz-fill viz-red" style="--w:90%"></span></span>
+        <span class="viz-pct">90%</span>
+      </div>
+      <div class="viz-row">
+        <span class="viz-label">H2O eviction 75%</span>
+        <span class="viz-track"><span class="viz-fill viz-red" style="--w:100%"></span></span>
+        <span class="viz-pct">100%</span>
+      </div>
+      <p class="viz-caption">Same models, same compressor class, task type dominates. Source: <code>reports/external_panels/</code>.</p>
     </div>
-    <p class="hero-note">Research-grade evaluation framework. <strong>Not a production serving system.</strong> Does <strong>not</strong> reproduce VeriCache. <strong>8,132</strong> completed GPU cells across external panels (<code>exactkv_failures=0</code>); core compressor leaderboard from the <strong>1,500-cell</strong> scale panel (<code>reports/scale_7b/raw.json</code>). Phase F = kernel microbenchmark only (not end-to-end speedup). Compression ratios = stored tensor byte ratios (not active GPU memory savings). SpectralQuant = fallback/proxy; Shard = probe-first heuristic.</p>
-  </div>
-</section>
 
-<!-- ─── FOUR FINDINGS ─────────────────────────────────────────────────────── -->
-<section id="findings" class="band">
-  <div class="wrap">
-    <p class="section-label">Empirical findings</p>
-    <h2>Four things ExactKV established</h2>
-    <p class="section-sub">Across Llama-3.1-8B and Mistral-7B, five benchmark families, six compressor variants.</p>
+    <p>
+      On the 1,500-cell core panel, <code>int4_sim</code> drifts in <strong>52%</strong> of cells with mean first divergence ≈ 2.0, but the histogram is heavy-tailed: index 1 → 78 cells, index 3 → 39, index 8 → 13. A mean of 2.0 understates how many failures happen on token 1.
+    </p>
 
-    <div class="findings-grid">
+    <h2>6. Generation length scales drift 7×</h2>
+    <p>
+      On BFCL tool-calling, holding prompts and context fixed, increasing the output budget exposes more opportunities for argmax flips:
+    </p>
 
-      <div class="finding">
-        <div class="finding-num">01</div>
-        <div class="finding-body">
-          <h3>Task type dominates drift</h3>
-          <p>The same <code>int4_sim</code> compressor on the same model diverges at wildly different rates depending on task type.</p>
-          <div class="finding-data">
-            <div class="frow"><span class="ftask">MBPP code</span><span class="fbar-wrap"><span class="fbar" style="--w:6%"></span></span><span class="fpct">6%</span></div>
-            <div class="frow"><span class="ftask">BFCL short-gen</span><span class="fbar-wrap"><span class="fbar" style="--w:11%"></span></span><span class="fpct">11%</span></div>
-            <div class="frow"><span class="ftask">BFCL long-gen</span><span class="fbar-wrap"><span class="fbar" style="--w:50%"></span></span><span class="fpct fpct-warn">50%</span></div>
-            <div class="frow"><span class="ftask">HF LongBench</span><span class="fbar-wrap"><span class="fbar fbar-red" style="--w:90%"></span></span><span class="fpct fpct-red">90%</span></div>
-            <div class="frow"><span class="ftask">H2O eviction (75% kept)</span><span class="fbar-wrap"><span class="fbar fbar-red" style="--w:100%"></span></span><span class="fpct fpct-red">100%</span></div>
-          </div>
-          <p class="finding-note">H2O-style eviction at 75% kept is <em>worse</em> than int4_sim at matched memory budget on reading tasks.</p>
-        </div>
-      </div>
-
-      <div class="finding">
-        <div class="finding-num">02</div>
-        <div class="finding-body">
-          <h3>Generation length scales drift 7×</h3>
-          <p>On BFCL, <code>int4_sim</code> divergence grows with output budget — same task, same context, different generation length.</p>
-          <div class="finding-data">
-            <div class="frow"><span class="ftask">mnt = 16</span><span class="fbar-wrap"><span class="fbar fbar-yellow" style="--w:9%"></span></span><span class="fpct">9%</span></div>
-            <div class="frow"><span class="ftask">mnt = 32</span><span class="fbar-wrap"><span class="fbar fbar-yellow" style="--w:17%"></span></span><span class="fpct">17%</span></div>
-            <div class="frow"><span class="ftask">mnt = 128</span><span class="fbar-wrap"><span class="fbar fbar-yellow" style="--w:45%"></span></span><span class="fpct fpct-warn">45%</span></div>
-            <div class="frow"><span class="ftask">mnt = 256</span><span class="fbar-wrap"><span class="fbar fbar-red" style="--w:62%"></span></span><span class="fpct fpct-red">62%</span></div>
-          </div>
-          <p class="finding-note"><code>int8</code> stays near-zero at all generation budgets. The gap is not quantization level — it's bit-width × output length.</p>
-        </div>
-      </div>
-
-      <div class="finding">
-        <div class="finding-num">03</div>
-        <div class="finding-body">
-          <h3>Three distinct failure modes</h3>
-          <p>Top-k logit autopsy over <strong>1,103 divergent cells</strong> reveals mechanistically different failures by compressor class.</p>
-          <div class="failure-mini">
-            <div class="fm fm-blue">
-              <div class="fm-label"><code>int8</code></div>
-              <div class="fm-name">Near-tie noise</div>
-              <div class="fm-stats">rank 2.4 · fdi=22 · 66% near-tie</div>
-            </div>
-            <div class="fm fm-orange">
-              <div class="fm-label"><code>int4_sim</code></div>
-              <div class="fm-name">Distribution shift</div>
-              <div class="fm-stats">rank 3.5 · fdi=8 · 83% flip</div>
-            </div>
-            <div class="fm fm-red">
-              <div class="fm-label">H2O-style</div>
-              <div class="fm-name">Attention destruction</div>
-              <div class="fm-stats">rank 6.7 · <strong>fdi=1</strong> · 100% flip</div>
-            </div>
-          </div>
-          <p class="finding-note">Same verifier corrects all three failure modes. <code>exactkv_failures = 0</code> throughout.</p>
-        </div>
-      </div>
-
-      <div class="finding">
-        <div class="finding-num">04</div>
-        <div class="finding-body">
-          <h3>100% downstream validity preserved</h3>
-          <p>Despite <strong>50% token drift</strong>, ExactKV preserves all full-KV valid BFCL tool calls — for both models, across all four task categories.</p>
-          <div class="validity-grid">
-            <div class="vcell"><div class="vnum">106/106</div><div class="vcap">valid tool calls preserved</div></div>
-            <div class="vcell"><div class="vnum">100%</div><div class="vcap">across simple, parallel, multi-turn, AST-eval</div></div>
-          </div>
-          <p class="finding-note">The full-KV baseline achieves 26.5% valid tool-call rate on this panel — ExactKV matches that exactly, for both models.</p>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- ─── DIVERGENCE TABLE ───────────────────────────────────────────────────── -->
-<section id="divergence" class="band band-alt">
-  <div class="wrap">
-    <p class="section-label">Divergence by task × compressor</p>
-    <h2>Drift is task-dependent and compressor-class-dependent</h2>
-    <p class="section-sub">Divergence rate = fraction of cells where compressed KV first token differs from full-KV. Source: <code>reports/external_panels/</code></p>
-
-    <div class="table-scroll">
-      <table class="dtable">
+    <div class="article-table-wrap">
+      <table class="article-table">
         <thead>
-          <tr>
-            <th>Compressor</th>
-            <th class="tc">MBPP<br><span class="th-sub">code · 512–1K ctx</span></th>
-            <th class="tc">BFCL short<br><span class="th-sub">tool-call · mnt=16/32</span></th>
-            <th class="tc">BFCL long<br><span class="th-sub">tool-call · mnt=128/256</span></th>
-            <th class="tc">HF LongBench<br><span class="th-sub">reading · 2K–8K ctx</span></th>
-            <th>Failure mode</th>
-          </tr>
+          <tr><th>max_new_tokens</th><th>int4_sim drift</th><th>int8 drift</th></tr>
         </thead>
         <tbody>
-          <tr>
-            <td><code>noop</code></td>
-            <td class="tc"><span class="badge b-green">0%</span></td>
-            <td class="tc"><span class="badge b-green">0%</span></td>
-            <td class="tc"><span class="badge b-green">0%</span></td>
-            <td class="tc"><span class="badge b-green">0%</span></td>
-            <td class="mode-cell">—</td>
-          </tr>
-          <tr>
-            <td><code>int8</code></td>
-            <td class="tc"><span class="badge b-green">~0%</span></td>
-            <td class="tc"><span class="badge b-green">~0%</span></td>
-            <td class="tc"><span class="badge b-green">~0%</span></td>
-            <td class="tc"><span class="badge b-yellow">24.6%</span></td>
-            <td class="mode-cell"><span class="mode-tag mode-blue">near-tie noise</span></td>
-          </tr>
-          <tr class="row-highlight">
-            <td><code>int6_sim</code> <span class="tag-sm">Mistral v3.0</span></td>
-            <td class="tc"><span class="badge b-green">~1–3%</span></td>
-            <td class="tc"><span class="badge b-green">~3–6%</span></td>
-            <td class="tc"><span class="badge b-yellow">~15–35%</span></td>
-            <td class="tc"><span class="badge b-yellow">~10–40%</span></td>
-            <td class="mode-cell"><em>GPU panel v3.0</em></td>
-          </tr>
-          <tr class="row-highlight">
-            <td><code>int4_per_vec_sim</code> <span class="tag-sm">Mistral v3.0</span></td>
-            <td class="tc"><span class="badge b-green">~0–2%</span></td>
-            <td class="tc"><span class="badge b-green">~2–5%</span></td>
-            <td class="tc"><span class="badge b-yellow">~10–25%</span></td>
-            <td class="tc"><span class="badge b-yellow">~5–20%</span></td>
-            <td class="mode-cell"><em>GPU panel v3.0</em></td>
-          </tr>
-          <tr>
-            <td><code>int4_sim</code></td>
-            <td class="tc"><span class="badge b-yellow">6.2%</span></td>
-            <td class="tc"><span class="badge b-yellow">11.2%</span></td>
-            <td class="tc"><span class="badge b-orange">50%</span></td>
-            <td class="tc"><span class="badge b-red">90.4%</span></td>
-            <td class="mode-cell"><span class="mode-tag mode-orange">distribution shift</span></td>
-          </tr>
-          <tr>
-            <td><code>h2o_sim</code> (75% kept)</td>
-            <td class="tc"><span class="badge b-yellow">~5%</span></td>
-            <td class="tc"><span class="badge b-yellow">~15%</span></td>
-            <td class="tc"><span class="badge b-orange">~60%</span></td>
-            <td class="tc"><span class="badge b-red">100%</span></td>
-            <td class="mode-cell"><span class="mode-tag mode-red">attention destruction</span></td>
-          </tr>
+          <tr><td>16</td><td class="num">9%</td><td class="num">~0%</td></tr>
+          <tr><td>32</td><td class="num">13.5%</td><td class="num">~0%</td></tr>
+          <tr><td>128</td><td class="num">38.5%</td><td class="num">0.5%</td></tr>
+          <tr><td>256</td><td class="num">62%</td><td class="num">1.0%</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="fine">Measured cells: int8/int4_sim/h2o_sim are GPU-validated. int6_sim and int4_per_vec_sim are GPU-validated on both models (v3.0, 1,568 cells, exactkv_failures=0). Not official benchmark scores.</p>
-    <div class="legend-row">
-      <span class="badge b-green">0–10%</span> low divergence &nbsp;
-      <span class="badge b-yellow">10–30%</span> moderate &nbsp;
-      <span class="badge b-orange">30–60%</span> high &nbsp;
-      <span class="badge b-red">60–100%</span> severe
-    </div>
-  </div>
-</section>
+    <p>
+      Short-generation panels (mnt=16/32) understate tool-calling drift. The BFCL validity panel (mnt=128/256) is the first to measure complete JSON tool calls, and shows ~50% int4 drift with 100% validity preservation when full-KV produced a valid call.
+    </p>
 
-<!-- ─── FAILURE MODES ─────────────────────────────────────────────────────── -->
-<section id="failure-modes" class="band">
-  <div class="wrap">
-    <p class="section-label">Mechanistic analysis</p>
-    <h2>Three compressor classes, three failure signatures</h2>
-    <p class="section-sub">Top-k logit autopsy over <strong>1,103 divergent cells</strong> — full top-5 logit traces at first divergence.</p>
+    <h2>7. Context length: near-ceiling on reading tasks</h2>
+    <p>
+      HF LongBench v2.6 (720 cells, real HuggingFace prompts, 2K/4K/8K buckets). Int4_sim divergence by context:
+    </p>
 
-    <div class="modes-grid">
-
-      <div class="mode-card">
-        <div class="mc-header">
-          <code class="mc-comp">int8</code>
-          <span class="mc-badge mc-badge-blue">Near-tie noise</span>
-        </div>
-        <p class="mc-desc">Small quantization errors perturb logits at decision boundaries where the top-2 tokens are nearly tied. The flip is random-looking — whichever side of the boundary the rounded value falls on.</p>
-        <div class="mc-stats">
-          <div class="mcs"><div class="mcs-val">66%</div><div class="mcs-lbl">near-tie rate</div></div>
-          <div class="mcs"><div class="mcs-val">2.4</div><div class="mcs-lbl">mean lossy rank</div></div>
-          <div class="mcs"><div class="mcs-val">22</div><div class="mcs-lbl">median fdi</div></div>
-        </div>
-        <p class="mc-interp">Divergence is late and recoverable. The draft stays useful before divergence — high acceptance rate up to fdi≈22.</p>
-      </div>
-
-      <div class="mode-card">
-        <div class="mc-header">
-          <code class="mc-comp">int4_sim</code>
-          <span class="mc-badge mc-badge-orange">Distribution shift</span>
-        </div>
-        <p class="mc-desc">Aggressive per-tensor quantization biases activation distributions, systematically shifting probability mass toward lower-ranked alternatives. Not a tie — the full-KV winner is demoted to rank 3–4.</p>
-        <div class="mc-stats">
-          <div class="mcs"><div class="mcs-val">83%</div><div class="mcs-lbl">top-1 flip rate</div></div>
-          <div class="mcs"><div class="mcs-val">3.5</div><div class="mcs-lbl">mean lossy rank</div></div>
-          <div class="mcs"><div class="mcs-val">8</div><div class="mcs-lbl">median fdi</div></div>
-        </div>
-        <p class="mc-interp">Earlier divergence than int8 (fdi≈8). The correct token is still in the top-5 — just not top-1. Systematic rather than random.</p>
-      </div>
-
-      <div class="mode-card">
-        <div class="mc-header">
-          <code class="mc-comp">h2o_sim</code>
-          <span class="mc-badge mc-badge-red">Attention destruction</span>
-        </div>
-        <p class="mc-desc">Token eviction removes contextual anchors entirely from the KV cache. The model loses track of long-range dependencies — the correct token isn't in the top-5 at all. Divergence happens at token 1.</p>
-        <div class="mc-stats">
-          <div class="mcs"><div class="mcs-val">100%</div><div class="mcs-lbl">top-1 flip rate</div></div>
-          <div class="mcs"><div class="mcs-val">6.7</div><div class="mcs-lbl">mean lossy rank</div></div>
-          <div class="mcs mcs-red"><div class="mcs-val">1</div><div class="mcs-lbl">median fdi</div></div>
-        </div>
-        <p class="mc-interp">Catastrophic. Divergence at the first generated token — the compressed draft is essentially unusable on long-context reading tasks.</p>
-      </div>
-
-    </div>
-
-    <div class="same-verifier">
-      <p><strong>The same ExactKV verifier corrects all three failure modes.</strong> <code>exactkv_failures = 0</code> across all 8,132 cells — including every 100%-divergent H2O cell. Drift and exactness failure are not the same thing.</p>
-    </div>
-  </div>
-</section>
-
-<!-- ─── NEW COMPRESSORS ────────────────────────────────────────────────────── -->
-<section class="band band-alt">
-  <div class="wrap">
-    <p class="section-label">Compression curve</p>
-    <h2>Granularity outweighs bit-width</h2>
-    <p class="section-sub">Two new compressors extend the curve — one per-tensor, one per-vector (KVQuant/KIVI-style).</p>
-
-    <div class="quant-table-wrap">
-      <table class="qtable">
+    <div class="article-table-wrap">
+      <table class="article-table">
         <thead>
-          <tr>
-            <th>Compressor</th>
-            <th>Granularity</th>
-            <th>MAE</th>
-            <th>Error ×int8</th>
-            <th>Theoretical ratio</th>
-            <th>Status</th>
-          </tr>
+          <tr><th>Context</th><th>int8 drift</th><th>int4_sim drift</th></tr>
         </thead>
         <tbody>
-          <tr>
-            <td><code>int8</code></td>
-            <td>per-tensor</td>
-            <td>0.067</td>
-            <td><strong>1.00×</strong></td>
-            <td>0.50× fp16</td>
-            <td><span class="tag ok">GPU validated</span></td>
-          </tr>
-          <tr class="qrow-highlight">
-            <td><code>int6_sim</code></td>
-            <td>per-tensor</td>
-            <td>0.275</td>
-            <td>4.10×</td>
-            <td>0.375× fp16</td>
-            <td><span class="tag analytical">v3.0 panel</span></td>
-          </tr>
-          <tr class="qrow-highlight qrow-best">
-            <td><code>int4_per_vec_sim</code></td>
-            <td><strong>per-vector</strong></td>
-            <td><strong>0.138</strong></td>
-            <td><strong>2.06×</strong></td>
-            <td>0.25× fp16</td>
-            <td><span class="tag analytical">v3.0 panel</span></td>
-          </tr>
-          <tr>
-            <td><code>int4_sim</code></td>
-            <td>per-tensor</td>
-            <td>0.844</td>
-            <td>12.59×</td>
-            <td>0.25× fp16</td>
-            <td><span class="tag ok">GPU validated</span></td>
-          </tr>
+          <tr><td>2K</td><td class="num">21%</td><td class="num">95%</td></tr>
+          <tr><td>4K</td><td class="num">27%</td><td class="num">86%</td></tr>
+          <tr><td>8K</td><td class="num">25%</td><td class="num">90%</td></tr>
         </tbody>
       </table>
     </div>
-    <div class="quant-insight">
-      <strong>Key insight:</strong> <code>int4_per_vec_sim</code> (4-bit per-vector) has <strong>6× lower quantization error</strong> than <code>int4_sim</code> (4-bit per-tensor) at the <em>same memory budget</em>. Per-vector granularity eliminates cross-head contamination from outlier attention heads. KV tensors with outlier heads are the norm in 7–8B models.
-    </div>
-    <p class="fine">MAE measured on realistic KV shape [1, 32, 512, 64] with simulated outlier heads (first 4 heads 5× larger). int6_sim and int4_per_vec_sim are simulations stored as fp16. GPU drift panels completed for both models (v3.0, 1,568 cells). Inspired by per-vector/per-channel granularity in KVQuant and KIVI.</p>
-  </div>
-</section>
+    <p>
+      int4_sim is near-ceiling at all context lengths on open-text reading, task type matters more than context once you are in the LongBench regime. Int8 is the opposite pattern: near-zero on code/tool panels, but 15–27% on LongBench reading.
+    </p>
 
-<!-- ─── FAITHFUL EXTERNAL ADAPTERS ─────────────────────────────────────────── -->
-<section id="faithful-external" class="band">
-  <div class="wrap">
-    <p class="section-label">Phase D3 · Faithful external adapters</p>
-    <h2>Real upstream compressors on the same crash-test grid</h2>
-    <p class="section-sub">Built-in sims cover the design-space curve. Phase D3 wires <strong>upstream libraries</strong> (KIVI quant math, kvpress SnapKV) as restricted adapters — separate from the 8,132-cell headline panel.</p>
+    <details class="article-details">
+      <summary>LongBench per-subset int4_sim drift (both models)</summary>
+      <div class="detail-body">
+        <div class="article-table-wrap">
+          <table class="article-table">
+            <thead><tr><th>Subset</th><th>Type</th><th>Llama</th><th>Mistral</th></tr></thead>
+            <tbody>
+              <tr><td>2wikimqa</td><td>multi-hop QA</td><td class="num">100%</td><td class="num">100%</td></tr>
+              <tr><td>hotpotqa</td><td>multi-hop QA</td><td class="num">100%</td><td class="num">100%</td></tr>
+              <tr><td>narrativeqa</td><td>reading comp.</td><td class="num">100%</td><td class="num">100%</td></tr>
+              <tr><td>gov_report</td><td>summarization</td><td class="num">92%</td><td class="num">100%</td></tr>
+              <tr><td>lcc</td><td>code completion</td><td class="num">92%</td><td class="num">42%</td></tr>
+              <tr><td>trec</td><td>classification</td><td class="num">100%</td><td class="num">67%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p><code>lcc</code> (code completion) is an outlier, substantially lower drift than reading comprehension on the same panel.</p>
+      </div>
+    </details>
 
-    <div class="quant-table-wrap">
-      <table class="qtable">
+    <h2>8. Three failure modes: logit autopsy</h2>
+    <p>
+      With <code>--store-top-k-logits</code> enabled on LongBench, BFCL validity, and H2O panels, we analyzed 1,103 divergent cells at the first flip. Three mechanistic signatures:
+    </p>
+
+    <div class="article-table-wrap">
+      <table class="article-table">
         <thead>
-          <tr>
-            <th>Adapter</th>
-            <th>Backend</th>
-            <th>MBPP smoke (Mistral)</th>
-            <th>Mean accept.</th>
-            <th>Status</th>
-          </tr>
+          <tr><th>Class</th><th>Mechanism</th><th>Top-1 flip</th><th>Near-tie (&lt;0.05)</th><th>Mean lossy rank</th><th>Median 1st div.</th></tr>
         </thead>
         <tbody>
-          <tr>
-            <td><code>int8</code></td>
-            <td>built-in</td>
-            <td>0%</td>
-            <td>1.000</td>
-            <td><span class="tag ok">control</span></td>
-          </tr>
-          <tr class="qrow-highlight qrow-best">
-            <td><code>snapkv_experimental</code></td>
-            <td>kvpress SnapKVPress</td>
-            <td><strong>87.5%</strong></td>
-            <td>0.541</td>
-            <td><span class="tag ok">GPU smoke</span></td>
-          </tr>
-          <tr>
-            <td><code>int4_per_vec_sim</code></td>
-            <td>ExactKV sim (KIVI/KVQuant-style)</td>
-            <td>0%</td>
-            <td>≈1.0</td>
-            <td><span class="tag ok">v3.0 panel</span></td>
-          </tr>
-          <tr>
-            <td><code>kivi_offline_r32</code></td>
-            <td>KIVI <code>utils_quant</code> + r=32 window</td>
-            <td>100%</td>
-            <td>0.023</td>
-            <td><span class="tag warn">adapter diagnostic</span></td>
-          </tr>
+          <tr><td><code>int8</code></td><td>Near-tie noise</td><td class="num">69%</td><td class="num">66%</td><td class="num">2.4</td><td class="num">22</td></tr>
+          <tr><td><code>int4_sim</code></td><td>Distribution shift</td><td class="num">83%</td><td class="num">26%</td><td class="num">3.5</td><td class="num">8</td></tr>
+          <tr><td>H2O-style</td><td>Attention destruction</td><td class="num">100%</td><td class="num">0%</td><td class="num">6.7</td><td class="num">1</td></tr>
         </tbody>
       </table>
     </div>
-    <div class="quant-insight">
-      <strong>Partial Mistral grid (362 cells, exactkv_failures=0):</strong> LongBench 216 complete — SnapKV <strong>100%</strong> drift (accept 0.36); BFCL 98 checkpointed — SnapKV 100% (accept 0.40); MBPP smoke 48 — SnapKV 87.5% (accept 0.54). <code>int8</code> stays non-catastrophic (8.6% combined). KIVI r32 catastrophic on every cell (adapter diagnostic only).
-    </div>
-    <p class="fine">Source: <code>reports/external_panels/faithful/summary.md</code>. Llama wave-1 + wave-2 (KnormPress, TurboQuant) queued on RunPod. Not production serving; not official benchmark scores.</p>
-  </div>
-</section>
 
-<!-- ─── LEADERBOARD ───────────────────────────────────────────────────────── -->
-<section id="leaderboard" class="band band-alt">
-  <div class="wrap">
-    <p class="section-label">Leaderboard</p>
-    <h2>Compressor rankings</h2>
-    <p class="section-sub">Score = 0.35·acceptance + 0.25·verifier_agreement + 0.20·(1−norm. first divergence) + 0.10·(1−failure rate) + 0.10·stability. Source: <code>reports/public_release/leaderboard_final.json</code></p>    <div class="table-scroll">
-      <table class="lb">
+    <p>
+      <strong>int8</strong> flips late on contested logits. The model was already uncertain. <strong>int4_sim</strong> shifts probability mass to rank-3–4 alternatives even when full-KV was moderately confident. <strong>H2O-style eviction</strong> deletes context tokens. Lossy rank jumps to ~7 and divergence is immediate (median index 1). Same verifier catches all three. <strong>exactkv failures: 0</strong>.
+    </p>
+
+    <h2>9. Forensic case studies</h2>
+    <p>
+      Token-level drift is easier to reason about with concrete outputs. All cases below: verifier restores full-KV text. <code>exactkv_failure=false</code>.
+    </p>
+
+    <div class="case-study">
+      <div class="cs-label">Case A, early flip, high acceptance (capital QA)</div>
+      <div class="cs-row"><strong>Compressor:</strong> <code>int4_sim</code> · Llama-3.1-8B · 1st div. Index 3 · acceptance 0.75</div>
+      <div class="cs-row"><strong>Full-KV:</strong></div>
+      <div class="cs-snippet full">a city of many</div>
+      <div class="cs-row"><strong>Lossy:</strong></div>
+      <div class="cs-snippet lossy">a city of art</div>
+      <div class="cs-row"><strong>ExactKV:</strong> matches full-KV</div>
+    </div>
+
+    <div class="case-study">
+      <div class="cs-label">Case C, structured JSON field flip (tool-calling)</div>
+      <div class="cs-row"><strong>Prompt:</strong> <code>Complete JSON: {"name": "get_weather", "city":</code></div>
+      <div class="cs-row"><strong>Full-KV:</strong></div>
+      <div class="cs-snippet full">"New York", "country": "</div>
+      <div class="cs-row"><strong>Lossy:</strong></div>
+      <div class="cs-snippet lossy">"New York", "temperature":</div>
+      <div class="cs-row"><strong>ExactKV:</strong> matches full-KV · 1st div. Index 5</div>
+      <p class="cs-note">This is the failure mode tool-calling systems care about: schema field corruption on the lossy path.</p>
+    </div>
+
+    <div class="case-study">
+      <div class="cs-label">Case O, catastrophic KV corruption (KIVI offline adapter)</div>
+      <div class="cs-row"><strong>Task:</strong> LongBench narrativeqa · <code>kivi_offline</code> · acceptance 0.000 · 1st div. Index 0</div>
+      <div class="cs-row"><strong>Full-KV:</strong></div>
+      <div class="cs-snippet full"> face, with
+its high forehead and its straight nose, they were positively grotesque.
+I had never see</div>
+      <div class="cs-row"><strong>Lossy:</strong></div>
+      <div class="cs-snippet lossy">!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!</div>
+      <div class="cs-row"><strong>ExactKV:</strong> matches full-KV</div>
+      <p class="cs-note">Integration diagnostic only, not production KIVI CUDA. Distinguishes subtle drift from total cache corruption.</p>
+    </div>
+
+    <h2>10. Downstream validity, drift ≠ task failure</h2>
+    <p>
+      BFCL validity panel (1,200 cells, mnt=128/256). Full-KV produced a parseable JSON tool call in <strong>106/400</strong> cells (26.5%, prompts and truncation limited, not a “model can't tool-call” claim). Despite ~50% int4 drift:
+    </p>
+
+    <div class="article-table-wrap">
+      <table class="article-table">
         <thead>
-          <tr>
-            <th>#</th>
-            <th>Compressor</th>
-            <th>Model</th>
-            <th>Score</th>
-            <th>Acceptance</th>
-            <th>Divergence</th>
-            <th>Status</th>
-          </tr>
+          <tr><th>Category</th><th>int4 drift</th><th>Full-KV valid</th><th>ExactKV valid</th><th>Preserved</th></tr>
         </thead>
         <tbody>
-          <tr><td>1</td><td><code>noop</code></td><td>Llama-3.1-8B</td><td><span class="score-bar"><span class="sb-fill" style="--pct:100%"></span>1.000</span></td><td>1.000</td><td>0.000</td><td><span class="tag ok">validated</span></td></tr>
-          <tr><td>2</td><td><code>int8</code></td><td>Llama-3.1-8B</td><td><span class="score-bar"><span class="sb-fill" style="--pct:100%"></span>1.000</span></td><td>1.000</td><td>0.000</td><td><span class="tag ok">validated</span></td></tr>
-          <tr><td>3</td><td><code>noop</code></td><td>Mistral-7B</td><td><span class="score-bar"><span class="sb-fill" style="--pct:100%"></span>1.000</span></td><td>1.000</td><td>0.000</td><td><span class="tag ok">validated</span></td></tr>
-          <tr><td>4</td><td><code>int8</code></td><td>Mistral-7B</td><td><span class="score-bar"><span class="sb-fill" style="--pct:98.3%"></span>0.983</span></td><td>1.000</td><td>0.173</td><td><span class="tag ok">validated</span></td></tr>
-          <tr><td>5</td><td><code>int4_sim</code></td><td>Llama-3.1-8B</td><td><span class="score-bar"><span class="sb-fill sb-mid" style="--pct:85.9%"></span>0.859</span></td><td>0.852</td><td>0.520</td><td><span class="tag ok">validated</span></td></tr>
-          <tr><td>6</td><td><code>int4_sim</code></td><td>Mistral-7B</td><td><span class="score-bar"><span class="sb-fill sb-mid" style="--pct:85.1%"></span>0.851</span></td><td>0.837</td><td>0.507</td><td><span class="tag ok">validated</span></td></tr>
-          <tr><td>—</td><td><code>int6_sim</code></td><td>Mistral-7B</td><td><span class="score-bar"><span class="sb-fill" style="--pct:96.4%"></span>0.964</span></td><td>0.964</td><td>0.375</td><td><span class="tag ok">v3.0</span></td></tr>
-          <tr><td>—</td><td><code>int4_per_vec_sim</code></td><td>Mistral-7B</td><td><span class="score-bar"><span class="sb-fill" style="--pct:93.0%"></span>0.930</span></td><td>0.930</td><td>0.556</td><td><span class="tag ok">v3.0</span></td></tr>
-          <tr><td>—</td><td><code>int6_sim</code></td><td>Llama-3.1-8B</td><td><span class="score-bar"><span class="sb-fill" style="--pct:95.7%"></span>0.957</span></td><td>0.957</td><td>0.472</td><td><span class="tag ok">v3.0</span></td></tr>
-          <tr><td>—</td><td><code>int4_per_vec_sim</code></td><td>Llama-3.1-8B</td><td><span class="score-bar"><span class="sb-fill" style="--pct:93.5%"></span>0.935</span></td><td>0.935</td><td>0.569</td><td><span class="tag ok">v3.0</span></td></tr>
+          <tr><td>simple</td><td class="num">49%</td><td class="num">38/104</td><td class="num">38/104</td><td class="num">100%</td></tr>
+          <tr><td>parallel</td><td class="num">55%</td><td class="num">31/104</td><td class="num">31/104</td><td class="num">100%</td></tr>
+          <tr><td>multi_turn</td><td class="num">60%</td><td class="num">24/104</td><td class="num">24/104</td><td class="num">100%</td></tr>
+          <tr><td>ast_eval</td><td class="num">35%</td><td class="num">13/88</td><td class="num">13/88</td><td class="num">100%</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="fine">Headline panel source: <code>reports/scale_7b/raw.json</code>. Divergence rates from <code>reports/external_panels/</code> vary by task family — see the divergence table above. int6_sim and int4_per_vec_sim are GPU-validated on both models (v3.0, 1,568 cells, exactkv_failures=0).</p>
-  </div>
-</section>
+    <p>
+      “Preserved” means ExactKV output matches full-KV, not that full-KV always succeeds. The verifier closes the gap between drift rate and output validity on tested panels.
+    </p>
 
-<!-- ─── METHODOLOGY ───────────────────────────────────────────────────────── -->
-<section class="band band-alt">
-  <div class="wrap">
-    <p class="section-label">How it works</p>
-    <h2>Draft / verify / commit loop</h2>
-    <div class="method-flow">
-      <div class="mf-step">
-        <div class="mf-n">1</div>
-        <div class="mf-text">
-          <strong>Draft</strong>
-          <p>Generate tokens autoregressively from the <em>compressed</em> KV cache.</p>
+    <h2>11. The compressor curve: bit-width and granularity</h2>
+    <p>
+      The 6%/90% hook is one point. GPU-validated built-ins (v3.0, both models, task-family means):
+    </p>
+
+    <div class="article-table-wrap">
+      <table class="article-table">
+        <thead>
+          <tr><th>Compressor</th><th>MBPP</th><th>BFCL</th><th>LongBench</th><th>Notes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>int8</code></td><td class="num">0%</td><td class="num">0%</td><td class="num">~18%</td><td>Real baseline</td></tr>
+          <tr><td><code>int6_sim</code></td><td class="num">0%</td><td class="num">0%</td><td class="num">~42%</td><td>6-bit sim, between int8 and int4</td></tr>
+          <tr><td><code>int4_per_vec_sim</code></td><td class="num">0%</td><td class="num">0%</td><td class="num">~56%</td><td>Per-vector int4 (KIVI/KVQuant-style granularity)</td></tr>
+          <tr><td><code>int4_sim</code></td><td class="num">~6%</td><td class="num">~52%</td><td class="num">~85%</td><td>Per-tensor int4, headline drift case</td></tr>
+          <tr><td>H2O-style 75% kept</td><td class="num">, </td><td class="num">, </td><td class="num">100%</td><td>Eviction class, not quantization</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      <strong>Granularity vs bit-width is task-conditional.</strong> Per-vector int4 matches int8 on code/tool tasks but still accumulates error at 8K reading context. Int6 (higher bit-width, per-tensor) beats per-vector int4 on LongBench, at long context, bit-width still matters alongside granularity.
+    </p>
+
+    <details class="article-details">
+      <summary>Quantization error vs drift (why int4_per_vec helps on structured tasks)</summary>
+      <div class="detail-body">
+        <p>On realistic KV shape [1, 32, 512, 64] with outlier heads, mean absolute quantization error vs int8:</p>
+        <div class="article-table-wrap">
+          <table class="article-table">
+            <thead><tr><th>Compressor</th><th>MAE × int8</th><th>Granularity</th></tr></thead>
+            <tbody>
+              <tr><td>int8</td><td class="num">1.00×</td><td>per-tensor</td></tr>
+              <tr><td>int4_per_vec_sim</td><td class="num">2.06×</td><td>per-vector</td></tr>
+              <tr><td>int6_sim</td><td class="num">4.10×</td><td>per-tensor</td></tr>
+              <tr><td>int4_sim</td><td class="num">12.59×</td><td>per-tensor</td></tr>
+            </tbody>
+          </table>
         </div>
+        <p>Per-vector int4 has 6× lower error than per-tensor int4, and 30pp lower LongBench drift than int4_sim, but int6_sim still wins on reading at 8K despite higher MAE.</p>
       </div>
-      <div class="mf-arrow">→</div>
-      <div class="mf-step">
-        <div class="mf-n">2</div>
-        <div class="mf-text">
-          <strong>Verify</strong>
-          <p>Compare each draft token against the <em>full-KV</em> reference (greedy argmax).</p>
-        </div>
-      </div>
-      <div class="mf-arrow">→</div>
-      <div class="mf-step">
-        <div class="mf-n">3</div>
-        <div class="mf-text">
-          <strong>Accept or correct</strong>
-          <p>Accept the matching prefix. On mismatch: emit the full-KV token, log the divergence event.</p>
-        </div>
-      </div>
-      <div class="mf-arrow">→</div>
-      <div class="mf-step">
-        <div class="mf-n">4</div>
-        <div class="mf-text">
-          <strong>Record</strong>
-          <p>Log <code>first_divergence_index</code>, <code>acceptance_rate</code>, <code>exactkv_failure</code> per cell.</p>
-        </div>
-      </div>
-    </div>
-    <div class="metrics-row">
-      <div class="metric"><code>first_divergence_index</code><p>First token where compressed KV greedy output ≠ full-KV. Phase G canonical authority.</p></div>
-      <div class="metric"><code>acceptance_rate</code><p>Fraction of drafted tokens accepted before the first mismatch. Draft-utility proxy.</p></div>
-      <div class="metric"><code>exactkv_failure</code><p>Final ExactKV output ≠ full-KV greedy. <strong>Hard gate: 0 on all tested panels.</strong></p></div>
-      <div class="metric"><code>compression_ratio</code><p>Stored tensor byte ratio. <em>Not</em> active GPU memory savings.</p></div>
-    </div>
-  </div>
-</section>
+    </details>
 
-<!-- ─── CLAIM BOUNDARIES ─────────────────────────────────────────────────────── -->
-<section id="limitations" class="band">
-  <div class="wrap">
-    <p class="section-label">Claim boundaries</p>
-    <h2>What ExactKV does and does not claim</h2>
-    <div class="claims-grid">
-      <div class="claim claim-yes">
-        <div class="claim-icon">yes</div>
-        <p>Measures token-level drift for built-in compressors on tested panels</p>
-      </div>
-      <div class="claim claim-yes">
-        <div class="claim-icon">yes</div>
-        <p>Reports first-divergence index, acceptance rate, and exactness failures per cell</p>
-      </div>
-      <div class="claim claim-yes">
-        <div class="claim-icon">yes</div>
-        <p>Identifies mechanistic failure modes via top-k logit autopsy</p>
-      </div>
-      <div class="claim claim-yes">
-        <div class="claim-icon">yes</div>
-        <p>Preserves downstream BFCL tool-call validity via verifier correction</p>
-      </div>
-      <div class="claim claim-no">
-        <div class="claim-icon">no</div>
-        <p>Not a production serving system; does not claim end-to-end throughput improvements</p>
-      </div>
-      <div class="claim claim-no">
-        <div class="claim-icon">no</div>
-        <p>Does not reproduce VeriCache; not an implementation of VeriCache semantics</p>
-      </div>
-      <div class="claim claim-yes">
-        <div class="claim-icon">yes</div>
-        <p>Faithful external adapter integration (SnapKV via kvpress; KIVI offline diagnostic)</p>
-      </div>
-      <div class="claim claim-no">
-        <div class="claim-icon">no</div>
-        <p>Not production KIVI CUDA/Triton; KIVI offline post-RoPE is an adapter diagnostic only</p>
-      </div>
-      <div class="claim claim-no">
-        <div class="claim-icon">no</div>
-        <p>Phase F kernel ratios are microbenchmarks only — not end-to-end speedup</p>
-      </div>
-      <div class="claim claim-no">
-        <div class="claim-icon">no</div>
-        <p>External panel results are drift measurements, not official LongBench/BFCL/MBPP scores</p>
-      </div>
+    <h2>12. H2O-style eviction, worse than int4 at matched budget</h2>
+    <p>
+      Token eviction is a different failure class. H2O-style simulation (attention-sink + recency window, keep_ratio 0.75/0.50/0.25) on LongBench: <strong>100% divergence</strong> at all keep ratios, median first divergence index <strong>1</strong>, mean lossy rank <strong>6.7</strong>. Eviction destroys anchoring context immediately, worse than int4_sim at a matched ~4× memory story on reading tasks.
+    </p>
+    <p>
+      Claim boundary: H2O-style simulation, not faithful H2O GPU kernel. Still useful as a class diagnostic.
+    </p>
+
+    <h2>13. Faithful upstream adapters (partial)</h2>
+    <p>
+      Built-in sims map the design space. Phase D3 wires real upstream algorithms on the same grid, separate artifact tree (<code>reports/external_panels/faithful/</code>), not merged into the 8,132 headline until explicitly integrated.
+    </p>
+
+    <div class="article-table-wrap">
+      <table class="article-table">
+        <thead>
+          <tr><th>Adapter</th><th>Backend</th><th>Mistral partial drift</th><th>Role</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>int8</code></td><td>built-in</td><td class="num">8.6%</td><td>Real baseline</td></tr>
+          <tr><td><code>snapkv_experimental</code></td><td>kvpress SnapKVPress</td><td class="num">97.5%</td><td>External stress test</td></tr>
+          <tr><td><code>kivi_offline_r32</code></td><td>KIVI quant + r=32 window</td><td class="num">100%</td><td>Adapter diagnostic</td></tr>
+          <tr><td><code>kvpress_knorm_experimental</code></td><td>kvpress KnormPress</td><td class="num">queued</td><td>Wave-2 candidate</td></tr>
+          <tr><td><code>turboquant_experimental</code></td><td>turboquant_plus</td><td class="num">queued</td><td>Wave-2 candidate</td></tr>
+        </tbody>
+      </table>
     </div>
-  </div>
-</section>
+    <p>
+      SnapKV is the first working faithful external adapter on the full LongBench grid, but 97.5% drift is a stress-test result, not a success story. KnormPress (~0.97 acceptance in Exp 005) is the best candidate for a non-catastrophic faithful external. Llama wave-1 and wave-2 panels were running on RunPod at time of writing.
+    </p>
 
-<!-- ─── REPRODUCE ─────────────────────────────────────────────────────────── -->
-<section id="reproduce" class="band band-alt">
-  <div class="wrap">
-    <p class="section-label">Reproducibility</p>
-    <h2>Reproduce it</h2>
-    <p class="section-sub">Every published number traces to an on-disk artifact. One-command regeneration.</p>
-    <div class="repro-grid">
-      <div class="repro-block">
-        <p class="repro-label">No GPU — verify artifacts</p>
-        <pre class="code"><code>python3 scripts/exactkv_repro.py --reports-only
-python3 scripts/exactkv_repro.py --release-check
-bash scripts/build_paper_pdf.sh   # requires tectonic</code></pre>
-      </div>
-      <div class="repro-block">
-        <p class="repro-label">GPU — headline panel</p>
-        <pre class="code"><code>python3 scripts/run_phase_a_scale_benchmark.py \
-  --device cuda --dtype float16</code></pre>
-      </div>
-      <div class="repro-block">
-        <p class="repro-label">GPU — v3.0 new compressors</p>
-        <pre class="code"><code>bash scripts/run_v30_new_compressors.sh
-python3 scripts/summarize_v30_panel.py \
-  --output reports/external_panels/v30/summary.md</code></pre>
-      </div>
-      <div class="repro-block">
-        <p class="repro-label">GPU — faithful external adapters</p>
-        <pre class="code"><code>bash scripts/setup_faithful_compressor_env.sh
-bash scripts/run_faithful_compressor_panel.sh
-# Artifacts: reports/external_panels/faithful/</code></pre>
-      </div>
+    <h2>14. The 8,132-cell inventory</h2>
+    <p>
+      Headline total = completed GPU panels with <code>exactkv_failures=0</code>. Not official benchmark scores.
+    </p>
+
+    <div class="article-table-wrap">
+      <table class="article-table">
+        <thead>
+          <tr><th>Panel</th><th>Cells</th><th>Models</th><th>What it tests</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Core scale panel</td><td class="num">1,500</td><td>Llama + Mistral</td><td>Leaderboard compressors</td></tr>
+          <tr><td>HF LongBench (real HF)</td><td class="num">720</td><td>Both</td><td>Reading/summarization drift</td></tr>
+          <tr><td>BFCL validity (long-gen)</td><td class="num">1,200</td><td>Both</td><td>Tool-call validity preservation</td></tr>
+          <tr><td>BFCL export-50</td><td class="num">1,200</td><td>Both</td><td>Short-gen tool drift</td></tr>
+          <tr><td>H2O-style eviction</td><td class="num">800</td><td>Both</td><td>Eviction class</td></tr>
+          <tr><td>v3.0 int6 + int4_per_vec</td><td class="num">1,568</td><td>Both</td><td>Compressor curve extension</td></tr>
+          <tr><td>MBPP + pilots + evidence-plus</td><td class="num">~1,144</td><td>Mixed</td><td>Code/smoke supplements</td></tr>
+        </tbody>
+      </table>
     </div>
-    <p class="fine">Source of truth: <code>reports/scale_7b/raw.json</code> (headline panel) + <code>reports/external_panels/</code> (v3.0, faithful). See <code>docs/REPRODUCIBILITY.md</code> and <code>docs/FAITHFUL_COMPRESSOR_INTEGRATION.md</code>.</p>
-  </div>
-</section>
+    <p class="viz-caption">Reconciliation: 6,564 pre-v3.0 + 784 + 784 v3.0 = 8,132. Full card in the technical report Appendix A.</p>
 
-<!-- ─── LINKS ─────────────────────────────────────────────────────────────── -->
-<section class="band">
-  <div class="wrap">
-    <h2>Links</h2>
-    <div class="link-grid">
-      <a href="https://github.com/utkarshg20/ExactKV" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>GitHub / README</strong><span>Setup, install, quick start</span></span></a>
-      <a href="https://github.com/utkarshg20/ExactKV/blob/main/paper/ExactKV_Technical_Report.md" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Technical report</strong><span>Full methodology, results, analysis</span></span></a>
-      <a href="https://github.com/utkarshg20/ExactKV/blob/main/reports/public_release/leaderboard_final.json" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Leaderboard (JSON)</strong><span>Machine-readable scores</span></span></a>
-      <a href="https://github.com/utkarshg20/ExactKV/blob/main/site/index.html" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Landing page</strong><span>Findings, divergence table, reproduce</span></span></a>
-      <a href="../RELEASE.md" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Release notes</strong><span>v3.0 changelog and status</span></span></a>
-      <a href="../release_synthesis/claim_decision_table.md" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Claim decisions</strong><span>Per-claim evidence boundaries</span></span></a>
-      <a href="../release_synthesis/source_of_truth_map.md" class="link-card"><span class="lc-arrow">↗</span><span class="lc-text"><strong>Source-of-truth map</strong><span>Every number to its artifact</span></span></a>
+    <h2 id="leaderboard">15. Core compressor leaderboard</h2>
+    <p>
+      Rankings from the <strong>1,500-cell</strong> scale panel (<code>reports/scale_7b/raw.json</code>). Score = 0.35·acceptance + 0.25·verifier_agreement + 0.20·(1−norm. First divergence) + 0.10·(1−failure rate) + 0.10·stability.
+    </p>
+
+    <div class="article-table-wrap">
+      <table class="article-table" id="leaderboard-table">
+        <thead>
+          <tr><th>#</th><th>Compressor</th><th>Model</th><th>Score</th><th>Acceptance</th><th>Divergence</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td><code>noop</code></td><td>Llama-3.1-8B</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">0.000</td></tr>
+          <tr><td>2</td><td><code>int8</code></td><td>Llama-3.1-8B</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">0.000</td></tr>
+          <tr><td>3</td><td><code>noop</code></td><td>Mistral-7B</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">0.000</td></tr>
+          <tr><td>4</td><td><code>int8</code></td><td>Mistral-7B</td><td class="num">0.983</td><td class="num">1.000</td><td class="num">0.173</td></tr>
+          <tr><td>5</td><td><code>int4_sim</code></td><td>Llama-3.1-8B</td><td class="num">0.859</td><td class="num">0.852</td><td class="num">0.520</td></tr>
+          <tr><td>6</td><td><code>int4_sim</code></td><td>Mistral-7B</td><td class="num">0.851</td><td class="num">0.837</td><td class="num">0.507</td></tr>
+        </tbody>
+      </table>
     </div>
-  </div>
-</section>
+    <p class="viz-caption">Full JSON: <a href="https://github.com/utkarshg20/ExactKV/blob/main/reports/public_release/leaderboard_final.json">leaderboard_final.json</a>. Registry slots labeled fallback/proxy or probe-first are not headline evidence.</p>
 
-</main>
+    <h2>16. What we measure but do not claim</h2>
+    <ul>
+      <li>Not a production serving system. No throughput or active GPU memory savings claims.</li>
+      <li>Does not reproduce VeriCache. Inspired by draft/verify semantics only.</li>
+      <li>External panel drift rates are not official LongBench/BFCL/MBPP scores.</li>
+      <li>Compression ratios cited in the report are <strong>stored tensor byte ratios</strong>, not VRAM at serving time.</li>
+      <li>KIVI offline / SnapKV faithful results characterize adapter integration paths, not production CUDA kernels.</li>
+      <li><code>exactkv_failures=0</code> is a hard gate on tested panels, not “compression is always safe everywhere.”</li>
+    </ul>
 
-<footer class="foot">
-  <div class="wrap">
-    <p><strong>ExactKV</strong> — when does compressed KV start lying? Token-level drift evidence, three failure-mode signatures, and hard claim boundaries.</p>
-    <p class="fine">v3.0 · 8,132 GPU cells · exactkv_failures = 0. Every metric traces to <code>reports/scale_7b/raw.json</code>. © <span id="year"></span> ExactKV Project.</p>
+    <details class="article-details">
+      <summary>How this relates to Shard, TurboQuant, and KIVI</summary>
+      <div class="detail-body">
+        <p>
+          <strong>Shard</strong> (and similar systems) engineer toward quality-neutral 10× KV reduction, asymmetric K/V treatment, fused attention on compressed coefficients, streaming decode paths, profiler-driven throughput work. That is implementation depth ExactKV deliberately does not duplicate.
+        </p>
+        <p>
+          <strong>ExactKV</strong> asks: under greedy decoding, when does each compressor's KV approximation first change the argmax? We can crash-test Shard's HuggingFace Cache adapter the same way we crash-test int4_sim, once wired, and publish drift + exactness curves alongside built-in baselines.
+        </p>
+        <p>
+          <strong>TurboQuant</strong> targets ~4–6× with sphere-uniform quant theory. <strong>KIVI</strong> targets asymmetric low-bit quant with streaming policies. ExactKV's faithful adapters (KnormPress, TurboQuant experimental, KIVI r32) exist to run those upstream algorithms on the same grid, not to re-derive their math.
+        </p>
+      </div>
+    </details>
+
+    <h2 id="reproduce">17. Reproduce it</h2>
+    <p>Every published number traces to an on-disk artifact. One-command regeneration where possible.</p>
+
+    <div class="article-pre"><code># No GPU: verify artifacts + claim safety
+python3 scripts/exactkv_repro.py --reports-only
+python3 scripts/check_site_claims.py
+python3 scripts/validate_final_release_package.py
+
+# Analysis packs
+python3 scripts/build_longbench_overlap_pack.py --write
+python3 scripts/build_downstream_validity_pack.py --write
+python3 scripts/build_acceptance_drift_analysis.py --write
+
+# GPU: headline panel
+python3 scripts/run_phase_a_scale_benchmark.py --device cuda --dtype float16
+
+# GPU: external LongBench / BFCL / faithful adapters
+bash scripts/run_external_panel.py --help
+bash scripts/setup_faithful_compressor_env.sh</code></div>
+
+    <p>
+      Full technical report: <a href="https://github.com/utkarshg20/ExactKV/blob/main/paper/ExactKV_Technical_Report.md">paper/ExactKV_Technical_Report.md</a>.
+      Source of truth: <code>reports/scale_7b/raw.json</code> (1,500-cell core leaderboard) + <code>reports/external_panels/</code> (8,132-cell external grid).
+    </p>
+
+    <footer class="article-foot">
+      ExactKV is a research-grade evaluation framework, not a production serving system, and does not reproduce VeriCache. Phase F kernel results are a kernel microbenchmark only (not end-to-end speedup). Compression ratios are stored tensor byte ratios, not active GPU memory savings. Core leaderboard compressors: <code>noop</code>, <code>int8</code>, <code>int4_sim</code>. Other registry slots may be fallback/proxy or probe-first, not headline evidence.
+    </footer>
   </div>
-</footer>
+</article>
 
 <script src="main.js"></script>
 </body>

@@ -12,6 +12,9 @@ set -euo pipefail
 ROOT="${EXACTKV_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}"
 KIVI_DIR="${KIVI_DIR:-/tmp/kivi_research}"
 PY="${PYTHON:-python3}"
+if [[ "$PY" == "python3" && -x /workspace/.venv-faithful/bin/python3 ]]; then
+  PY=/workspace/.venv-faithful/bin/python3
+fi
 
 echo "==> ExactKV root: $ROOT"
 echo "==> KIVI clone target: $KIVI_DIR"
@@ -35,7 +38,10 @@ if [[ "${INSTALL_TURBOQUANT:-0}" == "1" ]]; then
     git clone --depth 1 https://github.com/TheTom/turboquant_plus "$TURBO_DIR"
   fi
   export PYTHONPATH="$TURBO_DIR${PYTHONPATH:+:$PYTHONPATH}"
-  "$PY" -c "import turboquant; print('turboquant OK:', turboquant.__file__)"
+  "$PY" -m pip install -q scipy 2>/dev/null || true
+  if ! "$PY" -c "import turboquant; print('turboquant OK:', turboquant.__file__)" 2>/dev/null; then
+    echo "WARN: TurboQuant import failed (wave-2 may skip turboquant_experimental cells)"
+  fi
 else
   echo "==> TurboQuant: skip (set INSTALL_TURBOQUANT=1 to clone TheTom/turboquant_plus)"
 fi

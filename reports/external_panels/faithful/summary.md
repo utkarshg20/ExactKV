@@ -1,15 +1,37 @@
 # Faithful External Compressor Panel Summary
 
-## bfcl_Mistral_7B_Instruct_v0_3_raw
+## bfcl_Llama_3_1_8B_raw
 
-- **Cells:** 98 ok / 98 total
+- **Cells:** 120 ok / 120 total
 - **ExactKV failures:** 0
 
 | Compressor | n | Div. rate | Mean accept. |
 |------------|--:|----------:|-------------:|
-| `int8` | 35 | 0.0% | 1.000 |
-| `kivi_offline_r32` | 33 | 100.0% | 0.032 |
-| `snapkv_experimental` | 30 | 100.0% | 0.400 |
+| `int8` | 40 | 0.0% | 1.000 |
+| `kivi_offline_r32` | 40 | 100.0% | 0.002 |
+| `snapkv_experimental` | 40 | 100.0% | 0.446 |
+
+## bfcl_Mistral_7B_Instruct_v0_3_raw
+
+- **Cells:** 120 ok / 120 total
+- **ExactKV failures:** 0
+
+| Compressor | n | Div. rate | Mean accept. |
+|------------|--:|----------:|-------------:|
+| `int8` | 40 | 0.0% | 1.000 |
+| `kivi_offline_r32` | 40 | 100.0% | 0.031 |
+| `snapkv_experimental` | 40 | 100.0% | 0.405 |
+
+## longbench_Llama_3_1_8B_raw
+
+- **Cells:** 216 ok / 216 total
+- **ExactKV failures:** 0
+
+| Compressor | n | Div. rate | Mean accept. |
+|------------|--:|----------:|-------------:|
+| `int8` | 72 | 18.1% | 0.992 |
+| `kivi_offline_r32` | 72 | 100.0% | 0.010 |
+| `snapkv_experimental` | 72 | 100.0% | 0.371 |
 
 ## longbench_Mistral_7B_Instruct_v0_3_raw
 
@@ -21,6 +43,28 @@
 | `int8` | 72 | 15.3% | 0.985 |
 | `kivi_offline_r32` | 72 | 100.0% | 0.052 |
 | `snapkv_experimental` | 72 | 100.0% | 0.360 |
+
+## mbpp_Llama_3_1_8B_raw
+
+- **Cells:** 96 ok / 96 total
+- **ExactKV failures:** 0
+
+| Compressor | n | Div. rate | Mean accept. |
+|------------|--:|----------:|-------------:|
+| `int8` | 32 | 0.0% | 1.000 |
+| `kivi_offline_r32` | 32 | 100.0% | 0.001 |
+| `snapkv_experimental` | 32 | 56.2% | 0.696 |
+
+## mbpp_Mistral_7B_Instruct_v0_3_raw
+
+- **Cells:** 96 ok / 96 total
+- **ExactKV failures:** 0
+
+| Compressor | n | Div. rate | Mean accept. |
+|------------|--:|----------:|-------------:|
+| `int8` | 32 | 0.0% | 1.000 |
+| `kivi_offline_r32` | 32 | 100.0% | 0.026 |
+| `snapkv_experimental` | 32 | 87.5% | 0.527 |
 
 ## mbpp_mistral_smoke_raw
 
@@ -35,14 +79,14 @@
 
 ## merged_raw
 
-- **Cells:** 384 ok / 384 total
+- **Cells:** 1230 ok / 1230 total
 - **ExactKV failures:** 0
 
 | Compressor | n | Div. rate | Mean accept. |
 |------------|--:|----------:|-------------:|
-| `int8` | 131 | 8.4% | 0.992 |
-| `kivi_offline_r32` | 129 | 100.0% | 0.041 |
-| `snapkv_experimental` | 124 | 96.8% | 0.412 |
+| `int8` | 416 | 7.9% | 0.992 |
+| `kivi_offline_r32` | 412 | 100.0% | 0.041 |
+| `snapkv_experimental` | 402 | 97.0% | 0.411 |
 
 ## smoke2_mbpp_llama_raw
 
@@ -66,6 +110,6 @@
 
 | Compressor | n | Div. rate | Mean accept. |
 |------------|--:|----------:|-------------:|
-| `int8` | 255 | 8.6% | 0.991 |
-| `kivi_offline_r32` | 251 | 100.0% | 0.042 |
-| `snapkv_experimental` | 242 | 97.5% | 0.404 |
+| `int8` | 721 | 7.9% | 0.993 |
+| `kivi_offline_r32` | 717 | 100.0% | 0.033 |
+| `snapkv_experimental` | 706 | 95.5% | 0.425 |

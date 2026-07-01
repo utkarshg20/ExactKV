@@ -22,7 +22,14 @@ while ! grep -q "FAITHFUL_PANEL_DONE" "$ROOT/reports/faithful_panel.log" 2>/dev/
   sleep 120
   grep -E "^\[longbench\]|^\[bfcl\]|^\[mbpp\]|cell " "$ROOT/reports/faithful_panel.log" 2>/dev/null | tail -1 | tee -a "$LOG" || true
 done
-while pgrep -f "run_external_panel.py" >/dev/null 2>&1; do sleep 30; done
+bash "$ROOT/scripts/wait_for_external_panel_idle.sh" 30
+
+echo "==> Preflight: exactkv import" | tee -a "$LOG"
+if ! "$PY" -c "import exactkv.benchmarks.external_panel as ep; print('exactkv:', ep.EXTERNAL_PANEL_ID)" 2>&1 | tee -a "$LOG"; then
+  echo "==> Installing editable exactkv into venv" | tee -a "$LOG"
+  "$PY" -m pip install -q -e "$ROOT" --no-deps
+  "$PY" -c "import exactkv.benchmarks.external_panel as ep; print('exactkv:', ep.EXTERNAL_PANEL_ID)" | tee -a "$LOG"
+fi
 
 echo "==> Starting Llama faithful panel $(date -u -Iseconds)" | tee -a "$LOG"
 
@@ -37,10 +44,18 @@ run_panel() {
   local out_json="$2"
   shift 2
   local resume_args=()
+  local ok_cells=0
   if [[ -f "$out_json" ]]; then
+    ok_cells=$("$PY" -c "import json; d=json.load(open('$out_json')); print(sum(1 for c in d.get('cells',[]) if c.get('status')=='ok'))" 2>/dev/null || echo 0)
+  fi
+  if [[ -f "$out_json" && "$ok_cells" -gt 0 ]]; then
     resume_args=(--resume-json "$out_json" --checkpoint-json "$out_json")
-    echo "==> [$name] resuming from $out_json" | tee -a "$LOG"
+    echo "==> [$name] resuming from $out_json ($ok_cells ok cells)" | tee -a "$LOG"
   else
+    if [[ -f "$out_json" ]]; then
+      echo "==> [$name] removing empty checkpoint $out_json" | tee -a "$LOG"
+      rm -f "$out_json"
+    fi
     resume_args=(--checkpoint-json "$out_json")
   fi
   echo "==> [$name] $(date -u -Iseconds)" | tee -a "$LOG"
