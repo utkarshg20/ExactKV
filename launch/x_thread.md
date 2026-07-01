@@ -30,7 +30,11 @@ The 6% / 90% split is **one compressor** (`int4_sim`, 4× quant) — the case wh
 
 The report already has the wider picture — int8 near-clean on code, int6 + per-vector int4 in between, H2O-style eviction at 100% on reading. Different mechanisms, same crash test.
 
-**What's running now:** wiring **real upstream compressors** (SnapKV, KnormPress, TurboQuant, KIVI) into the same grid on Llama + Mistral — not to crown a winner, but to chart *when each one starts lying*.
+We also wired **real upstream adapters** (kvpress SnapKV, KIVI r32) into the same grid — **864 cells**, both models, separate from the 8,132 headline set.
+
+Not to crown a winner: **int8** is still the only non-catastrophic real compressor (~8–9% drift). Faithful SnapKV: **~90–97%** drift. KIVI offline: **100%** (integration diagnostic, not production KIVI). **Exactness failures: 0** throughout.
+
+KnormPress + TurboQuant wave-2 smoke ran on RunPod (MBPP leg reached 64/64 before pod went offline). Full artifact pull pending. Early MBPP checkpoint only, not claim-ready.
 
 Open source. Repro in the repo. More compressors + benchmarks welcome.
 

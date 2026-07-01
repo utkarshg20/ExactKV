@@ -61,9 +61,12 @@ tasks. `int4_sim` and H2O-style eviction do not on reading/long-gen.
 
 `int4_per_vec_sim` is a **KIVI/KVQuant-inspired granularity baseline** (per-vector INT4
 layout), not a reproduction of either production system. GPU-validated on both models
-(1,568 v3.0 cells). Faithful external adapters (SnapKV via kvpress, KIVI offline r32)
-are evaluated separately as **upstream stress tests** (§6.17, Appendix), not headline
-success stories until full-grid results land.
+(1,568 extended-validation cells). Faithful external adapters (SnapKV via kvpress,
+KIVI offline r32) are evaluated separately as **upstream adapter smoke tests** (§6.17,
+864 cells, both models). They confirm the harness runs on real upstream code paths,
+but adapters **mostly fail** the drift test (90–100% on SnapKV/KIVI). This does **not**
+establish a strong faithful-compressor baseline and does not change headline conclusions
+about built-in compressors.
 
 Results are **not** official benchmark scores, production serving claims, or a reproduction
 of VeriCache [vericache2026] throughput-oriented serving.
@@ -1572,69 +1575,82 @@ from the v2.8 LongBench panel (both models, `h2o_sim_75`).
 *Table 6.16, Core benchmark curve. V3.0 quantisation compressors: both-model mean
 (Mistral/Llama). H2O: v2.8 LongBench panel. `exactkv_failures=0` throughout.*
 
-### 6.17 Faithful external compressor panel (Appendix, upstream stress tests)
+### 6.17 Faithful external adapter smoke (Appendix, not headline compressors)
 
 > **Paper positioning:** The headline study (§6, Table 6.16) uses built-in compressors
-> plus real `int8`. This section tests **upstream faithful adapters**, not to claim
-> they are non-catastrophic winners, but to ask: *do real published compressors also
-> drift heavily under ExactKV's token-level crash test?*
+> plus real `int8`. This section reports **adapter smoke tests**: can ExactKV run real
+> upstream compressor code paths on the same grid, and how much do they drift? It is **not**
+> evidence of a strong faithful-compressor baseline.
 
-The headline v3.0 panel uses ExactKV built-in simulations plus real `int8`. Phase D3 adds
-**faithful external adapters** that wrap upstream compressor algorithms (not ExactKV tensor
-approximations). See `docs/FAITHFUL_COMPRESSOR_INTEGRATION.md`.
-
-**Three roles in the faithful panel (not three successes):**
+**Three roles (not three successes):**
 
 | Role | Compressor | What it tests |
 |------|------------|---------------|
 | Real baseline | `int8` | Non-catastrophic **real** quantizer (built-in, not external) |
-| External stress test | `snapkv_experimental` | Real kvpress SnapKVPress, does upstream eviction drift? |
-| Integration diagnostic | `kivi_offline_r32` | KIVI quant + r=32 on post-RoPE offline path, adapter completeness |
+| Adapter smoke | `snapkv_experimental` | Real kvpress SnapKVPress runs end-to-end. How much drift? |
+| Integration diagnostic | `kivi_offline_r32` | KIVI quant + r=32 on post-RoPE offline path |
 
-**Status (2026-07-01):** Wave-1 **complete on both models**, **864 GPU cells** (432 per model:
-LongBench 216 + BFCL 120 + MBPP 96). Artifacts: faithful adapter panel (Appendix E).
-**`exactkv_failures=0`** throughout. Wave-2 external smoke (KnormPress, TurboQuant vs
-`int8` on Mistral MBPP/BFCL) was **in progress** at pull time (~20/128 cells).
+Wave-1 **complete on both models**: **864 GPU cells** (432 per model: LongBench 216,
+BFCL 120, MBPP 96). Artifacts: Appendix E. Reproduction commands: §17 and
+`docs/FAITHFUL_COMPRESSOR_INTEGRATION.md`.
 
-**Table 6.17a, Faithful panel, Mistral-7B (full grid, 432 cells)**
+**Table 6.17a, Mistral-7B (432 cells)**
 
-| Task family | Cells | `int8` div. | `int8` accept. | `snapkv_experimental` div. | SnapKV accept. | `kivi_offline_r32` div. | KIVI accept. |
-|-------------|------:|------------:|---------------:|---------------------------:|---------------:|------------------------:|-------------:|
-| HF LongBench | 216 | 15.3% | 0.985 | **100.0%** | 0.360 | **100.0%** | 0.052 |
-| BFCL | 120 | 0.0% | 1.000 | **100.0%** | 0.405 | **100.0%** | 0.031 |
-| MBPP | 96 | 0.0% | 1.000 | **87.5%** | 0.527 | **100.0%** | 0.026 |
-| **Combined** | **432** | **7.6%** | **0.992** | **97.2%** | **0.409** | **100.0%** | **0.041** |
+| Task family | Cells | `int8` div. | SnapKV div. | KIVI r32 div. |
+|-------------|------:|------------:|------------:|--------------:|
+| HF LongBench | 216 | 15.3% | **100.0%** | **100.0%** |
+| BFCL | 120 | 0.0% | **100.0%** | **100.0%** |
+| MBPP | 96 | 0.0% | **87.5%** | **100.0%** |
+| **Combined** | **432** | **7.6%** | **97.2%** | **100.0%** |
 
-**Table 6.17b, Faithful panel, Llama-3.1-8B (full grid, 432 cells)**
+**Table 6.17b, Llama-3.1-8B (432 cells)**
 
-| Task family | Cells | `int8` div. | `int8` accept. | `snapkv_experimental` div. | SnapKV accept. | `kivi_offline_r32` div. | KIVI accept. |
-|-------------|------:|------------:|---------------:|---------------------------:|---------------:|------------------------:|-------------:|
-| HF LongBench | 216 | 18.1% | 0.992 | **100.0%** | 0.371 | **100.0%** | 0.010 |
-| BFCL | 120 | 0.0% | 1.000 | **100.0%** | 0.446 | **100.0%** | 0.002 |
-| MBPP | 96 | 0.0% | 1.000 | **56.2%** | 0.696 | **100.0%** | 0.001 |
-| **Combined** | **432** | **9.0%** | **0.996** | **90.3%** | **0.464** | **100.0%** | **0.006** |
+| Task family | Cells | `int8` div. | SnapKV div. | KIVI r32 div. |
+|-------------|------:|------------:|------------:|--------------:|
+| HF LongBench | 216 | 18.1% | **100.0%** | **100.0%** |
+| BFCL | 120 | 0.0% | **100.0%** | **100.0%** |
+| MBPP | 96 | 0.0% | **56.2%** | **100.0%** |
+| **Combined** | **432** | **9.0%** | **90.3%** | **100.0%** |
 
-**Cross-model pattern (wave-1, 864 cells):** `int8` remains the only non-catastrophic real
-compressor (7.6% Mistral / 9.0% Llama combined drift). **`snapkv_experimental`** is the
-first working faithful external adapter on the full LongBench grid, but **90–97% combined
-drift** is a stress-test failure mode, not a headline win. MBPP SnapKV drift is lower on
-Llama (56.2%) than Mistral (87.5%), mirroring task-type sensitivity in §6.8.
-**`kivi_offline_r32` is catastrophic on every cell** (100% drift, acceptance ≈ 0.01–0.04),
-confirming the offline post-RoPE simulate path is an integration diagnostic only, not
-production KIVI. **`int4_per_vec_sim`** remains the headline KIVI/KVQuant-**inspired**
-granularity baseline in Table 6.16 until production KIVI CUDA or KVQuant simquant adapters land.
+**Summary (864 cells):** The harness successfully wires faithful adapters, but the
+adapters **mostly fail** under token-level crash testing. **`int8` remains the only
+non-catastrophic real compressor** (~8–9% combined drift). **`snapkv_experimental`**
+runs end-to-end via kvpress but shows **90–97% combined drift**, a stress-test failure
+mode, not a deployment win. **`kivi_offline_r32` is catastrophic on every cell**
+(100% drift), an integration diagnostic only, not production KIVI. Headline conclusions
+about task-type sensitivity (§6.8) still rest primarily on **built-in** compressors
+(`int4_sim`, `int6_sim`, `int4_per_vec_sim`, `h2o_sim`). **`int4_per_vec_sim`** remains
+the KIVI/KVQuant-**inspired** granularity baseline in Table 6.16.
 
-**Verifier holds throughout:** despite 90–100% SnapKV/KIVI lossy-path drift on external
-adapters, **`exactkv_failures=0` on all 864 wave-1 cells**. ExactKV output matches full-KV
-on every cell.
+**Implementation note:** `exactkv_failures=0` on these cells follows from verify/commit
+semantics when the implementation is correct (§1). It confirms the harness reports
+drift without breaking exact output, but is not itself surprising science.
 
-#### 6.17.1 Wave-2 external smoke (KnormPress, TurboQuant)
+#### 6.17.1 Wave-2 adapter smoke (KnormPress, TurboQuant)
 
-Separate artifact tree under `faithful/wave2/` (Appendix E). Compares `int8` vs
-`kvpress_knorm_experimental` vs `turboquant_experimental` vs `snapkv_experimental` on
-Mistral MBPP/BFCL smoke (4 prompts, 128 cells target). **Status at 2026-07-01 pull:**
-MBPP smoke in progress (~20/64 cells). BFCL smoke queued after MBPP. Results are
-diagnostic only and are **not** merged into the 8,132 headline cell total.
+Mistral-7B only. **128 cells target** (64 MBPP + 64 BFCL smoke, 4 prompts each). Compares
+`int8` vs `kvpress_knorm_experimental` vs `turboquant_experimental` vs
+`snapkv_experimental`. Diagnostic only, not merged into the 8,132 headline total.
+
+**Pull status (2026-07-01):** RunPod instance **offline** at pull time (`connection refused`).
+Local repo holds a **20-cell MBPP checkpoint** only. Last live pod telemetry before
+disconnect: **MBPP 64/64 complete**, **BFCL ~29/64 in progress**. Complete wave-2 tables
+pending `bash scripts/pull_faithful_from_runpod.sh` after pod restart.
+
+**Table 6.17.1a, Wave-2 MBPP smoke, Mistral (partial local checkpoint, 20/64 cells)**
+
+| Compressor | n | Div. rate | Mean accept. |
+|------------|--:|----------:|-------------:|
+| `int8` | 6 | 0.0% | 1.000 |
+| `kvpress_knorm_experimental` | 6 | 33.3% | 0.572 |
+| `turboquant_experimental` | 4 | 25.0% | 0.971 |
+| `snapkv_experimental` | 4 | 100.0% | 0.445 |
+
+**Interpretation (partial only):** On this tiny MBPP slice, KnormPress and TurboQuant show
+**lower drift than SnapKV**, consistent with the hypothesis that a faithful external
+compressor might be non-catastrophic on structured code tasks. **n is too small to claim
+a win.** A full 128-cell pull is required before updating the abstract or launch copy.
+BFCL wave-2 results were not retrieved.
 
 ---
 
@@ -2049,16 +2065,15 @@ all 160 `kivi_offline` cells (`exactkv_failures=0`). Real HF `int4_sim` drift
 (LongBench: 91.2%) substantially exceeds bundled pilot results (20.8%), confirming
 that pilot prompts underestimate production drift.
 
-Reproduce:
+Reproduce (§17, Appendix E):
 
 ```bash
-export PYTHONPATH=/tmp/kivi_research  # jy-yuan/KIVI clone
-bash scripts/run_kivi_external_panel.sh          # legacy diagnostic (no r32)
-bash scripts/run_faithful_compressor_panel.sh      # faithful: kivi_offline_r32 + SnapKV
+bash scripts/run_faithful_compressor_panel.sh      # wave-1: kivi_offline_r32 + SnapKV
+bash scripts/run_faithful_external_wave2_smoke.sh  # wave-2: KnormPress + TurboQuant
 ```
 
-Claim boundary: `kivi_offline` uses real KIVI quantizer math (simulate path,
-`supports_real_bytes_claim=False`). Not KIVI production CUDA/Triton serving.
+Claim boundary: `kivi_offline` / `kivi_offline_r32` use real KIVI quantizer math
+(simulate path, `supports_real_bytes_claim=False`). Not KIVI production CUDA/Triton serving.
 
 ### 14.3 Future work
 
@@ -2414,7 +2429,7 @@ are in **Appendix A**. Version labels in **Appendix D**.
 | H2O eviction v2.8 merged | `reports/external_panels/h2o_v28_merged_raw.json` | 800 |
 | v3.0 validation (both models) | `reports/external_panels/v30/` | 1,568 |
 | Faithful adapter panel (wave-1, both models) | `reports/external_panels/faithful/` | 864 |
-| Faithful wave-2 smoke (Mistral) | `reports/external_panels/faithful/wave2/` | partial |
+| Faithful wave-2 smoke (Mistral) | `reports/external_panels/faithful/wave2/` | partial (20/128 local) |
 | External case-study pack | `reports/external_panels/case_studies_extracted.json` | 15+1 |
 | LongBench overlap pack | `reports/external_panels/longbench_overlap_pack.{json,md}` | 720 |
 | Phase-F kernel microbenchmark | `reports/phaseF_kernel_benchmark.json` |, |
