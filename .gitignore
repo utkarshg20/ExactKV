@@ -54,8 +54,14 @@ htmlcov/
 *.fdb_latexmk
 *.synctex.gz
 
-# Accidental stdlib shadow (RunPod import collision)
-platform/
+# Internal / local-only (not published to GitHub)
+launch/
+release_synthesis/
+docs/LAUNCH_*.md
+docs/PRELAUNCH_*.md
+docs/V11_LAUNCH_READINESS.md
+docs/V13_SCOPE_STATEMENT.md
+docs/REPO_HYGIENE.md
 
 # Model weights / HF cache (never commit these)
 *.bin
@@ -70,8 +76,12 @@ outputs/
 results/
 reports/*.json
 reports/*.csv
+reports/exp*_kv_files/*.pt
 # Generated markdown reports (keep .gitkeep, ignore generated .md files)
 docs/generated/*.md
+docs/CHANGELOG_v2*.md
+docs/assets/exactkv_crash_test_frames/
+*.pt
 *.log
 
 # Prompt JSONL files committed under benchmarks/prompts/ are tracked explicitly.

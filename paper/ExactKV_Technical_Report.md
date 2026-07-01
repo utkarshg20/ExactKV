@@ -2,7 +2,7 @@
 
 **ExactKV Technical Report (v3.0, complete: 8,132 GPU cells, five benchmark families, h2o_sim + int6_sim + int4_per_vec_sim GPU-validated)**
 
-*All quantitative values are read from on-disk release artifacts (Appendix A, Appendix E). Metric definitions follow `docs/METRIC_DEFINITIONS.md`. Claim boundaries follow `docs/CLAIM_BOUNDARIES.md` and the [claim decision table](../release_synthesis/claim_decision_table.md). No results are invented.*
+*All quantitative values are read from on-disk release artifacts (Appendix A, Appendix E). Metric definitions follow `docs/METRIC_DEFINITIONS.md`. Claim boundaries follow [`docs/CLAIM_BOUNDARIES.md`](../docs/CLAIM_BOUNDARIES.md). No results are invented.*
 
 ---
 
@@ -1974,7 +1974,7 @@ drift measurements, **not** official benchmark scores.
 | Speculative decoding [leviathan2023speculative] | Draft/verify for speedup | ExactKV uses verify semantics for measurement only, no throughput claim |
 | MagicDec [chen2024magicdec] | Long-context speculative decoding | Adjacent. ExactKV measures long-context drift rather than accelerating it |
 
-Full audit: [`release_synthesis/related_work_audit.md`](../release_synthesis/related_work_audit.md).
+Full audit: [`docs/NOVELTY_AUDIT.md`](../docs/NOVELTY_AUDIT.md).
 
 ---
 
@@ -2151,7 +2151,7 @@ Claim boundary: `kivi_offline` / `kivi_offline_r32` use real KIVI quantizer math
 Two timelines: **V1–V21** research arc (verifier-first prototypes, safety
 ladder, no-go probes) and **Phase A–K** formal release arc (scale, leaderboard,
 novelty audit, launch pack). Details:
-[`release_synthesis/project_lineage.md`](../release_synthesis/project_lineage.md).
+[`docs/PROJECT_LINEAGE.md`](../docs/PROJECT_LINEAGE.md).
 
 ---
 
@@ -2377,11 +2377,11 @@ same panel grid. They are not counted as separate 784-cell panels.
 ## Appendix B: Artifact inventory
 
 1,524 tracked artifacts, curated release-grade set in
-[`release_synthesis/artifact_inventory.md`](../release_synthesis/artifact_inventory.md).
+[`docs/HISTORICAL_ARTIFACT_INVENTORY.md`](../docs/HISTORICAL_ARTIFACT_INVENTORY.md).
 
 ## Appendix C: Claim decision table
 
-[`release_synthesis/claim_decision_table.md`](../release_synthesis/claim_decision_table.md)
+[`docs/CLAIM_BOUNDARIES.md`](../docs/CLAIM_BOUNDARIES.md)
 
 ## Appendix D: Internal panel lineage (version labels)
 

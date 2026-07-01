@@ -31,7 +31,7 @@ STALE_HEADLINE = re.compile(
     r"(?:total\s+benchmark\s+cells|^\*\*cells:\*\*)\s*[:*]*\s*336\b",
     re.I | re.M,
 )
-SCALE_HEADLINE = re.compile(r"(\b1500\b.*\bcell|\bcell.*\b1500\b)", re.I)
+SCALE_HEADLINE = re.compile(r"(\b1500\b.*\bcell|\bcell.*\b1500\b|\b8132\b|\b8,132\b)", re.I)
 
 
 @dataclass

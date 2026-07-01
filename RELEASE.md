@@ -123,8 +123,6 @@ Path to stronger faithful story: complete wave-2 pull + optional KIVI production
 | v3.0 panel script | `scripts/run_v30_new_compressors.sh` |
 | v3.0 Llama-only script | `scripts/run_llama_v30.sh` (on RunPod) |
 | v3.0 summarizer | `scripts/summarize_v30_panel.py` |
-| X / Twitter thread | `launch/x_thread.md` |
-| LinkedIn posts | `launch/linkedin_post.md` |
 
 ## Reproducibility
 

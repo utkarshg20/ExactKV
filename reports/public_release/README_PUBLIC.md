@@ -23,7 +23,8 @@ python3 scripts/exactkv.py run publish
 ## Public release benchmark (authoritative)
 
 - **Evidence track:** Phase H+ scale_7b (authoritative public release)
-- **Total benchmark cells:** 6,564
+- **Headline external cells:** 8,132 (`exactkv_failures = 0`)
+- **Core leaderboard panel:** 1,500 cells (`reports/scale_7b/raw.json`)
 - **Models evaluated:** meta-llama/Llama-3.1-8B, mistralai/Mistral-7B-Instruct-v0.3
 - **ExactKV failures:** 0
 - **Deterministic mode:** False

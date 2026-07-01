@@ -1,60 +1,25 @@
 {
-  "timestamp_utc": "2026-06-28T23:30:16Z",
-  "git_commit": "250bf754ccb053792bae8542a5ab5db0b3380ee4",
-  "release_status": "phase_k_launch_pack_ready",
+  "timestamp_utc": "2026-07-01T22:00:00Z",
+  "release_status": "research_preview",
   "source_of_truth_artifact": "reports/scale_7b/raw.json",
-  "benchmark_cell_count": 6564,
+  "benchmark_cell_count": 8132,
+  "core_leaderboard_cells": 1500,
+  "faithful_adapter_cells": 864,
   "models": [
     "meta-llama/Llama-3.1-8B",
     "mistralai/Mistral-7B-Instruct-v0.3"
   ],
-  "compressors": [
-    "int4_sim",
-    "int8",
-    "noop",
-    "shard",
-    "spectralquant"
-  ],
   "exactkv_failures": 0,
   "public_leaderboard_path": "reports/public_release/leaderboard_final.json",
-  "technical_report_path": "docs/EXACTKV_TECHNICAL_REPORT.md",
-  "blog_path": "docs/launch_blog_final.md",
-  "x_thread_path": "docs/launch_x_thread_final.md",
-  "linkedin_path": "docs/launch_linkedin_final.md",
+  "technical_report_path": "paper/ExactKV_Technical_Report.md",
+  "site_path": "site/index.html",
   "demo_cards_path": "reports/public_release/demo_cards.json",
-  "novelty_audit_path": "reports/novelty_audit.json",
-  "project_lineage_path": "docs/PROJECT_LINEAGE.md",
-  "version_lineage_path": "docs/VERSION_LINEAGE.md",
-  "version_lineage_json": "reports/version_lineage.json",
-  "version_arc": "V1-V21",
-  "version_lineage_caveat": "Historical version arc (V1-V21) is project lineage context, not release benchmark evidence. Authoritative benchmark: reports/scale_7b/raw.json.",
-  "historical_inventory_path": "reports/historical_artifact_inventory.json",
   "claim_boundaries_path": "docs/CLAIM_BOUNDARIES.md",
-  "metric_definitions_path": "docs/METRIC_DEFINITIONS.md",
-  "release_checklist_path": "docs/RELEASE_CHECKLIST.md",
   "validation_commands": [
-    "python3 scripts/check_launch_pack.py",
-    "python3 scripts/check_project_lineage.py",
-    "python3 scripts/check_public_release.py",
-    "python3 scripts/check_release_evidence.py",
+    "python3 scripts/check_site_claims.py",
+    "python3 scripts/validate_final_release_package.py",
     "python3 scripts/audit_public_claims.py",
-    "python3 scripts/check_no_secrets.py",
-    "python3 scripts/exactkv_repro.py --release-check"
+    "python3 scripts/exactkv_repro.py --reports-only"
   ],
-  "validation_results": {
-    "note": "Run validation_commands before publish; manual_signoff_required=true until approved."
-  },
-  "manual_signoff_required": true,
-  "remaining_known_limitations": [
-    "ExactKV is not a production serving system.",
-    "ExactKV does not reproduce VeriCache serving throughput.",
-    "Phase F speedups are kernel microbenchmark results only (not end-to-end).",
-    "Compression ratios are stored tensor byte ratios unless active GPU memory is explicitly measured.",
-    "SpectralQuant uses fallback/proxy in the current environment (spectralquant_available=False).",
-    "Shard is probe-first heuristic analysis (probe_only=True), not full Shard integration.",
-    "Scale run used sequential model execution due to RunPod volume constraints.",
-    "Historical inventory contains 1176 artifacts; manual editorial review recommended before launch.",
-    "231 inventory entries remain in unknown chronological bucket pending manual curation."
-  ],
-  "version": "v2.9"
+  "version": "v3.0"
 }

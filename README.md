@@ -95,7 +95,7 @@ bash scripts/setup_faithful_compressor_env.sh   # KIVI / kvpress adapters
 
 ## Reproducing the benchmarks
 
-Every headline number traces to an on-disk JSON artifact. Source-of-truth map: [`release_synthesis/source_of_truth_map.md`](release_synthesis/source_of_truth_map.md).
+Every headline number traces to an on-disk JSON artifact. Claim boundaries: [`docs/CLAIM_BOUNDARIES.md`](docs/CLAIM_BOUNDARIES.md).
 
 | panel | artifact |
 |-------|----------|
@@ -135,10 +135,8 @@ site/                # Public landing page + data/
 reports/
   scale_7b/          # 1,500-cell headline panel
   external_panels/   # 8,132-cell external grid + faithful appendix
-  public_release/    # Leaderboard JSON, demo cards, launch manifest
+  public_release/    # Leaderboard JSON, demo cards
 
-launch/              # X / LinkedIn / short announcement (claim-safe copy)
-release_synthesis/   # Evidence ledger, claim decision table, lineage
 docs/                # Claim boundaries, metrics, experiment corpus
 ```
 
@@ -153,7 +151,8 @@ docs/                # Claim boundaries, metrics, experiment corpus
 | Leaderboard JSON | [`reports/public_release/leaderboard_final.json`](reports/public_release/leaderboard_final.json) |
 | Release notes | [`RELEASE.md`](RELEASE.md) |
 | Claim boundaries | [`docs/CLAIM_BOUNDARIES.md`](docs/CLAIM_BOUNDARIES.md) |
-| Launch copy | [`launch/`](launch/) |
+| Metrics | [`docs/METRIC_DEFINITIONS.md`](docs/METRIC_DEFINITIONS.md) |
+| Novelty audit | [`docs/NOVELTY_AUDIT.md`](docs/NOVELTY_AUDIT.md) |
 
 ---
 

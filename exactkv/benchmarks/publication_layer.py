@@ -742,10 +742,10 @@ def write_phase_c_outputs(
     result: Mapping[str, Any],
     *,
     demo_pack_path: Path | str = DEFAULT_DEMO_PACK,
-    paper_path: Path = Path("docs/paper_draft.md"),
-    blog_path: Path = Path("docs/blog_post.md"),
-    x_path: Path = Path("docs/x_thread.md"),
-    linkedin_path: Path = Path("docs/linkedin_post.md"),
+    paper_path: Path = Path("docs/generated/paper_draft.md"),
+    blog_path: Path = Path("docs/generated/blog_post.md"),
+    x_path: Path = Path("docs/generated/x_thread.md"),
+    linkedin_path: Path = Path("docs/generated/linkedin_post.md"),
 ) -> dict[str, str]:
     demo_pack = {
         "phase_id": result["phase_id"],

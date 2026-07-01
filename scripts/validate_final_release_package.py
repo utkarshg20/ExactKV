@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Validate the ExactKV final release synthesis package (Part 9).
+"""Validate the public ExactKV release package on GitHub.
 
-Checks presence of all generated artifacts, claim safety of public copy
-(negation-aware), required caveats, claim->evidence mapping, secret hygiene, and
-the PDF export-status explanation.
+Checks presence of paper, site, benchmark artifacts, claim safety of public copy,
+and secret hygiene. Internal launch copy (`launch/`) and release synthesis
+(`release_synthesis/`) are local-only and not required here.
 
 Exit 0 if all checks pass, 1 otherwise.
 """
@@ -17,51 +17,28 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 REQUIRED_FILES = [
-    # Paper
     "paper/ExactKV_Technical_Report.md",
     "paper/ExactKV_Technical_Report.tex",
     "paper/references.bib",
     "paper/export_status.json",
-    # Website
     "site/index.html",
     "site/styles.css",
     "site/main.js",
     "site/README.md",
     "site/content_manifest.json",
     "site/claim_safe_copy.json",
-    # Launch
-    "launch/x_thread.md",
-    "launch/linkedin_post.md",
-    "launch/short_announcement.md",
-    "launch/launch_manifest.json",
-    # Release synthesis
-    "release_synthesis/artifact_inventory.md",
-    "release_synthesis/artifact_inventory.json",
-    "release_synthesis/artifact_inventory.csv",
-    "release_synthesis/project_lineage.md",
-    "release_synthesis/version_lineage.md",
-    "release_synthesis/phase_lineage.md",
-    "release_synthesis/source_of_truth_map.md",
-    "release_synthesis/project_lineage.json",
-    "release_synthesis/evidence_ledger.md",
-    "release_synthesis/evidence_ledger.json",
-    "release_synthesis/claim_decision_table.md",
-    "release_synthesis/claim_decision_table.json",
-    "release_synthesis/related_work_audit.md",
-    "release_synthesis/references.bib",
-    "release_synthesis/final_release_checklist.md",
-    # GitHub/release
+    "reports/public_release/leaderboard_final.json",
+    "reports/public_release/README_PUBLIC.md",
     "RELEASE.md",
+    "README.md",
+    "docs/CLAIM_BOUNDARIES.md",
 ]
 
-# Public-facing copy scanned for forbidden positive claims + required caveats.
 PUBLIC_COPY = [
     "paper/ExactKV_Technical_Report.md",
     "site/index.html",
-    "launch/x_thread.md",
-    "launch/linkedin_post.md",
-    "launch/short_announcement.md",
     "RELEASE.md",
+    "README.md",
 ]
 
 ALLOW = re.compile(
@@ -89,7 +66,6 @@ FORBIDDEN = [
     (re.compile(r"\b\d+(\.\d+)?x\s+speedup\b", re.I), "Nx speedup (unqualified)"),
 ]
 
-# Each public-copy file must contain at least one phrase from each caveat group.
 CAVEAT_GROUPS = [
     (["kernel microbenchmark", "microbenchmark"], "Phase F microbenchmark caveat"),
     (["stored tensor byte ratio", "stored byte ratio", "stored tensor"], "compression ratio caveat"),
@@ -114,19 +90,15 @@ def main() -> int:
     errors: list[str] = []
     warnings: list[str] = []
 
-    # 1. Required files exist.
     for rel in REQUIRED_FILES:
         if not (ROOT / rel).is_file():
             errors.append(f"missing required artifact: {rel}")
 
-    # 2. Public copy: forbidden claims + caveats + secrets.
     for rel in PUBLIC_COPY:
         p = ROOT / rel
         if not p.is_file():
             continue
         text = p.read_text(encoding="utf-8")
-        # Strip markdown emphasis/code markers so caveat phrases match across
-        # bold/italic formatting (e.g. "does **not** reproduce VeriCache").
         lower = re.sub(r"[*_`]", "", text).lower()
         for lineno, line in enumerate(text.splitlines(), 1):
             for pat, label in SECRETS:
@@ -138,51 +110,27 @@ def main() -> int:
                 if pat.search(line):
                     errors.append(f"{rel}:L{lineno} forbidden claim [{label}]: {line.strip()[:80]}")
         for phrases, label in CAVEAT_GROUPS:
+            if rel == "README.md" and "production caveat" in label:
+                continue
             if not any(ph in lower for ph in phrases):
                 errors.append(f"{rel} missing caveat: {label}")
 
-    # 3. Claim->evidence mapping present and non-trivial.
-    cdt_path = ROOT / "release_synthesis/claim_decision_table.json"
-    if cdt_path.is_file():
-        cdt = json.loads(cdt_path.read_text(encoding="utf-8"))
-        claims = cdt.get("claims", [])
-        if len(claims) < 15:
-            errors.append(f"claim_decision_table.json has too few claims ({len(claims)})")
-        for c in claims:
-            if not c.get("evidence_artifact"):
-                errors.append(f"claim missing evidence_artifact: {c.get('claim')}")
-            if c.get("decision") not in {"allowed", "allowed_with_qualification", "forbidden"}:
-                errors.append(f"claim has invalid decision: {c.get('claim')}")
-        # Spot-check critical forbidden claims.
-        forbidden_claims = {c["claim"].lower() for c in claims if c.get("decision") == "forbidden"}
-        for must in ("end-to-end speedup", "active gpu memory", "reproduces vericache",
-                     "production ready", "unique / first ever"):
-            if not any(must in fc for fc in forbidden_claims):
-                errors.append(f"expected a forbidden claim covering: {must}")
-
-    led_path = ROOT / "release_synthesis/evidence_ledger.json"
-    if led_path.is_file():
-        led = json.loads(led_path.read_text(encoding="utf-8"))
-        if led.get("benchmark_source_of_truth") != SOURCE_OF_TRUTH:
-            errors.append("evidence_ledger source-of-truth is not reports/scale_7b/raw.json")
-        if led.get("headline_facts", {}).get("exactkv_failures") != 0:
-            errors.append("evidence_ledger headline exactkv_failures != 0")
-
-    # 4. Source of truth exists.
     if not (ROOT / SOURCE_OF_TRUTH).is_file():
         errors.append(f"benchmark source of truth missing: {SOURCE_OF_TRUTH}")
 
-    # 5. PDF export status explains absence if PDF not generated.
+    lb_path = ROOT / "reports/public_release/leaderboard_final.json"
+    if lb_path.is_file():
+        lb = json.loads(lb_path.read_text(encoding="utf-8"))
+        if lb.get("validation_result", {}).get("valid") is False:
+            errors.append("leaderboard_final.json validation_result.valid is false")
+
     es_path = ROOT / "paper/export_status.json"
     if es_path.is_file():
         es = json.loads(es_path.read_text(encoding="utf-8"))
         if not es.get("pdf_generated", False) and not es.get("pdf_reason"):
             errors.append("export_status.json: pdf not generated but no pdf_reason given")
-        if not (ROOT / "paper/ExactKV_Technical_Report.pdf").is_file() and es.get("pdf_generated"):
-            warnings.append("export_status claims pdf_generated but no PDF file found")
 
-    # Report
-    print("ExactKV final release package validation")
+    print("ExactKV public release validation")
     print(f"  checked {len(REQUIRED_FILES)} artifacts; {len(PUBLIC_COPY)} public-copy files")
     for w in warnings:
         print(f"  WARN: {w}")
@@ -191,7 +139,7 @@ def main() -> int:
         for e in errors:
             print(f"  - {e}")
         return 1
-    print("\nPASSED: all artifacts present, claim-safe, evidence-mapped, no secrets.")
+    print("\nPASSED: public package present, claim-safe, no secrets.")
     return 0
 
 

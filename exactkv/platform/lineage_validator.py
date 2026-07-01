@@ -20,11 +20,10 @@ V13_UNDERCOUNT_RE = re.compile(r"v1[–\-]v13\b", re.I)
 
 PUBLIC_LAUNCH_VERSION_SCAN = (
     "README.md",
+    "RELEASE.md",
     "reports/public_release/README_PUBLIC.md",
-    "docs/EXACTKV_TECHNICAL_REPORT.md",
-    "docs/launch_blog_final.md",
-    "docs/launch_x_thread_final.md",
-    "docs/launch_linkedin_final.md",
+    "paper/ExactKV_Technical_Report.md",
+    "site/index.html",
     "docs/PROJECT_LINEAGE.md",
     "docs/HISTORICAL_ARTIFACT_INVENTORY.md",
     "docs/ARTIFACT_INDEX.md",

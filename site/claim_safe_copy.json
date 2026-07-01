@@ -1,6 +1,6 @@
 {
   "schema": "exactkv.site.claim_safe_copy.v2",
-  "note": "Every string here is approved against docs/CLAIM_BOUNDARIES.md and release_synthesis/claim_decision_table.json. Do not add superiority, first-ever, production, end-to-end speedup, or active-GPU-memory claims.",
+  "note": "Every string here is approved against docs/CLAIM_BOUNDARIES.md. Do not add superiority, first-ever, production, end-to-end speedup, or active-GPU-memory claims.",
   "hero": {
     "headline": "ExactKV shows when compressed KV caches start lying.",
     "subhead": "A compressor-agnostic crash-test and leaderboard for LLM KV-cache compression. It measures the first token where compressed KV diverges from the full-KV verifier — plus acceptance rate, verifier agreement, and exactness failures.",

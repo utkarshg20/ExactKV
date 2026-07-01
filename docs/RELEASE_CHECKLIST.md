@@ -51,7 +51,7 @@ Pre-launch gate — all items should pass before public announcement.
 - [ ] `docs/CLAIM_BOUNDARIES.md`
 - [ ] `docs/RESULTS_SUMMARY.md`
 - [ ] `docs/ARTIFACT_INDEX.md`
-- [ ] Launch drafts refreshed: `blog_post.md`, `x_thread.md`, `linkedin_post.md`, `paper_draft.md`
+- [ ] Launch copy (local-only, not in repo): `launch/short_announcement.md`, `launch/x_thread.md`, `launch/linkedin_post.md`
 
 ---
 
@@ -101,9 +101,9 @@ Pre-launch gate — all items should pass before public announcement.
 - [ ] Launch pack validator passed (`python3 scripts/check_launch_pack.py`)
 - [ ] Full pytest passed (`python3 -m pytest -q`)
 - [ ] Technical report reviewed (`docs/EXACTKV_TECHNICAL_REPORT.md`)
-- [ ] Blog reviewed (`docs/launch_blog_final.md`)
-- [ ] X thread reviewed (`docs/launch_x_thread_final.md`)
-- [ ] LinkedIn reviewed (`docs/launch_linkedin_final.md`)
+- [ ] Announcement reviewed (local `launch/short_announcement.md`, if publishing)
+- [ ] X thread reviewed (local `launch/x_thread.md`, if publishing)
+- [ ] LinkedIn reviewed (local `launch/linkedin_post.md`, if publishing)
 - [ ] Demo cards reviewed (`reports/public_release/demo_cards.md`)
 - [ ] No HF token in docs/reports/logs
 - [ ] HF token rotated if exposed in prior terminal logs
