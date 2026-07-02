@@ -91,13 +91,13 @@ on LongBench (86% → 57%, a 29pp improvement), but bit-width still matters at 8
 | **With faithful production KIVI/KVQuant kernel** | **9.7+/10** |
 
 **Phase D3 (June 2026):** Faithful external adapter smoke **complete** — **864 GPU cells**
-(both models: LongBench + BFCL + MBPP). **`int8`** is the only non-catastrophic real
-compressor (~8–9% combined drift). Faithful SnapKV via kvpress runs end-to-end but shows
-**90–97% drift** (stress-test failure mode). KIVI offline r32: **100%** on every cell
-(adapter diagnostic only). Wave-2 KnormPress/TurboQuant smoke (128 cells, Mistral) rerun
-in progress. Artifacts: `reports/external_panels/faithful/`.
+wave-1 (both models: LongBench + BFCL + MBPP) plus **128 cells** wave-2 Mistral smoke
+(MBPP + BFCL). Wave-1: **`int8`** is the only non-catastrophic real compressor (~8–9%
+combined drift); SnapKV **90–97%**; KIVI offline r32 **100%**. Wave-2:
+**`turboquant_experimental` 3.1% combined drift** on structured tasks (0% BFCL, 6.2% MBPP);
+KnormPress/SnapKV remain catastrophic. Artifacts: `reports/external_panels/faithful/`.
 
-Path to stronger faithful story: complete wave-2 pull + optional KIVI production CUDA (Exp 024 blocked).
+Path to stronger faithful story: expand TurboQuant panel (both models, LongBench) + optional KIVI production CUDA (Exp 024 blocked).
 
 ## Benchmark source of truth
 

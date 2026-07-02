@@ -79,14 +79,14 @@
 
 ## merged_raw
 
-- **Cells:** 1230 ok / 1230 total
+- **Cells:** 2144 ok / 2144 total
 - **ExactKV failures:** 0
 
 | Compressor | n | Div. rate | Mean accept. |
 |------------|--:|----------:|-------------:|
-| `int8` | 416 | 7.9% | 0.992 |
-| `kivi_offline_r32` | 412 | 100.0% | 0.041 |
-| `snapkv_experimental` | 402 | 97.0% | 0.411 |
+| `int8` | 721 | 7.9% | 0.993 |
+| `kivi_offline_r32` | 717 | 100.0% | 0.033 |
+| `snapkv_experimental` | 706 | 95.5% | 0.425 |
 
 ## smoke2_mbpp_llama_raw
 
@@ -110,6 +110,6 @@
 
 | Compressor | n | Div. rate | Mean accept. |
 |------------|--:|----------:|-------------:|
-| `int8` | 721 | 7.9% | 0.993 |
-| `kivi_offline_r32` | 717 | 100.0% | 0.033 |
-| `snapkv_experimental` | 706 | 95.5% | 0.425 |
+| `int8` | 1026 | 7.9% | 0.993 |
+| `kivi_offline_r32` | 1022 | 100.0% | 0.030 |
+| `snapkv_experimental` | 1010 | 94.9% | 0.430 |

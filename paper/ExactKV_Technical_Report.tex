@@ -876,8 +876,14 @@ bash scripts/run_faithful_compressor_panel.sh
 \end{verbatim}
 
 Compressors: \texttt{int8}, \texttt{kivi\_offline\_r32}, \texttt{snapkv\_experimental}.
-Grid mirrors v3.0 (both models). Full GPU panel artifacts:
-\texttt{reports/external\_panels/faithful/}. KIVI production CUDA remains blocked (Exp~024).
+\textbf{Wave-1 complete (864 cells, both models):} \texttt{int8} is the only
+non-catastrophic real compressor ($\sim$8--9\% combined drift); SnapKV 90--97\%;
+KIVI r32 100\% (integration diagnostic). \textbf{Wave-2 smoke complete (128 cells,
+Mistral only, MBPP+BFCL):} \texttt{turboquant\_experimental} 3.1\% combined drift
+(0\% BFCL, 6.2\% MBPP); KnormPress/SnapKV remain catastrophic. Diagnostic only,
+not merged into the 8,132 headline total. Artifacts:
+\texttt{reports/external\_panels/faithful/} and \texttt{faithful/wave2/}.
+KIVI production CUDA remains blocked (Exp~024).
 
 \FloatBarrier
 
@@ -1128,8 +1134,9 @@ distinct failure modes. Total: \textbf{8,132 completed GPU cells}.
 expand MBPP with safe pass@1/syntax validation; broader downstream metrics beyond BFCL
 (including LongBench answer-overlap); RULER 12K+; HELMET; InfiniteBench 100K+;
 broader scaling curves (12K+, 16K+ context; more compressors);
-faithful production KIVI/KVQuant/SnapKV integrations (Phase D3 wiring complete;
-GPU panel pending; KIVI CUDA blocked).
+faithful production KIVI/KVQuant/SnapKV integrations (Phase D3 wave-1 complete,
+864 cells; wave-2 TurboQuant/KnormPress smoke complete, 128 cells;
+KIVI CUDA blocked).
 
 \section{Conclusion}
 

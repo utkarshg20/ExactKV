@@ -25,7 +25,7 @@ All on **Llama-3.1-8B** and **Mistral-7B-Instruct-v0.3**, greedy decoding, **`ex
 | H2O-style eviction @ 75% kept — LongBench | **100%** (worse than int4 at matched budget) |
 | BFCL long-gen drift (mnt 16→256) | **9% → 62%** (7× within-task scaling) |
 | Full-KV valid tool calls preserved | **106/106** (v2.7 BFCL validity panel) |
-| Faithful adapter smoke (appendix) | **864** cells — int8 ~8–9% drift; SnapKV 90–97%; KIVI r32 100% |
+| Faithful adapter smoke (appendix) | **864** wave-1 + **128** wave-2 — int8 ~8–9%; TurboQuant 3.1% (wave-2 smoke); SnapKV 90–97%; KIVI r32 100% |
 
 External panel drift rates are **not** official LongBench/BFCL/MBPP scores. Compression ratios cited in the report are **stored tensor byte ratios**, not active GPU memory savings at serving time.
 

@@ -345,11 +345,12 @@ I had never see</div>
       Claim boundary: H2O-style simulation, not faithful H2O GPU kernel. Still useful as a class diagnostic.
     </p>
 
-    <h2>13. Faithful upstream adapters (864 cells, wave-1 complete)</h2>
+    <h2>13. Faithful upstream adapters (864 + 128 cells)</h2>
     <p>
       Built-in sims map the design space. Phase D3 wires real upstream algorithms on the same crash-test grid, in a separate artifact tree (<code>reports/external_panels/faithful/</code>), not merged into the 8,132 headline total. These are <strong>adapter smoke tests</strong>: they ask whether ExactKV can run real upstream code paths and how much they drift, not which compressor wins.
     </p>
 
+    <h3>Wave-1 (both models, 864 cells)</h3>
     <div class="article-table-wrap">
       <table class="article-table">
         <thead>
@@ -363,10 +364,27 @@ I had never see</div>
       </table>
     </div>
     <p>
-      <strong>864 GPU cells</strong> (432 per model: LongBench 216, BFCL 120, MBPP 96). <code>exactkv_failures=0</code> throughout. <code>int8</code> is the only non-catastrophic real compressor (~8–9% combined drift). Faithful SnapKV runs end-to-end via kvpress but shows <strong>90–97% drift</strong> — a stress-test failure mode, not a deployment win. KIVI offline r32 is catastrophic on every cell (adapter diagnostic only, not production KIVI).
+      <strong>864 GPU cells</strong> (432 per model: LongBench 216, BFCL 120, MBPP 96). <code>exactkv_failures=0</code> throughout. <code>int8</code> is the only non-catastrophic real compressor in wave-1 (~8–9% combined drift). Faithful SnapKV runs end-to-end via kvpress but shows <strong>90–97% drift</strong>. KIVI offline r32 is catastrophic on every cell (adapter diagnostic only, not production KIVI).
     </p>
+
+    <h3>Wave-2 smoke (Mistral only, 128 cells — complete)</h3>
     <p>
-      <strong>Wave-2 smoke</strong> (KnormPress + TurboQuant vs int8/SnapKV, 128 cells target, Mistral only) was interrupted when the RunPod instance stopped. Local repo holds a 20-cell MBPP checkpoint only; full tables pending volume recovery or rerun. See technical report §6.17.1.
+      MBPP + BFCL structured-task smoke comparing <code>int8</code>, KnormPress, TurboQuant, and SnapKV. Pulled from RunPod 2026-07-01. Not merged into the 8,132 headline total.
+    </p>
+    <div class="article-table-wrap">
+      <table class="article-table">
+        <thead>
+          <tr><th>Task</th><th><code>int8</code></th><th><code>turboquant_experimental</code></th><th><code>kvpress_knorm</code></th><th><code>snapkv_experimental</code></th></tr>
+        </thead>
+        <tbody>
+          <tr><td>MBPP (64 cells)</td><td class="num">0.0%</td><td class="num">6.2%</td><td class="num">75.0%</td><td class="num">87.5%</td></tr>
+          <tr><td>BFCL (64 cells)</td><td class="num">0.0%</td><td class="num">0.0%</td><td class="num">81.2%</td><td class="num">100.0%</td></tr>
+          <tr><td><strong>Combined (128)</strong></td><td class="num"><strong>0.0%</strong></td><td class="num"><strong>3.1%</strong></td><td class="num">78.1%</td><td class="num">93.8%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      <strong>Key finding:</strong> <code>turboquant_experimental</code> is the first faithful external adapter here with near-int8 drift on structured tasks (3.1% combined; 0% on BFCL). KnormPress and SnapKV remain catastrophic. Mistral-only smoke panel — not a deployment claim. Full tables: technical report §6.17.1.
     </p>
 
     <h2 id="case-studies">14. Divergence case studies</h2>
@@ -396,10 +414,11 @@ I had never see</div>
           <tr><td>v3.0 int6 + int4_per_vec</td><td class="num">1,568</td><td>Both</td><td>Compressor curve extension</td></tr>
           <tr><td>MBPP + pilots + evidence-plus</td><td class="num">~1,144</td><td>Mixed</td><td>Code/smoke supplements</td></tr>
           <tr><td>Faithful adapter panel (wave-1)</td><td class="num">864</td><td>Both</td><td>Upstream adapter smoke (separate tree)</td></tr>
+          <tr><td>Faithful wave-2 smoke</td><td class="num">128</td><td>Mistral</td><td>KnormPress + TurboQuant vs int8/SnapKV</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="viz-caption">Reconciliation: 6,564 pre-v3.0 + 784 + 784 v3.0 = 8,132 headline. Faithful wave-1 (864) tracked separately in §6.17. Full card in the technical report Appendix A.</p>
+    <p class="viz-caption">Reconciliation: 6,564 pre-v3.0 + 784 + 784 v3.0 = 8,132 headline. Faithful wave-1 (864) and wave-2 (128) tracked separately in §6.17. Full card in the technical report Appendix A.</p>
 
     <h2 id="leaderboard">16. Core compressor leaderboard</h2>
     <p>
