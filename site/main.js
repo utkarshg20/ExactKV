@@ -31,7 +31,7 @@
   }
 
   function fmtNum(v, digits) {
-    if (v === null || v === undefined) return "—";
+    if (v === null || v === undefined) return "-";
     if (typeof v !== "number" || isNaN(v)) return String(v);
     return v.toFixed(digits === undefined ? 3 : digits);
   }
@@ -125,9 +125,9 @@
             "<h3>" + escHtml(title) + "</h3>" +
             '<p class="case-meta"><code>' + escHtml(meta) + "</code></p>" +
             '<div class="case-cols">' +
-              '<div class="case-col"><span class="case-label">Full KV</span><pre>' + escHtml(c.full_snippet || "—") + "</pre></div>" +
-              '<div class="case-col case-col-lossy"><span class="case-label">Lossy draft</span><pre>' + escHtml(c.lossy_snippet || "—") + "</pre></div>" +
-              '<div class="case-col"><span class="case-label">ExactKV out</span><pre>' + escHtml(c.exactkv_snippet || "—") + "</pre></div>" +
+              '<div class="case-col"><span class="case-label">Full KV</span><pre>' + escHtml(c.full_snippet || "-") + "</pre></div>" +
+              '<div class="case-col case-col-lossy"><span class="case-label">Lossy draft</span><pre>' + escHtml(c.lossy_snippet || "-") + "</pre></div>" +
+              '<div class="case-col"><span class="case-label">ExactKV out</span><pre>' + escHtml(c.exactkv_snippet || "-") + "</pre></div>" +
             "</div>";
           root.appendChild(card);
         });

@@ -31,11 +31,12 @@ def _check_invariants(result, draft_tokens, verifier_tokens) -> None:
     assert result.num_accepted == len(result.accepted_tokens)
     assert result.num_rejected == len(result.rejected_tokens)
     # accepted + rejected accounts for all draft tokens past the boundary
-    if result.correction_token is None:
-        # All matched — no rejected tokens
+    if result.correction_token is None and result.all_matched:
         assert result.rejected_tokens == []
-        assert result.all_matched is True
         assert result.accepted_tokens == list(draft_tokens[: len(result.accepted_tokens)])
+    elif result.correction_token is None:
+        assert result.all_matched is False
+        assert result.rejected_tokens == list(draft_tokens[len(result.accepted_tokens):])
     else:
         # Mismatch: accepted_tokens + [mismatched_draft] + remaining = draft_tokens
         assert result.all_matched is False
@@ -126,6 +127,21 @@ def test_single_token_match() -> None:
     assert r.accepted_tokens == [42]
     assert r.correction_token is None
     assert r.rejected_tokens == []
+
+
+def test_short_verifier_prefix_no_false_all_match() -> None:
+    """Verifier shorter than draft but prefix-matching must not mark all_matched."""
+    draft    = [10, 20, 30]
+    verifier = [10, 20]
+    r = compute_acceptance(draft, verifier)
+
+    assert r.all_matched is False
+    assert r.accepted_tokens == [10, 20]
+    assert r.correction_token is None
+    assert r.rejected_tokens == [30]
+    assert r.num_accepted == 2
+    assert r.num_rejected == 1
+    _check_invariants(r, draft, verifier)
 
 
 def test_single_token_mismatch() -> None:

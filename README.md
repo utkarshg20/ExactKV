@@ -1,8 +1,10 @@
 # ExactKV
 
+**Version 0.11.0** · [`docs/EVALUATOR_GUIDE.md`](docs/EVALUATOR_GUIDE.md) · [Technical report](paper/ExactKV_Technical_Report.md)
+
 **When does compressed KV start lying?**
 
-ExactKV is a compressor-agnostic **crash-test and leaderboard** for LLM KV-cache compression. It runs a draft/verify/commit loop: draft from compressed KV, verify each token against the full-KV reference, accept the matching prefix, correct on mismatch — and record **first-divergence index**, acceptance rate, verifier agreement, and exactness failures per cell.
+ExactKV is a compressor-agnostic **crash-test and leaderboard** for LLM KV-cache compression. It runs a draft/verify/commit loop: draft from compressed KV, verify each token against the full-KV reference, accept the matching prefix, correct on mismatch, and record **first-divergence index**, **acceptance rate**, **verifier agreement**, and exactness failures per cell.
 
 Unlike Shard, TurboQuant, or KIVI, ExactKV does **not** ship a new compression kernel. It measures **where and how** compressors drift under greedy decoding, with every published number tracing to a saved artifact.
 
@@ -14,18 +16,30 @@ ExactKV is a **research-grade evaluation framework**. It is **not** a production
 
 ## Results
 
-All on **Llama-3.1-8B** and **Mistral-7B-Instruct-v0.3**, greedy decoding, **`exactkv_failures = 0`** on cited panels.
+All on **Llama-3.1-8B** and **Mistral-7B-Instruct-v0.3**, greedy decoding.
+
+**Primary metrics:** divergence rate, acceptance rate, first-divergence index.
+**Safety gate:** `exactkv_failures = 0` on cited panels confirms verify/commit wiring, not that compression is practically useful by itself.
 
 | metric | result |
 |--------|--------|
 | External GPU cells (headline) | **8,132** |
 | Core leaderboard panel | **1,500** (`reports/scale_7b/raw.json`) |
-| `int4_sim` drift — MBPP (code) | **6%** |
-| `int4_sim` drift — HF LongBench (reading) | **~90%** |
-| H2O-style eviction @ 75% kept — LongBench | **100%** (worse than int4 at matched budget) |
+| `int4_sim` drift, MBPP (code) | **6%** |
+| `int4_sim` drift, HF LongBench (reading) | **~90%** |
+| H2O-style eviction @ 75% kept, LongBench | **100%** (worse than int4 at matched budget) |
 | BFCL long-gen drift (mnt 16→256) | **9% → 62%** (7× within-task scaling) |
 | Full-KV valid tool calls preserved | **106/106** (v2.7 BFCL validity panel) |
-| Faithful adapter smoke (appendix) | **864** wave-1 + **128** wave-2 — int8 ~8–9%; TurboQuant 3.1% (wave-2 smoke); SnapKV 90–97%; KIVI r32 100% |
+| Faithful adapter smoke (appendix) | **864** wave-1 + **128** wave-2, int8 ~8-9%, TurboQuant 3.1% (wave-2 smoke), SnapKV 90-97%, KIVI r32 100% |
+
+### Compressor tiers
+
+| tier | examples | note |
+|------|----------|------|
+| Built-in real | `noop`, `int8` | Headline 1,500-cell panel |
+| Built-in simulated | `int4_sim`, `int6_sim`, `h2o_sim` | Diagnostic, not upstream ports |
+| Fallback / proxy | `spectralquant`, `shard` | Mock or probe-only rows in leaderboard |
+| Faithful adapter | `snapkv_experimental`, `turboquant_experimental`, `kivi_offline_r32` | Appendix smoke grid only |
 
 External panel drift rates are **not** official LongBench/BFCL/MBPP scores. Compression ratios cited in the report are **stored tensor byte ratios**, not active GPU memory savings at serving time.
 
@@ -40,7 +54,7 @@ External panel drift rates are **not** official LongBench/BFCL/MBPP scores. Comp
 | **Commit** | Accept matching prefix; on mismatch, correct and advance full KV |
 | **Measure** | Record first divergence, acceptance, agreement, failures |
 
-ExactKV measures **whether compression is compatible with exact decoding**, not whether it is faster. Phase F kernel numbers are a **microbenchmark only** — not end-to-end inference speedup.
+ExactKV measures **whether compression is compatible with exact decoding**, not whether it is faster. Phase F kernel numbers are a **microbenchmark only**, not end-to-end inference speedup.
 
 ---
 
@@ -151,6 +165,7 @@ docs/                # Claim boundaries, metrics, experiment corpus
 | Leaderboard JSON | [`reports/public_release/leaderboard_final.json`](reports/public_release/leaderboard_final.json) |
 | Release notes | [`RELEASE.md`](RELEASE.md) |
 | Claim boundaries | [`docs/CLAIM_BOUNDARIES.md`](docs/CLAIM_BOUNDARIES.md) |
+| Evaluator guide (start here) | [`docs/EVALUATOR_GUIDE.md`](docs/EVALUATOR_GUIDE.md) |
 | Metrics | [`docs/METRIC_DEFINITIONS.md`](docs/METRIC_DEFINITIONS.md) |
 | Novelty audit | [`docs/NOVELTY_AUDIT.md`](docs/NOVELTY_AUDIT.md) |
 
@@ -158,12 +173,12 @@ docs/                # Claim boundaries, metrics, experiment corpus
 
 ## What ExactKV is not
 
-- **Not** a production serving system — no throughput or active VRAM savings claims
-- **Does not** reproduce VeriCache — inspired by draft/verify semantics only
-- **Not** official benchmark scores — external panels are drift smoke tests
+- **Not** a production serving system, no throughput or active VRAM savings claims
+- **Does not** reproduce VeriCache, inspired by draft/verify semantics only
+- **Not** official benchmark scores, external panels are drift smoke tests
 - **SpectralQuant** runs in fallback/proxy mode when the real dependency is unavailable
-- **Shard** is probe-first — not a full Shard / ShardCache integration
-- **`exactkv_failures = 0`** is a hard gate on tested panels only, not “compression is always safe”
+- **Shard** is probe-first, not a full Shard / ShardCache integration
+- **`exactkv_failures = 0`** is a harness safety gate on tested panels, not "compression is always safe"
 
 ---
 
@@ -175,4 +190,4 @@ ExactKV grew through a long verifier-first research arc (Experiments 001–113+,
 
 ## License
 
-Research release. See repository root for license terms if present.
+MIT License. See [`LICENSE`](LICENSE).

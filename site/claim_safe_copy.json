@@ -3,35 +3,69 @@
   "note": "Every string here is approved against docs/CLAIM_BOUNDARIES.md. Do not add superiority, first-ever, production, end-to-end speedup, or active-GPU-memory claims.",
   "hero": {
     "headline": "ExactKV shows when compressed KV caches start lying.",
-    "subhead": "A compressor-agnostic crash-test and leaderboard for LLM KV-cache compression. It measures the first token where compressed KV diverges from the full-KV verifier — plus acceptance rate, verifier agreement, and exactness failures.",
+    "subhead": "A compressor-agnostic crash-test and leaderboard for LLM KV-cache compression. It measures the first token where compressed KV diverges from the full-KV verifier, plus acceptance rate, verifier agreement, and exactness failures.",
     "primary_cta": "Read the technical report",
     "secondary_cta": "View on GitHub"
   },
   "positioning": "ExactKV is a research-grade evaluation framework. It is not a production serving system and does not reproduce VeriCache.",
   "result_cards": [
-    {"label": "External GPU cells", "value": "8,132", "note": "completed panels across benchmark families; exactkv_failures=0"},
-    {"label": "Core leaderboard panel", "value": "1,500", "note": "reports/scale_7b/raw.json — compressor rankings source"},
-    {"label": "Models evaluated", "value": "Llama-3.1-8B + Mistral-7B", "note": "meta-llama/Llama-3.1-8B, mistralai/Mistral-7B-Instruct-v0.3"},
-    {"label": "ExactKV failures", "value": "0", "note": "on all cited completed panels"},
-    {"label": "Faithful adapter smoke", "value": "864", "note": "wave-1, separate from 8,132 headline; reports/external_panels/faithful/"},
-    {"label": "First-divergence", "value": "token-level", "note": "Phase G canonical FirstDivergenceAuthority"}
+    {
+      "label": "External GPU cells",
+      "value": "8,132",
+      "note": "completed panels across benchmark families. exactkv_failures=0"
+    },
+    {
+      "label": "Core leaderboard panel",
+      "value": "1,500",
+      "note": "reports/scale_7b/raw.json, compressor rankings source"
+    },
+    {
+      "label": "Models evaluated",
+      "value": "Llama-3.1-8B + Mistral-7B",
+      "note": "meta-llama/Llama-3.1-8B, mistralai/Mistral-7B-Instruct-v0.3"
+    },
+    {
+      "label": "ExactKV failures",
+      "value": "0",
+      "note": "on all cited completed panels"
+    },
+    {
+      "label": "Faithful adapter smoke",
+      "value": "864",
+      "note": "wave-1, separate from 8,132 headline. reports/external_panels/faithful/"
+    },
+    {
+      "label": "First-divergence",
+      "value": "token-level",
+      "note": "Phase G canonical FirstDivergenceAuthority"
+    }
   ],
   "required_caveats": [
-    "Phase F kernel results are a kernel microbenchmark only — not an end-to-end inference speedup.",
-    "Compression ratios are stored tensor byte ratios — not active GPU memory savings.",
+    "Phase F kernel results are a kernel microbenchmark only, not an end-to-end inference speedup.",
+    "Compression ratios are stored tensor byte ratios, not active GPU memory savings.",
     "SpectralQuant runs in fallback/proxy mode when the real dependency is unavailable.",
     "Shard is a probe-first heuristic, not a full Shard / ShardCache integration.",
-    "ExactKV is inspired by verifier-mediated compressed-KV ideas; it does not reproduce VeriCache.",
+    "ExactKV is inspired by verifier-mediated compressed-KV ideas. it does not reproduce VeriCache.",
     "ExactKV is not a production serving system.",
     "exactkv_failures = 0 is a hard gate on the tested panel only.",
     "Scale run used sequential model execution (volume constraint).",
     "External panel drift rates are not official LongBench/BFCL/MBPP leaderboard scores."
   ],
   "forbidden_terms": [
-    "production ready", "first ever", "first and only", "nothing like this exists",
-    "active gpu memory savings", "vram savings", "end-to-end speedup", "faster inference",
-    "beats vericache", "reproduces vericache", "real spectralquant", "real shard",
-    "fastest", "sota"
+    "production ready",
+    "first ever",
+    "first and only",
+    "nothing like this exists",
+    "active gpu memory savings",
+    "vram savings",
+    "end-to-end speedup",
+    "faster inference",
+    "beats vericache",
+    "reproduces vericache",
+    "real spectralquant",
+    "real shard",
+    "fastest",
+    "sota"
   ],
   "urls": {
     "github": "https://github.com/utkarshg20/ExactKV",

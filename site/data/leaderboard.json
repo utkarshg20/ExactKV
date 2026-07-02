@@ -436,9 +436,9 @@
   "insights": [
     "`noop` leads the cross-model mean score (1.000 across 2 models).",
     "`int8` is near Pareto-optimal: mean acceptance 1.000 vs noop 1.000 with zero ExactKV failures across all models.",
-    "`spectralquant` mean acceptance 0.844 vs `int4_sim` 0.844; divergence rates 0.513 vs 0.513.",
-    "`shard` probe-only rows show mean divergence 0.237 and stability 0.763; weakest score on Mistral-7B (0.727).",
-    "Llama-3.1-8B has the highest mean score (0.890); Mistral-7B shows the widest compressor spread (0.273)."
+    "`spectralquant` mean acceptance 0.844 vs `int4_sim` 0.844. divergence rates 0.513 vs 0.513.",
+    "`shard` probe-only rows show mean divergence 0.237 and stability 0.763. weakest score on Mistral-7B (0.727).",
+    "Llama-3.1-8B has the highest mean score (0.890). Mistral-7B shows the widest compressor spread (0.273)."
   ],
   "models_evaluated": [
     "meta-llama/Llama-3.1-8B",

@@ -137,6 +137,11 @@ def compute_acceptance(
         # all tokens from mismatch_idx onwards are rejected.
         rejected = list(draft_tokens[mismatch_idx:])
         all_matched = False
+    elif len(verifier_tokens) < len(draft_tokens):
+        # Prefix matched, but the verifier stopped before covering every draft token.
+        # Do not treat unverified tail tokens as accepted.
+        rejected = list(draft_tokens[len(accepted):])
+        all_matched = False
     else:
         rejected = []
         all_matched = True

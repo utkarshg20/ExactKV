@@ -27,8 +27,8 @@ else
 fi
 
 section "2. Import exactkv"
-if "$PYTHON" -c "import exactkv; print(exactkv.__file__)" >/dev/null 2>&1; then
-  pass "import exactkv"
+if "$PYTHON" -c "import exactkv; assert exactkv.__version__; print(exactkv.__version__)" >/dev/null 2>&1; then
+  pass "import exactkv (__version__=$("$PYTHON" -c 'import exactkv; print(exactkv.__version__)'))"
 else
   fail "import exactkv (run: pip install -e '.[dev]')"
 fi
@@ -74,6 +74,7 @@ PYTEST_ARGS=(
   tests/test_docs_links.py
   tests/test_report_hygiene.py
   tests/test_acceptance_logic.py
+  tests/test_capture_divergence_topk.py
   -q
 )
 if "$PYTHON" -m pytest "${PYTEST_ARGS[@]}"; then

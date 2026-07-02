@@ -121,6 +121,19 @@ def run_one(
     }
 
 
+def _materialize_lossy_kv_for_topk(compressor: object, full_state: Any) -> Any:
+    """Build lossy past_key_values for divergence top-k forensics."""
+    import copy
+
+    if not hasattr(compressor, "compress") or not hasattr(compressor, "materialize_for_draft"):
+        raise TypeError(
+            "capture_divergence_topk requires a KVCompressor with "
+            "compress(FullKVState) and materialize_for_draft()"
+        )
+    compressed = compressor.compress(full_state)
+    return copy.deepcopy(compressor.materialize_for_draft(compressed))
+
+
 def capture_divergence_topk(
     runtime: ModelRuntime,
     prompt: str,
@@ -173,11 +186,8 @@ def capture_divergence_topk(
         full_state = prefill_to_full_state(runtime, prompt)
         past_kv = full_state.past_key_values
 
-        if apply_compression and hasattr(compressor, "compress"):
-            try:
-                past_kv = compressor.compress(past_kv)
-            except Exception:
-                pass
+        if apply_compression:
+            past_kv = _materialize_lossy_kv_for_topk(compressor, full_state)
 
         # Step through tokens 0..div_idx-2 to arrive at the state before div_idx
         for tok_id in token_sequence[1:div_idx]:
@@ -227,6 +237,8 @@ def capture_divergence_topk(
             "lossy_top1_logit_margin": round(margin_lossy, 6),
             "kl_div_approx": round(kl, 6),
         }
+    except (TypeError, ValueError):
+        raise
     except Exception:
         return None
 

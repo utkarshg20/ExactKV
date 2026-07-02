@@ -43,6 +43,7 @@ class ModelRuntime:
         model_name: str,
         device: str = "auto",
         dtype: str = "float32",
+        trust_remote_code: bool = False,
     ) -> None:
         self.model_name = model_name
         self.dtype_str = dtype
@@ -61,14 +62,14 @@ class ModelRuntime:
         load_kwargs.update(_hf_dtype_kwarg(torch_dtype))
 
         self.tokenizer: PreTrainedTokenizerBase = AutoTokenizer.from_pretrained(
-            model_name, trust_remote_code=True
+            model_name, trust_remote_code=trust_remote_code
         )
         # Ensure a pad token exists; reuse eos if absent.
         if self.tokenizer.pad_token_id is None:
             self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
 
         self.model: PreTrainedModel = AutoModelForCausalLM.from_pretrained(
-            model_name, trust_remote_code=True, **load_kwargs
+            model_name, trust_remote_code=trust_remote_code, **load_kwargs
         )
 
         # Move to explicit device when device != "auto".

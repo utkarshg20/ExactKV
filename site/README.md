@@ -16,9 +16,9 @@ Or: `open site/index.html`
 
 | File | Purpose |
 |------|---------|
-| `index.html` | Long-form story: TL;DR, drift findings, tables, leaderboard, reproduce. |
+| `index.html` | Long-form story: TL.DR, drift findings, tables, leaderboard, reproduce. |
 | `styles.css` | Dark prose layout + viz bars + tables. |
-| `main.js` | Loads leaderboard + case studies from `data/`; nav scroll highlight. |
+| `main.js` | Loads leaderboard + case studies from `data/`. nav scroll highlight. |
 | `data/leaderboard.json` | Copy of public leaderboard (sync via `scripts/sync_site_data.sh`). |
 | `data/case_studies.json` | Divergence snippet gallery for the case-studies section. |
 | `content_manifest.json` | Structured leaderboard/demo metadata (used by tests). |

@@ -7,7 +7,7 @@
 <meta name="description" content="A crash-test for LLM KV-cache compression: token-level drift, three failure modes, and 8,132 GPU cells on Llama + Mistral." />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400.500.600.700&family=Geist+Mono:wght@400.500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="article-page">
@@ -57,7 +57,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
   T=8192  → ~1.07 GB KV (fp16)
   T=128K  → ~16 GB KV, comparable to model weights</code></div>
     <p>
-      Compression papers chase 4×–10× stored-byte reductions. ExactKV does not build those compressors. It crash-tests them: same prompt, same model, full-KV reference vs lossy compressed path vs verifier-corrected path, and logs the split.
+      Compression papers chase 4×-10× stored-byte reductions. ExactKV does not build those compressors. It crash-tests them: same prompt, same model, full-KV reference vs lossy compressed path vs verifier-corrected path, and logs the split.
     </p>
 
     <h2>2. What benchmarks usually miss</h2>
@@ -188,7 +188,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       </table>
     </div>
     <p>
-      int4_sim is near-ceiling at all context lengths on open-text reading, task type matters more than context once you are in the LongBench regime. Int8 is the opposite pattern: near-zero on code/tool panels, but 15–27% on LongBench reading.
+      int4_sim is near-ceiling at all context lengths on open-text reading, task type matters more than context once you are in the LongBench regime. Int8 is the opposite pattern: near-zero on code/tool panels, but 15-27% on LongBench reading.
     </p>
 
     <details class="article-details">
@@ -219,7 +219,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
     <div class="article-table-wrap">
       <table class="article-table">
         <thead>
-          <tr><th>Class</th><th>Mechanism</th><th>Top-1 flip</th><th>Near-tie (&lt;0.05)</th><th>Mean lossy rank</th><th>Median 1st div.</th></tr>
+          <tr><th>Class</th><th>Mechanism</th><th>Top-1 flip</th><th>Near-tie (&lt.0.05)</th><th>Mean lossy rank</th><th>Median 1st div.</th></tr>
         </thead>
         <tbody>
           <tr><td><code>int8</code></td><td>Near-tie noise</td><td class="num">69%</td><td class="num">66%</td><td class="num">2.4</td><td class="num">22</td></tr>
@@ -230,7 +230,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
     </div>
 
     <p>
-      <strong>int8</strong> flips late on contested logits. The model was already uncertain. <strong>int4_sim</strong> shifts probability mass to rank-3–4 alternatives even when full-KV was moderately confident. <strong>H2O-style eviction</strong> deletes context tokens. Lossy rank jumps to ~7 and divergence is immediate (median index 1). Same verifier catches all three. <strong>exactkv failures: 0</strong>.
+      <strong>int8</strong> flips late on contested logits. The model was already uncertain. <strong>int4_sim</strong> shifts probability mass to rank-3-4 alternatives even when full-KV was moderately confident. <strong>H2O-style eviction</strong> deletes context tokens. Lossy rank jumps to ~7 and divergence is immediate (median index 1). Same verifier catches all three. <strong>exactkv failures: 0</strong>.
     </p>
 
     <h2>9. Forensic case studies</h2>
@@ -364,10 +364,10 @@ I had never see</div>
       </table>
     </div>
     <p>
-      <strong>864 GPU cells</strong> (432 per model: LongBench 216, BFCL 120, MBPP 96). <code>exactkv_failures=0</code> throughout. <code>int8</code> is the only non-catastrophic real compressor in wave-1 (~8–9% combined drift). Faithful SnapKV runs end-to-end via kvpress but shows <strong>90–97% drift</strong>. KIVI offline r32 is catastrophic on every cell (adapter diagnostic only, not production KIVI).
+      <strong>864 GPU cells</strong> (432 per model: LongBench 216, BFCL 120, MBPP 96). <code>exactkv_failures=0</code> throughout. <code>int8</code> is the only non-catastrophic real compressor in wave-1 (~8-9% combined drift). Faithful SnapKV runs end-to-end via kvpress but shows <strong>90-97% drift</strong>. KIVI offline r32 is catastrophic on every cell (adapter diagnostic only, not production KIVI).
     </p>
 
-    <h3>Wave-2 smoke (Mistral only, 128 cells — complete)</h3>
+    <h3>Wave-2 smoke (Mistral only, 128 cells, complete)</h3>
     <p>
       MBPP + BFCL structured-task smoke comparing <code>int8</code>, KnormPress, TurboQuant, and SnapKV. Pulled from RunPod 2026-07-01. Not merged into the 8,132 headline total.
     </p>
@@ -384,7 +384,7 @@ I had never see</div>
       </table>
     </div>
     <p>
-      <strong>Key finding:</strong> <code>turboquant_experimental</code> is the first faithful external adapter here with near-int8 drift on structured tasks (3.1% combined; 0% on BFCL). KnormPress and SnapKV remain catastrophic. Mistral-only smoke panel — not a deployment claim. Full tables: technical report §6.17.1.
+      <strong>Key finding:</strong> <code>turboquant_experimental</code> is the first faithful external adapter here with near-int8 drift on structured tasks (3.1% combined. 0% on BFCL). KnormPress and SnapKV remain catastrophic. Mistral-only smoke panel, not a deployment claim. Full tables: technical report §6.17.1.
     </p>
 
     <h2 id="case-studies">14. Divergence case studies</h2>
@@ -462,7 +462,7 @@ I had never see</div>
           <strong>ExactKV</strong> asks: under greedy decoding, when does each compressor's KV approximation first change the argmax? We can crash-test Shard's HuggingFace Cache adapter the same way we crash-test int4_sim, once wired, and publish drift + exactness curves alongside built-in baselines.
         </p>
         <p>
-          <strong>TurboQuant</strong> targets ~4–6× with sphere-uniform quant theory. <strong>KIVI</strong> targets asymmetric low-bit quant with streaming policies. ExactKV's faithful adapters (KnormPress, TurboQuant experimental, KIVI r32) exist to run those upstream algorithms on the same grid, not to re-derive their math.
+          <strong>TurboQuant</strong> targets ~4-6× with sphere-uniform quant theory. <strong>KIVI</strong> targets asymmetric low-bit quant with streaming policies. ExactKV's faithful adapters (KnormPress, TurboQuant experimental, KIVI r32) exist to run those upstream algorithms on the same grid, not to re-derive their math.
         </p>
       </div>
     </details>
