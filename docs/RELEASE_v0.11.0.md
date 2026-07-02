@@ -16,10 +16,10 @@ Primary metrics: **divergence rate**, **acceptance rate**, **first-divergence in
 
 ## Start here
 
-- [Evaluator guide](docs/EVALUATOR_GUIDE.md)
-- [Technical report](paper/ExactKV_Technical_Report.md)
-- [Claim boundaries](docs/CLAIM_BOUNDARIES.md)
-- [Headline leaderboard JSON](reports/public_release/leaderboard_final.json) (6 ranked rows; mock/probe rows in `diagnostic_entries`)
+- [Evaluator guide](EVALUATOR_GUIDE.md)
+- [Technical report](../paper/ExactKV_Technical_Report.md)
+- [Claim boundaries](CLAIM_BOUNDARIES.md)
+- [Headline leaderboard JSON](../reports/public_release/leaderboard_final.json) (6 ranked rows; mock/probe rows in `diagnostic_entries`)
 
 ## Cheap repro (CPU, no GPU)
 
@@ -40,4 +40,4 @@ Artifact: `reports/scale_7b/raw.json`
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](../LICENSE).
