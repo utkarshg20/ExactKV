@@ -1,6 +1,6 @@
 # ExactKV Project Status (v0.11.0)
 
-**As of:** v0.11.0 (V11 complete). **Not public-launch final.**
+**As of:** v0.11.0 (V-release complete; legacy: V11).
 
 ExactKV is a correctness-first, compressor-agnostic research platform for evaluating
 lossy KV-cache compression under ExactKV's draft-verify-commit loop. Through V11 it

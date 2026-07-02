@@ -1,5 +1,7 @@
 # V11 Scope Statement: Final Launch Hardening
 
+> **Canonical milestone name:** **V-release** (this file keeps the legacy `V11` filename).
+
 **Status:** **Phase 6 complete** — launch package readiness prepared; **`v0.11.0` tag-ready**; public v1.0.0 deferred.
 **Builds on:** `v0.10.0` — V10 complete (Experiments 012–014; evaluation-suite hardening).
 **Not public launch.** v1.0.0 deferred until V11 substance and launch package (D17–D20) exit criteria are met.

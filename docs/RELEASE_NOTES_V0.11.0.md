@@ -1,9 +1,9 @@
 # ExactKV v0.11.0 Release Notes
 
-**Status:** V11 complete (Phases 0–6). **Tag:** `v0.11.0` — **research milestone, not public launch.**
+**Status:** V-release complete (Phases 0–6; legacy docs: V11). **Tag:** `v0.11.0` — **research release**.
 **Base:** Builds on `v0.10.0` (evaluation-suite hardening, Experiments 012–014).
 
-> **V11 is a launch-hardening release, not a performance or production release.**
+> **V-release** is launch hardening, not a performance or production release (legacy docs: V11).
 > V10/V11 suites are **not universal benchmarks**. `_sim` compressors are **not** real packed-bit backends.
 > Restricted real backends remain **factory-only**. `total_kv_footprint_bytes` is accounting, not measured peak GPU memory.
 > Active GPU memory is **not** a standard schema metric. Repair policies are **pilot-only**, not core defaults.

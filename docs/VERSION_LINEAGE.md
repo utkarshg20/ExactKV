@@ -24,7 +24,7 @@ The **version arc** (V1–V21) spans pre-formal-release research milestones. It 
 | V8 | verified | Serving harness | `docs/RELEASE_NOTES_V0.8.0.md` |
 | V9 | verified | Real backend gauntlet | `docs/RELEASE_NOTES_V0.9.0.md` |
 | V10 | verified | Suite hardening | `docs/RELEASE_NOTES_V0.10.0.md` |
-| V11 | verified | Launch hardening | `docs/RELEASE_NOTES_V0.11.0.md` |
+| V-release (V11) | verified | Launch hardening | `docs/RELEASE_NOTES_V0.11.0.md` |
 | V12 | verified | Deferred work completion gauntlet | `docs/V12_SCOPE_STATEMENT.md` |
 | V13 | verified | Practicality proof | `docs/V13_SCOPE_STATEMENT.md` |
 | V14 | partial | CUDA restored verifier & GPU memory diagnostics | `docs/EXPERIMENT_055_EXPERIMENTAL_RESTORED_VERIFIER_CLI.md` |
@@ -81,7 +81,7 @@ The **version arc** (V1–V21) spans pre-formal-release research milestones. It 
 
 - **Evidence status:** `verified` (high)
 - **Purpose:** Pre-formal-release milestone V5: Workspace-aware memory accounting.
-- **Key contribution:** Experiment 004; git tag `v0.5.0`
+- **Key contribution:** Experiment 004; historical tag `v0.5.0` *(removed)*
 - **Caveats:** Historical prototype milestone; not the 1500-cell public headline.
 - **Evidence files:**
   - `docs/RELEASE_NOTES_V0.5.0.md`
@@ -92,7 +92,7 @@ The **version arc** (V1–V21) spans pre-formal-release research milestones. It 
 
 - **Evidence status:** `verified` (high)
 - **Purpose:** Pre-formal-release milestone V6: Backend adapter interface.
-- **Key contribution:** kvpress KnormPress; git tag `v0.6.0`
+- **Key contribution:** kvpress KnormPress; historical tag `v0.6.0` *(removed)*
 - **Caveats:** Historical prototype milestone; not the 1500-cell public headline.
 - **Evidence files:**
   - `docs/RELEASE_NOTES_V0.6.0.md`
@@ -102,7 +102,7 @@ The **version arc** (V1–V21) spans pre-formal-release research milestones. It 
 
 - **Evidence status:** `verified` (high)
 - **Purpose:** Pre-formal-release milestone V7: Layer-aware V policies.
-- **Key contribution:** Experiments 006/006C; git tag `v0.7.0`
+- **Key contribution:** Experiments 006/006C; historical tag `v0.7.0` *(removed)*
 - **Caveats:** Historical prototype milestone; not the 1500-cell public headline.
 - **Evidence files:**
   - `docs/RELEASE_NOTES_V0.7.0.md`
@@ -112,7 +112,7 @@ The **version arc** (V1–V21) spans pre-formal-release research milestones. It 
 
 - **Evidence status:** `verified` (high)
 - **Purpose:** Pre-formal-release milestone V8: Serving harness.
-- **Key contribution:** Experiment 007; git tag `v0.8.0`
+- **Key contribution:** Experiment 007; historical tag `v0.8.0` *(removed)*
 - **Caveats:** Historical prototype milestone; not the 1500-cell public headline.
 - **Evidence files:**
   - `docs/RELEASE_NOTES_V0.8.0.md`
@@ -122,7 +122,7 @@ The **version arc** (V1–V21) spans pre-formal-release research milestones. It 
 
 - **Evidence status:** `verified` (high)
 - **Purpose:** Pre-formal-release milestone V9: Real backend gauntlet.
-- **Key contribution:** Exp 008–011; git tag `v0.9.0`
+- **Key contribution:** Exp 008–011; historical tag `v0.9.0` *(removed)*
 - **Caveats:** Historical prototype milestone; not the 1500-cell public headline.
 - **Evidence files:**
   - `docs/RELEASE_NOTES_V0.9.0.md`
@@ -132,19 +132,19 @@ The **version arc** (V1–V21) spans pre-formal-release research milestones. It 
 
 - **Evidence status:** `verified` (high)
 - **Purpose:** Pre-formal-release milestone V10: Suite hardening.
-- **Key contribution:** Exp 012–014; git tag `v0.10.0`
+- **Key contribution:** Exp 012–014; historical tag `v0.10.0` *(removed)*
 - **Caveats:** Historical prototype milestone; not the 1500-cell public headline.
 - **Evidence files:**
   - `docs/RELEASE_NOTES_V0.10.0.md`
   - `docs/V10_SCOPE_DRAFT.md`
   - `docs/V10_SCOPE_STATEMENT.md`
 
-### V11 — Launch hardening
+### V-release — Launch hardening (legacy: V11)
 
 - **Evidence status:** `verified` (high)
-- **Purpose:** Pre-formal-release milestone V11: Launch hardening.
-- **Key contribution:** Exp 015–020; git tag `v0.11.0`
-- **Caveats:** Historical prototype milestone; not the 1500-cell public headline.
+- **Purpose:** Pre-formal-release milestone **V-release**: launch hardening and public research release (`v0.11.0`).
+- **Key contribution:** Exp 015–020; **public tag `v0.11.0`**
+- **Caveats:** Historical prototype milestone; older filenames still use `V11_*.md`.
 - **Evidence files:**
   - `docs/RELEASE_NOTES_V0.11.0.md`
   - `docs/V11_SCOPE_STATEMENT.md`

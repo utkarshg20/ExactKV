@@ -62,7 +62,7 @@ Tooling: `exactkv/platform/project_archaeology.py` · `scripts/build_project_lin
 |-------|------|
 | V1–V3 | Early foundation: correctness prototype, framework, sweeps |
 | V4–V9 | Compression simulation, adapters, serving harness, backend gauntlet |
-| V10–V11 | Evaluation suite hardening, launch hardening (tagged v0.10–v0.11) |
+| V10–V-release | Evaluation suite hardening, launch hardening (public tag `v0.11.0`) |
 | V12–V13 | Deferred-work gauntlet, practicality proof, demos, external methods |
 | V14–V15 | CUDA restored verifier, GPU memory diagnostics, vLLM no-go probes |
 | V16 | Shadow observers, streaming quant feasibility, Phase 16 closeout |
