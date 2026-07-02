@@ -1,11 +1,11 @@
 # ExactKV
 
 ![CI](https://github.com/utkarshg20/ExactKV/actions/workflows/ci.yml/badge.svg)
-[![Release v0.11.0](https://img.shields.io/github/v/release/utkarshg20/ExactKV?label=release)](https://github.com/utkarshg20/ExactKV/releases/tag/v0.11.0)
+[![Release](https://img.shields.io/github/v/release/utkarshg20/ExactKV?label=research%20release)](https://github.com/utkarshg20/ExactKV/releases/tag/v-release)
 
-**Version 0.11.0** (research release) · [`docs/VERSIONING.md`](docs/VERSIONING.md) · [`docs/EVALUATOR_GUIDE.md`](docs/EVALUATOR_GUIDE.md) · [Technical report](paper/ExactKV_Technical_Report.md) · [GitHub Release](https://github.com/utkarshg20/ExactKV/releases/tag/v0.11.0)
+**ExactKV research release** · [`docs/VERSIONING.md`](docs/VERSIONING.md) · [`docs/EVALUATOR_GUIDE.md`](docs/EVALUATOR_GUIDE.md) · [Technical report](paper/ExactKV_Technical_Report.md) · [GitHub Release](https://github.com/utkarshg20/ExactKV/releases/tag/v-release)
 
-**One public release tag: `v0.11.0`.** V1–V21 in `docs/` are internal research milestones (not semver). The shipped milestone is **V-release** (legacy docs: V11). All other historical git tags were removed from GitHub. See [`docs/VERSIONING.md`](docs/VERSIONING.md).
+**One public git tag: `v-release`.** V1–V21 in `docs/` are internal research milestones (not semver). The shipped milestone is **V-release** (legacy docs: V11). All historical semver tags were removed from GitHub. See [`docs/VERSIONING.md`](docs/VERSIONING.md).
 
 **When does compressed KV start lying?**
 

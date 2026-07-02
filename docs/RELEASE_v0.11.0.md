@@ -1,10 +1,8 @@
-# ExactKV 0.11.0 (research release)
+# ExactKV research release
 
-**Canonical package version:** `0.11.0` (`exactkv.__version__`, `pyproject.toml`)
+**Git tag:** `v-release`
 
 **Research release artifact:** 1,500-cell core panel + 8,132-cell external headline grid
-
-**Commit:** `6a67201`
 
 ## What this is
 
@@ -24,6 +22,7 @@ Primary metrics: **divergence rate**, **acceptance rate**, **first-divergence in
 ## Cheap repro (CPU, no GPU)
 
 ```bash
+pip install git+https://github.com/utkarshg20/ExactKV.git@v-release
 pip install -e ".[dev]"
 bash scripts/smoke_test.sh
 python3 scripts/exactkv_repro.py --reports-only

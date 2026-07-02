@@ -1,8 +1,10 @@
-# ExactKV 0.11.0 (research release)
+# ExactKV research release
 
-**Canonical public package version:** `0.11.0` (`exactkv.__version__`, `pyproject.toml`, git tag `v0.11.0`).
+**Public git tag:** `v-release` (GitHub Release).
 
 **Research release artifact:** headline 8,132-cell external grid + 1,500-cell core panel in this bundle.
+
+**Package version (optional):** `0.11.0` (`exactkv.__version__`, `pyproject.toml`) — implementation detail only; cite **`v-release`**.
 
 **Not the same as:** V12/V13 internal docs or removed historical git tags. See [`docs/VERSIONING.md`](docs/VERSIONING.md).
 
@@ -79,14 +81,14 @@ on LongBench (86% → 57%, a 29pp improvement), but bit-width still matters at 8
 ### Total: **8,132 completed GPU cells**, `exactkv_failures = 0` throughout
 
 
-## Public artifact checklist (v0.11.0)
+## Public artifact checklist (research release)
 
 **Completed in this release**
 
 - 8,132 GPU cells across cited external panels + 1,500-cell core headline panel
 - `exactkv_failures = 0` on all cited completed panels (harness safety gate)
 - Claim-boundary audit, CPU smoke replay, and reports-only validation path
-- GitHub Release [`v0.11.0`](https://github.com/utkarshg20/ExactKV/releases/tag/v0.11.0) (tag commit `6a67201`)
+- GitHub Release [`v-release`](https://github.com/utkarshg20/ExactKV/releases/tag/v-release)
 - CI workflow green on smoke + correctness unit tests
 - Faithful adapter smoke appendix (864 wave-1 + 128 wave-2 cells, separate from headline total)
 

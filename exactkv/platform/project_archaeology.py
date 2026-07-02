@@ -152,7 +152,7 @@ VERSION_SEEDS: dict[int, dict[str, Any]] = {
     8: {"title": "Serving harness", "theme": "Experiment 007", "tag": "v0.8.0"},
     9: {"title": "Real backend gauntlet", "theme": "Exp 008–011", "tag": "v0.9.0"},
     10: {"title": "Suite hardening", "theme": "Exp 012–014", "tag": "v0.10.0"},
-    11: {"title": "Launch hardening", "theme": "Exp 015–020", "tag": "v0.11.0"},
+    11: {"title": "Launch hardening", "theme": "Exp 015–020", "tag": "v-release"},
     12: {"title": "Deferred work completion gauntlet", "theme": "Exp 021–027", "tag": None},
     13: {"title": "Practicality proof", "theme": "span verification, demos, external methods", "tag": None},
     14: {

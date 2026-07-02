@@ -81,14 +81,21 @@ Read **[VERSIONING.md](VERSIONING.md)** first if tag/V-series numbering looks co
 
 | field | value |
 |-------|-------|
-| **Canonical package version** | **`0.11.0`** |
-| **Only public git tag** | **`v0.11.0`** (commit `6a67201`) |
-| **GitHub Release** | https://github.com/utkarshg20/ExactKV/releases/tag/v0.11.0 |
-| **Evidence bundle label** | **research release** (`RELEASE.md`) |
+| **Public name** | **research release** |
+| **Only public git tag** | **`v-release`** |
+| **GitHub Release** | https://github.com/utkarshg20/ExactKV/releases/tag/v-release |
+| **Evidence bundle** | `RELEASE.md` (8,132 + 1,500 cells) |
+| **Package version (optional)** | `0.11.0` (`exactkv.__version__`) — not the public cite |
 | **V1–V21 in docs/** | Internal research milestones — **not** product semver |
-| **Withdrawn / removed tags** | `v0.2.0`–`v0.10.0`, `v0.13.0-rc1` (July 2026 cleanup; docs only) |
+| **Withdrawn / removed tags** | `v0.1.0-phase1`–`v0.11.0`, `v0.13.0-rc1` (July 2026 cleanup) |
 
-Use **`v0.11.0`** when installing, citing, or reviewing code. Use **research release** when referring to the full evidence bundle described in `RELEASE.md`. Panel-batch labels like `v3.0` / `v30/` in the report are internal artifact names, not semver.
+**Cite:** `ExactKV research release` · **Git tag:** `v-release`
+
+```bash
+pip install git+https://github.com/utkarshg20/ExactKV.git@v-release
+```
+
+Panel-batch labels like `v3.0` / `v30/` in the report are internal artifact names, not semver.
 
 Historical phase docs live under `docs/` and `docs/archive/` (when present). Start here, not there.
 

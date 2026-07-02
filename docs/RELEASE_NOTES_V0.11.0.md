@@ -1,6 +1,6 @@
 # ExactKV v0.11.0 Release Notes
 
-**Status:** V-release complete (Phases 0–6; legacy docs: V11). **Tag:** `v0.11.0` — **research release**.
+**Status:** V-release complete (Phases 0–6; legacy docs: V11). **Tag:** `v-release` — **research release**.
 **Base:** Builds on `v0.10.0` (evaluation-suite hardening, Experiments 012–014).
 
 > **V-release** is launch hardening, not a performance or production release (legacy docs: V11).

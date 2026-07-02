@@ -1,6 +1,6 @@
 # ExactKV Version Lineage (V1–V21)
 
-> **Public release:** only **`v0.11.0`** (package `0.11.0`). See **[VERSIONING.md](VERSIONING.md)** for why V12/V13 tags do not supersede v0.11.0.
+> **Public release:** only **`v-release`** (research release). See **[VERSIONING.md](VERSIONING.md)** for why V12/V13 tags do not supersede it.
 
 Generated: 2026-06-26T14:58:00.590506+00:00
 
@@ -142,8 +142,8 @@ The **version arc** (V1–V21) spans pre-formal-release research milestones. It 
 ### V-release — Launch hardening (legacy: V11)
 
 - **Evidence status:** `verified` (high)
-- **Purpose:** Pre-formal-release milestone **V-release**: launch hardening and public research release (`v0.11.0`).
-- **Key contribution:** Exp 015–020; **public tag `v0.11.0`**
+- **Purpose:** Pre-formal-release milestone **V-release**: launch hardening and public research release (`v-release`).
+- **Key contribution:** Exp 015–020; **public tag `v-release`**
 - **Caveats:** Historical prototype milestone; older filenames still use `V11_*.md`.
 - **Evidence files:**
   - `docs/RELEASE_NOTES_V0.11.0.md`
