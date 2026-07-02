@@ -1,8 +1,8 @@
-# ExactKV v0.11.0 (research release v3.0)
+# ExactKV 0.11.0 (research release)
 
 **Canonical public package version:** `0.11.0` (`exactkv.__version__`, `pyproject.toml`, git tag `v0.11.0`).
 
-**Research narrative label:** v3.0 (headline 8,132-cell external grid + 1,500-cell core panel in this artifact set).
+**Research release artifact:** headline 8,132-cell external grid + 1,500-cell core panel in this bundle.
 
 **Not the same as:** V12/V13 internal docs or removed historical git tags. See [`docs/VERSIONING.md`](docs/VERSIONING.md).
 

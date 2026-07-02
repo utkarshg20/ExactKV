@@ -6,15 +6,15 @@ ExactKV uses **three separate naming systems**. They are **not** the same counte
 |--------|---------|---------------|---------------|
 | **Package / pip** | `0.11.0` | `pyproject.toml`, `exactkv.__version__` | **Yes** |
 | **Git tag / GitHub Release** | `v0.11.0` | Cited public research artifact | **Yes — only tag on GitHub** |
-| **Evidence bundle label** | `v3.0` | Headline 8,132-cell + 1,500-cell panel set in `RELEASE.md` | Yes (paper/README) |
+| **Evidence bundle label** | `research release` | Headline 8,132-cell + 1,500-cell panel set in `RELEASE.md` | Yes (paper/README) |
 | **V-milestones (V1–V21)** | `V11`, `V13` | Internal research arc docs in `docs/` | **No — archive only** |
 
 ## What you should cite
 
 ```text
-ExactKV v0.11.0 (research artifact v3.0)
+ExactKV 0.11.0 (research release)
 Git tag: v0.11.0
-Commit: 6a67201 (release artifact; see GitHub Releases)
+Commit: 6a67201 (see GitHub Releases)
 ```
 
 Install from the release tag:
@@ -34,20 +34,22 @@ Earlier internal milestone tags (`v0.2.0`–`v0.10.0`, `v0.13.0-rc1`) were **rem
 | V-milestone | Theme | Public git tag? |
 |-------------|-------|-----------------|
 | V1–V10 | Prototype through suite hardening | *(removed — docs only)* |
-| **V11** | Launch hardening + v3.0 bundle | **`v0.11.0`** |
+| **V11** | Launch hardening + public research release | **`v0.11.0`** |
 | V12 | Deferred-work gauntlet | *(docs only)* |
 | V13 | Practicality proof | *(docs only; old rc tag removed)* |
 | V14–V21 | L3/L4 integration ladder | *(docs only)* |
 
 **V11 is not “missing”.** It **is** `v0.11.0`. V12/V13 docs describe later internal work; they do **not** mean a newer product version exists on GitHub.
 
-## Evidence bundle “v3.0”
+## Evidence bundle “research release”
 
-`RELEASE.md` uses **v3.0** for the **research evidence bundle** (technical report + 8,132 external cells + faithful appendix). That label is independent of pip version `0.11.0`:
+`RELEASE.md` describes the **research release** artifact (technical report + 8,132 external cells + faithful appendix). That label is independent of pip version `0.11.0`:
 
 ```text
-ExactKV v0.11.0 — research release v3.0
+ExactKV 0.11.0 — research release
 ```
+
+**Note:** `v3.0` in the technical report and `reports/external_panels/v30/` refers to a **specific GPU panel batch** inside this release, not a separate public version number.
 
 ## For reviewers
 

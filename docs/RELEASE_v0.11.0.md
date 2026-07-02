@@ -1,8 +1,8 @@
-# ExactKV v0.11.0 (research release v3.0)
+# ExactKV 0.11.0 (research release)
 
 **Canonical package version:** `0.11.0` (`exactkv.__version__`, `pyproject.toml`)
 
-**Research bundle label:** v3.0 (1,500-cell core panel + 8,132-cell external headline grid)
+**Research release artifact:** 1,500-cell core panel + 8,132-cell external headline grid
 
 **Commit:** `6a67201`
 
