@@ -189,7 +189,7 @@ docs/                # Claim boundaries, metrics, experiment corpus
 
 ## Historical development
 
-ExactKV grew through a long verifier-first research arc (Experiments 001–113+, V1–V21) before Phases A–J formalized the public benchmark platform. For version lineage, experiment index, and historical artifacts, see [`docs/PROJECT_LINEAGE.md`](docs/PROJECT_LINEAGE.md), [`docs/VERSION_LINEAGE.md`](docs/VERSION_LINEAGE.md), and [`docs/HISTORICAL_ARTIFACT_INVENTORY.md`](docs/HISTORICAL_ARTIFACT_INVENTORY.md).
+Long internal research history (Experiments 001+, V-lineage) lives under [`docs/PROJECT_LINEAGE.md`](docs/PROJECT_LINEAGE.md). **Start with [`docs/EVALUATOR_GUIDE.md`](docs/EVALUATOR_GUIDE.md)** for the public review path.
 
 ---
 

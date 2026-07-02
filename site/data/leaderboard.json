@@ -147,18 +147,6 @@
       "mean_score": 0.855,
       "models_count": 2,
       "rank": 3
-    },
-    {
-      "compressor": "spectralquant",
-      "mean_score": 0.855,
-      "models_count": 2,
-      "rank": 4
-    },
-    {
-      "compressor": "shard",
-      "mean_score": 0.7291,
-      "models_count": 2,
-      "rank": 5
     }
   ],
   "per_model_breakdown": {
@@ -284,9 +272,7 @@
   "insights": [
     "`noop` leads the cross-model mean score (1.000 across 2 models).",
     "`int8` is near Pareto-optimal: mean acceptance 1.000 vs noop 1.000 with zero ExactKV failures across all models.",
-    "`spectralquant` mean acceptance 0.844 vs `int4_sim` 0.844. divergence rates 0.513 vs 0.513.",
-    "`shard` probe-only rows show mean divergence 0.237 and stability 0.763. weakest score on Mistral-7B (0.727).",
-    "Llama-3.1-8B has the highest mean score (0.890). Mistral-7B shows the widest compressor spread (0.273)."
+    "Llama-3.1-8B has the highest mean score (0.890); Mistral-7B shows the widest compressor spread (0.273)."
   ],
   "models_evaluated": [
     "meta-llama/Llama-3.1-8B",
@@ -295,9 +281,7 @@
   "compressors_evaluated": [
     "noop",
     "int8",
-    "int4_sim",
-    "spectralquant",
-    "shard"
+    "int4_sim"
   ],
   "filters": {
     "model": null,
@@ -387,5 +371,27 @@
       "rank": 10
     }
   ],
-  "ranking_policy": "Main entries rank built-in compressors only. Mock/probe rows live in diagnostic_entries and are not headline evidence."
+  "ranking_policy": "Main entries rank built-in compressors only. Mock/probe rows live in diagnostic_entries and are not headline evidence.",
+  "diagnostic_global_compressor_rankings": [
+    {
+      "compressor": "spectralquant",
+      "mean_score": 0.855,
+      "models_count": 2,
+      "rank": 4
+    },
+    {
+      "compressor": "shard",
+      "mean_score": 0.7291,
+      "models_count": 2,
+      "rank": 5
+    }
+  ],
+  "diagnostic_insights": [
+    "`spectralquant` mean acceptance 0.844 vs `int4_sim` 0.844; divergence rates 0.513 vs 0.513.",
+    "`shard` probe-only rows show mean divergence 0.237 and stability 0.763; weakest score on Mistral-7B (0.727)."
+  ],
+  "diagnostic_compressors_evaluated": [
+    "spectralquant",
+    "shard"
+  ]
 }
