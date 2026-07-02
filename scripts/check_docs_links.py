@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import re
+import subprocess
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
@@ -15,6 +16,20 @@ LINK_RE = re.compile(r"!?\[([^\]]*)\]\(([^)]+)\)")
 HREF_RE = re.compile(r"""href=["']([^"']+)["']""", re.I)
 
 SKIP_URL_PREFIXES = ("http://", "https://", "mailto:", "#", "data:")
+
+
+def _is_gitignored(path: Path, root: Path) -> bool:
+    """True when path matches .gitignore (internal/local-only doc targets)."""
+    try:
+        rel = path.resolve().relative_to(root.resolve())
+    except ValueError:
+        return False
+    proc = subprocess.run(
+        ["git", "check-ignore", "-q", "--", str(rel)],
+        cwd=root,
+        capture_output=True,
+    )
+    return proc.returncode == 0
 
 
 def _resolve_link(source: Path, target: str, root: Path) -> Path | None:
@@ -54,6 +69,8 @@ def scan_file(path: Path, root: Path) -> list[tuple[int, str, str]]:
             # Outside repo — skip
             continue
         if not resolved.exists():
+            if _is_gitignored(resolved, root):
+                continue
             missing.append((lineno, raw, str(resolved.relative_to(root))))
     return missing
 
