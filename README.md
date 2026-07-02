@@ -1,6 +1,8 @@
 # ExactKV
 
-**Version 0.11.0** · [`docs/EVALUATOR_GUIDE.md`](docs/EVALUATOR_GUIDE.md) · [Technical report](paper/ExactKV_Technical_Report.md)
+**Version 0.11.0** (research release v3.0) · [`docs/EVALUATOR_GUIDE.md`](docs/EVALUATOR_GUIDE.md) · [Technical report](paper/ExactKV_Technical_Report.md)
+
+Package version, git tag, and evaluator guide all use **`v0.11.0`**. The **v3.0** label names the research artifact bundle (headline panels + external grid). Tag `v0.13.0-rc1` is a future preview only, not this release.
 
 **When does compressed KV start lying?**
 

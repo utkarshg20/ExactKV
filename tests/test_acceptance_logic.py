@@ -129,6 +129,21 @@ def test_single_token_match() -> None:
     assert r.rejected_tokens == []
 
 
+def test_short_verifier_single_token_prefix() -> None:
+    """One matching verifier token must not accept the full draft."""
+    draft    = [1, 2, 3]
+    verifier = [1]
+    r = compute_acceptance(draft, verifier)
+
+    assert r.all_matched is False
+    assert r.accepted_tokens == [1]
+    assert r.correction_token is None
+    assert r.rejected_tokens == [2, 3]
+    assert r.num_accepted == 1
+    assert r.num_rejected == 2
+    _check_invariants(r, draft, verifier)
+
+
 def test_short_verifier_prefix_no_false_all_match() -> None:
     """Verifier shorter than draft but prefix-matching must not mark all_matched."""
     draft    = [10, 20, 30]

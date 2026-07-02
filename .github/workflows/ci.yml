@@ -26,6 +26,10 @@ jobs:
       - name: CPU smoke test
         run: bash scripts/smoke_test.sh
 
+      - name: Correctness unit tests
+        run: |
+          python3 -m pytest tests/test_acceptance_logic.py tests/test_capture_divergence_topk.py -q
+
       - name: No-secrets scan
         run: python3 scripts/check_no_secrets.py
 

@@ -83,8 +83,10 @@
           });
           var cap = document.getElementById("leaderboard-caption");
           if (cap && data.score_formula) {
-            cap.textContent = "Loaded from leaderboard JSON (" + entries.length + " rows). " +
-              data.score_formula + ". Probe-first and fallback/proxy rows are not headline evidence.";
+            var diagN = ((data && data.diagnostic_entries) || []).length;
+            cap.textContent = "Loaded from leaderboard JSON (" + entries.length + " ranked rows" +
+              (diagN ? ", " + diagN + " diagnostic/proxy rows excluded from ranking" : "") + "). " +
+              data.score_formula + ". Mock/probe rows are in diagnostic_entries only.";
           }
         })
         .catch(function () { tryFetch(i + 1); });

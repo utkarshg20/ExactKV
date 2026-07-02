@@ -36,6 +36,8 @@ class ModelRuntime:
     - Greedy decoding only (callers are responsible for argmax; this class
       does not sample).
     - dtype defaults to float32 for determinism in tests.
+    - ``trust_remote_code`` defaults to ``False``; pass ``True`` only when the
+      target model requires custom HF code.
     """
 
     def __init__(

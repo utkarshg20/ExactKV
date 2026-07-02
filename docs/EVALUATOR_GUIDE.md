@@ -79,9 +79,12 @@ External **8,132-cell** supplement: `reports/external_panels/` (see
 
 | field | value |
 |-------|-------|
-| Package version | `exactkv.__version__` / `pyproject.toml` |
-| Latest git tag | `v0.11.0` |
-| Research release narrative | [`RELEASE.md`](../RELEASE.md) |
+| **Canonical package version** | **`0.11.0`** (`exactkv.__version__`, `pyproject.toml`) |
+| **Git tag for this artifact** | **`v0.11.0`** |
+| **Research bundle label** | **v3.0** (see [`RELEASE.md`](../RELEASE.md)) |
+| **Future preview tag** | `v0.13.0-rc1` is **not** the cited public artifact |
+
+Use **`v0.11.0`** when installing, citing, or reviewing code. Use **v3.0** only when referring to the full research evidence bundle described in `RELEASE.md`.
 
 Historical phase docs live under `docs/` and `docs/archive/` (when present). Start here, not there.
 

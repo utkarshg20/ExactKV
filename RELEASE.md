@@ -1,4 +1,10 @@
-# ExactKV Release (v3.0)
+# ExactKV v0.11.0 (research release v3.0)
+
+**Canonical public package version:** `0.11.0` (`exactkv.__version__`, `pyproject.toml`, git tag `v0.11.0`).
+
+**Research narrative label:** v3.0 (headline 8,132-cell external grid + 1,500-cell core panel in this artifact set).
+
+**Not the same as:** git tag `v0.13.0-rc1` (future research preview only, not the cited public artifact).
 
 **ExactKV is a compressor-agnostic crash-test and leaderboard framework for LLM
 KV-cache compression exactness.** It measures token-level drift, first divergence,
