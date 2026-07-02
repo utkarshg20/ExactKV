@@ -1,6 +1,10 @@
 # When Does Compressed KV Start Lying? Token-Level Drift in KV Cache Compression
 
-**ExactKV Technical Report (v3.0, complete: 8,132 GPU cells, five benchmark families, h2o_sim + int6_sim + int4_per_vec_sim GPU-validated)**
+**ExactKV Technical Report — research release (git tag `v-release`)**
+
+*Complete: 8,132 GPU cells, five benchmark families, h2o_sim + int6_sim + int4_per_vec_sim GPU-validated.*
+
+*Public cite: **ExactKV research release** · git tag **`v-release`**. Panel-batch labels like `v30/` in this report are internal artifact names, not separate public versions.*
 
 *All quantitative values are read from on-disk release artifacts (Appendix A, Appendix E). Metric definitions follow `docs/METRIC_DEFINITIONS.md`. Claim boundaries follow [`docs/CLAIM_BOUNDARIES.md`](../docs/CLAIM_BOUNDARIES.md). No results are invented.*
 
@@ -288,7 +292,7 @@ Source: headline release panel (Appendix A).
 | **Cell grid** | 2 models × 5 compressors × 50 prompt variants × 3 `max_new_tokens` values |
 | **Models** | `meta-llama/Llama-3.1-8B` (750 cells), `mistralai/Mistral-7B-Instruct-v0.3` (750 cells) |
 | **Execution** | Sequential per model (volume constraint), real GPU, `deterministic_mode=false` |
-| **Stack** | torch `2.8.0+cu128`, transformers `5.12.1`, ExactKV **`0.11.0`** (tag `v0.11.0`, commit `6a67201`, package `exactkv.__version__`) |
+| **Stack** | torch `2.8.0+cu128`, transformers `5.12.1`, ExactKV **research release** (git tag `v-release`, see GitHub Releases) |
 | **`draft_len`** | **4** (fixed) |
 | **`max_new_tokens`** | **4, 8, 16** (three buckets per prompt) |
 | **Decoding** | Greedy, no temperature / top-p |
@@ -352,7 +356,7 @@ Reproduce: `bash scripts/run_external_gpu_workflow.sh`,
 ## 6. Results, validated compressors
 
 §6 is organized by **claim type** (drift panels, downstream validity, scaling,
-compressor curve), not by internal release version. Version labels (v2.6-v3.0)
+compressor curve), not by internal release version. Panel-batch labels (v2.6–v30)
 appear only in Appendix D.
 
 **Provenance convention:** Main-text tables cite panel names only. File paths,

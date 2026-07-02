@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ExactKV: When does compressed KV start lying?</title>
 <meta name="description" content="A crash-test for LLM KV-cache compression: token-level drift, three failure modes, and 8,132 GPU cells on Llama + Mistral." />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="ExactKV: When does compressed KV start lying?" />
+<meta property="og:description" content="Compressor-agnostic KV crash-test: 8,132 GPU cells on Llama + Mistral. int4 drift is 6% on code, ~90% on reading. Drift diagnostics, not official benchmark scores." />
+<meta property="og:url" content="https://utkarshg20.github.io/ExactKV/" />
+<meta property="og:image" content="https://utkarshg20.github.io/ExactKV/assets/public_exactkv_one_page_summary.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="ExactKV: When does compressed KV start lying?" />
+<meta name="twitter:description" content="When does compressed KV first diverge from full-precision greedy decoding? 8,132-cell crash-test on Llama-3.1-8B and Mistral-7B." />
+<meta name="twitter:image" content="https://utkarshg20.github.io/ExactKV/assets/public_exactkv_one_page_summary.png" />
+<link rel="canonical" href="https://utkarshg20.github.io/ExactKV/" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400.500.600.700&family=Geist+Mono:wght@400.500&display=swap" rel="stylesheet">
@@ -16,10 +26,13 @@
   <div class="nav-inner">
     <a class="brand" href="#top">ExactKV</a>
     <nav class="nav-links">
+      <a href="#summary">Summary</a>
       <a href="#case-studies">Cases</a>
       <a href="#leaderboard">Leaderboard</a>
+      <a href="https://github.com/utkarshg20/ExactKV/releases/tag/v-release">Release</a>
       <a href="https://github.com/utkarshg20/ExactKV">GitHub</a>
       <a href="https://github.com/utkarshg20/ExactKV/blob/main/paper/ExactKV_Technical_Report.md">Report</a>
+      <a href="https://github.com/utkarshg20/ExactKV/blob/main/paper/ExactKV_Technical_Report.pdf">PDF</a>
       <a href="#reproduce">Reproduce</a>
     </nav>
   </div>
@@ -29,13 +42,51 @@
   <header class="article-header">
     <h1>When does compressed KV start lying?</h1>
     <p class="article-sub">A crash-test for LLM KV-cache compression, measuring the first token where compressed memory diverges from full precision, why it happens, and whether downstream tasks survive.</p>
-    <p class="article-meta">ExactKV · June 2026 · <a href="https://github.com/utkarshg20/ExactKV">github</a></p>
+    <p class="article-meta">ExactKV research release · git tag <code>v-release</code> · June 2026 · research eval · not production serving</p>
+    <div class="hero-cta-row">
+      <a class="btn btn-primary" href="https://github.com/utkarshg20/ExactKV/blob/main/paper/ExactKV_Technical_Report.pdf">Read PDF</a>
+      <a class="btn btn-secondary" href="https://github.com/utkarshg20/ExactKV/releases/tag/v-release">Research release</a>
+      <a class="btn btn-ghost" href="#case-studies">See drift cases</a>
+    </div>
   </header>
 
-  <div class="tldr">
-    <div class="tldr-label">Summary</div>
-    <strong>ExactKV</strong> is a compressor-agnostic evaluation framework. It asks: <em>when</em> does a compressed KV cache first produce a different token than full-precision greedy decoding? We ran <strong>8,132 GPU cells</strong> on Llama-3.1-8B and Mistral-7B. Same 4× compressor (<code>int4_sim</code>): <strong>~6% token drift on code, ~90% on reading</strong>: task type dominates, not model family. Logit autopsy over 1,103 divergent cells reveals three mechanistic failure modes. The verifier preserves full-KV outputs (<code>exactkv_failures=0</code>) and keeps valid tool calls intact (106/106). ExactKV measures compressors. It is not a compression method. Research eval only, not production serving, does not reproduce VeriCache.
-  </div>
+  <section class="exec-summary" id="summary">
+    <h2 class="exec-summary-title">Executive summary</h2>
+    <p class="exec-summary-lead">
+      ExactKV is a compressor-agnostic <strong>crash-test</strong> for KV-cache compression under greedy decoding.
+      It records the <em>first token</em> where compressed KV diverges from full precision — not official LongBench/BFCL scores.
+    </p>
+    <div class="stat-grid">
+      <article class="stat-card">
+        <div class="stat-value">8,132</div>
+        <div class="stat-label">GPU cells completed</div>
+        <div class="stat-note">Llama-3.1-8B + Mistral-7B · exactkv_failures=0</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-value">6% vs 90%</div>
+        <div class="stat-label">int4_sim drift split</div>
+        <div class="stat-note">MBPP code vs HF LongBench reading</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-value">106/106</div>
+        <div class="stat-label">Tool calls preserved</div>
+        <div class="stat-note">BFCL validity panel when full-KV valid</div>
+      </article>
+      <article class="stat-card">
+        <div class="stat-value">3 modes</div>
+        <div class="stat-label">Failure signatures</div>
+        <div class="stat-note">int8 near-tie · int4 shift · H2O eviction</div>
+      </article>
+    </div>
+    <ul class="exec-bullets">
+      <li>Measures compressors — does <strong>not</strong> ship a new compression kernel.</li>
+      <li>External panels measure <strong>drift</strong>, not leaderboard submissions.</li>
+      <li>Does <strong>not</strong> reproduce VeriCache or claim production serving speedups.</li>
+    </ul>
+    <p class="exec-live-url viz-caption">
+      Live site: <a href="https://utkarshg20.github.io/ExactKV/">utkarshg20.github.io/ExactKV</a>
+    </p>
+  </section>
 
   <div class="article-body">
 
@@ -233,44 +284,26 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       <strong>int8</strong> flips late on contested logits. The model was already uncertain. <strong>int4_sim</strong> shifts probability mass to rank-3-4 alternatives even when full-KV was moderately confident. <strong>H2O-style eviction</strong> deletes context tokens. Lossy rank jumps to ~7 and divergence is immediate (median index 1). Same verifier catches all three. <strong>exactkv failures: 0</strong>.
     </p>
 
-    <h2>9. Forensic case studies</h2>
+    <h2>9. Key figures</h2>
     <p>
-      Token-level drift is easier to reason about with concrete outputs. All cases below: verifier restores full-KV text. <code>exactkv_failure=false</code>.
+      Headline panels rendered from committed artifacts (<code>reports/scale_7b/</code>, <code>reports/external_panels/</code>).
+      Token-level before/after snippets — including KIVI catastrophic corruption — are in <a href="#case-studies">§14</a>.
     </p>
 
-    <div class="case-study">
-      <div class="cs-label">Case A, early flip, high acceptance (capital QA)</div>
-      <div class="cs-row"><strong>Compressor:</strong> <code>int4_sim</code> · Llama-3.1-8B · 1st div. Index 3 · acceptance 0.75</div>
-      <div class="cs-row"><strong>Full-KV:</strong></div>
-      <div class="cs-snippet full">a city of many</div>
-      <div class="cs-row"><strong>Lossy:</strong></div>
-      <div class="cs-snippet lossy">a city of art</div>
-      <div class="cs-row"><strong>ExactKV:</strong> matches full-KV</div>
-    </div>
+    <figure class="figure-block">
+      <img src="assets/public_exactkv_one_page_summary.png" alt="ExactKV one-page summary: drift metrics, task split, and exactness gate" loading="lazy" width="720" height="405" />
+      <figcaption class="viz-caption">One-page summary card — headline int4 task split and exactness gate.</figcaption>
+    </figure>
 
-    <div class="case-study">
-      <div class="cs-label">Case C, structured JSON field flip (tool-calling)</div>
-      <div class="cs-row"><strong>Prompt:</strong> <code>Complete JSON: {"name": "get_weather", "city":</code></div>
-      <div class="cs-row"><strong>Full-KV:</strong></div>
-      <div class="cs-snippet full">"New York", "country": "</div>
-      <div class="cs-row"><strong>Lossy:</strong></div>
-      <div class="cs-snippet lossy">"New York", "temperature":</div>
-      <div class="cs-row"><strong>ExactKV:</strong> matches full-KV · 1st div. Index 5</div>
-      <p class="cs-note">This is the failure mode tool-calling systems care about: schema field corruption on the lossy path.</p>
-    </div>
+    <figure class="figure-block">
+      <img src="assets/exp035_first_divergence_histogram.png" alt="Histogram of first divergence index on the core scale panel" loading="lazy" width="720" height="405" />
+      <figcaption class="viz-caption">First-divergence histogram (core 1,500-cell panel) — heavy mass at token 1 despite mean ≈ 2.</figcaption>
+    </figure>
 
-    <div class="case-study">
-      <div class="cs-label">Case O, catastrophic KV corruption (KIVI offline adapter)</div>
-      <div class="cs-row"><strong>Task:</strong> LongBench narrativeqa · <code>kivi_offline</code> · acceptance 0.000 · 1st div. Index 0</div>
-      <div class="cs-row"><strong>Full-KV:</strong></div>
-      <div class="cs-snippet full"> face, with
-its high forehead and its straight nose, they were positively grotesque.
-I had never see</div>
-      <div class="cs-row"><strong>Lossy:</strong></div>
-      <div class="cs-snippet lossy">!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!</div>
-      <div class="cs-row"><strong>ExactKV:</strong> matches full-KV</div>
-      <p class="cs-note">Integration diagnostic only, not production KIVI CUDA. Distinguishes subtle drift from total cache corruption.</p>
-    </div>
+    <figure class="figure-block">
+      <img src="assets/exp035_category_heatmap.png" alt="Heatmap of divergence rate by task category and compressor" loading="lazy" width="720" height="405" />
+      <figcaption class="viz-caption">Divergence by task category × compressor — reading tasks dominate int4 drift.</figcaption>
+    </figure>
 
     <h2>10. Downstream validity, drift ≠ task failure</h2>
     <p>
@@ -296,7 +329,7 @@ I had never see</div>
 
     <h2>11. The compressor curve: bit-width and granularity</h2>
     <p>
-      The 6%/90% hook is one point. GPU-validated built-ins (v3.0, both models, task-family means):
+      The 6%/90% hook is one point. GPU-validated built-ins (v30 panel batch, both models, task-family means):
     </p>
 
     <div class="article-table-wrap">
@@ -309,7 +342,7 @@ I had never see</div>
           <tr><td><code>int6_sim</code></td><td class="num">0%</td><td class="num">0%</td><td class="num">~42%</td><td>6-bit sim, between int8 and int4</td></tr>
           <tr><td><code>int4_per_vec_sim</code></td><td class="num">0%</td><td class="num">0%</td><td class="num">~56%</td><td>Per-vector int4 (KIVI/KVQuant-style granularity)</td></tr>
           <tr><td><code>int4_sim</code></td><td class="num">~6%</td><td class="num">~52%</td><td class="num">~85%</td><td>Per-tensor int4, headline drift case</td></tr>
-          <tr><td>H2O-style 75% kept</td><td class="num">, </td><td class="num">, </td><td class="num">100%</td><td>Eviction class, not quantization</td></tr>
+          <tr><td>H2O-style 75% kept</td><td class="num">—</td><td class="num">—</td><td class="num">100%</td><td>Eviction class (LongBench only in v2.8 panel), not quantization</td></tr>
         </tbody>
       </table>
     </div>
@@ -389,7 +422,7 @@ I had never see</div>
 
     <h2 id="case-studies">14. Divergence case studies</h2>
     <p>
-      Token-level snapshots from external panels: full-KV greedy output, lossy compressed draft, and ExactKV verifier output on the same cell. These are drift smoke tests, not official benchmark scores.
+      Token-level snapshots from headline GPU panels (core scale, HF LongBench, BFCL validity/export, faithful KIVI wave-1): full-KV greedy output, lossy compressed draft, and ExactKV verifier output on the same cell. Includes subtle int4 prose flips and catastrophic adapter corruption (<code>kivi_offline_r32</code> → <code>!!!!</code>). These measure <em>drift</em>, not official LongBench/BFCL leaderboard scores.
     </p>
     <div id="case-studies-root" class="case-studies-grid">
       <p class="viz-caption">Loading case studies…</p>
@@ -411,14 +444,14 @@ I had never see</div>
           <tr><td>BFCL validity (long-gen)</td><td class="num">1,200</td><td>Both</td><td>Tool-call validity preservation</td></tr>
           <tr><td>BFCL export-50</td><td class="num">1,200</td><td>Both</td><td>Short-gen tool drift</td></tr>
           <tr><td>H2O-style eviction</td><td class="num">800</td><td>Both</td><td>Eviction class</td></tr>
-          <tr><td>v3.0 int6 + int4_per_vec</td><td class="num">1,568</td><td>Both</td><td>Compressor curve extension</td></tr>
+          <tr><td>v30 int6 + int4_per_vec panel</td><td class="num">1,568</td><td>Both</td><td>Compressor curve extension</td></tr>
           <tr><td>MBPP + pilots + evidence-plus</td><td class="num">~1,144</td><td>Mixed</td><td>Code/smoke supplements</td></tr>
           <tr><td>Faithful adapter panel (wave-1)</td><td class="num">864</td><td>Both</td><td>Upstream adapter smoke (separate tree)</td></tr>
           <tr><td>Faithful wave-2 smoke</td><td class="num">128</td><td>Mistral</td><td>KnormPress + TurboQuant vs int8/SnapKV</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="viz-caption">Reconciliation: 6,564 pre-v3.0 + 784 + 784 v3.0 = 8,132 headline. Faithful wave-1 (864) and wave-2 (128) tracked separately in §6.17. Full card in the technical report Appendix A.</p>
+    <p class="viz-caption">Reconciliation: 6,564 pre-v30 + 784 + 784 v30 = 8,132 headline. Faithful wave-1 (864) and wave-2 (128) tracked separately in §6.17. Full card in the technical report Appendix A. Public cite: ExactKV research release · git tag <code>v-release</code>.</p>
 
     <h2 id="leaderboard">16. Core compressor leaderboard</h2>
     <p>
@@ -431,12 +464,7 @@ I had never see</div>
           <tr><th>#</th><th>Compressor</th><th>Model</th><th>Score</th><th>Acceptance</th><th>Divergence</th></tr>
         </thead>
         <tbody>
-          <tr><td>1</td><td><code>noop</code></td><td>Llama-3.1-8B</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">0.000</td></tr>
-          <tr><td>2</td><td><code>int8</code></td><td>Llama-3.1-8B</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">0.000</td></tr>
-          <tr><td>3</td><td><code>noop</code></td><td>Mistral-7B</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">0.000</td></tr>
-          <tr><td>4</td><td><code>int8</code></td><td>Mistral-7B</td><td class="num">0.983</td><td class="num">1.000</td><td class="num">0.173</td></tr>
-          <tr><td>5</td><td><code>int4_sim</code></td><td>Llama-3.1-8B</td><td class="num">0.859</td><td class="num">0.852</td><td class="num">0.520</td></tr>
-          <tr><td>6</td><td><code>int4_sim</code></td><td>Mistral-7B</td><td class="num">0.851</td><td class="num">0.837</td><td class="num">0.507</td></tr>
+          <tr class="leaderboard-loading"><td colspan="6">Loading leaderboard from JSON…</td></tr>
         </tbody>
       </table>
     </div>
@@ -470,10 +498,16 @@ I had never see</div>
     <h2 id="reproduce">18. Reproduce it</h2>
     <p>Every published number traces to an on-disk artifact. One-command regeneration where possible.</p>
 
-    <div class="article-pre"><code># No GPU: verify artifacts + claim safety
+    <div class="article-pre"><code># Install pinned public artifact
+pip install git+https://github.com/utkarshg20/ExactKV.git@v-release
+
+# No GPU: verify artifacts + claim safety
 python3 scripts/exactkv_repro.py --reports-only
 python3 scripts/check_site_claims.py
 python3 scripts/validate_final_release_package.py
+
+# Refresh site JSON from headline artifacts
+bash scripts/sync_site_data.sh
 
 # Analysis packs
 python3 scripts/build_longbench_overlap_pack.py --write
@@ -488,12 +522,15 @@ bash scripts/run_external_panel.py --help
 bash scripts/setup_faithful_compressor_env.sh</code></div>
 
     <p>
-      Full technical report: <a href="https://github.com/utkarshg20/ExactKV/blob/main/paper/ExactKV_Technical_Report.md">paper/ExactKV_Technical_Report.md</a>.
+      Full technical report: <a href="https://github.com/utkarshg20/ExactKV/blob/main/paper/ExactKV_Technical_Report.md">paper/ExactKV_Technical_Report.md</a> ·
+      <a href="https://github.com/utkarshg20/ExactKV/blob/main/paper/ExactKV_Technical_Report.pdf">PDF</a> ·
+      <a href="https://github.com/utkarshg20/ExactKV/releases/tag/v-release">research release (v-release)</a>.
       Source of truth: <code>reports/scale_7b/raw.json</code> (1,500-cell core leaderboard) + <code>reports/external_panels/</code> (8,132-cell external grid).
+      Case-study gallery: <code>site/data/case_studies.json</code> (from <code>scripts/curate_site_case_studies.py</code>).
     </p>
 
     <footer class="article-foot">
-      ExactKV is a research-grade evaluation framework, not a production serving system, and does not reproduce VeriCache. Phase F kernel results are a kernel microbenchmark only (not end-to-end speedup). Compression ratios are stored tensor byte ratios, not active GPU memory savings. Core leaderboard compressors: <code>noop</code>, <code>int8</code>, <code>int4_sim</code>. Other registry slots may be fallback/proxy or probe-first, not headline evidence.
+      ExactKV research release (git tag <code>v-release</code>). Research-grade evaluation framework, not a production serving system, and does not reproduce VeriCache. Phase F kernel results are a kernel microbenchmark only (not end-to-end speedup). Compression ratios are stored tensor byte ratios, not active GPU memory savings. Core leaderboard compressors: <code>noop</code>, <code>int8</code>, <code>int4_sim</code>. Other registry slots may be fallback/proxy or probe-first, not headline evidence.
     </footer>
   </div>
 </article>

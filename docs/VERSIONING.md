@@ -50,7 +50,7 @@ ExactKV research release
 Git tag: v-release
 ```
 
-**Note:** `v3.0` in the technical report and `reports/external_panels/v30/` refers to a **specific GPU panel batch** inside this release, not a separate public version number.
+**Note:** `v30/` in the technical report and site inventory refers to a **specific GPU panel batch** inside this release, not a separate public version number.
 
 ## For reviewers
 

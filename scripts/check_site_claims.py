@@ -29,6 +29,14 @@ REQUIRED_FILES = [
     "content_manifest.json",
     "claim_safe_copy.json",
     "README.md",
+    "data/leaderboard.json",
+    "data/case_studies.json",
+]
+
+REQUIRED_ASSETS = [
+    "assets/public_exactkv_one_page_summary.png",
+    "assets/exp035_first_divergence_histogram.png",
+    "assets/exp035_category_heatmap.png",
 ]
 
 # (substring that must appear somewhere in index.html, human label)
@@ -43,6 +51,10 @@ REQUIRED_CONTENT = [
     ("probe-first", "Shard probe-first caveat"),
     ("does not", "VeriCache / production negation caveat"),
     ("1,500", "1500-cell headline"),
+    ("executive summary", "executive summary section"),
+    ("read pdf", "hero PDF CTA"),
+    ("v-release", "public git tag v-release"),
+    ("research release", "public release name"),
 ]
 
 # Lines containing any of these are treated as caveat/negation context (allowed).
@@ -92,6 +104,10 @@ def main() -> int:
         if not (SITE / f).is_file():
             errors.append(f"missing required file: site/{f}")
 
+    for f in REQUIRED_ASSETS:
+        if not (SITE / f).is_file():
+            errors.append(f"missing required asset: site/{f} (run scripts/sync_site_data.sh)")
+
     html_path = SITE / "index.html"
     html = html_path.read_text(encoding="utf-8") if html_path.is_file() else ""
     html_l = html.lower()
@@ -121,11 +137,42 @@ def main() -> int:
             if pat.search(line):
                 errors.append(f"index.html:L{lineno} forbidden claim [{label}]: {line.strip()[:90]}")
 
+    # Case-study gallery must come from headline panels, not synthetic pilots.
+    case_path = SITE / "data" / "case_studies.json"
+    if case_path.is_file():
+        import json
+
+        case_data = json.loads(case_path.read_text(encoding="utf-8"))
+        cases = case_data.get("case_studies") or []
+        allowed_panels = {
+            "core_scale",
+            "hf_longbench_v26",
+            "bfcl_validity_v27",
+            "bfcl_export_50",
+            "faithful_wave1_longbench",
+        }
+        for c in cases:
+            panel = c.get("panel") or ""
+            if panel not in allowed_panels:
+                errors.append(f"case_studies.json: unexpected panel source {panel!r}")
+            blob = " ".join(
+                str(c.get(k) or "")
+                for k in ("full_snippet", "lossy_snippet", "exactkv_snippet")
+            )
+            if "deterministic filler" in blob:
+                errors.append(
+                    f"case_studies.json: pilot padding in {c.get('prompt_id')!r}"
+                )
+
+    if ", </td>" in html or "<td class=\"num\">, </td>" in html:
+        errors.append("index.html: broken empty table cell (`, </td>`)")
+
     if errors:
         print("ExactKV site claims check: FAILED")
         for e in errors:
             print(f"  - {e}")
         return 1
+
     print("ExactKV site claims check: PASSED")
     print(f"  checked {len(REQUIRED_FILES)} files; hero + leaderboard + caveats present; no forbidden claims; no secrets")
     return 0

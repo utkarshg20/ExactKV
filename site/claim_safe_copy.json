@@ -69,8 +69,16 @@
   ],
   "urls": {
     "github": "https://github.com/utkarshg20/ExactKV",
+    "github_release": "https://github.com/utkarshg20/ExactKV/releases/tag/v-release",
     "technical_report": "https://github.com/utkarshg20/ExactKV/blob/main/paper/ExactKV_Technical_Report.md",
-    "landing_page": "https://github.com/utkarshg20/ExactKV/blob/main/site/index.html",
+    "technical_report_pdf": "https://github.com/utkarshg20/ExactKV/blob/main/paper/ExactKV_Technical_Report.pdf",
+    "landing_page": "https://utkarshg20.github.io/ExactKV/",
+    "landing_page_source": "https://github.com/utkarshg20/ExactKV/blob/main/site/index.html",
     "leaderboard_json": "https://github.com/utkarshg20/ExactKV/blob/main/reports/public_release/leaderboard_final.json"
+  },
+  "release": {
+    "public_name": "research release",
+    "git_tag": "v-release",
+    "cite": "ExactKV research release · git tag v-release"
   }
 }

@@ -66,8 +66,15 @@ ExactKV measures **whether compression is compatible with exact decoding**, not 
 ## Install
 
 ```bash
+pip install git+https://github.com/utkarshg20/ExactKV.git@v-release
+```
+
+Or clone for development:
+
+```bash
 git clone https://github.com/utkarshg20/ExactKV.git
 cd ExactKV
+git checkout v-release
 pip install -e ".[dev]"
 ```
 
