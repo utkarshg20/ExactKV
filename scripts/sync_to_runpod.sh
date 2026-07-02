@@ -25,6 +25,8 @@ rsync -avz --no-owner --no-group \
   --exclude '.pytest_cache' \
   --exclude 'reports/scale_7b' \
   --exclude '.DS_Store' \
+  --exclude 'launch/' \
+  --exclude 'release_synthesis/' \
   "$ROOT/" "$USER@$HOST:$REMOTE/"
 
 echo "==> Remote bootstrap"

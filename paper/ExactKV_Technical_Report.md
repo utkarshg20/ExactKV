@@ -101,22 +101,27 @@ verifier agreement, and exactness failures per cell.
 
 1. A **compressor-agnostic crash-test framework** with leaderboard-style reporting
    that measures token-level drift, first-divergence index, acceptance rate, and
-   exactness failures across compressors and models (§3–5).
-2. **8,132 GPU cells** across Llama-3.1-8B and Mistral-7B, five benchmark families,
-   six built-in compressor classes (`noop`, `int8`, `int6_sim`, `int4_per_vec_sim`,
-   `int4_sim`, H2O-style eviction), with `exactkv_failures = 0` throughout (§6).
-3. Empirical evidence that **task type dominates drift** (6% code → 90% reading for
-   int4_sim) and **generation length scales it within a task** (9% → 62% on BFCL,
-   7×), two axes that aggregate benchmarks do not resolve (§6.4–6.12).
-4. A **logit autopsy** over 1,103 divergent cells identifying three mechanistically
-   distinct failure modes: near-tie noise (int8), distribution shift (int4_sim),
-  and attention destruction (H2O-style eviction), each with forensic case studies
-  (§6.10, §7).
-5. **Downstream validity measurement**: despite 50% token drift, all 106/106 full-KV
-   valid BFCL tool calls are preserved under verifier-mediated execution (§6.11).
-6. **GPU validation of two new compressors** (int6_sim, int4_per_vec_sim) confirming
-   non-catastrophic drift on structured tasks. Per-vector granularity helps on BFCL/MBPP
-   while bit-width still matters at 8K LongBench context (§6.13–6.16, Table 6.16).
+   and mechanistic failure signatures across compressors and models (§3–5).
+2. **Empirical evidence that drift is task-dependent, length-dependent, and
+   compressor-class-dependent:** `int4_sim` spans 6% (MBPP) → 90% (HF LongBench);
+   BFCL long-gen scales 9% → 62% as output budget grows 7×; H2O-style eviction
+   reaches 100% on reading at 75% kept (§6.4–6.12, Table 6.16).
+3. A **logit autopsy** over 1,103 divergent cells identifying three mechanistically
+   distinct failure modes — near-tie noise (int8), distribution shift (int4_sim),
+   attention destruction (H2O-style) — each with forensic case studies (§6.10, §7).
+4. A **compressor design curve** from `int8` through `int6_sim` and `int4_per_vec_sim`
+   to catastrophic `int4_sim`, showing per-vector granularity helps on structured
+   tasks while bit-width still matters at 8K LongBench (§6.13–6.16).
+5. **Downstream validity measurement** on BFCL tool-call JSON (318/318 and 264/264
+   full-KV valid calls preserved under verifier-mediated execution when full-KV
+   itself is valid — §6.11). Not official benchmark pass rates.
+6. **8,132 GPU cells** on Llama-3.1-8B and Mistral-7B across five benchmark families
+   (§6, Appendix A). **`exactkv_failures = 0` throughout** confirms verify/commit
+   semantics are implemented correctly — an engineering invariant, not the scientific
+   headline.
+7. **Faithful upstream adapter diagnostics** (992 cells, appendix §6.17): wave-1
+   confirms harness integration; wave-2 TurboQuant smoke (128 cells, Mistral,
+   structured tasks only) is promising but **not** a non-catastrophic external baseline.
 
 ### 2.1 Shared problem framing with VeriCache
 
@@ -1593,10 +1598,17 @@ from the v2.8 LongBench panel (both models, `h2o_sim_75`).
 | Integration diagnostic | `kivi_offline_r32` | KIVI quant + r=32 on post-RoPE offline path |
 
 Wave-1 **complete on both models**: **864 GPU cells** (432 per model: LongBench 216,
-BFCL 120, MBPP 96). Artifacts: Appendix E. Reproduction commands: §17 and
-`docs/FAITHFUL_COMPRESSOR_INTEGRATION.md`.
+BFCL 120, MBPP 96). Artifacts and reproduction commands: Appendix E and
+`docs/FAITHFUL_COMPRESSOR_INTEGRATION.md` (not repeated here).
 
-**Table 6.17a, Mistral-7B (432 cells)**
+**Table 6.17 — Faithful adapter panel summary (992 cells total, appendix evidence)**
+
+| Wave | Model(s) | Families | Cells | Compressors tested | Best result | Status |
+|------|----------|----------|------:|-------------------|-------------|--------|
+| 1 | Llama + Mistral | LongBench, BFCL, MBPP | 864 | int8, SnapKV, KIVI r32 | `int8` (~8–9% combined) | Complete |
+| 2 | Mistral only | MBPP, BFCL smoke | 128 | int8, KnormPress, TurboQuant, SnapKV | `turboquant_experimental` (3.1% combined) | Smoke only |
+
+**Table 6.17a, Wave-1 Mistral-7B (432 cells)**
 
 | Task family | Cells | `int8` div. | SnapKV div. | KIVI r32 div. |
 |-------------|------:|------------:|------------:|--------------:|
@@ -1605,7 +1617,7 @@ BFCL 120, MBPP 96). Artifacts: Appendix E. Reproduction commands: §17 and
 | MBPP | 96 | 0.0% | **87.5%** | **100.0%** |
 | **Combined** | **432** | **7.6%** | **97.2%** | **100.0%** |
 
-**Table 6.17b, Llama-3.1-8B (432 cells)**
+**Table 6.17b, Wave-1 Llama-3.1-8B (432 cells)**
 
 | Task family | Cells | `int8` div. | SnapKV div. | KIVI r32 div. |
 |-------------|------:|------------:|------------:|--------------:|
@@ -1667,8 +1679,9 @@ Pulled from RunPod 2026-07-01. **`exactkv_failures=0`** throughout.
 the first faithful external adapter in this study with near-int8 drift** (3.1% combined;
 0% on BFCL, 6.2% on MBPP). KnormPress and SnapKV remain catastrophic (78–94% combined).
 This is **Mistral-only, smoke-scale, experimental-adapter evidence** — not a headline
-compressor win and not LongBench coverage. It motivates a larger faithful TurboQuant
-panel (both models, reading tasks) before any deployment claim.
+compressor win and not LongBench coverage. **Strict conference framing:** this does
+not establish a faithful non-catastrophic baseline; it motivates a full TurboQuant
+panel (both models, LongBench, same depth as Table 6.16) before any deployment claim.
 
 ---
 
@@ -2083,12 +2096,7 @@ all 160 `kivi_offline` cells (`exactkv_failures=0`). Real HF `int4_sim` drift
 (LongBench: 91.2%) substantially exceeds bundled pilot results (20.8%), confirming
 that pilot prompts underestimate production drift.
 
-Reproduce (§17, Appendix E):
-
-```bash
-bash scripts/run_faithful_compressor_panel.sh      # wave-1: kivi_offline_r32 + SnapKV
-bash scripts/run_faithful_external_wave2_smoke.sh  # wave-2: KnormPress + TurboQuant
-```
+Reproduce (Appendix E, `docs/FAITHFUL_COMPRESSOR_INTEGRATION.md`):
 
 Claim boundary: `kivi_offline` / `kivi_offline_r32` use real KIVI quantizer math
 (simulate path, `supports_real_bytes_claim=False`). Not KIVI production CUDA/Triton serving.
