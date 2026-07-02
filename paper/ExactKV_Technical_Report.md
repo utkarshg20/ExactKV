@@ -288,7 +288,7 @@ Source: headline release panel (Appendix A).
 | **Cell grid** | 2 models × 5 compressors × 50 prompt variants × 3 `max_new_tokens` values |
 | **Models** | `meta-llama/Llama-3.1-8B` (750 cells), `mistralai/Mistral-7B-Instruct-v0.3` (750 cells) |
 | **Execution** | Sequential per model (volume constraint), real GPU, `deterministic_mode=false` |
-| **Stack** | torch `2.8.0+cu128`, transformers `5.12.1`, ExactKV **`0.11.0`** (commit `46eb5b8`, package `exactkv.__version__`) |
+| **Stack** | torch `2.8.0+cu128`, transformers `5.12.1`, ExactKV **`0.11.0`** (tag `v0.11.0`, commit `6a67201`, package `exactkv.__version__`) |
 | **`draft_len`** | **4** (fixed) |
 | **`max_new_tokens`** | **4, 8, 16** (three buckets per prompt) |
 | **Decoding** | Greedy, no temperature / top-p |

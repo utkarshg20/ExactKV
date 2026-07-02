@@ -79,22 +79,23 @@ on LongBench (86% → 57%, a 29pp improvement), but bit-width still matters at 8
 ### Total: **8,132 completed GPU cells**, `exactkv_failures = 0` throughout
 
 
-## Score (external reviewer, v3.0 complete)
+## Public artifact checklist (v0.11.0)
 
-| Dimension | Score |
-|-----------|------:|
-| Problem framing | 9.5 |
-| Empirical evidence | 9.7 |
-| Mechanistic analysis | 9.5 |
-| Downstream validity | 9.0 |
-| Compressor coverage | 9.4 |
-| Claim safety | 9.3 |
-| Paper consistency | 9.3 |
-| Paper polish | 9.2 |
-| **Strict research-paper (current draft)** | **9.50/10** |
-| **After final wording pass** | **9.55–9.60/10** |
-| **Underlying project / evidence quality** | **9.65/10** |
-| **With faithful production KIVI/KVQuant kernel** | **9.7+/10** |
+**Completed in this release**
+
+- 8,132 GPU cells across cited external panels + 1,500-cell core headline panel
+- `exactkv_failures = 0` on all cited completed panels (harness safety gate)
+- Claim-boundary audit, CPU smoke replay, and reports-only validation path
+- GitHub Release [`v0.11.0`](https://github.com/utkarshg20/ExactKV/releases/tag/v0.11.0) (tag commit `6a67201`)
+- CI workflow green on smoke + correctness unit tests
+- Faithful adapter smoke appendix (864 wave-1 + 128 wave-2 cells, separate from headline total)
+
+**Known limitations**
+
+- Not a production serving system
+- No active GPU memory / VRAM telemetry claims
+- External panels are drift smoke tests, not official LongBench/BFCL/MBPP scores
+- `spectralquant` and `shard` rows are fallback/proxy diagnostics only (see leaderboard `diagnostic_entries`)
 
 **Phase D3 (June 2026):** Faithful external adapter smoke **complete** — **864 GPU cells**
 wave-1 (both models: LongBench + BFCL + MBPP) plus **128 cells** wave-2 Mistral smoke

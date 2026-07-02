@@ -80,7 +80,8 @@ External **8,132-cell** supplement: `reports/external_panels/` (see
 | field | value |
 |-------|-------|
 | **Canonical package version** | **`0.11.0`** (`exactkv.__version__`, `pyproject.toml`) |
-| **Git tag for this artifact** | **`v0.11.0`** |
+| **Git tag for this artifact** | **`v0.11.0`** (commit `6a67201`) |
+| **GitHub Release** | https://github.com/utkarshg20/ExactKV/releases/tag/v0.11.0 |
 | **Research bundle label** | **v3.0** (see [`RELEASE.md`](../RELEASE.md)) |
 | **Future preview tag** | `v0.13.0-rc1` is **not** the cited public artifact |
 
