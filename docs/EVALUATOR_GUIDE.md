@@ -77,13 +77,16 @@ External **8,132-cell** supplement: `reports/external_panels/` (see
 
 ## 8. Version source of truth
 
+Read **[VERSIONING.md](VERSIONING.md)** first if tag/V-series numbering looks confusing.
+
 | field | value |
 |-------|-------|
-| **Canonical package version** | **`0.11.0`** (`exactkv.__version__`, `pyproject.toml`) |
-| **Git tag for this artifact** | **`v0.11.0`** (commit `6a67201`) |
+| **Canonical package version** | **`0.11.0`** |
+| **Only public git tag** | **`v0.11.0`** (commit `6a67201`) |
 | **GitHub Release** | https://github.com/utkarshg20/ExactKV/releases/tag/v0.11.0 |
-| **Research bundle label** | **v3.0** (see [`RELEASE.md`](../RELEASE.md)) |
-| **Future preview tag** | `v0.13.0-rc1` is **not** the cited public artifact |
+| **Evidence bundle label** | **v3.0** (`RELEASE.md`) |
+| **V1–V21 in docs/** | Internal research milestones — **not** product semver |
+| **Withdrawn** | `v0.13.0-rc1` (removed; was internal V13 preview, not a public release) |
 
 Use **`v0.11.0`** when installing, citing, or reviewing code. Use **v3.0** only when referring to the full research evidence bundle described in `RELEASE.md`.
 
