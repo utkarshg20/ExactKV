@@ -22,7 +22,7 @@ PORT="${RUNPOD_PORT:-}"
 if [[ -z "$HOST" || -z "$PORT" ]]; then
   echo "==> Probing known RunPod endpoints..."
   for spec in \
-    "203.57.40.101:10003" \
+    "203.57.40.101:10149" \
     "194.68.245.16:22108" \
     "203.57.40.169:10113"; do
     h="${spec%:*}"; p="${spec#*:}"
