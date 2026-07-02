@@ -71,7 +71,7 @@ The **version arc** (V1–V21) spans pre-formal-release research milestones. It 
 
 - **Evidence status:** `verified` (high)
 - **Purpose:** Pre-formal-release milestone V4: Asymmetric K/V compression.
-- **Key contribution:** Experiment 003; git tag `v0.4.0`
+- **Key contribution:** Experiment 003; historical tag `v0.4.0` *(removed; see VERSIONING.md)*
 - **Caveats:** Historical prototype milestone; not the 1500-cell public headline.
 - **Evidence files:**
   - `docs/RELEASE_NOTES_V0.4.0.md`

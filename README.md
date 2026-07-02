@@ -5,7 +5,7 @@
 
 **Version 0.11.0** (research release v3.0) · [`docs/VERSIONING.md`](docs/VERSIONING.md) · [`docs/EVALUATOR_GUIDE.md`](docs/EVALUATOR_GUIDE.md) · [Technical report](paper/ExactKV_Technical_Report.md) · [GitHub Release](https://github.com/utkarshg20/ExactKV/releases/tag/v0.11.0)
 
-**One public release tag: `v0.11.0`.** V1–V21 in `docs/` are internal research milestones (not semver). Old tags `v0.2`–`v0.10` are historical snapshots only. The withdrawn preview tag `v0.13.0-rc1` is **not** a release. Full explanation: [`docs/VERSIONING.md`](docs/VERSIONING.md).
+**One public release tag: `v0.11.0`.** V1–V21 in `docs/` are internal research milestones (not semver). All other historical git tags were removed from GitHub. See [`docs/VERSIONING.md`](docs/VERSIONING.md).
 
 **When does compressed KV start lying?**
 

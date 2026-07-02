@@ -86,7 +86,7 @@ Read **[VERSIONING.md](VERSIONING.md)** first if tag/V-series numbering looks co
 | **GitHub Release** | https://github.com/utkarshg20/ExactKV/releases/tag/v0.11.0 |
 | **Evidence bundle label** | **v3.0** (`RELEASE.md`) |
 | **V1–V21 in docs/** | Internal research milestones — **not** product semver |
-| **Withdrawn** | `v0.13.0-rc1` (removed; was internal V13 preview, not a public release) |
+| **Withdrawn / removed tags** | `v0.2.0`–`v0.10.0`, `v0.13.0-rc1` (July 2026 cleanup; docs only) |
 
 Use **`v0.11.0`** when installing, citing, or reviewing code. Use **v3.0** only when referring to the full research evidence bundle described in `RELEASE.md`.
 

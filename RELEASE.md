@@ -4,7 +4,7 @@
 
 **Research narrative label:** v3.0 (headline 8,132-cell external grid + 1,500-cell core panel in this artifact set).
 
-**Not the same as:** git tags `v0.2.0`–`v0.10.0` (historical milestones only), V12/V13 internal docs, or the withdrawn preview tag `v0.13.0-rc1`. See [`docs/VERSIONING.md`](docs/VERSIONING.md).
+**Not the same as:** V12/V13 internal docs or removed historical git tags. See [`docs/VERSIONING.md`](docs/VERSIONING.md).
 
 **ExactKV is a compressor-agnostic crash-test and leaderboard framework for LLM
 KV-cache compression exactness.** It measures token-level drift, first divergence,
