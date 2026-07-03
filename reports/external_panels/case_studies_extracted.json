@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-07-03T00:01:52.074451+00:00",
+  "generated_at": "2026-07-03T17:32:39.291069+00:00",
   "divergent_count": 8,
   "total_case_entries": 8,
-  "note": "Curated from headline GPU panels (HF LongBench, BFCL validity/export, core scale). Drift diagnostics only \u2014 not official benchmark leaderboard scores.",
+  "note": "Curated from headline GPU panels (HF LongBench, BFCL validity/export, core scale). Drift diagnostics only. Not official benchmark leaderboard scores.",
   "case_studies": [
     {
       "dataset_family": "core_scale",

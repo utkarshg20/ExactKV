@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-07-03T00:46:44.515354+00:00",
-  "note": "Curated from headline GPU panels (HF LongBench, BFCL validity/export, core scale). Drift diagnostics only \u2014 not official benchmark leaderboard scores.",
+  "generated_at": "2026-07-03T17:32:39.291069+00:00",
+  "note": "Curated from headline GPU panels (HF LongBench, BFCL validity/export, core scale). Drift diagnostics only. Not official benchmark leaderboard scores.",
   "case_studies": [
     {
       "dataset_family": "core_scale",

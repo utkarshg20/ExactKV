@@ -25,7 +25,7 @@ cd site && python3 -m http.server 8000
 ## Deploy (GitHub Pages)
 
 1. In GitHub repo **Settings → Pages**, set **Source** to **GitHub Actions**.
-2. Push to `main` — workflow `.github/workflows/deploy-site.yml` runs `sync_site_data.sh` and publishes `site/`.
+2. Push to `main`, workflow `.github/workflows/deploy-site.yml` runs `sync_site_data.sh` and publishes `site/`.
 3. Live at https://utkarshg20.github.io/ExactKV/
 
 Manual deploy trigger: **Actions → Deploy site → Run workflow**.

@@ -250,7 +250,7 @@ def curate(*, max_cases: int = 8) -> dict[str, Any]:
         "total_case_entries": len(selected),
         "note": (
             "Curated from headline GPU panels (HF LongBench, BFCL validity/export, core scale). "
-            "Drift diagnostics only — not official benchmark leaderboard scores."
+            "Drift diagnostics only. Not official benchmark leaderboard scores."
         ),
         "case_studies": selected,
     }

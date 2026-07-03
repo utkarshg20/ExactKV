@@ -56,12 +56,12 @@
     <p class="section-label">Reviewer TL;DR</p>
     <p class="reviewer-tldr-lead">
       ExactKV shows that KV-cache compression can preserve final verified outputs while still causing early greedy-token drift.
-      Across <strong>8,132 GPU cells</strong>, int4 drift varies sharply by task — from <strong>6%</strong> on MBPP code to about <strong>90%</strong> on LongBench reading — while the verifier preserves <strong>106/106</strong> valid BFCL tool calls.
+      Across <strong>8,132 GPU cells</strong>, int4 drift varies sharply by task, from <strong>6%</strong> on MBPP code to about <strong>90%</strong> on LongBench reading, while the verifier preserves <strong>106/106</strong> valid BFCL tool calls.
     </p>
 
     <div class="why-matters-callout">
       <strong>Why this matters:</strong>
-      Existing compression papers report average output quality. ExactKV exposes <em>exact decoding instability</em> that those averages hide — the first token where compressed KV stops matching full-precision greedy decoding.
+      Existing compression papers report average output quality. ExactKV exposes <em>exact decoding instability</em> that those averages hide. The first token where compressed KV stops matching full-precision greedy decoding.
     </div>
 
     <div class="story-pillars">
@@ -71,11 +71,11 @@
       </article>
       <article class="story-pillar">
         <h3>Why it matters</h3>
-        <p>Aggregate benchmark scores can look fine while greedy decoding already branched. Drift rate ≠ task failure — but it is the hidden risk compression papers rarely report.</p>
+        <p>Aggregate benchmark scores can look fine while greedy decoding already branched. Drift rate ≠ task failure, but it is the hidden risk compression papers rarely report.</p>
       </article>
       <article class="story-pillar">
         <h3>How to reproduce</h3>
-        <p>Every number traces to committed JSON under <code>reports/</code>. One-command artifact verification; GPU panels documented in §18.</p>
+        <p>Every number traces to committed JSON under <code>reports/</code>. One-command artifact verification. GPU panels documented in §18.</p>
       </article>
     </div>
 
@@ -102,7 +102,7 @@
     <h2 class="exec-summary-title">Executive summary</h2>
     <p class="exec-summary-lead">
       ExactKV is a compressor-agnostic <strong>crash-test</strong> for KV-cache compression under greedy decoding.
-      It records the <em>first token</em> where compressed KV diverges from full precision — not official LongBench/BFCL scores.
+      It records the <em>first token</em> where compressed KV diverges from full precision, not official LongBench/BFCL scores.
     </p>
     <div class="stat-grid">
       <article class="stat-card">
@@ -127,7 +127,7 @@
       </article>
     </div>
     <ul class="exec-bullets">
-      <li>Measures compressors — does <strong>not</strong> ship a new compression kernel.</li>
+      <li>Measures compressors. It does <strong>not</strong> ship a new compression kernel.</li>
       <li>External panels measure <strong>drift</strong>, not leaderboard submissions.</li>
       <li>Does <strong>not</strong> reproduce VeriCache or claim production serving speedups.</li>
     </ul>
@@ -164,7 +164,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       Official leaderboard scores (LongBench F1, MBPP pass@1, BFCL accuracy) answer “how good is the output?” ExactKV answers “where did the compressed KV path branch?” Those are related but not the same.
     </p>
     <p>
-      <strong>For reviewers outside KV-cache compression:</strong> most papers optimize average quality or throughput. ExactKV measures whether greedy decoding still matches full precision token-by-token — instability that averages can bury. A compressor can drift on 50% of cells and still preserve every valid tool call when a verifier corrects the suffix. It can look fine on aggregate quality while failing catastrophically at token 0. Crash-testing catches both.
+      <strong>For reviewers outside KV-cache compression:</strong> most papers optimize average quality or throughput. ExactKV measures whether greedy decoding still matches full precision token-by-token. That instability that averages can bury. A compressor can drift on 50% of cells and still preserve every valid tool call when a verifier corrects the suffix. It can look fine on aggregate quality while failing catastrophically at token 0. Crash-testing catches both.
     </p>
     <div class="article-callout article-callout-warn">
       <strong>Claim boundary:</strong> ExactKV external panels measure <em>drift</em>, not official benchmark scores. We use LongBench, BFCL, and MBPP prompts as stress tests, not as leaderboard submissions.
@@ -252,7 +252,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       On BFCL tool-calling, holding prompts and context fixed, increasing the output budget exposes more opportunities for argmax flips:
     </p>
 
-    <p class="table-takeaway"><strong>Main takeaway:</strong> Short generation budgets understate tool-calling drift — int4 climbs from 9% at 16 tokens to 62% at 256.</p>
+    <p class="table-takeaway"><strong>Main takeaway:</strong> Short generation budgets understate tool-calling drift, int4 climbs from 9% at 16 tokens to 62% at 256.</p>
     <div class="article-table-wrap">
       <table class="article-table">
         <thead>
@@ -275,7 +275,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       HF LongBench v2.6 (720 cells, real HuggingFace prompts, 2K/4K/8K buckets). Int4_sim divergence by context:
     </p>
 
-    <p class="table-takeaway"><strong>Main takeaway:</strong> On LongBench reading, int4 is near-ceiling at every context bucket — task family matters more than context length.</p>
+    <p class="table-takeaway"><strong>Main takeaway:</strong> On LongBench reading, int4 is near-ceiling at every context bucket, task family matters more than context length.</p>
     <div class="article-table-wrap">
       <table class="article-table">
         <thead>
@@ -317,7 +317,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       With <code>--store-top-k-logits</code> enabled on LongBench, BFCL validity, and H2O panels, we analyzed 1,103 divergent cells at the first flip. Three mechanistic signatures:
     </p>
 
-    <p class="table-takeaway"><strong>Main takeaway:</strong> int8 flips late on near-ties; int4 shifts the distribution; H2O-style eviction destroys context immediately (median divergence at token 1).</p>
+<p class="table-takeaway"><strong>Main takeaway:</strong> int8 flips late on near-ties. int4 shifts the distribution. H2O-style eviction destroys context immediately (median divergence at token 1).</p>
     <div class="article-table-wrap">
       <table class="article-table">
         <thead>
@@ -339,7 +339,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       <h2 class="figures-heading">9. Key figures</h2>
       <p class="figures-lead">
         Headline panels rendered from committed artifacts (<code>reports/scale_7b/</code>, <code>reports/external_panels/</code>).
-        Token-level before/after snippets — including KIVI catastrophic corruption — are in <a href="#case-studies">section 14</a>.
+        Token-level before/after snippets, including KIVI catastrophic corruption, are in <a href="#case-studies">section 14</a>.
       </p>
 
       <div class="figures-stack">
@@ -392,17 +392,17 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
               <span class="evidence-chip">H2O · attention destruction</span>
             </div>
           </div>
-          <figcaption class="viz-caption">Headline int4 task split and exactness gate — same metrics as the executive summary, artifact-backed.</figcaption>
+          <figcaption class="viz-caption">Headline int4 task split and exactness gate, same metrics as the executive summary, artifact-backed.</figcaption>
         </figure>
 
         <figure class="figure-block figure-block--chart">
           <img src="assets/exp035_first_divergence_histogram.png" alt="Histogram of first divergence index on the core scale panel" loading="lazy" width="720" height="405" />
-          <figcaption class="viz-caption">First-divergence histogram (core 1,500-cell panel) — heavy mass at token 1 despite mean ≈ 2.</figcaption>
+          <figcaption class="viz-caption">First-divergence histogram (core 1,500-cell panel), heavy mass at token 1 despite mean ≈ 2.</figcaption>
         </figure>
 
         <figure class="figure-block figure-block--chart">
           <img src="assets/exp035_category_heatmap.png" alt="Heatmap of divergence rate by task category and compressor" loading="lazy" width="720" height="405" />
-          <figcaption class="viz-caption">Divergence by task category × compressor — reading tasks dominate int4 drift.</figcaption>
+          <figcaption class="viz-caption">Divergence by task category × compressor, reading tasks dominate int4 drift.</figcaption>
         </figure>
       </div>
     </section>
@@ -437,7 +437,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       The 6%/90% hook is one point. GPU-validated built-ins (v30 panel batch, both models, task-family means):
     </p>
 
-    <p class="table-takeaway"><strong>Main takeaway:</strong> Per-vector int4 helps on structured tasks; int6 beats per-vector int4 on LongBench reading — bit-width and granularity interact by task.</p>
+<p class="table-takeaway"><strong>Main takeaway:</strong> Per-vector int4 helps on structured tasks. int6 beats per-vector int4 on LongBench reading, bit-width and granularity interact by task.</p>
     <div class="article-table-wrap">
       <table class="article-table">
         <thead>
@@ -448,7 +448,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
           <tr><td><code>int6_sim</code></td><td class="num">0%</td><td class="num">0%</td><td class="num">~42%</td><td>6-bit sim, between int8 and int4</td></tr>
           <tr><td><code>int4_per_vec_sim</code></td><td class="num">0%</td><td class="num">0%</td><td class="num">~56%</td><td>Per-vector int4 (KIVI/KVQuant-style granularity)</td></tr>
           <tr><td><code>int4_sim</code></td><td class="num">~6%</td><td class="num">~52%</td><td class="num">~85%</td><td>Per-tensor int4, headline drift case</td></tr>
-          <tr><td>H2O-style 75% kept</td><td class="num">—</td><td class="num">—</td><td class="num">100%</td><td>Eviction class (LongBench only in v2.8 panel), not quantization</td></tr>
+          <tr><td>H2O-style 75% kept</td><td class="num">n/a</td><td class="num">n/a</td><td class="num">100%</td><td>Eviction class (LongBench only in v2.8 panel), not quantization</td></tr>
         </tbody>
       </table>
     </div>
@@ -510,7 +510,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       </table>
     </div>
     <p>
-      <strong>864 GPU cells</strong> (432 per model: LongBench 216, BFCL 120, MBPP 96). <code>exactkv_failures=0</code> throughout. <code>int8</code> is the only non-catastrophic real compressor in wave-1 (~8-9% combined drift). Faithful SnapKV runs end-to-end via kvpress but shows <strong>90-97% drift</strong>. KIVI offline r32 is catastrophic on every cell (adapter diagnostic only, not production KIVI).
+      <strong>864 GPU cells</strong> (432 per model: LongBench 216, BFCL 120, MBPP 96). <code>exactkv_failures=0</code> throughout. <code>int8</code> is the only non-catastrophic real compressor in wave-1 (~8-9% combined drift). Faithful SnapKV runs end-to-end via kvpress but shows <strong>90-97% drift</strong>. KIVI offline r32 is catastrophic on every cell (adapter diagnostic only. Not production KIVI).
     </p>
 
     <h3>Wave-2 smoke (Mistral only, 128 cells, complete)</h3>
@@ -541,7 +541,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
     </p>
     <div id="case-studies-root" class="case-studies-grid">
       <!-- SYNC:CASE_STUDIES -->
-      <p class="viz-caption">Curated from headline GPU panels (HF LongBench, BFCL validity/export, core scale). Drift diagnostics only — not official benchmark leaderboard scores.</p>
+      <p class="viz-caption">Curated from headline GPU panels (HF LongBench, BFCL validity/export, core scale). Drift diagnostics only. Not official benchmark leaderboard scores.</p>
       <article class="case-card">
         <h3>core_scale · capital_france</h3>
         <p class="case-meta"><code>core_scale · int4_sim · Llama-3.1-8B</code></p>
@@ -778,7 +778,7 @@ its high forehead and its straight nose, they were positively grotes</pre>
       Rankings from the <strong>1,500-cell</strong> scale panel (<code>reports/scale_7b/raw.json</code>). Score = 0.35·acceptance + 0.25·verifier_agreement + 0.20·(1−norm. First divergence) + 0.10·(1−failure rate) + 0.10·stability.
     </p>
 
-    <p class="table-takeaway"><strong>Main takeaway:</strong> On the 1,500-cell core panel, <code>noop</code> and <code>int8</code> lead; <code>int4_sim</code> shows ~50% divergence with zero ExactKV failures.</p>
+<p class="table-takeaway"><strong>Main takeaway:</strong> On the 1,500-cell core panel, <code>noop</code> and <code>int8</code> lead. <code>int4_sim</code> shows ~50% divergence with zero ExactKV failures.</p>
     <div class="article-table-wrap">
       <table class="article-table" id="leaderboard-table">
         <thead>
@@ -862,7 +862,7 @@ bash scripts/setup_faithful_compressor_env.sh</code></div>
     </p>
 
     <footer class="article-foot">
-      ExactKV research release (git tag <code>v-release</code>). Research-grade evaluation framework, not a production serving system, and does not reproduce VeriCache. Phase F kernel results are a kernel microbenchmark only (not end-to-end speedup). Compression ratios are stored tensor byte ratios, not active GPU memory savings. Core leaderboard compressors: <code>noop</code>, <code>int8</code>, <code>int4_sim</code>. Other registry slots may be fallback/proxy or probe-first, not headline evidence.
+      ExactKV research release (git tag <code>v-release</code>). Research-grade evaluation framework, not a production serving system, and does not reproduce VeriCache. Phase F kernel results are a kernel microbenchmark only (not end-to-end speedup). Compression ratios are stored tensor byte ratios, not active GPU memory savings. Core leaderboard compressors: <code>noop</code>, <code>int8</code>, <code>int4_sim</code>. Other registry slots may be fallback/proxy or probe-first. Not headline evidence.
     </footer>
   </div>
 </article>
