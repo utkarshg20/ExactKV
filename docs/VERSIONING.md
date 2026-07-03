@@ -27,7 +27,9 @@ pip install git+https://github.com/utkarshg20/ExactKV.git@v-release
 
 **Only one tag exists:** **`v-release`**.
 
-Earlier tags (`v0.1.0-phase1`–`v0.10.0`, `v0.11.0`, `v0.13.0-rc1`) were **removed** in July 2026. They caused confusion with V-milestone numbers and semver ordering. Historical work remains in `docs/` under V1–V13, but **no longer has git tags**.
+Verify live: [github.com/utkarshg20/ExactKV/tags](https://github.com/utkarshg20/ExactKV/tags) · CI runs `scripts/verify_public_tags.py` on every push.
+
+Earlier tags (`v0.1.0-phase1`–`v0.11.0`, `v0.13.0-rc1`) were **removed** in July 2026. If an old tag reappears, open an issue — the public release is **`v-release` only**.
 
 ## V-milestones vs public release (not the same counter)
 

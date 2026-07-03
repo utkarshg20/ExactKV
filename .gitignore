@@ -76,6 +76,8 @@ outputs/
 results/
 reports/*.json
 reports/*.csv
+!reports/systems/
+!reports/systems/*.json
 reports/exp*_kv_files/*.pt
 # Generated markdown reports (keep .gitkeep, ignore generated .md files)
 docs/generated/*.md

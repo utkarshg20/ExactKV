@@ -1,0 +1,14 @@
+{
+  "schema": "exactkv.systems.gpu_memory_trace.v1",
+  "git_tag": "v-release",
+  "source_artifact": "reports/phaseF_kernel_benchmark.json",
+  "claim_boundary": "Stored tensor byte accounting on Phase F microbench shape only. NOT active peak GPU memory during 7B/8B headline panels or serving.",
+  "device": "cuda",
+  "kv_shape": [1, 8, 512, 64],
+  "traces": [
+    {"mode": "int8", "memory_before_bytes": 2097152, "memory_after_bytes": 557056, "compression_ratio": 0.265625},
+    {"mode": "int4", "memory_before_bytes": 2097152, "memory_after_bytes": 524288, "compression_ratio": 0.25},
+    {"mode": "block_sparse", "memory_before_bytes": 2097152, "memory_after_bytes": 1376320, "compression_ratio": 0.656280517578125}
+  ],
+  "headline_panel_note": "The 1,500-cell scale panel (reports/scale_7b/raw.json) records total_kv_footprint_bytes as stored tensor accounting per cell. Active VRAM telemetry was not a standard schema field in the public release bundle."
+}

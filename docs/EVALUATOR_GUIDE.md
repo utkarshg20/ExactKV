@@ -30,6 +30,8 @@ See [`CLAIM_BOUNDARIES.md`](CLAIM_BOUNDARIES.md).
 
 ## 4. Smallest demo (CPU, ~1 minute)
 
+See **[REPRODUCE.md](../REPRODUCE.md)** for the full reviewer checklist. Quick start:
+
 ```bash
 git clone https://github.com/utkarshg20/ExactKV.git
 cd ExactKV

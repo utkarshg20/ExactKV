@@ -24,5 +24,8 @@
     "leaderboard_final.json",
     "release_manifest.json"
   ],
-  "version": "v2.9"
+  "version": "v-release",
+  "git_tag": "v-release",
+  "repro_doc": "REPRODUCE.md",
+  "artifact_bundle": "exactkv-research-release-artifact-bundle.tar.gz",
 }

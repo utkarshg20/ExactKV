@@ -40,3 +40,14 @@ Artifact: `reports/scale_7b/raw.json`
 ## License
 
 MIT — see [LICENSE](../LICENSE).
+
+## Release assets
+
+After checkout, build or download the frozen bundle:
+
+```bash
+python3 scripts/build_release_artifact_bundle.py
+shasum -a 256 -c SHA256SUMS
+```
+
+GitHub Release also attaches `exactkv-research-release-artifact-bundle.tar.gz` and `SHA256SUMS`.

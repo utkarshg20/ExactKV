@@ -36,5 +36,14 @@ jobs:
       - name: Site claim safety
         run: python3 scripts/check_site_claims.py
 
+      - name: Site artifact tests
+        run: python3 -m pytest tests/test_site_artifacts.py -q
+
+      - name: Release package validation
+        run: python3 scripts/validate_final_release_package.py
+
+      - name: Public git tag policy
+        run: python3 scripts/verify_public_tags.py
+
       - name: Public claims audit
         run: python3 scripts/audit_public_claims.py

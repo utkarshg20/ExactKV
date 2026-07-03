@@ -1,0 +1,19 @@
+{
+  "schema": "exactkv.systems.latency_microbench.v1",
+  "git_tag": "v-release",
+  "source_artifact": "reports/phaseF_kernel_benchmark.json",
+  "claim_boundary": "Kernel microbenchmark on fixed KV shape only. NOT end-to-end inference latency or verifier overhead on 7B/8B headline panels.",
+  "device": "cuda",
+  "kv_shape": [1, 8, 512, 64],
+  "speedups_triton_vs_torch": [
+    {"mode": "int8", "torch_latency_ms": 0.115, "triton_latency_ms": 0.0706, "speedup_x": 1.63},
+    {"mode": "int4", "torch_latency_ms": 0.3319, "triton_latency_ms": 0.2162, "speedup_x": 1.54},
+    {"mode": "block_sparse", "torch_latency_ms": 0.7622, "triton_latency_ms": 0.7797, "speedup_x": 0.98, "note": "block_sparse triton path uses torch execution_backend"}
+  ],
+  "benchmarks": [
+    {"backend": "torch", "mode": "int8", "latency_ms": 0.115, "compression_ratio": 0.265625},
+    {"backend": "triton", "mode": "int8", "latency_ms": 0.0706, "compression_ratio": 0.265625},
+    {"backend": "torch", "mode": "int4", "latency_ms": 0.3319, "compression_ratio": 0.25},
+    {"backend": "triton", "mode": "int4", "latency_ms": 0.2162, "compression_ratio": 0.25}
+  ]
+}

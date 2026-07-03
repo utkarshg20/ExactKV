@@ -129,7 +129,11 @@ Every headline number traces to an on-disk JSON artifact. Claim boundaries: [`do
 | Public leaderboard JSON | `reports/public_release/leaderboard_final.json` |
 | External panels (8,132 headline total) | `reports/external_panels/` |
 | Faithful adapter smoke (864, appendix) | `reports/external_panels/faithful/` |
-| v3.0 int6 + int4_per_vec | `reports/external_panels/v30/` |
+| v30 int6 + int4_per_vec panel | `reports/external_panels/v30/` |
+| Systems microbench (Phase F) | `reports/systems/latency_microbench.json` |
+| Stored-byte memory trace | `reports/systems/gpu_memory_trace.json` |
+
+Full reproduction guide: [`REPRODUCE.md`](REPRODUCE.md) · Threats to validity: [`docs/THREATS_TO_VALIDITY.md`](docs/THREATS_TO_VALIDITY.md)
 
 Regenerate summaries:
 
@@ -178,6 +182,9 @@ docs/                # Claim boundaries, metrics, experiment corpus
 | Release notes | [`RELEASE.md`](RELEASE.md) |
 | Claim boundaries | [`docs/CLAIM_BOUNDARIES.md`](docs/CLAIM_BOUNDARIES.md) |
 | Evaluator guide (start here) | [`docs/EVALUATOR_GUIDE.md`](docs/EVALUATOR_GUIDE.md) |
+| Reproduce (reviewer path) | [`REPRODUCE.md`](REPRODUCE.md) |
+| Threats to validity | [`docs/THREATS_TO_VALIDITY.md`](docs/THREATS_TO_VALIDITY.md) |
+| Frozen release bundle | [GitHub Release assets](https://github.com/utkarshg20/ExactKV/releases/tag/v-release) (`exactkv-research-release-artifact-bundle.tar.gz` + `SHA256SUMS`) |
 | Metrics | [`docs/METRIC_DEFINITIONS.md`](docs/METRIC_DEFINITIONS.md) |
 | Novelty audit | [`docs/NOVELTY_AUDIT.md`](docs/NOVELTY_AUDIT.md) |
 
