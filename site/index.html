@@ -26,6 +26,7 @@
   <div class="nav-inner">
     <a class="brand" href="#top">ExactKV</a>
     <nav class="nav-links">
+      <a href="#reviewer-tldr">TL;DR</a>
       <a href="#summary">Summary</a>
       <a href="#key-figures">Figures</a>
       <a href="#case-studies">Cases</a>
@@ -50,6 +51,52 @@
       <a class="btn btn-ghost" href="#case-studies">See drift cases</a>
     </div>
   </header>
+
+  <section class="reviewer-tldr" id="reviewer-tldr">
+    <p class="section-label">Reviewer TL;DR</p>
+    <p class="reviewer-tldr-lead">
+      ExactKV shows that KV-cache compression can preserve final verified outputs while still causing early greedy-token drift.
+      Across <strong>8,132 GPU cells</strong>, int4 drift varies sharply by task — from <strong>6%</strong> on MBPP code to about <strong>90%</strong> on LongBench reading — while the verifier preserves <strong>106/106</strong> valid BFCL tool calls.
+    </p>
+
+    <div class="why-matters-callout">
+      <strong>Why this matters:</strong>
+      Existing compression papers report average output quality. ExactKV exposes <em>exact decoding instability</em> that those averages hide — the first token where compressed KV stops matching full-precision greedy decoding.
+    </div>
+
+    <div class="story-pillars">
+      <article class="story-pillar">
+        <h3>What we found</h3>
+        <p>Task type dominates int4 drift (6% code → 90% reading). Three mechanistic failure classes. <code>exactkv_failures=0</code> on all cited panels.</p>
+      </article>
+      <article class="story-pillar">
+        <h3>Why it matters</h3>
+        <p>Aggregate benchmark scores can look fine while greedy decoding already branched. Drift rate ≠ task failure — but it is the hidden risk compression papers rarely report.</p>
+      </article>
+      <article class="story-pillar">
+        <h3>How to reproduce</h3>
+        <p>Every number traces to committed JSON under <code>reports/</code>. One-command artifact verification; GPU panels documented in §18.</p>
+      </article>
+    </div>
+
+    <div class="action-card-row">
+      <a class="action-card" href="#key-figures">
+        <span class="action-card-kicker">Evidence</span>
+        <span class="action-card-title">Read the evidence</span>
+        <span class="action-card-desc">Key figures, drift splits, and artifact-backed panels.</span>
+      </a>
+      <a class="action-card" href="#case-studies">
+        <span class="action-card-kicker">Cases</span>
+        <span class="action-card-title">See divergence cases</span>
+        <span class="action-card-desc">Token-level before/after snippets from real GPU runs.</span>
+      </a>
+      <a class="action-card" href="#reproduce">
+        <span class="action-card-kicker">Reproduce</span>
+        <span class="action-card-title">Reproduce the release</span>
+        <span class="action-card-desc">Install tag <code>v-release</code> and verify artifacts locally.</span>
+      </a>
+    </div>
+  </section>
 
   <section class="exec-summary" id="summary">
     <h2 class="exec-summary-title">Executive summary</h2>
@@ -117,7 +164,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       Official leaderboard scores (LongBench F1, MBPP pass@1, BFCL accuracy) answer “how good is the output?” ExactKV answers “where did the compressed KV path branch?” Those are related but not the same.
     </p>
     <p>
-      A compressor can drift on 50% of cells and still preserve every valid tool call. If a verifier corrects the suffix back to full-KV. A compressor can look fine on aggregate quality while failing catastrophically at token 0. Crash-testing catches both.
+      <strong>For reviewers outside KV-cache compression:</strong> most papers optimize average quality or throughput. ExactKV measures whether greedy decoding still matches full precision token-by-token — instability that averages can bury. A compressor can drift on 50% of cells and still preserve every valid tool call when a verifier corrects the suffix. It can look fine on aggregate quality while failing catastrophically at token 0. Crash-testing catches both.
     </p>
     <div class="article-callout article-callout-warn">
       <strong>Claim boundary:</strong> ExactKV external panels measure <em>drift</em>, not official benchmark scores. We use LongBench, BFCL, and MBPP prompts as stress tests, not as leaderboard submissions.
@@ -205,6 +252,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       On BFCL tool-calling, holding prompts and context fixed, increasing the output budget exposes more opportunities for argmax flips:
     </p>
 
+    <p class="table-takeaway"><strong>Main takeaway:</strong> Short generation budgets understate tool-calling drift — int4 climbs from 9% at 16 tokens to 62% at 256.</p>
     <div class="article-table-wrap">
       <table class="article-table">
         <thead>
@@ -227,6 +275,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       HF LongBench v2.6 (720 cells, real HuggingFace prompts, 2K/4K/8K buckets). Int4_sim divergence by context:
     </p>
 
+    <p class="table-takeaway"><strong>Main takeaway:</strong> On LongBench reading, int4 is near-ceiling at every context bucket — task family matters more than context length.</p>
     <div class="article-table-wrap">
       <table class="article-table">
         <thead>
@@ -268,10 +317,11 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       With <code>--store-top-k-logits</code> enabled on LongBench, BFCL validity, and H2O panels, we analyzed 1,103 divergent cells at the first flip. Three mechanistic signatures:
     </p>
 
+    <p class="table-takeaway"><strong>Main takeaway:</strong> int8 flips late on near-ties; int4 shifts the distribution; H2O-style eviction destroys context immediately (median divergence at token 1).</p>
     <div class="article-table-wrap">
       <table class="article-table">
         <thead>
-          <tr><th>Class</th><th>Mechanism</th><th>Top-1 flip</th><th>Near-tie (&lt.0.05)</th><th>Mean lossy rank</th><th>Median 1st div.</th></tr>
+          <tr><th>Class</th><th>Mechanism</th><th>Top-1 flip</th><th>Near-tie (&lt;.05)</th><th>Mean lossy rank</th><th>Median 1st div.</th></tr>
         </thead>
         <tbody>
           <tr><td><code>int8</code></td><td>Near-tie noise</td><td class="num">69%</td><td class="num">66%</td><td class="num">2.4</td><td class="num">22</td></tr>
@@ -315,6 +365,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       BFCL validity panel (1,200 cells, mnt=128/256). Full-KV produced a parseable JSON tool call in <strong>106/400</strong> cells (26.5%, prompts and truncation limited, not a “model can't tool-call” claim). Despite ~50% int4 drift:
     </p>
 
+    <p class="table-takeaway"><strong>Main takeaway:</strong> ~50% int4 drift on long-gen BFCL, yet 100% validity preservation when full-KV produced a valid tool call.</p>
     <div class="article-table-wrap">
       <table class="article-table">
         <thead>
@@ -332,11 +383,14 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       “Preserved” means ExactKV output matches full-KV, not that full-KV always succeeds. The verifier closes the gap between drift rate and output validity on tested panels.
     </p>
 
-    <h2>11. The compressor curve: bit-width and granularity</h2>
+    <details class="article-details article-details--section" id="compressor-curve">
+      <summary>11. The compressor curve: bit-width and granularity</summary>
+      <div class="detail-body">
     <p>
       The 6%/90% hook is one point. GPU-validated built-ins (v30 panel batch, both models, task-family means):
     </p>
 
+    <p class="table-takeaway"><strong>Main takeaway:</strong> Per-vector int4 helps on structured tasks; int6 beats per-vector int4 on LongBench reading — bit-width and granularity interact by task.</p>
     <div class="article-table-wrap">
       <table class="article-table">
         <thead>
@@ -373,17 +427,24 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
         </div>
         <p>Per-vector int4 has 6× lower error than per-tensor int4, and 30pp lower LongBench drift than int4_sim, but int6_sim still wins on reading at 8K despite higher MAE.</p>
       </div>
+      </div>
     </details>
 
-    <h2>12. H2O-style eviction, worse than int4 at matched budget</h2>
+    <details class="article-details article-details--section" id="h2o-eviction">
+      <summary>12. H2O-style eviction, worse than int4 at matched budget</summary>
+      <div class="detail-body">
     <p>
       Token eviction is a different failure class. H2O-style simulation (attention-sink + recency window, keep_ratio 0.75/0.50/0.25) on LongBench: <strong>100% divergence</strong> at all keep ratios, median first divergence index <strong>1</strong>, mean lossy rank <strong>6.7</strong>. Eviction destroys anchoring context immediately, worse than int4_sim at a matched ~4× memory story on reading tasks.
     </p>
     <p>
       Claim boundary: H2O-style simulation, not faithful H2O GPU kernel. Still useful as a class diagnostic.
     </p>
+      </div>
+    </details>
 
-    <h2>13. Faithful upstream adapters (864 + 128 cells)</h2>
+    <details class="article-details article-details--section" id="faithful-adapters">
+      <summary>13. Faithful upstream adapters (864 + 128 cells)</summary>
+      <div class="detail-body">
     <p>
       Built-in sims map the design space. Phase D3 wires real upstream algorithms on the same crash-test grid, in a separate artifact tree (<code>reports/external_panels/faithful/</code>), not merged into the 8,132 headline total. These are <strong>adapter smoke tests</strong>: they ask whether ExactKV can run real upstream code paths and how much they drift, not which compressor wins.
     </p>
@@ -424,16 +485,221 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
     <p>
       <strong>Key finding:</strong> <code>turboquant_experimental</code> is the first faithful external adapter here with near-int8 drift on structured tasks (3.1% combined. 0% on BFCL). KnormPress and SnapKV remain catastrophic. Mistral-only smoke panel, not a deployment claim. Full tables: technical report §6.17.1.
     </p>
+      </div>
+    </details>
 
     <h2 id="case-studies">14. Divergence case studies</h2>
     <p>
       Token-level snapshots from headline GPU panels (core scale, HF LongBench, BFCL validity/export, faithful KIVI wave-1): full-KV greedy output, lossy compressed draft, and ExactKV verifier output on the same cell. Includes subtle int4 prose flips and catastrophic adapter corruption (<code>kivi_offline_r32</code> → <code>!!!!</code>). These measure <em>drift</em>, not official LongBench/BFCL leaderboard scores.
     </p>
     <div id="case-studies-root" class="case-studies-grid">
-      <p class="viz-caption">Loading case studies…</p>
+      <!-- SYNC:CASE_STUDIES -->
+      <p class="viz-caption">Curated from headline GPU panels (HF LongBench, BFCL validity/export, core scale). Drift diagnostics only — not official benchmark leaderboard scores.</p>
+      <article class="case-card">
+        <h3>core_scale · capital_france</h3>
+        <p class="case-meta"><code>core_scale · int4_sim · Llama-3.1-8B</code></p>
+        <div class="case-cols">
+          <div class="case-col">
+            <span class="case-label">Full KV</span>
+            <pre>a city of many faces. It is a city of history, culture, and</pre>
+          </div>
+          <div class="case-col case-col-lossy">
+            <span class="case-label">Lossy draft</span>
+            <pre>a city of art, culture, and history. It is also a city of</pre>
+          </div>
+          <div class="case-col">
+            <span class="case-label">ExactKV out</span>
+            <pre>a city of many faces. It is a city of history, culture, and</pre>
+          </div>
+        </div>
+      </article>
+      <article class="case-card">
+        <h3>longbench · narrativeqa</h3>
+        <p class="case-meta"><code>hf_longbench_v26 · int4_sim · Llama-3.1-8B · 2048 ctx · fdi=1</code></p>
+        <div class="case-cols">
+          <div class="case-col">
+            <span class="case-label">Full KV</span>
+            <pre>face, with
+its high forehead and its straight nose, they were positively grotesque.
+I had never seen a man so big, and I had never seen</pre>
+          </div>
+          <div class="case-col case-col-lossy">
+            <span class="case-label">Lossy draft</span>
+            <pre>face I
+wondered whether I had ever seen anything so much like a mask.  I had been
+told at Cambridge that Gravener was</pre>
+          </div>
+          <div class="case-col">
+            <span class="case-label">ExactKV out</span>
+            <pre>face, with
+its high forehead and its straight nose, they were positively grotesque.
+I had never seen a man so big, and I had never seen</pre>
+          </div>
+        </div>
+      </article>
+      <article class="case-card">
+        <h3>longbench · gov_report</h3>
+        <p class="case-meta"><code>hf_longbench_v26 · int4_sim · Llama-3.1-8B · 2048 ctx · fdi=3</code></p>
+        <div class="case-cols">
+          <div class="case-col">
+            <span class="case-label">Full KV</span>
+            <pre>is governed by the provisions of 10 U.S.C. 2306b and by the implementing regulations in DOD&#x27;s Federal Acquisition Regulation (FAR)</pre>
+          </div>
+          <div class="case-col case-col-lossy">
+            <span class="case-label">Lossy draft</span>
+            <pre>is governed by 10 U.S.C. 2306b, which is a permanent statute. The statute was created by Section 909 of the FY198</pre>
+          </div>
+          <div class="case-col">
+            <span class="case-label">ExactKV out</span>
+            <pre>is governed by the provisions of 10 U.S.C. 2306b and by the implementing regulations in DOD&#x27;s Federal Acquisition Regulation (FAR)</pre>
+          </div>
+        </div>
+      </article>
+      <article class="case-card">
+        <h3>bfcl · parallel</h3>
+        <p class="case-meta"><code>bfcl_validity_v27 · int4_sim · Mistral-7B-Instruct-v0.3 · 2048 ctx · fdi=4</code></p>
+        <div class="case-cols">
+          <div class="case-col">
+            <span class="case-label">Full KV</span>
+            <pre>},
+        &quot;city&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The city where the purchase is made.&quot;
+        },
+        &quot;state&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The state where</pre>
+          </div>
+          <div class="case-col case-col-lossy">
+            <span class="case-label">Lossy draft</span>
+            <pre>&quot;: &quot;Illinois&quot;
+    }
+  },
+  {
+    &quot;name&quot;: &quot;calculate_sales_tax&quot;,
+    &quot;arguments&quot;: {
+      &quot;purchase_amount&quot;: 52.33,
+      &quot;city&quot;: &quot;Sacramento&quot;,
+      &quot;state&quot;: &quot;California&quot;
+    }
+  },
+  {
+    &quot;name&quot;: &quot;calculate_sales_tax&quot;,</pre>
+          </div>
+          <div class="case-col">
+            <span class="case-label">ExactKV out</span>
+            <pre>},
+        &quot;city&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The city where the purchase is made.&quot;
+        },
+        &quot;state&quot;: {
+          &quot;type&quot;: &quot;string&quot;,
+          &quot;description&quot;: &quot;The state where</pre>
+          </div>
+        </div>
+      </article>
+      <article class="case-card">
+        <h3>bfcl · ast_eval</h3>
+        <p class="case-meta"><code>bfcl_validity_v27 · int4_sim · Mistral-7B-Instruct-v0.3 · 2048 ctx · fdi=6</code></p>
+        <div class="case-cols">
+          <div class="case-col">
+            <span class="case-label">Full KV</span>
+            <pre>escription&quot;: &quot;The InputStream from which file contents are read.&quot;
+        },
+        &quot;force&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;If true, the operation is forced, otherwise it&#x27;s a normal set content</pre>
+          </div>
+          <div class="case-col case-col-lossy">
+            <span class="case-label">Lossy draft</span>
+            <pre>tents of the file.&quot;
+      },
+      &quot;force&quot;: {
+        &quot;type&quot;: &quot;boolean&quot;,
+        &quot;description&quot;: &quot;If true, the operation is forced, otherwise it&#x27;s a normal set content operation.&quot;
+      },
+      &quot;keepHistory&quot;: {
+        &quot;</pre>
+          </div>
+          <div class="case-col">
+            <span class="case-label">ExactKV out</span>
+            <pre>escription&quot;: &quot;The InputStream from which file contents are read.&quot;
+        },
+        &quot;force&quot;: {
+          &quot;type&quot;: &quot;boolean&quot;,
+          &quot;description&quot;: &quot;If true, the operation is forced, otherwise it&#x27;s a normal set content</pre>
+          </div>
+        </div>
+      </article>
+      <article class="case-card">
+        <h3>bfcl · multi_turn</h3>
+        <p class="case-meta"><code>bfcl_export_50 · int4_sim · Llama-3.1-8B · 2048 ctx · fdi=7</code></p>
+        <div class="case-cols">
+          <div class="case-col">
+            <span class="case-label">Full KV</span>
+            <pre>. Make sure to create the directory
+
+User: Perform a detailed search using grep</pre>
+          </div>
+          <div class="case-col case-col-lossy">
+            <span class="case-label">Lossy draft</span>
+            <pre>. Make sure to create the directory.
+
+User: Perform a detailed search using grep</pre>
+          </div>
+          <div class="case-col">
+            <span class="case-label">ExactKV out</span>
+            <pre>. Make sure to create the directory
+
+User: Perform a detailed search using grep</pre>
+          </div>
+        </div>
+      </article>
+      <article class="case-card">
+        <h3>longbench · narrativeqa</h3>
+        <p class="case-meta"><code>faithful_wave1_longbench · kivi_offline_r32 · Llama-3.1-8B · 2048 ctx · fdi=0</code></p>
+        <div class="case-cols">
+          <div class="case-col">
+            <span class="case-label">Full KV</span>
+            <pre>face, with
+its high forehead and its straight nose, they were positively grotes</pre>
+          </div>
+          <div class="case-col case-col-lossy">
+            <span class="case-label">Lossy draft</span>
+            <pre>!!!!!!!!!!!!!!!!</pre>
+          </div>
+          <div class="case-col">
+            <span class="case-label">ExactKV out</span>
+            <pre>face, with
+its high forehead and its straight nose, they were positively grotes</pre>
+          </div>
+        </div>
+      </article>
+      <article class="case-card">
+        <h3>core_scale · json_tool</h3>
+        <p class="case-meta"><code>core_scale · int4_sim · Mistral-7B-Instruct-v0.3</code></p>
+        <div class="case-cols">
+          <div class="case-col">
+            <span class="case-label">Full KV</span>
+            <pre>&quot;New York&quot;, &quot;country&quot;: &quot;</pre>
+          </div>
+          <div class="case-col case-col-lossy">
+            <span class="case-label">Lossy draft</span>
+            <pre>&quot;New York&quot;, &quot;temperature&quot;:</pre>
+          </div>
+          <div class="case-col">
+            <span class="case-label">ExactKV out</span>
+            <pre>&quot;New York&quot;, &quot;country&quot;: &quot;</pre>
+          </div>
+        </div>
+      </article>
+      <!-- /SYNC:CASE_STUDIES -->
     </div>
 
-    <h2>15. The 8,132-cell inventory</h2>
+    <details class="article-details article-details--section" id="cell-inventory">
+      <summary>15. The 8,132-cell inventory</summary>
+      <div class="detail-body">
     <p>
       Headline total = completed GPU panels with <code>exactkv_failures=0</code>. Not official benchmark scores.
     </p>
@@ -457,19 +723,33 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       </table>
     </div>
     <p class="viz-caption">Reconciliation: 6,564 pre-v30 + 784 + 784 v30 = 8,132 headline. Faithful wave-1 (864) and wave-2 (128) tracked separately in §6.17. Full card in the technical report Appendix A. Public cite: ExactKV research release · git tag <code>v-release</code>.</p>
+      </div>
+    </details>
 
     <h2 id="leaderboard">16. Core compressor leaderboard</h2>
     <p>
       Rankings from the <strong>1,500-cell</strong> scale panel (<code>reports/scale_7b/raw.json</code>). Score = 0.35·acceptance + 0.25·verifier_agreement + 0.20·(1−norm. First divergence) + 0.10·(1−failure rate) + 0.10·stability.
     </p>
 
+    <p class="table-takeaway"><strong>Main takeaway:</strong> On the 1,500-cell core panel, <code>noop</code> and <code>int8</code> lead; <code>int4_sim</code> shows ~50% divergence with zero ExactKV failures.</p>
     <div class="article-table-wrap">
       <table class="article-table" id="leaderboard-table">
         <thead>
           <tr><th>#</th><th>Compressor</th><th>Model</th><th>Score</th><th>Acceptance</th><th>Divergence</th></tr>
         </thead>
         <tbody>
-          <tr class="leaderboard-loading"><td colspan="6">Loading leaderboard from JSON…</td></tr>
+          <!-- SYNC:LEADERBOARD_TBODY -->
+          <tr><td>1</td><td><code>noop</code></td><td>Llama-3.1-8B</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">0.000</td></tr>
+          <tr><td>2</td><td><code>int8</code></td><td>Llama-3.1-8B</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">0.000</td></tr>
+          <tr><td>3</td><td><code>noop</code></td><td>Mistral-7B</td><td class="num">1.000</td><td class="num">1.000</td><td class="num">0.000</td></tr>
+          <tr><td>4</td><td><code>int8</code></td><td>Mistral-7B</td><td class="num">0.983</td><td class="num">1.000</td><td class="num">0.173</td></tr>
+          <tr><td>5</td><td><code>int4_sim</code></td><td>Llama-3.1-8B</td><td class="num">0.859</td><td class="num">0.852</td><td class="num">0.520</td></tr>
+          <tr><td>6</td><td><code>int4_sim</code></td><td>Mistral-7B</td><td class="num">0.851</td><td class="num">0.837</td><td class="num">0.507</td></tr>
+          <tr class="row-muted"><td>6</td><td><code>spectralquant</code> <span class="tier-tag">fallback/proxy</span></td><td>Llama-3.1-8B</td><td class="num">0.859</td><td class="num">0.852</td><td class="num">0.520</td></tr>
+          <tr class="row-muted"><td>8</td><td><code>spectralquant</code> <span class="tier-tag">fallback/proxy</span></td><td>Mistral-7B</td><td class="num">0.851</td><td class="num">0.837</td><td class="num">0.507</td></tr>
+          <tr class="row-muted"><td>9</td><td><code>shard</code> <span class="tier-tag">probe-first</span></td><td>Llama-3.1-8B</td><td class="num">0.732</td><td class="num">0.632</td><td class="num">0.227</td></tr>
+          <tr class="row-muted"><td>10</td><td><code>shard</code> <span class="tier-tag">probe-first</span></td><td>Mistral-7B</td><td class="num">0.727</td><td class="num">0.623</td><td class="num">0.247</td></tr>
+      <!-- /SYNC:LEADERBOARD_TBODY -->
         </tbody>
       </table>
     </div>

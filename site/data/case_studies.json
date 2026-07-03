@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-03T00:01:52.074451+00:00",
+  "generated_at": "2026-07-03T00:46:44.515354+00:00",
   "note": "Curated from headline GPU panels (HF LongBench, BFCL validity/export, core scale). Drift diagnostics only \u2014 not official benchmark leaderboard scores.",
   "case_studies": [
     {

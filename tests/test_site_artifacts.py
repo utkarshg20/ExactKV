@@ -30,11 +30,15 @@ def test_site_files_exist():
 def test_hero_and_leaderboard_present():
     html = (SITE / "index.html").read_text(encoding="utf-8").lower()
     assert "lying" in html, "hero headline missing"
+    assert "reviewer tl;dr" in html, "reviewer TLDR missing"
     assert "executive summary" in html, "executive summary missing"
+    assert "read the evidence" in html, "reviewer action card missing"
     assert "read pdf" in html, "hero PDF CTA missing"
     assert "leaderboard" in html
     assert "1,500" in html, "1500-cell headline missing"
     assert "exactkv failures" in html
+    assert "loading case studies" not in html, "case studies should not show loading placeholder"
+    assert "loading leaderboard" not in html, "leaderboard should not show loading placeholder"
 
 
 def test_required_caveats_present():
@@ -81,6 +85,7 @@ def test_content_manifest_matches_page_structure():
     manifest = json.loads((SITE / "content_manifest.json").read_text(encoding="utf-8"))
     assert manifest.get("schema", "").startswith("exactkv.site.content_manifest.v2")
     section_ids = {s["id"] for s in manifest.get("sections", [])}
+    assert "reviewer-tldr" in section_ids
     assert "summary" in section_ids
     assert "case-studies" in section_ids
     assert "leaderboard" in section_ids

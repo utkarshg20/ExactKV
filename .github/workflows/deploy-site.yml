@@ -7,6 +7,7 @@ on:
       - "site/**"
       - "scripts/sync_site_data.sh"
       - "scripts/prepare_site_figure_assets.py"
+      - "scripts/render_site_embedded_html.py"
       - "scripts/curate_site_case_studies.py"
       - "reports/public_release/leaderboard_final.json"
       - "docs/assets/public_exactkv_one_page_summary.png"

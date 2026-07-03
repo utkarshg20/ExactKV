@@ -9,6 +9,10 @@
   ],
   "sections": [
     {
+      "id": "reviewer-tldr",
+      "title": "Reviewer TL;DR"
+    },
+    {
       "id": "summary",
       "title": "Executive summary"
     },

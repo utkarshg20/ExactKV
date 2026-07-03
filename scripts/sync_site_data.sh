@@ -9,6 +9,7 @@ python3 "$ROOT/scripts/curate_site_case_studies.py"
 
 # Self-contained figure assets (dark-themed charts for the landing page).
 python3 "$ROOT/scripts/prepare_site_figure_assets.py"
+python3 "$ROOT/scripts/render_site_embedded_html.py"
 
 python3 <<PY
 import json

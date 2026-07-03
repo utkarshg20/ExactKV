@@ -1,11 +1,9 @@
 (function () {
   "use strict";
 
-  // Footer year
   var y = document.getElementById("year");
   if (y) y.textContent = String(new Date().getFullYear());
 
-  // Active nav link on scroll
   var links = Array.prototype.slice.call(document.querySelectorAll(".nav-links a"));
   var sectionMap = {};
   links.forEach(function (a) {
@@ -59,41 +57,41 @@
       "https://raw.githubusercontent.com/utkarshg20/ExactKV/main/reports/public_release/leaderboard_final.json"
     ];
 
-    function tryFetch(i) {
-      if (i >= urls.length) {
-        tbody.innerHTML = "<tr><td colspan=\"6\">Leaderboard JSON unavailable.</td></tr>";
-        return;
+    function renderRows(data) {
+      var entries = (data && data.entries) || [];
+      var diagnostic = (data && data.diagnostic_entries) || [];
+      var rows = entries.concat(diagnostic);
+      if (!rows.length) return false;
+      tbody.innerHTML = "";
+      rows.forEach(function (e) {
+        var note = tierNote(e);
+        var tr = document.createElement("tr");
+        if (note) tr.className = "row-muted";
+        tr.innerHTML =
+          "<td>" + e.rank + "</td>" +
+          "<td><code>" + e.compressor + "</code>" +
+            (note ? ' <span class="tier-tag">' + note + "</span>" : "") + "</td>" +
+          "<td>" + (e.model_short || e.model) + "</td>" +
+          '<td class="num">' + fmtNum(e.score) + "</td>" +
+          '<td class="num">' + fmtNum(e.acceptance_rate) + "</td>" +
+          '<td class="num">' + fmtNum(e.divergence_score) + "</td>";
+        tbody.appendChild(tr);
+      });
+      var cap = document.getElementById("leaderboard-caption");
+      if (cap && data.score_formula) {
+        cap.textContent =
+          "Loaded from leaderboard JSON (" + entries.length + " ranked rows" +
+          (diagnostic.length ? ", " + diagnostic.length + " diagnostic/proxy rows shown muted" : "") +
+          "). " + data.score_formula + ".";
       }
+      return true;
+    }
+
+    function tryFetch(i) {
+      if (i >= urls.length) return;
       fetch(urls[i])
         .then(function (r) { if (!r.ok) throw new Error("bad status"); return r.json(); })
-        .then(function (data) {
-          var entries = (data && data.entries) || [];
-          var diagnostic = (data && data.diagnostic_entries) || [];
-          var rows = entries.concat(diagnostic);
-          if (!rows.length) return;
-          tbody.innerHTML = "";
-          rows.forEach(function (e) {
-            var note = tierNote(e);
-            var tr = document.createElement("tr");
-            if (note) tr.className = "row-muted";
-            tr.innerHTML =
-              "<td>" + e.rank + "</td>" +
-              "<td><code>" + e.compressor + "</code>" +
-                (note ? ' <span class="tier-tag">' + note + "</span>" : "") + "</td>" +
-              "<td>" + (e.model_short || e.model) + "</td>" +
-              '<td class="num">' + fmtNum(e.score) + "</td>" +
-              '<td class="num">' + fmtNum(e.acceptance_rate) + "</td>" +
-              '<td class="num">' + fmtNum(e.divergence_score) + "</td>";
-            tbody.appendChild(tr);
-          });
-          var cap = document.getElementById("leaderboard-caption");
-          if (cap && data.score_formula) {
-            cap.textContent =
-              "Loaded from leaderboard JSON (" + entries.length + " ranked rows" +
-              (diagnostic.length ? ", " + diagnostic.length + " diagnostic/proxy rows shown muted" : "") +
-              "). " + data.score_formula + ".";
-          }
-        })
+        .then(function (data) { renderRows(data); })
         .catch(function () { tryFetch(i + 1); });
     }
     tryFetch(0);
@@ -107,48 +105,51 @@
       .replace(/"/g, "&quot;");
   }
 
+  function renderCaseStudies(data) {
+    var root = document.getElementById("case-studies-root");
+    if (!root) return false;
+    var cases = (data && data.case_studies) || [];
+    if (!cases.length) return false;
+    root.innerHTML = "";
+    if (data.note) {
+      var note = document.createElement("p");
+      note.className = "viz-caption";
+      note.textContent = data.note;
+      root.appendChild(note);
+    }
+    cases.slice(0, 8).forEach(function (c) {
+      var card = document.createElement("article");
+      card.className = "case-card";
+      var title = (c.dataset_family || "panel") + " · " + (c.task_category || c.prompt_id || "");
+      var meta = [
+        c.panel,
+        c.compressor_name,
+        c.model_name && c.model_name.split("/").pop(),
+        c.context_bucket ? c.context_bucket + " ctx" : null,
+        c.first_divergence_index != null ? "fdi=" + c.first_divergence_index : null
+      ].filter(Boolean).join(" · ");
+
+      card.innerHTML =
+        "<h3>" + escHtml(title) + "</h3>" +
+        '<p class="case-meta"><code>' + escHtml(meta) + "</code></p>" +
+        '<div class="case-cols">' +
+          '<div class="case-col"><span class="case-label">Full KV</span><pre>' + escHtml(c.full_snippet || "-") + "</pre></div>" +
+          '<div class="case-col case-col-lossy"><span class="case-label">Lossy draft</span><pre>' + escHtml(c.lossy_snippet || "-") + "</pre></div>" +
+          '<div class="case-col"><span class="case-label">ExactKV out</span><pre>' + escHtml(c.exactkv_snippet || "-") + "</pre></div>" +
+        "</div>";
+      root.appendChild(card);
+    });
+    return true;
+  }
+
   function loadCaseStudies() {
     var root = document.getElementById("case-studies-root");
     if (!root) return;
 
     fetch("data/case_studies.json")
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        var cases = (data && data.case_studies) || [];
-        if (!cases.length) return;
-        root.innerHTML = "";
-        if (data.note) {
-          var note = document.createElement("p");
-          note.className = "viz-caption";
-          note.textContent = data.note;
-          root.appendChild(note);
-        }
-        cases.slice(0, 8).forEach(function (c) {
-          var card = document.createElement("article");
-          card.className = "case-card";
-          var title = (c.dataset_family || "panel") + " · " + (c.task_category || c.prompt_id || "");
-          var meta = [
-            c.panel,
-            c.compressor_name,
-            c.model_name && c.model_name.split("/").pop(),
-            c.context_bucket ? c.context_bucket + " ctx" : null,
-            c.first_divergence_index != null ? "fdi=" + c.first_divergence_index : null
-          ].filter(Boolean).join(" · ");
-
-          card.innerHTML =
-            "<h3>" + escHtml(title) + "</h3>" +
-            '<p class="case-meta"><code>' + escHtml(meta) + "</code></p>" +
-            '<div class="case-cols">' +
-              '<div class="case-col"><span class="case-label">Full KV</span><pre>' + escHtml(c.full_snippet || "-") + "</pre></div>" +
-              '<div class="case-col case-col-lossy"><span class="case-label">Lossy draft</span><pre>' + escHtml(c.lossy_snippet || "-") + "</pre></div>" +
-              '<div class="case-col"><span class="case-label">ExactKV out</span><pre>' + escHtml(c.exactkv_snippet || "-") + "</pre></div>" +
-            "</div>";
-          root.appendChild(card);
-        });
-      })
-      .catch(function () {
-        root.innerHTML = "<p class=\"viz-caption\">Case study snippets unavailable offline.</p>";
-      });
+      .then(function (r) { if (!r.ok) throw new Error("bad status"); return r.json(); })
+      .then(function (data) { renderCaseStudies(data); })
+      .catch(function () { /* keep embedded static HTML */ });
   }
 
   loadLeaderboard();
