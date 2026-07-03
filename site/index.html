@@ -336,16 +336,63 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
     </p>
 
     <section class="figures-section" id="key-figures">
-      <h2 class="figures-heading"><span class="section-num">9.</span> Key figures</h2>
+      <h2 class="figures-heading">9. Key figures</h2>
       <p class="figures-lead">
         Headline panels rendered from committed artifacts (<code>reports/scale_7b/</code>, <code>reports/external_panels/</code>).
         Token-level before/after snippets — including KIVI catastrophic corruption — are in <a href="#case-studies">section 14</a>.
       </p>
 
       <div class="figures-stack">
-        <figure class="figure-block figure-block--hero">
-          <img src="assets/public_exactkv_one_page_summary.png" alt="ExactKV one-page summary: drift metrics, task split, and exactness gate" loading="lazy" width="720" height="405" />
-          <figcaption class="viz-caption">One-page summary card — headline int4 task split and exactness gate.</figcaption>
+        <figure class="figure-block figure-block--summary">
+          <div class="headline-evidence-card">
+            <p class="headline-evidence-kicker">Headline evidence · tested panels only</p>
+            <div class="headline-evidence-hero">
+              <div class="headline-evidence-stat">
+                <span class="headline-evidence-value">8,132</span>
+                <span class="headline-evidence-label">GPU cells completed</span>
+                <span class="headline-evidence-note">Llama-3.1-8B + Mistral-7B · <code>exactkv_failures=0</code></span>
+              </div>
+              <div class="headline-evidence-stat headline-evidence-stat--accent">
+                <span class="headline-evidence-value">6% → 90%</span>
+                <span class="headline-evidence-label">int4_sim drift split</span>
+                <span class="headline-evidence-note">MBPP code vs HF LongBench reading</span>
+              </div>
+              <div class="headline-evidence-stat">
+                <span class="headline-evidence-value">106/106</span>
+                <span class="headline-evidence-label">Tool calls preserved</span>
+                <span class="headline-evidence-note">BFCL validity when full-KV valid</span>
+              </div>
+            </div>
+            <div class="headline-evidence-bars">
+              <p class="viz-title">Lossy-path token drift (<code>int4_sim</code>)</p>
+              <div class="viz-row">
+                <span class="viz-label">MBPP code</span>
+                <span class="viz-track"><span class="viz-fill viz-green" style="--w:6%"></span></span>
+                <span class="viz-pct">6%</span>
+              </div>
+              <div class="viz-row">
+                <span class="viz-label">BFCL short-gen</span>
+                <span class="viz-track"><span class="viz-fill viz-yellow" style="--w:11%"></span></span>
+                <span class="viz-pct">11%</span>
+              </div>
+              <div class="viz-row">
+                <span class="viz-label">BFCL long-gen</span>
+                <span class="viz-track"><span class="viz-fill viz-yellow" style="--w:50%"></span></span>
+                <span class="viz-pct">50%</span>
+              </div>
+              <div class="viz-row">
+                <span class="viz-label">HF LongBench</span>
+                <span class="viz-track"><span class="viz-fill viz-red" style="--w:90%"></span></span>
+                <span class="viz-pct">90%</span>
+              </div>
+            </div>
+            <div class="headline-evidence-chips">
+              <span class="evidence-chip">int8 · near-tie noise</span>
+              <span class="evidence-chip">int4 · distribution shift</span>
+              <span class="evidence-chip">H2O · attention destruction</span>
+            </div>
+          </div>
+          <figcaption class="viz-caption">Headline int4 task split and exactness gate — same metrics as the executive summary, artifact-backed.</figcaption>
         </figure>
 
         <figure class="figure-block figure-block--chart">
