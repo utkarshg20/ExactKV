@@ -27,6 +27,7 @@
     <a class="brand" href="#top">ExactKV</a>
     <nav class="nav-links">
       <a href="#summary">Summary</a>
+      <a href="#key-figures">Figures</a>
       <a href="#case-studies">Cases</a>
       <a href="#leaderboard">Leaderboard</a>
       <a href="https://github.com/utkarshg20/ExactKV/releases/tag/v-release">Release</a>
@@ -284,26 +285,30 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       <strong>int8</strong> flips late on contested logits. The model was already uncertain. <strong>int4_sim</strong> shifts probability mass to rank-3-4 alternatives even when full-KV was moderately confident. <strong>H2O-style eviction</strong> deletes context tokens. Lossy rank jumps to ~7 and divergence is immediate (median index 1). Same verifier catches all three. <strong>exactkv failures: 0</strong>.
     </p>
 
-    <h2>9. Key figures</h2>
-    <p>
-      Headline panels rendered from committed artifacts (<code>reports/scale_7b/</code>, <code>reports/external_panels/</code>).
-      Token-level before/after snippets — including KIVI catastrophic corruption — are in <a href="#case-studies">§14</a>.
-    </p>
+    <section class="figures-section" id="key-figures">
+      <h2 class="figures-heading"><span class="section-num">9.</span> Key figures</h2>
+      <p class="figures-lead">
+        Headline panels rendered from committed artifacts (<code>reports/scale_7b/</code>, <code>reports/external_panels/</code>).
+        Token-level before/after snippets — including KIVI catastrophic corruption — are in <a href="#case-studies">section 14</a>.
+      </p>
 
-    <figure class="figure-block">
-      <img src="assets/public_exactkv_one_page_summary.png" alt="ExactKV one-page summary: drift metrics, task split, and exactness gate" loading="lazy" width="720" height="405" />
-      <figcaption class="viz-caption">One-page summary card — headline int4 task split and exactness gate.</figcaption>
-    </figure>
+      <div class="figures-stack">
+        <figure class="figure-block figure-block--hero">
+          <img src="assets/public_exactkv_one_page_summary.png" alt="ExactKV one-page summary: drift metrics, task split, and exactness gate" loading="lazy" width="720" height="405" />
+          <figcaption class="viz-caption">One-page summary card — headline int4 task split and exactness gate.</figcaption>
+        </figure>
 
-    <figure class="figure-block">
-      <img src="assets/exp035_first_divergence_histogram.png" alt="Histogram of first divergence index on the core scale panel" loading="lazy" width="720" height="405" />
-      <figcaption class="viz-caption">First-divergence histogram (core 1,500-cell panel) — heavy mass at token 1 despite mean ≈ 2.</figcaption>
-    </figure>
+        <figure class="figure-block figure-block--chart">
+          <img src="assets/exp035_first_divergence_histogram.png" alt="Histogram of first divergence index on the core scale panel" loading="lazy" width="720" height="405" />
+          <figcaption class="viz-caption">First-divergence histogram (core 1,500-cell panel) — heavy mass at token 1 despite mean ≈ 2.</figcaption>
+        </figure>
 
-    <figure class="figure-block">
-      <img src="assets/exp035_category_heatmap.png" alt="Heatmap of divergence rate by task category and compressor" loading="lazy" width="720" height="405" />
-      <figcaption class="viz-caption">Divergence by task category × compressor — reading tasks dominate int4 drift.</figcaption>
-    </figure>
+        <figure class="figure-block figure-block--chart">
+          <img src="assets/exp035_category_heatmap.png" alt="Heatmap of divergence rate by task category and compressor" loading="lazy" width="720" height="405" />
+          <figcaption class="viz-caption">Divergence by task category × compressor — reading tasks dominate int4 drift.</figcaption>
+        </figure>
+      </div>
+    </section>
 
     <h2>10. Downstream validity, drift ≠ task failure</h2>
     <p>

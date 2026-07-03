@@ -7,18 +7,8 @@ mkdir -p "$ROOT/site/data" "$ROOT/site/assets"
 cp "$ROOT/reports/public_release/leaderboard_final.json" "$ROOT/site/data/leaderboard.json"
 python3 "$ROOT/scripts/curate_site_case_studies.py"
 
-# Self-contained figure assets (avoid ../docs paths — breaks on GitHub Pages).
-for asset in \
-  public_exactkv_one_page_summary.png \
-  exp035_first_divergence_histogram.png \
-  exp035_category_heatmap.png; do
-  src="$ROOT/docs/assets/$asset"
-  if [[ ! -f "$src" ]]; then
-    echo "WARN: missing figure $src" >&2
-    continue
-  fi
-  cp "$src" "$ROOT/site/assets/$asset"
-done
+# Self-contained figure assets (dark-themed charts for the landing page).
+python3 "$ROOT/scripts/prepare_site_figure_assets.py"
 
 python3 <<PY
 import json
