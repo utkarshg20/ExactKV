@@ -2,11 +2,29 @@
 """Verify GitHub has only the public v-release tag (fail CI if stale tags reappear)."""
 from __future__ import annotations
 
+import json
+import os
 import subprocess
 import sys
+import urllib.request
 
 REPO = "utkarshg20/ExactKV"
 ALLOWED = {"v-release"}
+
+
+def fetch_tags_api() -> list[str]:
+    url = f"https://api.github.com/repos/{REPO}/tags?per_page=100"
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    headers = {
+        "Accept": "application/vnd.github+json",
+        "User-Agent": "exactkv-tag-verify",
+    }
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    req = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        data = json.load(resp)
+    return [item["name"] for item in data]
 
 
 def fetch_tags_gh() -> list[str]:
@@ -17,6 +35,13 @@ def fetch_tags_gh() -> list[str]:
     return [line.strip() for line in out.splitlines() if line.strip()]
 
 
+def fetch_tags() -> list[str]:
+    try:
+        return fetch_tags_api()
+    except Exception:
+        return fetch_tags_gh()
+
+
 def local_tags() -> set[str]:
     out = subprocess.check_output(["git", "tag", "-l"], text=True)
     return {line.strip() for line in out.splitlines() if line.strip()}
@@ -25,9 +50,9 @@ def local_tags() -> set[str]:
 def main() -> int:
     errors: list[str] = []
     try:
-        remote = set(fetch_tags_gh())
-    except subprocess.CalledProcessError as exc:
-        errors.append(f"could not fetch remote tags via gh: {exc}")
+        remote = set(fetch_tags())
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"could not fetch remote tags: {exc}")
         remote = set()
 
     local = local_tags()
