@@ -37,6 +37,9 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install site build deps
+        run: python -m pip install --upgrade pip pillow
+
       - name: Build self-contained site bundle
         run: bash scripts/sync_site_data.sh
 
