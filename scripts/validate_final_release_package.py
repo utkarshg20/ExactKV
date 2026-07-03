@@ -27,11 +27,23 @@ REQUIRED_FILES = [
     "site/README.md",
     "site/content_manifest.json",
     "site/claim_safe_copy.json",
+    "site/data/leaderboard.json",
+    "site/data/case_studies.json",
+    "site/assets/public_exactkv_one_page_summary.png",
+    "site/assets/exp035_first_divergence_histogram.png",
+    "site/assets/exp035_category_heatmap.png",
     "reports/public_release/leaderboard_final.json",
     "reports/public_release/README_PUBLIC.md",
     "RELEASE.md",
     "README.md",
+    "REPRODUCE.md",
+    "environment.yml",
+    "Dockerfile",
+    "SHA256SUMS",
     "docs/CLAIM_BOUNDARIES.md",
+    "docs/THREATS_TO_VALIDITY.md",
+    "reports/systems/latency_microbench.json",
+    "reports/systems/gpu_memory_trace.json",
 ]
 
 PUBLIC_COPY = [

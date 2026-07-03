@@ -60,14 +60,19 @@
     ];
 
     function tryFetch(i) {
-      if (i >= urls.length) return;
+      if (i >= urls.length) {
+        tbody.innerHTML = "<tr><td colspan=\"6\">Leaderboard JSON unavailable.</td></tr>";
+        return;
+      }
       fetch(urls[i])
         .then(function (r) { if (!r.ok) throw new Error("bad status"); return r.json(); })
         .then(function (data) {
           var entries = (data && data.entries) || [];
-          if (!entries.length) return;
+          var diagnostic = (data && data.diagnostic_entries) || [];
+          var rows = entries.concat(diagnostic);
+          if (!rows.length) return;
           tbody.innerHTML = "";
-          entries.forEach(function (e) {
+          rows.forEach(function (e) {
             var note = tierNote(e);
             var tr = document.createElement("tr");
             if (note) tr.className = "row-muted";
@@ -83,10 +88,10 @@
           });
           var cap = document.getElementById("leaderboard-caption");
           if (cap && data.score_formula) {
-            var diagN = ((data && data.diagnostic_entries) || []).length;
-            cap.textContent = "Loaded from leaderboard JSON (" + entries.length + " ranked rows" +
-              (diagN ? ", " + diagN + " diagnostic/proxy rows excluded from ranking" : "") + "). " +
-              data.score_formula + ". Mock/probe rows are in diagnostic_entries only.";
+            cap.textContent =
+              "Loaded from leaderboard JSON (" + entries.length + " ranked rows" +
+              (diagnostic.length ? ", " + diagnostic.length + " diagnostic/proxy rows shown muted" : "") +
+              "). " + data.score_formula + ".";
           }
         })
         .catch(function () { tryFetch(i + 1); });
@@ -112,11 +117,18 @@
         var cases = (data && data.case_studies) || [];
         if (!cases.length) return;
         root.innerHTML = "";
-        cases.slice(0, 6).forEach(function (c) {
+        if (data.note) {
+          var note = document.createElement("p");
+          note.className = "viz-caption";
+          note.textContent = data.note;
+          root.appendChild(note);
+        }
+        cases.slice(0, 8).forEach(function (c) {
           var card = document.createElement("article");
           card.className = "case-card";
           var title = (c.dataset_family || "panel") + " · " + (c.task_category || c.prompt_id || "");
           var meta = [
+            c.panel,
             c.compressor_name,
             c.model_name && c.model_name.split("/").pop(),
             c.context_bucket ? c.context_bucket + " ctx" : null,

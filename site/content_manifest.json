@@ -69,7 +69,7 @@
     "public_name": "research release",
     "git_tag": "v-release",
     "github_release_url": "https://github.com/utkarshg20/ExactKV/releases/tag/v-release",
-    "cite": "ExactKV research release · git tag v-release"
+    "cite": "ExactKV research release \u00b7 git tag v-release"
   },
   "case_study_policy": {
     "source_script": "scripts/curate_site_case_studies.py",
