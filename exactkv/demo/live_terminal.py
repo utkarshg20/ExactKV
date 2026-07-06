@@ -46,6 +46,9 @@ class TerminalStyle:
     def dim(self, text: str) -> str:
         return self.wrap(text, "2")
 
+    def white(self, text: str) -> str:
+        return self.wrap(text, "37")
+
     def cyan(self, text: str) -> str:
         return self.wrap(text, "36")
 

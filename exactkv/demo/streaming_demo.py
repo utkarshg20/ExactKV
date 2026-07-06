@@ -1,6 +1,8 @@
 """Single-act streaming terminal demo — cinematic crash-test replay."""
 from __future__ import annotations
 
+import re
+import shutil
 import sys
 import time
 from typing import TextIO
@@ -8,10 +10,10 @@ from typing import TextIO
 from exactkv.demo.case_study_loader import CLOSING_LINES, PUBLIC_TAGLINE
 from exactkv.demo.live_terminal import SPEED_PROFILES, LiveFrame, TerminalStyle, _emit, progress_bar
 
-INNER = 78
+SNIPPET_LINES = 4
 
 META = {
-    "prompt_label": "structured tool JSON · int4_sim 4× · continuous greedy decode",
+    "prompt_label": "int4_sim 4× · greedy decode · tool JSON",
     "prompt": 'Emit weather tool result: {"tool":"get_weather","city":"Paris",',
     "compressor": "int4_sim · 4× quant",
     "model": "Mistral-7B-Instruct",
@@ -29,8 +31,6 @@ FULL_TEXT = "".join(seg[1] if seg[0] == "sync" else seg[2] for seg in TIMELINE)
 LOSSY_TEXT = "".join(seg[1] if seg[0] == "sync" else seg[1] for seg in TIMELINE)
 STREAM_TOTAL = len(FULL_TEXT)
 
-SNIPPET_LINES = 3
-
 LOGO = [
     " ███████╗██╗  ██╗ █████╗  ██████╗████████╗██╗  ██╗██╗   ██╗",
     " ██╔════╝╚██╗██╔╝██╔══██╗██╔════╝╚══██╔══╝██║ ██╔╝██║   ██║",
@@ -40,6 +40,21 @@ LOGO = [
     " ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝   ╚═╝   ╚═╝  ╚═╝  ╚═══╝  ",
 ]
 
+_ANSI_RE = re.compile(r"\033\[[0-9;]*m")
+
+
+def _strip_ansi(text: str) -> str:
+    return _ANSI_RE.sub("", text)
+
+
+def _panel_width() -> int:
+    cols = shutil.get_terminal_size((110, 24)).columns
+    return min(104, max(92, cols - 4))
+
+
+def _col_width(inner: int) -> int:
+    return max(20, (inner - 8) // 3)
+
 
 def _pause(seconds: float, *, no_delay: bool) -> None:
     if not no_delay and seconds > 0:
@@ -47,7 +62,7 @@ def _pause(seconds: float, *, no_delay: bool) -> None:
 
 
 def _wrap_snippet(text: str, width: int, *, max_lines: int = SNIPPET_LINES) -> list[str]:
-    """Wrap snippet text on word/punctuation boundaries; never split mid-word when avoidable."""
+    """Wrap on punctuation/word boundaries; never split mid-word when avoidable."""
     one = text.replace("\n", "\\n").replace("\r", "")
     if width <= 0:
         return [""] * max_lines
@@ -87,45 +102,77 @@ def _wrap_snippet(text: str, width: int, *, max_lines: int = SNIPPET_LINES) -> l
     return lines
 
 
-def _box_line(inner: str, left: str = "┃", right: str = "┃") -> str:
-    return f"{left} {inner[:INNER].ljust(INNER)} {right}"
+def _fit_cell(plain: str, width: int) -> str:
+    if len(plain) <= width:
+        return plain.ljust(width)
+    line = _wrap_snippet(plain, width, max_lines=1)[0]
+    if len(line) < len(plain) and width >= 2:
+        if len(line) >= width:
+            line = line[: width - 1] + "…"
+        else:
+            line = line + "…"
+    return line.ljust(width)
+
+
+def _box_line(inner: str, width: int, left: str = "┃", right: str = "┃") -> str:
+    plain = _strip_ansi(inner)
+    if len(plain) > width:
+        inner = _fit_cell(plain, width)
+    return f"{left} {inner.ljust(width)} {right}"
 
 
 def _intro_frame(style: TerminalStyle, *, step: int) -> list[str]:
-    sep = "━" * (INNER + 2)
-    lines = [f"┏{sep}┓", _box_line("")]
+    inner = _panel_width()
+    sep = "━" * (inner + 2)
+    lines = [f"┏{sep}┓", _box_line("", inner)]
     for row in LOGO:
-        lines.append(_box_line(row.center(INNER)))
-    lines.append(_box_line(""))
-    title = "▶  CRASH TEST  ·  LIVE VERIFIER REPLAY"
+        lines.append(_box_line(row.center(inner), inner))
+    lines.append(_box_line("", inner))
+    title = "CRASH TEST  ·  LIVE VERIFIER REPLAY"
     if not style.plain:
         title = style.bold(style.cyan(title))
-    lines.append(_box_line(title.center(INNER)))
+    lines.append(_box_line(title.center(inner), inner))
     if step >= 1:
-        sub = "compressed KV drafts  ·  full KV verifies  ·  drift never ships"
-        lines.append(_box_line(style.dim(sub.center(INNER)) if not style.plain else sub.center(INNER)))
+        sub = "Every token: compressed draft vs full KV  ·  drift blocked before it ships"
+        if not style.plain:
+            sub = style.white(sub.center(inner))
+        else:
+            sub = sub.center(inner)
+        lines.append(_box_line(sub, inner))
     if step >= 2:
         tag = PUBLIC_TAGLINE.replace("\n", "  ·  ")
-        lines.append(_box_line(""))
+        lines.append(_box_line("", inner))
         if not style.plain:
-            lines.append(_box_line(style.bold(tag.center(INNER))))
+            lines.append(_box_line(style.bold(style.white(tag.center(inner))), inner))
         else:
-            lines.append(_box_line(tag.center(INNER)))
-    lines.extend([_box_line(""), f"┗{sep}┛"])
+            lines.append(_box_line(tag.center(inner), inner))
+    lines.extend([_box_line("", inner), f"┗{sep}┛"])
     return lines
 
 
-def _top_rail(style: TerminalStyle) -> list[str]:
-    sep = "━" * (INNER + 2)
-    badge = "verifier ● LIVE"
+def _value_prop(style: TerminalStyle) -> list[str]:
+    problem = "PROBLEM  Compressed KV silently picks wrong tokens"
+    action = "EXACTKV  Crash-tests every token  ·  rejects drift  ·  ships full-KV path"
     if not style.plain:
-        badge = style.green("verifier") + style.dim(" ● ") + style.bold("LIVE")
+        problem = style.red(style.bold(problem))
+        action = style.green(style.bold(action))
+    return [problem, action, ""]
+
+
+def _top_rail(style: TerminalStyle) -> list[str]:
+    inner = _panel_width()
+    sep = "━" * (inner + 2)
+    badge = "verifier LIVE"
+    if not style.plain:
+        badge = style.green(style.bold("verifier LIVE"))
     title = style.bold("EXACTKV") if not style.plain else "EXACTKV"
+    meta = f"{META['compressor']}  ·  {META['prompt_label']}"
+    if not style.plain:
+        meta = style.white(meta)
     return [
         f"┏{sep}┓",
-        _box_line(f"{title:<20}{META['model']:<34}{badge:>{INNER - 54}}"),
-        _box_line(style.dim(META["compressor"] + "  ·  " + META["prompt_label"]) if not style.plain
-                  else META["compressor"] + "  ·  " + META["prompt_label"]),
+        _box_line(f"{title}   {META['model']:<28}{badge:>{inner - 44}}", inner),
+        _box_line(meta, inner),
         f"┗{sep}┛",
     ]
 
@@ -141,18 +188,20 @@ def _hud(
     bar = progress_bar(stream_pos, STREAM_TOTAL, width=20)
     drift_txt = str(drifts_caught)
     if drifts_caught and not style.plain:
-        drift_txt = style.red(f"● {drifts_caught}")
+        drift_txt = style.red(style.bold(str(drifts_caught)))
     if phase == "drift":
-        verifier = style.red("ENGAGED") if not style.plain else "[ENGAGED]"
+        verifier = style.red(style.bold("BLOCKING")) if not style.plain else "BLOCKING"
     elif phase == "commit":
-        verifier = style.green("FIXING") if not style.plain else "[FIXING]"
+        verifier = style.green(style.bold("CORRECTING")) if not style.plain else "CORRECTING"
     elif phase == "victory":
-        verifier = style.green("MATCH") if not style.plain else "MATCH"
+        verifier = style.green(style.bold("MATCH")) if not style.plain else "MATCH"
     else:
         verifier = style.cyan("armed") if not style.plain else "armed"
-    line1 = f"DECODE {bar} {pct:>3}%   DRIFTS {drift_txt:<6}   VERIFIER {verifier}"
-    line2 = style.dim("full KV reference locked · lossy draft streams · verifier compares every token") if not style.plain else "full KV reference · lossy draft · verifier compares"
-    return [line1[:INNER + 6], line2[:INNER + 6], ""]
+    line1 = f"DECODE {bar} {pct:>3}%   drifts caught {drift_txt:<3}   verifier {verifier}"
+    line2 = "lossy draft streams left  ·  full KV truth center  ·  ExactKV output right"
+    if not style.plain:
+        line2 = style.white(line2)
+    return [line1, line2, ""]
 
 
 def _drift_alert(
@@ -163,92 +212,76 @@ def _drift_alert(
     right: str,
     flash: bool = False,
 ) -> list[str]:
-    sep = "━" * (INNER + 2)
-    headline = "⛔  DIVERGENCE DETECTED  ·  lossy draft ≠ full KV  ·  verifier blocking output"
-    detail = f"{note} — draft proposed «{wrong}»  ·  full KV expects «{right}»"
+    inner = _panel_width()
+    sep = "━" * (inner + 2)
+    headline = "DRIFT  lossy draft ≠ full KV  ·  verifier stops the bad token"
+    draft = f"draft wrote:  {wrong}"
+    truth = f"full KV wants:  {right}"
+    why = note
     if not style.plain:
         headline = style.red(style.bold(headline))
-        detail = style.yellow(style.bold(detail) if flash else detail)
+        draft = style.white(style.bold(draft) if flash else draft)
+        truth = style.green(truth)
+        why = style.white(f"({why})")
     return [
         f"┏{sep}┓",
-        _box_line(headline),
-        _box_line(detail),
+        _box_line(headline, inner),
+        _box_line(draft, inner),
+        _box_line(truth, inner),
+        _box_line(why, inner),
         f"┗{sep}┛",
         "",
     ]
 
 
 def _verifier_card(style: TerminalStyle, *, wrong: str, right: str, drift_num: int) -> list[str]:
-    sep = "═" * INNER
-    reject = f"✗  REJECT   «{wrong}»"
-    commit = f"✓  COMMIT   «{right}»"
-    foot = f"draft never reaches output buffer  ·  drift #{drift_num} corrected"
+    inner = _panel_width()
+    sep = "═" * inner
+    reject = f"REJECT  «{wrong}»  — never reaches output"
+    commit = f"COMMIT  «{right}»  — from full-KV reference"
+    foot = f"drift #{drift_num} corrected  ·  greedy path preserved"
     if not style.plain:
         reject = style.red(style.bold(reject))
         commit = style.green(style.bold(commit))
-        foot = style.dim(foot)
+        foot = style.white(foot)
     return [
-        f"╔══ VERIFIER ACTION ═══════════════════════════════════════════════════════════╗",
-        _box_line(reject, left="║", right="║"),
-        _box_line(commit, left="║", right="║"),
-        _box_line(foot, left="║", right="║"),
+        "╔══ VERIFIER ══════════════════════════════════════════════════════════════════╗",
+        _box_line(reject, inner, left="║", right="║"),
+        _box_line(commit, inner, left="║", right="║"),
+        _box_line(foot, inner, left="║", right="║"),
         f"╚{sep}╝",
         "",
     ]
 
 
-def _path_block_rows(
-    *,
-    style: TerminalStyle,
-    idx: int,
-    active: int,
-    label: str,
-    flag: str,
-    vis: str,
-    label_w: int,
-    flag_w: int,
-    snippet_w: int,
-    cursor: bool = False,
-    hot: bool = False,
-) -> list[str]:
-    prefix = "▶" if idx == active else " "
-    flag_out = flag
-    if not style.plain:
-        if flag == "DRIFT":
-            flag_out = style.red(style.bold(flag))
-        elif flag == "MATCH":
-            flag_out = style.green(style.bold(flag))
-        elif flag == "hold":
-            flag_out = style.yellow("HOLD")
-        elif flag == "fix":
-            flag_out = style.cyan("FIX")
-        elif flag == "ok":
-            flag_out = style.dim("ok")
-    flag_pad = flag_w if style.plain else max(flag_w, len(flag))
-    wrapped = _wrap_snippet(vis, snippet_w)
-    if cursor and wrapped:
-        last = wrapped[-1]
-        wrapped[-1] = last + (style.cyan("▌") if not style.plain else "|")
-    cont_pad = 2 + (label_w - 1) + 1 + flag_w + 1
-    label_out = label
-    if hot and not style.plain:
-        label_out = style.red(style.bold(label))
-    elif idx == 2 and not style.plain:
-        label_out = style.green(label)
-    elif idx == 0 and not style.plain:
-        label_out = style.dim(label)
-    rows: list[str] = []
-    for line_no, snip in enumerate(wrapped):
-        if line_no == 0:
-            row = f"{prefix} {label_out:<{label_w - 1}} {flag_out:<{flag_pad}} {snip}"
-        else:
-            row = f"{' ' * cont_pad}{snip}"
-        border = "│"
-        rows.append(f"{border} " + row[:INNER].ljust(INNER - 1) + " │")
-    return rows
+def _flag_label(style: TerminalStyle, flag: str) -> str:
+    if style.plain:
+        return flag
+    if flag == "DRIFT":
+        return style.red(style.bold(flag))
+    if flag == "MATCH":
+        return style.green(style.bold(flag))
+    if flag == "HOLD":
+        return style.cyan("HOLD")
+    if flag == "FIX":
+        return style.cyan(style.bold("FIX"))
+    if flag == "ok":
+        return style.white("streaming")
+    return style.white(flag)
 
 
-def _comparison_block(
+def _column_header(style: TerminalStyle, label: str, *, active: bool, hot: bool) -> str:
+    if style.plain:
+        return ("▶ " if active else "  ") + label
+    text = ("▶ " if active else "  ") + label
+    if hot:
+        return style.red(style.bold(text))
+    if active:
+        return style.bold(style.white(text))
+    return style.white(text)
+
+
+def _comparison_columns(
     *,
     style: TerminalStyle,
     full_vis: str,
@@ -260,41 +293,61 @@ def _comparison_block(
     cursor_path: int = -1,
     hot_lossy: bool = False,
 ) -> list[str]:
-    label_w, flag_w = 14, 8
-    snippet_w = INNER - label_w - flag_w - 7
-    sep = "─" * INNER
-    paths = [
-        (0, "Full KV ref", "—", full_vis, False),
-        (1, "Lossy draft", lossy_flag, lossy_vis, hot_lossy),
-        (2, "ExactKV out", exactkv_flag, exactkv_vis, False),
+    cw = _col_width(_panel_width())
+    div = "─" * (cw + 2)
+    top = f"┌{div}┬{div}┬{div}┐"
+    mid = f"├{div}┼{div}┼{div}┤"
+    bot = f"└{div}┴{div}┴{div}┘"
+
+    headers = [
+        _column_header(style, "FULL KV", active=(active == 0), hot=False),
+        _column_header(style, "LOSSY DRAFT", active=(active == 1), hot=hot_lossy),
+        _column_header(style, "EXACTKV OUT", active=(active == 2), hot=False),
     ]
-    hdr = "LIVE TOKEN PATHS  ·  compressed draft vs verified output"
+    flags = [
+        _flag_label(style, "truth"),
+        _flag_label(style, lossy_flag),
+        _flag_label(style, exactkv_flag),
+    ]
+
+    full_lines = _wrap_snippet(full_vis, cw, max_lines=SNIPPET_LINES)
+    lossy_lines = _wrap_snippet(lossy_vis, cw, max_lines=SNIPPET_LINES)
+    exact_lines = _wrap_snippet(exactkv_vis, cw, max_lines=SNIPPET_LINES)
+
+    if cursor_path == 1 and lossy_lines:
+        lossy_lines = list(lossy_lines)
+        lossy_lines[-1] = lossy_lines[-1] + ("▌" if style.plain else style.cyan("▌"))
+    if cursor_path == 2 and exact_lines:
+        exact_lines = list(exact_lines)
+        exact_lines[-1] = exact_lines[-1] + ("▌" if style.plain else style.cyan("▌"))
+
+    def _styled_cell(plain: str, *, hot: bool) -> str:
+        fitted = _fit_cell(plain, cw)
+        if style.plain:
+            return fitted
+        stripped = fitted.rstrip()
+        pad = " " * max(0, cw - len(stripped))
+        if hot and stripped:
+            return style.red(style.bold(stripped)) + pad
+        if stripped:
+            return style.white(stripped) + pad
+        return fitted
+
+    title = "SIDE-BY-SIDE TOKEN PATHS"
     if not style.plain:
-        hdr = style.bold(hdr)
-    lines = [
-        f"┌{sep}┐",
-        f"│ {hdr[:INNER].ljust(INNER)} │",
-        f"├{sep}┤",
-    ]
-    for pidx, (idx, label, flag, vis, hot) in enumerate(paths):
-        if pidx:
-            lines.append(f"├{sep}┤")
-        lines.extend(
-            _path_block_rows(
-                style=style,
-                idx=idx,
-                active=active,
-                label=label,
-                flag=flag,
-                vis=vis,
-                label_w=label_w,
-                flag_w=flag_w,
-                snippet_w=snippet_w,
-                cursor=(idx == cursor_path),
-                hot=hot,
-            )
-        )
-    lines.append(f"└{sep}┘")
+        title = style.bold(style.white(title))
+
+    lines: list[str] = [title, top]
+    lines.append("│" + "│".join(f" {_fit_cell(_strip_ansi(h), cw)} " for h in headers) + "│")
+    lines.append(mid)
+    lines.append("│" + "│".join(f" {_fit_cell(_strip_ansi(f), cw)} " for f in flags) + "│")
+    lines.append(mid)
+    for i in range(SNIPPET_LINES):
+        c1 = _styled_cell(full_lines[i], hot=False)
+        c2 = _styled_cell(lossy_lines[i], hot=hot_lossy and bool(lossy_lines[i].strip()))
+        c3 = _styled_cell(exact_lines[i], hot=False)
+        lines.append("│" + f" {c1} " + "│" + f" {c2} " + "│" + f" {c3} " + "│")
+    lines.append(bot)
     return lines
 
 
@@ -302,34 +355,34 @@ def _ship_comparison(style: TerminalStyle) -> list[str]:
     if style.plain:
         return [
             "",
-            "WHAT WOULD HAVE SHIPPED",
-            "",
-            "  WITHOUT EXACTKV              WITH EXACTKV",
-            '  "units":"imperial"           "units":"metric"',
-            '  "conditions":"overcast"      "conditions":"clear skies"',
-            "  silent wrong tool call       exact greedy path preserved",
+            "WITHOUT EXACTKV (would ship)     WITH EXACTKV (actually ships)",
+            '  "units":"imperial"               "units":"metric"',
+            '  "conditions":"overcast"           "conditions":"clear skies"',
+            "  silent wrong tool JSON           exact full-KV greedy path",
             "",
         ]
     return [
         "",
-        style.bold("WHAT WOULD HAVE SHIPPED"),
+        style.bold(style.white("WITHOUT EXACTKV (would ship)")),
+        style.red('  "units":"imperial"'),
+        style.red('  "conditions":"overcast"'),
+        style.red("  silent wrong tool JSON"),
         "",
-        f"  {style.red('WITHOUT EXACTKV'):<28}  {style.green('WITH EXACTKV')}",
-        f"  {style.red('\"units\":\"imperial\"'):<28}  {style.green('\"units\":\"metric\"')}",
-        f"  {style.red('\"conditions\":\"overcast\"'):<28}  {style.green('\"conditions\":\"clear skies\"')}",
-        f"  {style.red('✗ silent wrong tool call'):<28}  {style.green('✓ exact greedy path')}",
+        style.bold(style.white("WITH EXACTKV (actually ships)")),
+        style.green('  "units":"metric"'),
+        style.green('  "conditions":"clear skies"'),
+        style.green("  exact full-KV greedy path"),
         "",
     ]
 
 
 def _victory_banner(style: TerminalStyle, *, drifts_caught: int) -> list[str]:
-    bar = "█" * min(INNER, 60)
-    headline = "EXACTKV MATCH  ·  final output ≡ full precision KV"
+    headline = "EXACTKV MATCH  ·  output identical to full precision KV"
     stats = f"drifts caught & corrected: {drifts_caught}  ·  exactkv_failures: 0"
     if not style.plain:
         headline = style.green(style.bold(headline))
-        stats = style.bold(stats)
-    return ["", bar, headline, stats, bar, ""]
+        stats = style.white(stats)
+    return ["", headline, stats, ""]
 
 
 def _frame(
@@ -355,9 +408,13 @@ def _frame(
     hot_lossy: bool = False,
 ) -> list[str]:
     body: list[str] = []
+    body.extend(_value_prop(style))
     body.extend(_top_rail(style))
     body.append("")
-    body.append(META["prompt"])
+    prompt = META["prompt"]
+    if not style.plain:
+        prompt = style.white(prompt)
+    body.append(prompt)
     body.append("")
     body.extend(_hud(style, stream_pos=stream_pos, drifts_caught=drifts_caught, phase=phase))
     if status:
@@ -374,7 +431,7 @@ def _frame(
             )
         )
     body.extend(
-        _comparison_block(
+        _comparison_columns(
             style=style,
             full_vis=full_vis,
             lossy_vis=lossy_vis,
@@ -418,7 +475,7 @@ def _stream_chars(
 ) -> tuple[str, str, str, int]:
     full_acc, lossy_acc, exact_acc = full_vis, lossy_vis, exactkv_vis
     pos = stream_pos
-    status = style.dim("streaming greedy decode…") if not style.plain else "streaming…"
+    status = style.white("streaming tokens…") if not style.plain else "streaming…"
     for ch in text:
         full_acc += ch
         lossy_acc += ch
@@ -524,7 +581,7 @@ def run_streaming_demo(
                 exactkv_vis=exactkv_vis,
                 active=1,
                 lossy_flag="DRIFT",
-                exactkv_flag="hold",
+                exactkv_flag="HOLD",
                 stream_pos=pos + j,
                 drifts_caught=drifts_caught,
                 phase="drift",
@@ -547,7 +604,7 @@ def run_streaming_demo(
                 exactkv_vis=exactkv_vis,
                 active=1,
                 lossy_flag="DRIFT",
-                exactkv_flag="hold",
+                exactkv_flag="HOLD",
                 stream_pos=pos + len(wrong),
                 drifts_caught=drifts_caught,
                 phase="drift",
@@ -570,7 +627,7 @@ def run_streaming_demo(
             exactkv_vis=exactkv_vis,
             active=2,
             lossy_flag="DRIFT",
-            exactkv_flag="fix",
+            exactkv_flag="FIX",
             stream_pos=pos + len(wrong),
             drifts_caught=drifts_caught,
             phase="commit",
@@ -591,7 +648,7 @@ def run_streaming_demo(
                 exactkv_vis=exactkv_vis,
                 active=2,
                 lossy_flag="DRIFT",
-                exactkv_flag="fix",
+                exactkv_flag="FIX",
                 stream_pos=pos + k,
                 drifts_caught=drifts_caught,
                 phase="commit",
