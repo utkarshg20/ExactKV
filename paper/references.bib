@@ -1,4 +1,4 @@
-% ExactKV references — prior art and related work.
+% ExactKV references ,  prior art and related work.
 % VERIFIED entries have primary sources (arXiv / proceedings) confirmed via web search.
 % SOURCE-PENDING systems are listed in related_work_audit.md WITHOUT fabricated citations.
 
@@ -98,15 +98,15 @@
   archivePrefix = {arXiv},
   primaryClass = {cs.LG},
   url          = {https://arxiv.org/abs/2605.17613},
-  note         = {Serving/system prior art: compressed draft + full-KV verify for lossless greedy inference. ExactKV measures drift; does not reproduce VeriCache scheduling or throughput.}
+  note         = {Serving/system prior art: compressed draft + full-KV verify for lossless greedy inference. ExactKV measures drift. does not reproduce VeriCache scheduling or throughput.}
 }
 
 % ---------------------------------------------------------------------------
 % SOURCE-PENDING (no fabricated citation). See related_work_audit.md.
-%   - TurboQuant      : referenced in repo as adapter target; primary source not verified here.
-%   - SpectralQuant   : fallback/proxy in repo; primary source not verified here.
-%   - Shard / ShardCache / shard-kv : probe-only adapter; primary source not verified here.
-%   - QuantSpec, SparseSpec, SpecAttn : speculative-decoding adjacents; source-pending.
+%   - TurboQuant      : referenced in repo as adapter target. primary source not verified here.
+%   - SpectralQuant   : fallback/proxy in repo. primary source not verified here.
+%   - Shard / ShardCache / shard-kv : probe-only adapter. primary source not verified here.
+%   - QuantSpec, SparseSpec, SpecAttn : speculative-decoding adjacents. source-pending.
 % ---------------------------------------------------------------------------
 
 @misc{exactkv_local,
@@ -125,7 +125,7 @@
   eprint    = {2306.14048},
   archivePrefix = {arXiv},
   url       = {https://arxiv.org/abs/2306.14048},
-  note      = {Original Heavy Hitter Oracle token-eviction method. ExactKV implements an H2O-style simulation (simplified eviction, no streaming update or GPU kernel); results characterize the eviction compressor class, not the published H2O system.}
+  note      = {Original Heavy Hitter Oracle token-eviction method. ExactKV implements an H2O-style simulation (simplified eviction, no streaming update or GPU kernel). results characterize the eviction compressor class, not the published H2O system.}
 }
 
 @article{liu2024kivi,

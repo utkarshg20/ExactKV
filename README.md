@@ -84,10 +84,11 @@ Requires **Python 3.10+**, **PyTorch**, and **transformers**. GPU optional for t
 
 ## Usage
 
-**Terminal crash-test demo** (replay, no GPU weights):
+**Live terminal demo** (single-act streaming crash test):
 
 ```bash
-python3 scripts/exactkv_terminal_crash_test.py --speed fast
+python3 scripts/exactkv_live_demo.py --speed launch
+python3 scripts/exactkv_live_demo.py --mode cases --speed cinematic
 ```
 
 **Verify artifacts + claim safety** (no inference):
@@ -158,7 +159,7 @@ scripts/
   exactkv_repro.py              # One-command artifact + claim validation
   run_phase_a_scale_benchmark.py
   run_external_panel.py
-  exactkv_terminal_crash_test.py
+  exactkv_live_demo.py
 
 paper/               # Technical report (Markdown, LaTeX, PDF)
 site/                # Public landing page + data/

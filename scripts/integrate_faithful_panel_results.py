@@ -50,7 +50,9 @@ def main() -> int:
     parser.add_argument("--write", action="store_true")
     args = parser.parse_args()
 
-    raw_files = sorted(args.dir.glob("*_raw.json"))
+    raw_files = sorted(
+        p for p in args.dir.glob("*_raw.json") if p.name != "merged_raw.json"
+    )
     if not raw_files:
         print(f"No raw JSON in {args.dir}")
         return 1

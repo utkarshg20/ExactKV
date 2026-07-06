@@ -22,6 +22,13 @@ PY="${PYTHON:-$VENV/bin/python3}"
 export HF_HOME="${HF_HOME:-/workspace/.cache/huggingface}"
 export TRANSFORMERS_CACHE="${TRANSFORMERS_CACHE:-$HF_HOME}"
 export TMPDIR="${TMPDIR:-/workspace/tmp}"
+export HF_HOME="${HF_HOME:-/workspace/.cache/huggingface}"
+export TRANSFORMERS_CACHE="${TRANSFORMERS_CACHE:-$HF_HOME}"
+export TMPDIR="${TMPDIR:-/workspace/tmp}"
+if [[ -z "${HF_TOKEN:-}" && -f "$HF_HOME/token" ]]; then
+  export HF_TOKEN="$(tr -d '[:space:]' < "$HF_HOME/token")"
+  export HUGGING_FACE_HUB_TOKEN="$HF_TOKEN"
+fi
 export EXACTKV_KIVI_ROOT="${KIVI_DIR:-/tmp/kivi_research}"
 export EXACTKV_TURBOQUANT_ROOT="${EXACTKV_TURBOQUANT_ROOT:-/tmp/turboquant_plus}"
 export INSTALL_TURBOQUANT="${INSTALL_TURBOQUANT:-1}"

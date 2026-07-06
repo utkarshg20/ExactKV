@@ -28,6 +28,8 @@ PILOT_PATHS: dict[str, Path] = {
     "mbpp": _BENCHMARKS_DIR / "mbpp_pilot.jsonl",
 }
 
+LONGBENCH_EXPORT_PATH = _BENCHMARKS_DIR / "longbench_export.jsonl"
+
 LONGBENCH_HF_SUBSETS: tuple[str, ...] = (
     "narrativeqa",
     "qasper",
@@ -128,6 +130,15 @@ def load_longbench_pilot(*, max_prompts: int | None = None) -> list[dict[str, An
     return rows[:max_prompts] if max_prompts else rows
 
 
+def load_longbench_export(*, max_prompts: int | None = None) -> list[dict[str, Any]]:
+    rows = load_jsonl_prompts(
+        LONGBENCH_EXPORT_PATH,
+        dataset_family="longbench",
+        default_category="longbench",
+    )
+    return rows[:max_prompts] if max_prompts else rows
+
+
 def load_longbench_hf(
     *,
     subsets: Sequence[str] | None = None,
@@ -139,41 +150,61 @@ def load_longbench_hf(
     try:
         from datasets import load_dataset  # noqa: PLC0415
     except ImportError as exc:
+        if LONGBENCH_EXPORT_PATH.is_file():
+            import warnings
+
+            warnings.warn(
+                f"datasets not installed ({exc}); using {LONGBENCH_EXPORT_PATH.name}",
+                stacklevel=2,
+            )
+            return load_longbench_export(max_prompts=max_total)
         raise ImportError("pip install datasets to load LongBench from Hugging Face") from exc
 
     chosen = list(subsets or LONGBENCH_HF_SUBSETS)
     rows: list[dict[str, Any]] = []
-    for subset in chosen:
-        ds = load_dataset(
-            "THUDM/LongBench",
-            subset,
-            split=split,
-            trust_remote_code=True,
-        )
-        for i, item in enumerate(ds):
-            if i >= max_per_subset:
-                break
-            context = str(item.get("context") or "")
-            input_text = str(item.get("input") or "")
-            prompt = f"{context}\n\n{input_text}".strip() if context else input_text
-            rows.append(
-                _normalize_row(
-                    {
-                        "prompt_id": f"lb_{subset}_{i:03d}",
-                        "category": subset,
-                        "prompt": prompt,
-                        "source_dataset": f"THUDM/LongBench/{subset}",
-                        "source": "hf",
-                        "language": item.get("language", "en"),
-                        "reference_answer": item.get("answers"),
-                    },
-                    dataset_family="longbench",
-                    default_category=subset,
-                ),
+    try:
+        for subset in chosen:
+            ds = load_dataset(
+                "THUDM/LongBench",
+                subset,
+                split=split,
+                trust_remote_code=True,
             )
-            if max_total and len(rows) >= max_total:
-                return rows
-    return rows
+            for i, item in enumerate(ds):
+                if i >= max_per_subset:
+                    break
+                context = str(item.get("context") or "")
+                input_text = str(item.get("input") or "")
+                prompt = f"{context}\n\n{input_text}".strip() if context else input_text
+                rows.append(
+                    _normalize_row(
+                        {
+                            "prompt_id": f"lb_{subset}_{i:03d}",
+                            "category": subset,
+                            "prompt": prompt,
+                            "source_dataset": f"THUDM/LongBench/{subset}",
+                            "source": "hf",
+                            "language": item.get("language", "en"),
+                            "reference_answer": item.get("answers"),
+                        },
+                        dataset_family="longbench",
+                        default_category=subset,
+                    ),
+                )
+                if max_total and len(rows) >= max_total:
+                    return rows
+        return rows
+    except (RuntimeError, ValueError) as exc:
+        if not LONGBENCH_EXPORT_PATH.is_file():
+            raise
+        # Newer `datasets` builds reject LongBench loading scripts; use frozen export.
+        import warnings
+
+        warnings.warn(
+            f"LongBench HF load failed ({exc}); falling back to {LONGBENCH_EXPORT_PATH.name}",
+            stacklevel=2,
+        )
+        return load_longbench_export(max_prompts=max_total)
 
 
 def load_longbench_prompts(
@@ -184,6 +215,8 @@ def load_longbench_prompts(
 ) -> list[dict[str, Any]]:
     if source == "pilot":
         return load_longbench_pilot(max_prompts=max_prompts)
+    if source == "export":
+        return load_longbench_export(max_prompts=max_prompts)
     if source == "hf":
         return load_longbench_hf(subsets=subsets, max_total=max_prompts)
     raise ValueError(f"unknown longbench source {source!r}")

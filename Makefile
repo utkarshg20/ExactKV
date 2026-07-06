@@ -19,7 +19,7 @@ smoke:
 	bash scripts/smoke_test.sh
 
 demo:
-	python3 scripts/exactkv_terminal_crash_test.py --speed fast
+	python3 scripts/exactkv_live_demo.py --speed fast
 
 leaderboard:
 	python3 scripts/exactkv_leaderboard.py
@@ -30,6 +30,6 @@ audit:
 	python3 scripts/check_report_hygiene.py --require-public
 
 test-smoke:
-	python3 -m pytest tests/test_exactkv_terminal_crash_test.py tests/test_exactkv_leaderboard.py \
+	python3 -m pytest tests/test_exactkv_live_demo.py tests/test_exactkv_leaderboard.py \
 		tests/test_public_claims_audit.py tests/test_docs_links.py tests/test_report_hygiene.py \
 		tests/test_acceptance_logic.py -q

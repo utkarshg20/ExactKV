@@ -2,8 +2,8 @@
 # Pull wave-3 TurboQuant faithful panel from RunPod.
 set -euo pipefail
 
-HOST="${RUNPOD_HOST:-203.57.40.101}"
-PORT="${RUNPOD_PORT:-10149}"
+HOST="${RUNPOD_HOST:-203.57.40.105}"
+PORT="${RUNPOD_PORT:-10131}"
 USER="${RUNPOD_USER:-root}"
 KEY="${RUNPOD_SSH_KEY:-$HOME/.ssh/runpod_exactkv}"
 REMOTE="${RUNPOD_REMOTE:-/workspace/ExactKV}"
