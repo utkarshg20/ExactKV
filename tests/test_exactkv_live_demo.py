@@ -16,7 +16,7 @@ _JSON = _ROOT / "site" / "data" / "case_studies.json"
 
 
 def test_wrap_snippet_fills_and_scrolls() -> None:
-    assert _wrap_snippet('{"a":1}', 10) == ['{"a":1}', "", "", ""]
+    assert _wrap_snippet('{"a":1}', 10) == ['{"a":1}', "", "", "", ""]
     wrapped = _wrap_snippet("units imperial metric", 12)
     assert any("metric" in line for line in wrapped)
     assert not any(line.endswith("m") and "etric" in wrapped for line in wrapped)
@@ -66,6 +66,10 @@ def _run_demo(*extra: str) -> str:
         "clear skies",
         "drifts caught & corrected: 2",
         "PROBLEM",
+        "PANELS",
+        "8,132",
+        "first-divergence",
+        "France",
         "WITHOUT EXACTKV",
     ],
 )

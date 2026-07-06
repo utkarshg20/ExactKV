@@ -16,7 +16,7 @@ SPEED_PROFILES = {
     "instant": {"pause": 0.0, "typing": 0.0, "dramatic": 0.0, "section": 0.0, "row": 0.0},
     "fast": {"pause": 0.08, "typing": 0.02, "dramatic": 0.25, "section": 0.06, "row": 0.12},
     "cinematic": {"pause": 0.55, "typing": 0.045, "dramatic": 1.8, "section": 0.45, "row": 0.35},
-    "launch": {"pause": 0.65, "typing": 0.095, "dramatic": 2.4, "section": 0.55, "row": 0.4, "drift_pause": 2.8},
+    "launch": {"pause": 0.55, "typing": 0.082, "dramatic": 1.6, "section": 0.4, "row": 0.3, "drift_pause": 1.0},
     "social": {"pause": 0.4, "typing": 0.038, "dramatic": 1.6, "section": 0.35, "row": 0.3, "drift_pause": 2.0},
     "default": {"pause": 0.35, "typing": 0.03, "dramatic": 1.0, "section": 0.25, "row": 0.2},
 }

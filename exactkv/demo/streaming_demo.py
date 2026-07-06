@@ -10,21 +10,34 @@ from typing import TextIO
 from exactkv.demo.case_study_loader import CLOSING_LINES, PUBLIC_TAGLINE
 from exactkv.demo.live_terminal import SPEED_PROFILES, LiveFrame, TerminalStyle, _emit, progress_bar
 
-SNIPPET_LINES = 4
+SNIPPET_LINES = 5
 
 META = {
-    "prompt_label": "int4_sim 4× · greedy decode · tool JSON",
-    "prompt": 'Emit weather tool result: {"tool":"get_weather","city":"Paris",',
+    "panel": "BFCL tool-call panel · ctx 2048 · 64 max new tokens",
+    "prompt_label": "int4_sim 4× quant · greedy decode · compressed KV draft",
+    "prompt": (
+        "User: Return a complete weather JSON tool result for Paris, France. "
+        "Include units, conditions, humidity, wind, and a 2-day forecast."
+    ),
     "compressor": "int4_sim · 4× quant",
     "model": "Mistral-7B-Instruct",
 }
 
+# Longer realistic tool JSON; two drifts on high-impact fields.
 TIMELINE: tuple[tuple[str, ...], ...] = (
-    ("sync", '{"tool":"get_weather","city":"Paris","units":"'),
-    ("drift", "imperial", "metric", "wrong units field"),
-    ("sync", '","temp_c":18,"conditions":"'),
-    ("drift", "overcast", "clear skies", "wrong conditions field"),
-    ("sync", '","wind":"NW 12km/h","valid":true}'),
+    ("sync", '{"tool":"get_weather","city":"Paris","country":"France","units":"'),
+    ("drift", "imperial", "metric", "4× quant flipped units argmax"),
+    (
+        "sync",
+        '","temp_c":18,"feels_like_c":16,"conditions":"',
+    ),
+    ("drift", "overcast", "clear skies", "compressed KV drift on open-text field"),
+    (
+        "sync",
+        '","humidity_pct":72,"wind":"NW 12km/h","forecast":[{"day":"Mon","high_c":20,'
+        '"low_c":12},{"day":"Tue","high_c":19,"low_c":11}],"source":"open-meteo","valid":',
+    ),
+    ("sync", "true}"),
 )
 
 FULL_TEXT = "".join(seg[1] if seg[0] == "sync" else seg[2] for seg in TIMELINE)
@@ -151,12 +164,32 @@ def _intro_frame(style: TerminalStyle, *, step: int) -> list[str]:
 
 
 def _value_prop(style: TerminalStyle) -> list[str]:
-    problem = "PROBLEM  Compressed KV silently picks wrong tokens"
-    action = "EXACTKV  Crash-tests every token  ·  rejects drift  ·  ships full-KV path"
-    if not style.plain:
-        problem = style.red(style.bold(problem))
-        action = style.green(style.bold(action))
-    return [problem, action, ""]
+    lines = [
+        "PROBLEM   Compressed KV silently picks wrong tokens — benchmarks miss when",
+        "EXACTKV   Crash-tests every token vs full KV  ·  records first-divergence + acceptance",
+        "PANELS    MBPP code  ·  BFCL tool calls  ·  HF LongBench reading  ·  8,132 cells",
+        "RESULT    exactkv_failures = 0 across headline GPU panels (claim-safe release)",
+    ]
+    if style.plain:
+        return lines + [""]
+    return [
+        style.red(style.bold(lines[0])),
+        style.green(style.bold(lines[1])),
+        style.white(lines[2]),
+        style.white(lines[3]),
+        "",
+    ]
+
+
+def _context_block(style: TerminalStyle) -> list[str]:
+    rows = [
+        f"PANEL   {META['panel']}",
+        "KV      2,048-token compressed cache loaded  ·  full-KV reference locked for verify",
+        f"TASK    {META['prompt']}",
+    ]
+    if style.plain:
+        return rows + [""]
+    return [style.white(r) for r in rows] + [""]
 
 
 def _top_rail(style: TerminalStyle) -> list[str]:
@@ -197,8 +230,11 @@ def _hud(
         verifier = style.green(style.bold("MATCH")) if not style.plain else "MATCH"
     else:
         verifier = style.cyan("armed") if not style.plain else "armed"
-    line1 = f"DECODE {bar} {pct:>3}%   drifts caught {drift_txt:<3}   verifier {verifier}"
-    line2 = "lossy draft streams left  ·  full KV truth center  ·  ExactKV output right"
+    line1 = (
+        f"DECODE {bar} {pct:>3}%   token {stream_pos}/{STREAM_TOTAL}   "
+        f"drifts {drift_txt:<3}   verifier {verifier}"
+    )
+    line2 = "draft / full KV / ExactKV output compared every greedy step"
     if not style.plain:
         line2 = style.white(line2)
     return [line1, line2, ""]
@@ -355,34 +391,41 @@ def _ship_comparison(style: TerminalStyle) -> list[str]:
     if style.plain:
         return [
             "",
-            "WITHOUT EXACTKV (would ship)     WITH EXACTKV (actually ships)",
-            '  "units":"imperial"               "units":"metric"',
-            '  "conditions":"overcast"           "conditions":"clear skies"',
-            "  silent wrong tool JSON           exact full-KV greedy path",
+            "WITHOUT EXACTKV (compressed KV only)     WITH EXACTKV (verifier crash-test)",
+            '  "units":"imperial"                         "units":"metric"',
+            '  "conditions":"overcast"                   "conditions":"clear skies"',
+            "  wrong tool JSON ships silently             full-KV greedy path preserved",
+            "  downstream agent gets bad facts            8,132-cell panels: 0 exactness failures",
             "",
         ]
     return [
         "",
-        style.bold(style.white("WITHOUT EXACTKV (would ship)")),
+        style.bold(style.white("WITHOUT EXACTKV (compressed KV only)")),
         style.red('  "units":"imperial"'),
         style.red('  "conditions":"overcast"'),
-        style.red("  silent wrong tool JSON"),
+        style.red("  wrong tool JSON ships silently"),
         "",
-        style.bold(style.white("WITH EXACTKV (actually ships)")),
+        style.bold(style.white("WITH EXACTKV (verifier crash-test)")),
         style.green('  "units":"metric"'),
         style.green('  "conditions":"clear skies"'),
-        style.green("  exact full-KV greedy path"),
+        style.green("  full-KV greedy path preserved"),
+        style.white("  8,132-cell panels · MBPP + BFCL + LongBench · exactkv_failures: 0"),
         "",
     ]
 
 
 def _victory_banner(style: TerminalStyle, *, drifts_caught: int) -> list[str]:
-    headline = "EXACTKV MATCH  ·  output identical to full precision KV"
-    stats = f"drifts caught & corrected: {drifts_caught}  ·  exactkv_failures: 0"
+    headline = "EXACTKV MATCH  ·  shipped output ≡ full precision KV"
+    stats = (
+        f"drifts caught & corrected: {drifts_caught}  ·  acceptance restored  ·  "
+        f"exactkv_failures: 0"
+    )
+    scope = "measures: first-divergence index · token acceptance · verifier agreement per cell"
     if not style.plain:
         headline = style.green(style.bold(headline))
         stats = style.white(stats)
-    return ["", headline, stats, ""]
+        scope = style.white(scope)
+    return ["", headline, stats, scope, ""]
 
 
 def _frame(
@@ -410,11 +453,7 @@ def _frame(
     body: list[str] = []
     body.extend(_value_prop(style))
     body.extend(_top_rail(style))
-    body.append("")
-    prompt = META["prompt"]
-    if not style.plain:
-        prompt = style.white(prompt)
-    body.append(prompt)
+    body.extend(_context_block(style))
     body.append("")
     body.extend(_hud(style, stream_pos=stream_pos, drifts_caught=drifts_caught, phase=phase))
     if status:
@@ -593,7 +632,7 @@ def run_streaming_demo(
             )
             _pause(char_delay * 1.4, no_delay=no_delay)
 
-        flashes = 3 if drift_pause >= 2.0 else 2
+        flashes = 2
         for f in range(flashes):
             _draw_frame(
                 live,
@@ -634,7 +673,7 @@ def run_streaming_demo(
             verifier_card=last_card,
             hot_lossy=True,
         )
-        _pause(drift_pause * 0.35, no_delay=no_delay)
+        _pause(drift_pause * 0.15, no_delay=no_delay)
 
         for k in range(1, len(right) + 1):
             exactkv_vis += right[k - 1]
