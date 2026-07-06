@@ -23,19 +23,20 @@ META = {
     "model": "Mistral-7B-Instruct",
 }
 
-# Longer realistic tool JSON; two drifts on high-impact fields.
+# Longer realistic tool JSON; four drifts on high-impact tool-call fields.
 TIMELINE: tuple[tuple[str, ...], ...] = (
     ("sync", '{"tool":"get_weather","city":"Paris","country":"France","units":"'),
     ("drift", "imperial", "metric", "4× quant flipped units argmax"),
+    ("sync", '","temp_c":'),
+    ("drift", "22", "18", "wrong temperature from compressed logits"),
+    ("sync", ',"feels_like_c":16,"conditions":"'),
+    ("drift", "overcast", "clear skies", "open-text field drift under int4_sim"),
+    ("sync", '","humidity_pct":'),
+    ("drift", "45", "72", "humidity digits flipped by KV noise"),
     (
         "sync",
-        '","temp_c":18,"feels_like_c":16,"conditions":"',
-    ),
-    ("drift", "overcast", "clear skies", "compressed KV drift on open-text field"),
-    (
-        "sync",
-        '","humidity_pct":72,"wind":"NW 12km/h","forecast":[{"day":"Mon","high_c":20,'
-        '"low_c":12},{"day":"Tue","high_c":19,"low_c":11}],"source":"open-meteo","valid":',
+        ',"wind":"NW 12km/h","forecast":[{"day":"Mon","high_c":20,"low_c":12},'
+        '{"day":"Tue","high_c":19,"low_c":11}],"source":"open-meteo","valid":',
     ),
     ("sync", "true}"),
 )
@@ -393,7 +394,9 @@ def _ship_comparison(style: TerminalStyle) -> list[str]:
             "",
             "WITHOUT EXACTKV (compressed KV only)     WITH EXACTKV (verifier crash-test)",
             '  "units":"imperial"                         "units":"metric"',
+            '  "temp_c":22                               "temp_c":18',
             '  "conditions":"overcast"                   "conditions":"clear skies"',
+            '  "humidity_pct":45                         "humidity_pct":72',
             "  wrong tool JSON ships silently             full-KV greedy path preserved",
             "  downstream agent gets bad facts            8,132-cell panels: 0 exactness failures",
             "",
@@ -402,12 +405,16 @@ def _ship_comparison(style: TerminalStyle) -> list[str]:
         "",
         style.bold(style.white("WITHOUT EXACTKV (compressed KV only)")),
         style.red('  "units":"imperial"'),
+        style.red('  "temp_c":22'),
         style.red('  "conditions":"overcast"'),
+        style.red('  "humidity_pct":45'),
         style.red("  wrong tool JSON ships silently"),
         "",
         style.bold(style.white("WITH EXACTKV (verifier crash-test)")),
         style.green('  "units":"metric"'),
+        style.green('  "temp_c":18'),
         style.green('  "conditions":"clear skies"'),
+        style.green('  "humidity_pct":72'),
         style.green("  full-KV greedy path preserved"),
         style.white("  8,132-cell panels · MBPP + BFCL + LongBench · exactkv_failures: 0"),
         "",
@@ -568,7 +575,7 @@ def run_streaming_demo(
             lossy_flag="DRIFT",
             exactkv_flag="MATCH",
             stream_pos=STREAM_TOTAL,
-            drifts_caught=2,
+            drifts_caught=4,
             phase="victory",
             verifier_card=("imperial", "metric", 1),
             show_ship=True,
