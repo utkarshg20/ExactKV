@@ -52,8 +52,8 @@ Four main findings:
 \item \textbf{Generation length scales within-task.} On BFCL, \texttt{int4\_sim} rises
   from 9\% (mnt=16) to 62\% (mnt=256), a $7\times$ increase.
 \item \textbf{Three distinct failure modes.} Top-k logit autopsy (1{,}103 divergent cells):
-  near-tie noise (int8, rank~2.4, fdi=22). distribution shift (int4\_sim,
-  rank~3.5, fdi=8). attention destruction (H2O-style, rank~6.7, fdi=1).
+  near-tie noise (int8, rank~2.4, fdi=22); distribution shift (int4\_sim,
+  rank~3.5, fdi=8); and attention destruction (H2O-style, rank~6.7, fdi=1).
   Three forensic case studies confirm each.
 \item \textbf{100\% downstream validity preserved.} Despite 50\% token drift, ExactKV
   preserves all 106/106 full-KV valid BFCL tool calls (both models, all four task categories).
@@ -62,11 +62,12 @@ Four main findings:
 \begin{sloppypar}
 \noindent\texttt{int6\_sim} (6-bit per-tensor) and \texttt{int4\_per\_vec\_sim}
 (KIVI/KVQuant-style per-vector INT4, $2.06\times$ int8 error) are GPU-validated
-non-catastrophic on both Mistral-7B and Llama-3.1-8B (v3.0, 1,568 cells total,
-\texttt{exactkv\_failures=0}): both show 0\% divergence on BFCL and MBPP. \texttt{int6\_sim} reaches 37--47\% and \texttt{int4\_per\_vec\_sim} 56--57\% on
-HF LongBench, per-vector granularity helps on structured tasks, while bit-width
+non-catastrophic on both Mistral-7B and Llama-3.1-8B (extended validation panel,
+1{,}568 cells, \texttt{exactkv\_failures=0}): both show 0\% divergence on BFCL and MBPP.
+\texttt{int6\_sim} reaches 37--47\% and \texttt{int4\_per\_vec\_sim} 56--57\% on
+HF LongBench; per-vector granularity helps on structured tasks, while bit-width
 still matters at 8K LongBench context.
-\textbf{Faithful adapters (Phase D3 appendix, 1,568 cells, separate from headline):}
+\textbf{Faithful upstream adapters} (1{,}568 appendix cells, separate from headline):
 \texttt{turboquant\_experimental} is task-conditional, near-clean on structured tasks
 but $\sim$65\% LongBench drift; \texttt{int8} remains the only non-catastrophic real
 compressor in that grid (8.3\% combined).
@@ -144,9 +145,10 @@ acceptance, and exactness failures, \emph{not} deployment throughput. It does
 1 & Task type dominates drift & int4\_sim: MBPP 6\% $\to$ BFCL 11\% $\to$ BFCL long 50\% $\to$ LongBench 90\% \\
 2 & Generation length scales drift & int4\_sim mnt=16: 9\% $\to$ mnt=256: 62\% ($7\times$) \\
 3 & Eviction $>$ quantization & H2O-style 75\% kept $\to$ 100\% LongBench divergence \\
-4 & Three distinct failure modes & int8: near-tie (rank 2.4, fdi=22). int4\_sim: shift (rank 3.5, fdi=8). H2O: destruction (rank 6.7, fdi=1) \\
+4 & Three distinct failure modes & int8: near-tie (rank 2.4, fdi=22); int4\_sim: shift (rank 3.5, fdi=8); H2O: destruction (rank 6.7, fdi=1) \\
 5 & 100\% downstream validity & ExactKV preserves 106/106 valid BFCL tool calls despite 50\% drift \\
 6 & Zero correctness failures & \texttt{exactkv\_failures=0} across all 8,132 GPU cells \\
+7 & Faithful adapters reinforce task hierarchy & TurboQuant: $\sim$0--5\% code/tool, $\sim$65\% LongBench; int8: 8.3\% combined (appendix) \\
 \bottomrule
 \end{tabular}
 \caption{Main findings summary.}
@@ -619,8 +621,8 @@ fdi = first-divergence index. Three distinct failure modes: (1)~\emph{near-tie n
 
 Three qualitatively distinct failure modes emerge:
 
-\textbf{(1) Near-tie noise (int8):} 66\% of divergences are near-ties (margin $<0.05$).
-Lossy mean rank 2.4. late divergence (fdi=22). Small 8-bit noise flips only closely-contested
+\textbf{(1) Near-tie noise (int8):} 66\% of divergences are near-ties (margin $<0.05$);
+lossy mean rank 2.4; late divergence (fdi=22). Small 8-bit noise flips only closely-contested
 decisions, explaining why int8 diverges on LongBench (uncertain outputs) but not structured tasks.
 
 \textbf{(2) Distribution shift (int4\_sim):} 83\% top-1 flip, 26\% near-tie, mean margin
@@ -633,8 +635,8 @@ activation toward plausible but incorrect alternatives.
 token. the lossy model selects tokens ranked 6th--7th in the full-KV distribution.
 
 These three modes directly explain the task-type hierarchy: near-tie noise only surfaces
-on long-context uncertain tasks (LongBench). distribution shift affects all tasks but
-worsens with longer generation. attention destruction is immediate regardless of task.
+on long-context uncertain tasks (LongBench); distribution shift affects all tasks but
+worsens with longer generation; attention destruction is immediate regardless of task.
 \texttt{exactkv\_failures=0} across all 1,103 divergent cells.
 
 \FloatBarrier
@@ -851,13 +853,14 @@ h2o\_sim\_75    &,  &,  & 100\%  & Eviction (75\% kept) \\
 \label{tab:core-curve}
 \end{table}
 
-\subsection{Faithful external compressor integration (Phase D3)}
+\subsection{Faithful external adapter appendix}
 \label{sec:faithful-compressors}
 
 Phase D3 wires \textbf{faithful external adapters} (upstream algorithms, not ExactKV
 tensor sims) on the same crash-test grid as built-in compressors. Results are
 \textbf{appendix evidence only}, tracked separately from the 8,132-cell headline total.
-Reproduction commands: Appendix~\ref{sec:repro-faithful}.
+Reproduction commands: Appendix~\ref{sec:repro-faithful}. Internal wave labels (1--3)
+in tables below map to artifact directories in Appendix~E.
 
 \textbf{Three roles (not three successes):} \texttt{int8} is the non-catastrophic
 \textbf{real} baseline; \texttt{snapkv\_experimental} tests whether kvpress SnapKVPress
@@ -1170,20 +1173,23 @@ smoke (LongBench/RULER/BFCL/HumanEval bundled pilots). 144-cell MBPP smoke (both
 reveals catastrophic adapter-level drift (100\% divergence, acceptance $\approx$\,0)
 and all cells corrected (\texttt{exactkv\_failures=0}).
 
-\textbf{Future work, KIVI production path:} Phase D3 appendix is \textbf{complete}
-(1,568 cells across waves 1--3; Section~\ref{sec:faithful-compressors}). \textbf{Remaining:}
+\textbf{Future work, KIVI production path:} The faithful adapter appendix is
+\textbf{complete} (1,568 cells; Section~\ref{sec:faithful-compressors}). \textbf{Remaining:}
 production KIVI CUDA/Triton kernel validation (Exp~024 blocked), not adapter smoke.
 The legacy \texttt{kivi\_offline} result (no residual) is an adapter diagnostic.
 \par}
 
-\textbf{Completed v2.9 work:} BFCL validity panel v2.7 (1,200 cells, mnt=128/256,
-both models, \texttt{exactkv\_failures=0}). H2O-style token-eviction panel v2.8
-(800 cells, 5 eviction variants, both models). top-$k$ logit autopsy across
-1,103 divergent cells (\texttt{--store-top-k-logits}), revealing three mechanistically
-distinct failure modes. Total: \textbf{8,132 completed GPU cells}.
+\textbf{Completed extended panels:} BFCL tool-call validity (1,200 cells, mnt=128/256,
+both models, \texttt{exactkv\_failures=0}); H2O-style token-eviction (800 cells, five
+variants, both models); top-$k$ logit autopsy across 1,103 divergent cells
+(\texttt{--store-top-k-logits}), revealing three mechanistically distinct failure modes.
+Total: \textbf{8,132 completed GPU cells}.
 
-\textbf{Remaining future work:} expand BFCL validity to larger/more diverse prompts. expand MBPP with safe pass@1/syntax validation. broader downstream metrics beyond BFCL
-(including LongBench answer-overlap). RULER 12K+. HELMET. InfiniteBench 100K+. broader scaling curves (12K+, 16K+ context. more compressors). faithful production KIVI/KVQuant/SnapKV integrations (Phase D3 appendix complete: 1,568 cells across wave-1/2/3. KIVI CUDA blocked).
+\textbf{Remaining future work:} expand BFCL validity to larger/more diverse prompts;
+expand MBPP with safe pass@1/syntax validation; broader downstream metrics beyond BFCL
+(including LongBench answer-overlap); RULER 12K+; HELMET; InfiniteBench 100K+; broader
+scaling curves (12K+, 16K+ context, more compressors); production KIVI/KVQuant/SnapKV
+CUDA kernels (adapter smoke complete; Exp~024 blocked).
 
 \section{Conclusion}
 
@@ -1208,7 +1214,9 @@ ExactKV establishes four empirical findings:
   $7\times$ increase. \texttt{int8} stays near-zero throughout.
 
 \item \textbf{Compressor class determines failure mode.} Logit autopsy over 1,103
-  divergent cells reveals: (a)~near-tie noise (int8, mean rank 2.4, fdi=22). (b)~distribution shift (int4\_sim, rank 3.5, fdi=8). (c)~attention destruction (H2O-style, rank 6.7, fdi=1).
+  divergent cells reveals: (a)~near-tie noise (int8, mean rank 2.4, fdi=22);
+  (b)~distribution shift (int4\_sim, rank 3.5, fdi=8); and (c)~attention destruction
+  (H2O-style, rank 6.7, fdi=1).
 
 \item \textbf{Downstream task validity is fully preserved by ExactKV.} Despite 50\%
   token drift, 100\% of full-KV valid BFCL tool calls are preserved by the verifier
@@ -1217,17 +1225,17 @@ ExactKV establishes four empirical findings:
 
 \begin{sloppypar}
 Two new compressors extend the compression curve: \texttt{int6\_sim} (6-bit per-tensor)
-and \texttt{int4\_per\_vec\_sim} (4-bit per-vector, KIVI/KVQuant-style). The v3.0 GPU
-panel (both models, 1,568 cells, \texttt{exactkv\_failures=0}) validates both as
-non-catastrophic: 0\% on BFCL/MBPP. 37--47\% (int6) and 56--57\% (int4 per-vector)
+and \texttt{int4\_per\_vec\_sim} (4-bit per-vector, KIVI/KVQuant-style). An extended
+validation panel (both models, 1,568 cells, \texttt{exactkv\_failures=0}) validates both as
+non-catastrophic: 0\% on BFCL/MBPP; 37--47\% (int6) and 56--57\% (int4 per-vector)
 on LongBench. Per-vector granularity eliminates drift on structured tasks but
 4-bit resolution still accumulates at 8K context.
 
-\textbf{Faithful external adapters (Phase D3 appendix, 1,568 cells):} wave-3 shows
-\texttt{turboquant\_experimental} is task-conditional ($\sim$65\% LongBench drift,
-near-clean on code/tool); \texttt{int8} remains the only non-catastrophic real
-compressor in that grid. This reinforces task-type sensitivity; it does not establish
-a faithful non-catastrophic LongBench baseline.
+\textbf{Faithful upstream adapters} (1,568 appendix cells): a full \texttt{int8} vs
+\texttt{turboquant\_experimental} grid on both models shows TurboQuant is near-clean on
+structured tasks but $\sim$63--67\% LongBench drift; \texttt{int8} remains the only
+non-catastrophic real compressor in that grid. This reinforces task-type sensitivity;
+it does not establish a faithful non-catastrophic LongBench baseline.
 
 ExactKV's contribution is not a new compressor. It is a measurement infrastructure that
 makes KV-cache drift \textbf{observable, attributable, and reproducible}, and a verifier

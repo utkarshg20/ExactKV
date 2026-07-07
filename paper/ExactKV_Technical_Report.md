@@ -45,14 +45,14 @@ at matched memory budget.
 7× from 9% (mnt=16) to 62% (mnt=256). `int8` stays near-zero throughout.
 
 3. **Compressor class determines failure mode.** Top-k logit autopsy over 1,103 divergent
-cells identifies: near-tie noise (int8, mean lossy rank 2.4, fdi=22). Distribution shift
-(int4_sim, rank 3.5, fdi=8). Attention destruction (H2O-style, rank 6.7, fdi=1). Three
-forensic case studies with full top-5 logit traces confirm each mechanism.
+cells identifies three mechanisms: near-tie noise (int8, mean lossy rank 2.4, fdi=22);
+distribution shift (int4_sim, rank 3.5, fdi=8); and attention destruction (H2O-style,
+rank 6.7, fdi=1). Three forensic case studies with full top-5 logit traces confirm each.
 
 4. **Downstream validity is preserved when full-KV is valid.** Despite high token drift,
-ExactKV preserves **318/318** full-KV valid BFCL tool calls (v2.7 panel) and **264/264**
-in v3.0 BFCL subsets, but full-KV validity itself is modest (26-37% on BFCL). This is
-preservation of full-KV quality, not high absolute task success.
+ExactKV preserves **318/318** full-KV valid BFCL tool calls (long-gen validity panel) and
+**264/264** in extended BFCL subsets, but full-KV validity itself is modest (26–37% on
+BFCL). This is preservation of full-KV quality, not high absolute task success.
 
 **Correctness invariant:** `exactkv_failures = 0` on all 8,132 cells. The verifier
 implementation is sound under our semantics. This is expected when verify/commit logic
@@ -65,18 +65,14 @@ tasks. `int4_sim` and H2O-style eviction do not on reading/long-gen.
 
 `int4_per_vec_sim` is a **KIVI/KVQuant-inspired granularity baseline** (per-vector INT4
 layout), not a reproduction of either production system. GPU-validated on both models
-(1,568 extended-validation cells). Faithful external adapters (SnapKV via kvpress,
-KIVI offline r32) are evaluated separately as **upstream adapter smoke tests** (§6.17,
-864 cells wave-1, both models. 128 cells wave-2 Mistral smoke, §6.17.1. **576 cells
-wave-3** full grid, both models, §6.17.2). They confirm
-the harness runs on real upstream code paths. Wave-1 adapters **mostly fail** the drift
-test (90-100% on SnapKV/KIVI). Wave-2 smoke on structured tasks showed
-**`turboquant_experimental` at 3.1% combined drift**; wave-3 (576 cells, both models)
-shows the same adapter is **task-conditional**: near-clean on MBPP/BFCL (1.6-5.0%)
-but **~65% drift on HF LongBench**. **`int8` remains the only non-catastrophic real
-compressor** in the appendix grid (8.3% combined). Appendix evidence only,
-not merged into headline totals. This does **not** establish production-ready external
-compression and does not change headline conclusions about built-in compressors.
+(1,568 extended-validation cells). **Faithful upstream adapters** (SnapKV via kvpress,
+KIVI offline r32, TurboQuant) are evaluated separately in a **1,568-cell appendix**
+(§6.17), not merged into the 8,132 headline total. SnapKV and KIVI mostly fail the drift
+test (90–100%); TurboQuant is **task-conditional** — near-clean on structured code/tool
+(1.6–5.0% on MBPP/BFCL) but **~65% drift on HF LongBench** on both models. **`int8`
+remains the only non-catastrophic real compressor** in that appendix grid (8.3% combined).
+This reinforces task-type sensitivity; it does **not** establish production-ready external
+compression or a faithful non-catastrophic LongBench baseline.
 
 Results are **not** official benchmark scores, production serving claims, or a reproduction
 of VeriCache [vericache2026] throughput-oriented serving.
@@ -108,13 +104,13 @@ verifier agreement, and exactness failures per cell.
 **Contributions:**
 
 1. A **compressor-agnostic crash-test framework** with leaderboard-style reporting
-   that measures token-level drift, first-divergence index, acceptance rate, and
-   and mechanistic failure signatures across compressors and models (§3-5).
+   that measures token-level drift, first-divergence index, acceptance rate,
+   and mechanistic failure signatures across compressors and models (§3–5).
 2. **Empirical evidence that drift is task-dependent, length-dependent, and
    compressor-class-dependent:** `int4_sim` spans 6% (MBPP) → 90% (HF LongBench). BFCL long-gen scales 9% → 62% as output budget grows 7×. H2O-style eviction
    reaches 100% on reading at 75% kept (§6.4-6.12, Table 6.16).
 3. A **logit autopsy** over 1,103 divergent cells identifying three mechanistically
-   distinct failure modes, near-tie noise (int8), distribution shift (int4_sim),
+   distinct failure modes: near-tie noise (int8), distribution shift (int4_sim), and
    attention destruction (H2O-style), each with forensic case studies (§6.10, §7).
 4. A **compressor design curve** from `int8` through `int6_sim` and `int4_per_vec_sim`
    to catastrophic `int4_sim`, showing per-vector granularity helps on structured
@@ -126,12 +122,10 @@ verifier agreement, and exactness failures per cell.
    (§6, Appendix A). **`exactkv_failures = 0` throughout** confirms verify/commit
    semantics are implemented correctly, an engineering invariant, not the scientific
    headline.
-7. **Faithful upstream adapter diagnostics** (1,568 cells, appendix §6.17): wave-1
-   confirms harness integration. wave-2 TurboQuant smoke (128 cells, Mistral,
-   structured tasks only). **wave-3 full grid** (576 cells, both models) shows
-   **`turboquant_experimental` is task-conditional**: near-clean on code/tool,
-   **~65% LongBench drift** vs **~17% for `int8`**. No faithful non-catastrophic
-   LongBench baseline. Appendix evidence only.
+7. **Faithful upstream adapter diagnostics** (1,568 appendix cells, §6.17): real
+   upstream libraries on the same crash-test grid. TurboQuant is near-clean on
+   structured tasks but **~65% LongBench drift**; **`int8` is the only non-catastrophic
+   real compressor** in that grid. No faithful non-catastrophic LongBench baseline.
 
 ### 2.1 Shared problem framing with VeriCache
 
@@ -169,10 +163,11 @@ deployment throughput or reproduce VeriCache's system design. See Section 10.
 | 1 | **Task type dominates drift** | int4_sim: MBPP 6% → BFCL short 11% → BFCL long 50% → LongBench 90% |
 | 2 | **Generation length scales drift** | int4_sim mnt=16: 9% → mnt=256: 62% (7×) |
 | 3 | **Eviction > quantization drift** | H2O-style 75% kept → 100% LongBench divergence |
-| 4 | **Three distinct failure modes** | int8: near-tie (rank 2.4, fdi=22). Int4_sim: distribution shift (rank 3.5, fdi=8). H2O: attention destruction (rank 6.7, fdi=1) |
+| 4 | **Three distinct failure modes** | int8: near-tie (rank 2.4, fdi=22); int4_sim: distribution shift (rank 3.5, fdi=8); H2O: attention destruction (rank 6.7, fdi=1) |
 | 5 | **100% downstream validity preserved** | ExactKV preserves all 106/106 valid BFCL tool calls despite 50% drift |
 | 6 | **Zero correctness failures** | exactkv_failures=0 across all 8,132 GPU cells |
 | 7 | **Compressor design-space curve** | int8 → int6 → int4_per_vec → int4_sim → H2O: monotonic LongBench degradation (Table 6.16) |
+| 8 | **Faithful adapters reinforce task hierarchy** | TurboQuant: ~0–5% on code/tool, ~65% LongBench; int8: 8.3% combined (appendix, §6.17) |
 
 ExactKV's strongest supported claim is not merely that compressed KV drifts, it is
 that **KV-cache drift is governed jointly by task type, generation length, compressor
@@ -1592,7 +1587,7 @@ from the v2.8 LongBench panel (both models, `h2o_sim_75`).
 *Table 6.16, Core benchmark curve. V3.0 quantisation compressors: both-model mean
 (Mistral/Llama). H2O: v2.8 LongBench panel. `exactkv_failures=0` throughout.*
 
-### 6.17 Faithful external adapter smoke (Appendix, not headline compressors)
+### 6.17 Faithful upstream adapter appendix
 
 > **Paper positioning:** The headline study (§6, Table 6.16) uses built-in compressors
 > plus real `int8`. This section reports **adapter smoke tests**: can ExactKV run real
@@ -2157,7 +2152,7 @@ Claim boundary: `kivi_offline` / `kivi_offline_r32` use real KIVI quantizer math
 | **Rerun Mistral on main external panels** (LongBench/RULER/BFCL/HumanEval) | Failed in first workflow (disk quota). Succeeded later for MBPP only |
 | **HELMET holistic long-context panel** | Not implemented |
 | **InfiniteBench 100K+ stress** | Not run, pending verifier memory/runtime stability |
-| **KVQuant/SnapKV/TurboQuant faithful adapters** | Phase D3 appendix **complete** (1,568 cells: wave-1 864 + wave-2 128 + wave-3 576, §6.17). **`int8` only non-catastrophic real compressor**; TurboQuant task-conditional (~65% LongBench). **Remaining:** production KIVI CUDA/Triton kernel (Exp 024 blocked), not adapter smoke |
+| **KVQuant/SnapKV/TurboQuant faithful adapters** | Faithful adapter appendix **complete** (1,568 cells, §6.17). **`int8` only non-catastrophic real compressor**; TurboQuant task-conditional (~65% LongBench). **Remaining:** production KIVI CUDA/Triton kernel (Exp 024 blocked), not adapter smoke |
 | **RULER 16K/32K scaling** | 2K/4K/8K pilot done |
 | **HumanEval/MBPP pass@1 impact** | Requires safe sandboxing. Extend beyond BFCL downstream validity to MBPP pass@1/syntax and LongBench answer-overlap |
 | **Confidence intervals** | Wilson CIs added for all external panels |
@@ -2377,7 +2372,7 @@ tool-calling (BFCL short-gen), 50% on tool-calling (BFCL long-gen at mnt=128/256
 and **90% on open-text reading/summarization (HF LongBench, 2K-8K context)**.
 Even int8 reaches 25% divergence on LongBench vs 0% on BFCL/MBPP, confirming that
 **task type, not just quantization level or context length, is the dominant driver
-of KV compression drift**. The v2.8 H2O-style token-eviction panel adds a new dimension:
+of KV compression drift**. H2O-style token eviction adds a further dimension:
 **eviction-class compressors produce near-universal divergence (100%) on reading tasks
 even at mild keep_ratio=0.75**, far exceeding int4_sim at matched memory budgets. Mean
 acceptance rate for H2O is ~0.35 (diverges at token 1) vs. ~0.84 for int4_sim.
@@ -2385,10 +2380,10 @@ The verifier maintains `exactkv_failures = 0` across all 8,132 cells, including 
 100% H2O divergence cases. **ExactKV catches every compressor failure type.**
 
 Top-k logit analysis (§6.10) over 1,103 divergent cells reveals three mechanistically
-distinct failure modes: **(1) near-tie noise**, int8 flips close argmax decisions
-(66% near-tie, mean lossy rank 2.4). **(2) distribution shift**, int4_sim biases
-activations toward lower-ranked alternatives (83% flip, mean rank 3.5). And
-**(3) attention destruction**, H2O eviction eliminates contextual anchors from the
+distinct failure modes: **(1) near-tie noise** — int8 flips close argmax decisions
+(66% near-tie, mean lossy rank 2.4); **(2) distribution shift** — int4_sim biases
+activations toward lower-ranked alternatives (83% flip, mean rank 3.5); and
+**(3) attention destruction** — H2O eviction eliminates contextual anchors from the
 first generated token (100% flip, mean rank 6.7, fdi=1). The same verifier
 corrects all three failure modes with `exactkv_failures=0`.
 
@@ -2398,20 +2393,19 @@ infrastructure to understand when any compressor starts lying, and the mechanist
 evidence to explain *why*.
 
 Two new compressors extend the compression curve: `int6_sim` (6-bit per-tensor)
-and `int4_per_vec_sim` (4-bit per-vector, KIVI/KVQuant-style). The v3.0 GPU panel
-(both models, 1,568 cells, `exactkv_failures=0`) validates both as non-catastrophic:
-`int6_sim` achieves 0% divergence on BFCL/MBPP and 37-47% on LongBench (Mistral/Llama).
-`int4_per_vec_sim` achieves 0% on BFCL/MBPP and 56-57% on LongBench, establishing both
-as the first non-catastrophic int4/int6 compressors in the ExactKV framework. The
-per-vector granularity result is task-conditional: it eliminates drift on structured
-tasks, but 4-bit resolution still accumulates error at 8K context on both models.
+and `int4_per_vec_sim` (4-bit per-vector, KIVI/KVQuant-style). An extended validation
+panel on both models (1,568 cells, `exactkv_failures=0`) validates both as
+non-catastrophic: `int6_sim` achieves 0% divergence on BFCL/MBPP and 37–47% on LongBench;
+`int4_per_vec_sim` achieves 0% on BFCL/MBPP and 56–57% on LongBench. Per-vector
+granularity eliminates drift on structured tasks, but 4-bit resolution still accumulates
+error at 8K context on both models.
 
-**Faithful external adapters (Phase D3 appendix, 1,568 cells, separate from headline):**
-wave-3 completes a full `int8` vs `turboquant_experimental` grid on both models.
-TurboQuant is near-clean on structured code/tool tasks but **~63-67% drift on HF
-LongBench**; `int8` remains the only non-catastrophic real compressor in that grid
-(8.3% combined). This reinforces the task-type hierarchy from built-in compressors —
-it does not establish a faithful non-catastrophic LongBench baseline.
+**Faithful upstream adapters** (1,568 appendix cells, separate from headline): a full
+`int8` vs `turboquant_experimental` grid on both models shows TurboQuant is near-clean
+on structured code/tool tasks but **~63–67% drift on HF LongBench**; `int8` remains
+the only non-catastrophic real compressor in that grid (8.3% combined). This reinforces
+the task-type hierarchy from built-in compressors — it does not establish a faithful
+non-catastrophic LongBench baseline.
 
 ---
 
