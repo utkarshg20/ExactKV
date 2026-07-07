@@ -430,9 +430,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       “Preserved” means ExactKV output matches full-KV, not that full-KV always succeeds. The verifier closes the gap between drift rate and output validity on tested panels.
     </p>
 
-    <details class="article-details article-details--section" id="compressor-curve">
-      <summary>11. The compressor curve: bit-width and granularity</summary>
-      <div class="detail-body">
+    <h2 id="compressor-curve">11. The compressor curve: bit-width and granularity</h2>
     <p>
       The 6%/90% hook is one point. GPU-validated built-ins (v30 panel batch, both models, task-family means):
     </p>
@@ -474,24 +472,17 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
         </div>
         <p>Per-vector int4 has 6× lower error than per-tensor int4, and 30pp lower LongBench drift than int4_sim, but int6_sim still wins on reading at 8K despite higher MAE.</p>
       </div>
-      </div>
     </details>
 
-    <details class="article-details article-details--section" id="h2o-eviction">
-      <summary>12. H2O-style eviction, worse than int4 at matched budget</summary>
-      <div class="detail-body">
+    <h2 id="h2o-eviction">12. H2O-style eviction, worse than int4 at matched budget</h2>
     <p>
       Token eviction is a different failure class. H2O-style simulation (attention-sink + recency window, keep_ratio 0.75/0.50/0.25) on LongBench: <strong>100% divergence</strong> at all keep ratios, median first divergence index <strong>1</strong>, mean lossy rank <strong>6.7</strong>. Eviction destroys anchoring context immediately, worse than int4_sim at a matched ~4× memory story on reading tasks.
     </p>
     <p>
       Claim boundary: H2O-style simulation, not faithful H2O GPU kernel. Still useful as a class diagnostic.
     </p>
-      </div>
-    </details>
 
-    <details class="article-details article-details--section" id="faithful-adapters">
-      <summary>13. Faithful upstream adapters (1,568 cells)</summary>
-      <div class="detail-body">
+    <h2 id="faithful-adapters">13. Faithful upstream adapters (1,568 cells)</h2>
     <p>
       Built-in sims map the design space. Phase D3 wires real upstream algorithms on the same crash-test grid, in a separate artifact tree (<code>reports/external_panels/faithful/</code>), not merged into the 8,132 headline total. These are <strong>adapter smoke tests</strong>: they ask whether ExactKV can run real upstream code paths and how much they drift, not which compressor wins.
     </p>
@@ -564,8 +555,6 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
     <p>
       <strong>Key finding:</strong> TurboQuant looks fine on structured code/tool tasks (1.6–5.0% drift) but <strong>fails the long-context reading stress test</strong> (~63–67% LongBench drift, both models). <code>int8</code> remains the only non-catastrophic real compressor in this appendix grid (8.3% combined). Offline Python adapter only. not a deployment claim. Artifacts: <code>reports/external_panels/faithful/wave3/</code>. Full tables: technical report §6.17.2.
     </p>
-      </div>
-    </details>
 
     <h2 id="case-studies">14. Divergence case studies</h2>
     <p>
@@ -776,9 +765,7 @@ its high forehead and its straight nose, they were positively grotes</pre>
       <!-- /SYNC:CASE_STUDIES -->
     </div>
 
-    <details class="article-details article-details--section" id="cell-inventory">
-      <summary>15. The 8,132-cell inventory</summary>
-      <div class="detail-body">
+    <h2 id="cell-inventory">15. The 8,132-cell inventory</h2>
     <p>
       Headline total = completed GPU panels with <code>exactkv_failures=0</code>. Not official benchmark scores.
     </p>
@@ -803,8 +790,6 @@ its high forehead and its straight nose, they were positively grotes</pre>
       </table>
     </div>
     <p class="viz-caption">Reconciliation: 6,564 pre-v30 + 784 + 784 v30 = 8,132 headline. Faithful appendix: wave-1 (864) + wave-2 (128) + wave-3 (576) = 1,568 cells tracked separately in §6.17. Full card in the technical report Appendix A. Public cite: ExactKV research release · git tag <code>v-release</code>.</p>
-      </div>
-    </details>
 
     <h2 id="leaderboard">16. Core compressor leaderboard</h2>
     <p>
