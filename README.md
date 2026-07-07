@@ -35,7 +35,7 @@ All on **Llama-3.1-8B** and **Mistral-7B-Instruct-v0.3**, greedy decoding.
 | H2O-style eviction @ 75% kept, LongBench | **100%** (worse than int4 at matched budget) |
 | BFCL long-gen drift (mnt 16→256) | **9% → 62%** (7× within-task scaling) |
 | Full-KV valid tool calls preserved | **106/106** (v2.7 BFCL validity panel) |
-| Faithful adapter smoke (appendix) | **864** wave-1 + **128** wave-2, int8 ~8-9%, TurboQuant 3.1% (wave-2 smoke), SnapKV 90-97%, KIVI r32 100% |
+| Faithful adapter smoke (appendix) | **1,568** (864 wave-1 + 128 wave-2 + **576 wave-3**): int8 ~8–9%; TurboQuant 3.1% structured smoke → **~65% LongBench** in wave-3; SnapKV 90–97%; KIVI r32 100% |
 
 ### Compressor tiers
 
@@ -129,7 +129,7 @@ Every headline number traces to an on-disk JSON artifact. Claim boundaries: [`do
 | Core leaderboard (1,500 cells) | `reports/scale_7b/raw.json` |
 | Public leaderboard JSON | `reports/public_release/leaderboard_final.json` |
 | External panels (8,132 headline total) | `reports/external_panels/` |
-| Faithful adapter smoke (864, appendix) | `reports/external_panels/faithful/` |
+| Faithful adapter appendix (1,568 cells) | `reports/external_panels/faithful/` (wave-3: `faithful/wave3/`) |
 | v30 int6 + int4_per_vec panel | `reports/external_panels/v30/` |
 | Systems microbench (Phase F) | `reports/systems/latency_microbench.json` |
 | Stored-byte memory trace | `reports/systems/gpu_memory_trace.json` |

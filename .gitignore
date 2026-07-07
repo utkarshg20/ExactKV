@@ -90,9 +90,7 @@ docs/assets/exactkv_crash_test_frames/
 reports/*.pid
 reports/*_monitor.log
 reports/faithful_wave3_monitor.pid
-
-# Wave-3 faithful panel — commit only after 576/576 cells locked
-reports/external_panels/faithful/wave3/
+reports/external_panels/faithful/wave3/*_backup.json
 
 # Prompt JSONL files committed under benchmarks/prompts/ are tracked explicitly.
 # All other *.jsonl are ignored (e.g. benchmark output reports).

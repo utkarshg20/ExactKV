@@ -90,7 +90,7 @@ on LongBench (86% → 57%, a 29pp improvement), but bit-width still matters at 8
 - Claim-boundary audit, CPU smoke replay, and reports-only validation path
 - GitHub Release [`v-release`](https://github.com/utkarshg20/ExactKV/releases/tag/v-release)
 - CI workflow green on smoke + correctness unit tests
-- Faithful adapter smoke appendix (864 wave-1 + 128 wave-2 cells, separate from headline total)
+- Faithful adapter appendix (864 wave-1 + 128 wave-2 + 576 wave-3 cells, separate from headline total)
 
 **Known limitations**
 
@@ -99,14 +99,16 @@ on LongBench (86% → 57%, a 29pp improvement), but bit-width still matters at 8
 - External panels are drift smoke tests, not official LongBench/BFCL/MBPP scores
 - `spectralquant` and `shard` rows are fallback/proxy diagnostics only (see leaderboard `diagnostic_entries`)
 
-**Phase D3 (June 2026):** Faithful external adapter smoke **complete** — **864 GPU cells**
-wave-1 (both models: LongBench + BFCL + MBPP) plus **128 cells** wave-2 Mistral smoke
-(MBPP + BFCL). Wave-1: **`int8`** is the only non-catastrophic real compressor (~8–9%
+**Phase D3 (June–July 2026):** Faithful external adapter appendix **complete** — **1,568 GPU cells**
+total (separate from 8,132 headline): **864** wave-1 (both models: LongBench + BFCL + MBPP),
+**128** wave-2 Mistral smoke (MBPP + BFCL), **576** wave-3 full grid (both models, int8 +
+TurboQuant only). Wave-1: **`int8`** is the only non-catastrophic real compressor (~8–9%
 combined drift); SnapKV **90–97%**; KIVI offline r32 **100%**. Wave-2:
-**`turboquant_experimental` 3.1% combined drift** on structured tasks (0% BFCL, 6.2% MBPP);
-KnormPress/SnapKV remain catastrophic. Artifacts: `reports/external_panels/faithful/`.
-
-Path to stronger faithful story: expand TurboQuant panel (both models, LongBench) + optional KIVI production CUDA (Exp 024 blocked).
+**`turboquant_experimental` 3.1% combined drift** on structured tasks (0% BFCL, 6.2% MBPP).
+Wave-3 reconciles that smoke with long-context reality: TurboQuant **near-clean on code/tool**
+(1.6–5.0% on MBPP/BFCL) but **~63–67% LongBench drift** (both models). **`int8` 8.3%**
+combined in wave-3. KnormPress/SnapKV remain catastrophic in wave-2. Artifacts:
+`reports/external_panels/faithful/` (wave-3: `faithful/wave3/`).
 
 ## Benchmark source of truth
 

@@ -1,8 +1,9 @@
 # Wave-3 faithful panel — status and narrative
 
-**Last updated:** 2026-07-06 (in progress)  
+**Last updated:** 2026-07-07 (complete)  
 **Target grid:** 576 cells · `int8` + `turboquant_experimental` · Llama-3.1-8B + Mistral-7B · HF LongBench + BFCL + MBPP  
-**Artifact path (when complete):** `reports/external_panels/faithful/wave3/`
+**Artifact path:** `reports/external_panels/faithful/wave3/`  
+**Status:** **576/576 ok · exactkv_failures: 0** (locked locally after int8+turboquant merge)
 
 ---
 
@@ -13,11 +14,9 @@
 | BFCL Llama + Mistral | 80 each | ✅ complete |
 | MBPP Llama + Mistral | 64 each | ✅ complete |
 | LongBench Llama | 144 | ✅ complete (72 int8 + 72 turboquant) |
-| LongBench Mistral | 144 | ⏳ int8 done; turboquant backfill running on RunPod |
+| LongBench Mistral | 144 | ✅ complete (72 int8 + 72 turboquant) |
 
-**Local deduped total (last rebuild):** 504/576 ok · **exactkv_failures: 0**
-
-Do **not** publish wave-3 numbers in paper, site, or launch copy until **576/576** is locked and `rebuild_wave3_panels.py` confirms the total.
+**Local total:** **576/576 ok · exactkv_failures: 0**
 
 ---
 

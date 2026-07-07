@@ -490,7 +490,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
     </details>
 
     <details class="article-details article-details--section" id="faithful-adapters">
-      <summary>13. Faithful upstream adapters (864 + 128 cells)</summary>
+      <summary>13. Faithful upstream adapters (1,568 cells)</summary>
       <div class="detail-body">
     <p>
       Built-in sims map the design space. Phase D3 wires real upstream algorithms on the same crash-test grid, in a separate artifact tree (<code>reports/external_panels/faithful/</code>), not merged into the 8,132 headline total. These are <strong>adapter smoke tests</strong>: they ask whether ExactKV can run real upstream code paths and how much they drift, not which compressor wins.
@@ -530,7 +530,39 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       </table>
     </div>
     <p>
-      <strong>Key finding:</strong> <code>turboquant_experimental</code> is the first faithful external adapter here with near-int8 drift on structured tasks (3.1% combined. 0% on BFCL). KnormPress and SnapKV remain catastrophic. Mistral-only smoke panel, not a deployment claim. Full tables: technical report §6.17.1.
+      <strong>Key finding:</strong> <code>turboquant_experimental</code> shows near-int8 drift on structured tasks in this smoke panel (3.1% combined. 0% on BFCL). KnormPress and SnapKV remain catastrophic. Mistral-only smoke. Wave-3 (below) completes the TurboQuant story on LongBench. Full tables: technical report §6.17.1.
+    </p>
+
+    <h3>Wave-3 (both models, 576 cells, complete)</h3>
+    <p>
+      Full grid: HF LongBench + BFCL + MBPP on both models, <code>int8</code> vs <code>turboquant_experimental</code> only. Pulled from RunPod 2026-07-07. Not merged into the 8,132 headline total. <code>exactkv_failures=0</code> throughout.
+    </p>
+    <div class="article-table-wrap">
+      <table class="article-table">
+        <thead>
+          <tr><th>Task family</th><th>Cells</th><th><code>int8</code> drift</th><th><code>turboquant_experimental</code> drift</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>HF LongBench</td><td class="num">288</td><td class="num">16.7%</td><td class="num"><strong>64.6%</strong></td></tr>
+          <tr><td>BFCL</td><td class="num">160</td><td class="num">0.0%</td><td class="num">5.0%</td></tr>
+          <tr><td>MBPP</td><td class="num">128</td><td class="num">0.0%</td><td class="num">1.6%</td></tr>
+          <tr><td><strong>Combined</strong></td><td class="num"><strong>576</strong></td><td class="num"><strong>8.3%</strong></td><td class="num"><strong>34.0%</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="article-table-wrap">
+      <table class="article-table">
+        <thead>
+          <tr><th>HF LongBench by model</th><th><code>int8</code></th><th><code>turboquant_experimental</code></th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Llama-3.1-8B (144 cells)</td><td class="num">18.1%</td><td class="num">62.5%</td></tr>
+          <tr><td>Mistral-7B (144 cells)</td><td class="num">15.3%</td><td class="num">66.7%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      <strong>Key finding:</strong> TurboQuant looks fine on structured code/tool tasks (1.6–5.0% drift) but <strong>fails the long-context reading stress test</strong> (~63–67% LongBench drift, both models). <code>int8</code> remains the only non-catastrophic real compressor in this appendix grid (8.3% combined). Offline Python adapter only. not a deployment claim. Artifacts: <code>reports/external_panels/faithful/wave3/</code>. Full tables: technical report §6.17.2.
     </p>
       </div>
     </details>
@@ -766,10 +798,11 @@ its high forehead and its straight nose, they were positively grotes</pre>
           <tr><td>MBPP + pilots + evidence-plus</td><td class="num">~1,144</td><td>Mixed</td><td>Code/smoke supplements</td></tr>
           <tr><td>Faithful adapter panel (wave-1)</td><td class="num">864</td><td>Both</td><td>Upstream adapter smoke (separate tree)</td></tr>
           <tr><td>Faithful wave-2 smoke</td><td class="num">128</td><td>Mistral</td><td>KnormPress + TurboQuant vs int8/SnapKV</td></tr>
+          <tr><td>Faithful wave-3 panel</td><td class="num">576</td><td>Both</td><td>int8 + TurboQuant full grid (LongBench/BFCL/MBPP)</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="viz-caption">Reconciliation: 6,564 pre-v30 + 784 + 784 v30 = 8,132 headline. Faithful wave-1 (864) and wave-2 (128) tracked separately in §6.17. Full card in the technical report Appendix A. Public cite: ExactKV research release · git tag <code>v-release</code>.</p>
+    <p class="viz-caption">Reconciliation: 6,564 pre-v30 + 784 + 784 v30 = 8,132 headline. Faithful appendix: wave-1 (864) + wave-2 (128) + wave-3 (576) = 1,568 cells tracked separately in §6.17. Full card in the technical report Appendix A. Public cite: ExactKV research release · git tag <code>v-release</code>.</p>
       </div>
     </details>
 

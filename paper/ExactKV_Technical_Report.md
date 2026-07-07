@@ -67,11 +67,13 @@ tasks. `int4_sim` and H2O-style eviction do not on reading/long-gen.
 layout), not a reproduction of either production system. GPU-validated on both models
 (1,568 extended-validation cells). Faithful external adapters (SnapKV via kvpress,
 KIVI offline r32) are evaluated separately as **upstream adapter smoke tests** (§6.17,
-864 cells wave-1, both models. 128 cells wave-2 Mistral smoke, §6.17.1). They confirm
+864 cells wave-1, both models. 128 cells wave-2 Mistral smoke, §6.17.1. **576 cells
+wave-3** full grid, both models, §6.17.2). They confirm
 the harness runs on real upstream code paths. Wave-1 adapters **mostly fail** the drift
 test (90-100% on SnapKV/KIVI). Wave-2 finds **`turboquant_experimental` at 3.1% combined
-drift** on MBPP+BFCL smoke, a promising faithful-adapter signal, but smoke-scale and
-not merged into headline totals. This does **not** establish production-ready external
+drift** on MBPP+BFCL smoke. Wave-3 shows the same adapter is **near-clean on structured
+tasks but ~65% drift on HF LongBench** (both models). Smoke-scale and appendix evidence
+only. not merged into headline totals. This does **not** establish production-ready external
 compression and does not change headline conclusions about built-in compressors.
 
 Results are **not** official benchmark scores, production serving claims, or a reproduction
@@ -122,9 +124,12 @@ verifier agreement, and exactness failures per cell.
    (§6, Appendix A). **`exactkv_failures = 0` throughout** confirms verify/commit
    semantics are implemented correctly, an engineering invariant, not the scientific
    headline.
-7. **Faithful upstream adapter diagnostics** (992 cells, appendix §6.17): wave-1
+7. **Faithful upstream adapter diagnostics** (1,568 cells, appendix §6.17): wave-1
    confirms harness integration. wave-2 TurboQuant smoke (128 cells, Mistral,
-   structured tasks only) is promising but **not** a non-catastrophic external baseline.
+   structured tasks). **wave-3 full grid** (576 cells, both models, int8 +
+   TurboQuant only) shows near-clean structured-task drift but **~65% LongBench
+   drift** for TurboQuant vs **~17% for int8**. Appendix evidence only, not a
+   non-catastrophic external baseline.
 
 ### 2.1 Shared problem framing with VeriCache
 
@@ -1604,12 +1609,13 @@ Wave-1 **complete on both models**: **864 GPU cells** (432 per model: LongBench 
 BFCL 120, MBPP 96). Artifacts and reproduction commands: Appendix E and
 `docs/FAITHFUL_COMPRESSOR_INTEGRATION.md` (not repeated here).
 
-**Table 6.17, Faithful adapter panel summary (992 cells total, appendix evidence)**
+**Table 6.17, Faithful adapter panel summary (1,568 cells total, appendix evidence)**
 
 | Wave | Model(s) | Families | Cells | Compressors tested | Best result | Status |
 |------|----------|----------|------:|-------------------|-------------|--------|
 | 1 | Llama + Mistral | LongBench, BFCL, MBPP | 864 | int8, SnapKV, KIVI r32 | `int8` (~8-9% combined) | Complete |
 | 2 | Mistral only | MBPP, BFCL smoke | 128 | int8, KnormPress, TurboQuant, SnapKV | `turboquant_experimental` (3.1% combined) | Smoke only |
+| 3 | Llama + Mistral | LongBench, BFCL, MBPP | 576 | int8, TurboQuant | `int8` (8.3% combined) | **Complete** |
 
 **Table 6.17a, Wave-1 Mistral-7B (432 cells)**
 
@@ -1682,8 +1688,40 @@ Pulled from RunPod 2026-07-01. **`exactkv_failures=0`** throughout.
 the first faithful external adapter in this study with near-int8 drift** (3.1% combined. 0% on BFCL, 6.2% on MBPP). KnormPress and SnapKV remain catastrophic (78-94% combined).
 This is **Mistral-only, smoke-scale, experimental-adapter evidence**, not a headline
 compressor win and not LongBench coverage. **Strict conference framing:** this does
-not establish a faithful non-catastrophic baseline. it motivates a full TurboQuant
-panel (both models, LongBench, same depth as Table 6.16) before any deployment claim.
+not establish a faithful non-catastrophic baseline. Wave-3 (§6.17.2) completes that panel.
+
+#### 6.17.2 Wave-3 faithful panel (int8 + TurboQuant, full grid)
+
+Both models. **576 GPU cells complete** (288 per model: HF LongBench 144, BFCL 80,
+MBPP 64). Same task/context grid as wave-1 faithful LongBench/BFCL/MBPP panels, but
+**only** built-in `int8` and faithful `turboquant_experimental` (offline NumPy adapter).
+Not merged into the 8,132 headline total. Artifacts:
+`reports/external_panels/faithful/wave3/`. Pulled from RunPod 2026-07-07.
+**`exactkv_failures=0`** throughout.
+
+**Table 6.17.2a, Wave-3 by task family (576 cells, both models)**
+
+| Task family | Cells | `int8` div. | `int8` accept. | TurboQuant div. | TurboQuant accept. |
+|-------------|------:|------------:|---------------:|----------------:|-------------------:|
+| HF LongBench | 288 | 16.7% | 0.988 | **64.6%** | 0.868 |
+| BFCL | 160 | 0.0% | 1.000 | 5.0% | 1.000 |
+| MBPP | 128 | 0.0% | 1.000 | 1.6% | 0.998 |
+| **Combined** | **576** | **8.3%** | **0.994** | **34.0%** | **0.933** |
+
+**Table 6.17.2b, Wave-3 HF LongBench by model (144 cells each)**
+
+| Model | `int8` div. | `int8` accept. | TurboQuant div. | TurboQuant accept. |
+|-------|------------:|---------------:|----------------:|-------------------:|
+| Llama-3.1-8B | 18.1% | 0.992 | 62.5% | 0.861 |
+| Mistral-7B | 15.3% | 0.985 | 66.7% | 0.874 |
+
+**Interpretation:** Wave-3 reconciles wave-2 smoke with long-context reality.
+**`turboquant_experimental` is near-int8 on structured code/tool tasks** (1.6-5.0%
+combined drift on MBPP/BFCL) but **fails the reading/summarization stress test**
+(~63-67% LongBench drift, both models). **`int8` remains the only non-catastrophic
+real compressor** in this appendix grid (8.3% combined). TurboQuant here uses the
+restricted offline Python adapter (CPU path), not a production TurboQuant serving
+kernel. This is **faithful adapter diagnostic evidence**, not a deployment claim.
 
 ---
 
@@ -2421,11 +2459,12 @@ main narrative. See **Appendix E** for flat artifact paths.
 | v2.7 | BFCL tool-call validity (`mnt=128/256`) | `bfcl_validity_v27_*` | 1,200 | §6.7 |
 | v2.8 | H2O-style token eviction | `h2o_v28_*` | 800 | §6.9 |
 | v3.0 | `int6_sim` + `int4_per_vec_sim` validation | `v30/*` | 1,568 | §6.15 |
-| Faithful | Upstream adapters (KIVI, SnapKV, KnormPress, TurboQuant) | `faithful/*` | 864 (wave-1) + 128 (wave-2) | §6.17 |
+| Faithful | Upstream adapters (KIVI, SnapKV, KnormPress, TurboQuant) | `faithful/*` | 864 (wave-1) + 128 (wave-2) + 576 (wave-3) | §6.17 |
 
 Headline total **8,132 cells** = pre-v3.0 panels (6,564) + v3.0 (784 × 2 models).
-Faithful-panel wave-1 **864 cells** (432 × 2 models) and wave-2 **128 cells** (Mistral
-smoke) are tracked separately from the 8,132 headline total (see §6.17.1).
+Faithful-panel wave-1 **864 cells** (432 × 2 models), wave-2 **128 cells** (Mistral
+smoke), and wave-3 **576 cells** (432 × 2 models, int8 + TurboQuant) are tracked
+separately from the 8,132 headline total (see §6.17).
 
 ---
 
@@ -2457,6 +2496,7 @@ are in **Appendix A**. Version labels in **Appendix D**.
 | v3.0 validation (both models) | `reports/external_panels/v30/` | 1,568 |
 | Faithful adapter panel (wave-1) | `reports/external_panels/faithful/` | 864 |
 | Faithful wave-2 smoke (Mistral) | `reports/external_panels/faithful/wave2/` | 128 |
+| Faithful wave-3 panel (both models) | `reports/external_panels/faithful/wave3/` | 576 |
 | External case-study pack | `reports/external_panels/case_studies_extracted.json` | 15+1 |
 | LongBench overlap pack | `reports/external_panels/longbench_overlap_pack.{json,md}` | 720 |
 | Phase-F kernel microbenchmark | `reports/phaseF_kernel_benchmark.json` |, |
