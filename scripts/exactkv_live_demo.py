@@ -55,6 +55,9 @@ def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
     speed = "instant" if args.no_delay else args.speed
 
+    if args.case is not None or args.index is not None:
+        args.mode = "cases"
+
     if args.mode == "stream":
         run_streaming_demo(no_delay=args.no_delay, plain=args.plain, speed=speed)
         return 0

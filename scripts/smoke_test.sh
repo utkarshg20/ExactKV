@@ -33,11 +33,16 @@ else
   fail "import exactkv (run: pip install -e '.[dev]')"
 fi
 
-section "3. Live case-study demo (replay)"
-if "$PYTHON" scripts/exactkv_live_demo.py --no-delay --plain --case p02_p2_json_tool | grep -q "EXACTKV LIVE CASE STUDIES"; then
-  pass "exactkv_live_demo.py"
+section "3. Live terminal demo (replay)"
+if "$PYTHON" scripts/exactkv_live_demo.py --no-delay --plain | grep -q "SIDE-BY-SIDE TOKEN PATHS"; then
+  pass "exactkv_live_demo.py (stream)"
 else
-  fail "exactkv_live_demo.py"
+  fail "exactkv_live_demo.py (stream)"
+fi
+if "$PYTHON" scripts/exactkv_live_demo.py --no-delay --plain --mode cases --case p02_p2_json_tool | grep -q "EXACTKV LIVE CASE STUDIES"; then
+  pass "exactkv_live_demo.py (cases)"
+else
+  fail "exactkv_live_demo.py (cases)"
 fi
 
 section "4. Leaderboard"
