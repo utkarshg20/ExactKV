@@ -66,6 +66,10 @@ non-catastrophic on both Mistral-7B and Llama-3.1-8B (v3.0, 1,568 cells total,
 \texttt{exactkv\_failures=0}): both show 0\% divergence on BFCL and MBPP. \texttt{int6\_sim} reaches 37--47\% and \texttt{int4\_per\_vec\_sim} 56--57\% on
 HF LongBench, per-vector granularity helps on structured tasks, while bit-width
 still matters at 8K LongBench context.
+\textbf{Faithful adapters (Phase D3 appendix, 1,568 cells, separate from headline):}
+\texttt{turboquant\_experimental} is task-conditional, near-clean on structured tasks
+but $\sim$65\% LongBench drift; \texttt{int8} remains the only non-catastrophic real
+compressor in that grid (8.3\% combined).
 Results are \textbf{not} benchmark scores, production claims, or a reproduction of
 VeriCache~\citep{vericache2026}.
 \end{sloppypar}
@@ -851,32 +855,90 @@ h2o\_sim\_75    &,  &,  & 100\%  & Eviction (75\% kept) \\
 \label{sec:faithful-compressors}
 
 Phase D3 wires \textbf{faithful external adapters} (upstream algorithms, not ExactKV
-tensor sims): \texttt{kivi\_offline\_r32} (KIVI K2/V2 quant + $r{=}32$ fp16 residual
-window), \texttt{snapkv\_experimental} (kvpress SnapKVPress), and \texttt{kvquant\_sim}
-(pre-RoPE simquant. Qwen validated). The legacy \texttt{kivi\_offline} panel
-(Table~\ref{tab:kivi-panel}) omitted the residual window, an \textbf{incomplete
-adapter policy}, not a KIVI production claim.
+tensor sims) on the same crash-test grid as built-in compressors. Results are
+\textbf{appendix evidence only}, tracked separately from the 8,132-cell headline total.
+Reproduction commands: Appendix~\ref{sec:repro-faithful}.
 
-\textbf{GPU smoke (Mistral-7B, MBPP HF, 48 cells):} \texttt{int8} 0\% divergence. \texttt{snapkv\_experimental} 87.5\% (real kvpress, acceptance 0.54). \texttt{kivi\_offline\_r32} 100\% (acceptance 0.02). Source:
-\texttt{faithful/mbpp\_mistral\_smoke\_raw.json}. \texttt{exactkv\_failures=0}.
-SnapKV is the first working faithful external adapter on this grid. KIVI offline
-post-RoPE remains integration-incomplete. \texttt{int4\_per\_vec\_sim} remains the
-validated KIVI/KVQuant-style quant baseline (Table~\ref{tab:core-curve}).
+\textbf{Three roles (not three successes):} \texttt{int8} is the non-catastrophic
+\textbf{real} baseline; \texttt{snapkv\_experimental} tests whether kvpress SnapKVPress
+runs end-to-end; \texttt{kivi\_offline\_r32} is an integration diagnostic (not
+production KIVI). Wave-2/3 add KnormPress and \texttt{turboquant\_experimental}
+(offline NumPy adapter, not production TurboQuant serving).
 
-\begin{verbatim}
-bash scripts/setup_faithful_compressor_env.sh
-bash scripts/run_faithful_compressor_panel.sh
-# Artifacts: reports/external_panels/faithful/
-\end{verbatim}
+\begin{table}[H]
+\centering\small
+\caption{Faithful adapter panel summary (1,568 appendix cells, not in headline 8,132).}
+\label{tab:faithful-summary}
+\begin{tabular}{llrrl}
+\toprule
+\textbf{Wave} & \textbf{Models} & \textbf{Cells} & \textbf{Compressors} & \textbf{Status} \\
+\midrule
+1 & Llama+Mistral & 864 & int8, SnapKV, KIVI r32 & Complete \\
+2 & Mistral only & 128 & int8, KnormPress, TurboQuant, SnapKV & Smoke \\
+3 & Llama+Mistral & 576 & int8, TurboQuant & Complete \\
+\bottomrule
+\end{tabular}
+\end{table}
 
-Compressors: \texttt{int8}, \texttt{kivi\_offline\_r32}, \texttt{snapkv\_experimental}.
-\textbf{Wave-1 complete (864 cells, both models):} \texttt{int8} is the only
-non-catastrophic real compressor ($\sim$8--9\% combined drift). SnapKV 90--97\%. KIVI r32 100\% (integration diagnostic). \textbf{Wave-2 smoke complete (128 cells,
-Mistral only, MBPP+BFCL):} \texttt{turboquant\_experimental} 3.1\% combined drift
-(0\% BFCL, 6.2\% MBPP). KnormPress/SnapKV remain catastrophic. \textbf{Wave-3 complete (576 cells, both models, int8 + TurboQuant only):} near-clean on structured tasks (MBPP/BFCL 1.6--5.0\% TurboQuant drift) but $\sim$63--67\% LongBench drift (both models). \texttt{int8} 8.3\% combined. Appendix total: 1,568 cells. Diagnostic only,
-not merged into the 8,132 headline total. Artifacts:
-\texttt{reports/external\_panels/faithful/}, \texttt{faithful/wave2/}, and \texttt{faithful/wave3/}.
-KIVI production CUDA remains blocked (Exp~024).
+\textbf{Wave-1 (864 cells):} \texttt{int8} is the only non-catastrophic real compressor
+($\sim$8--9\% combined drift). SnapKV 90--97\%. KIVI r32 100\% (integration diagnostic).
+
+\begin{table}[H]
+\centering\small
+\caption{Wave-2 structured-task smoke, Mistral (128 cells). \texttt{exactkv\_failures=0}.}
+\label{tab:faithful-wave2}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Compressor} & \textbf{MBPP} & \textbf{BFCL} & \textbf{Combined} \\
+\midrule
+\texttt{int8} & 0.0\% & 0.0\% & 0.0\% \\
+\texttt{turboquant\_experimental} & 6.2\% & 0.0\% & 3.1\% \\
+\texttt{kvpress\_knorm\_experimental} & 75.0\% & 81.2\% & 78.1\% \\
+\texttt{snapkv\_experimental} & 87.5\% & 100.0\% & 93.8\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent Wave-2 shows near-int8 TurboQuant drift on structured tasks only (Mistral,
+MBPP+BFCL smoke). It is not a faithful non-catastrophic baseline.
+
+\begin{table}[H]
+\centering\small
+\caption{Wave-3 full grid by task family (576 cells, both models). \texttt{exactkv\_failures=0}.}
+\label{tab:faithful-wave3-family}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Family} & \textbf{Cells} & \textbf{int8 div.} & \textbf{TurboQuant div.} & \textbf{TQ accept.} \\
+\midrule
+HF LongBench & 288 & 16.7\% & \textbf{64.6\%} & 0.868 \\
+BFCL & 160 & 0.0\% & 5.0\% & 1.000 \\
+MBPP & 128 & 0.0\% & 1.6\% & 0.998 \\
+\textbf{Combined} & \textbf{576} & \textbf{8.3\%} & \textbf{34.0\%} & \textbf{0.933} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering\small
+\caption{Wave-3 HF LongBench by model (144 cells each).}
+\label{tab:faithful-wave3-longbench}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Model} & \textbf{int8 div.} & \textbf{int8 accept.} & \textbf{TQ div.} & \textbf{TQ accept.} \\
+\midrule
+Llama-3.1-8B & 18.1\% & 0.992 & 62.5\% & 0.861 \\
+Mistral-7B & 15.3\% & 0.985 & 66.7\% & 0.874 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\textbf{Interpretation:} \texttt{turboquant\_experimental} is
+\textbf{task-conditional}: near-clean on structured code/tool tasks (1.6--5.0\%
+drift on MBPP/BFCL) but $\sim$63--67\% LongBench drift on both models. \texttt{int8}
+remains the only non-catastrophic real compressor in this appendix grid (8.3\%
+combined). This reinforces the task-type hierarchy from built-in compressors; it does
+\textbf{not} establish a faithful non-catastrophic LongBench baseline. KIVI production
+CUDA remains blocked (Exp~024).
 
 \FloatBarrier
 
@@ -1108,9 +1170,9 @@ smoke (LongBench/RULER/BFCL/HumanEval bundled pilots). 144-cell MBPP smoke (both
 reveals catastrophic adapter-level drift (100\% divergence, acceptance $\approx$\,0)
 and all cells corrected (\texttt{exactkv\_failures=0}).
 
-\textbf{Future work, KIVI production path:} Phase D3 adds \texttt{kivi\_offline\_r32}
-(faithful streaming policy) and SnapKV panel wiring (Section~\ref{sec:faithful-compressors}).
-Remaining: GPU validation. KIVI CUDA/Triton production path. KVQuant Llama-8B calibration.
+\textbf{Future work, KIVI production path:} Phase D3 appendix is \textbf{complete}
+(1,568 cells across waves 1--3; Section~\ref{sec:faithful-compressors}). \textbf{Remaining:}
+production KIVI CUDA/Triton kernel validation (Exp~024 blocked), not adapter smoke.
 The legacy \texttt{kivi\_offline} result (no residual) is an adapter diagnostic.
 \par}
 
@@ -1161,6 +1223,12 @@ non-catastrophic: 0\% on BFCL/MBPP. 37--47\% (int6) and 56--57\% (int4 per-vecto
 on LongBench. Per-vector granularity eliminates drift on structured tasks but
 4-bit resolution still accumulates at 8K context.
 
+\textbf{Faithful external adapters (Phase D3 appendix, 1,568 cells):} wave-3 shows
+\texttt{turboquant\_experimental} is task-conditional ($\sim$65\% LongBench drift,
+near-clean on code/tool); \texttt{int8} remains the only non-catastrophic real
+compressor in that grid. This reinforces task-type sensitivity; it does not establish
+a faithful non-catastrophic LongBench baseline.
+
 ExactKV's contribution is not a new compressor. It is a measurement infrastructure that
 makes KV-cache drift \textbf{observable, attributable, and reproducible}, and a verifier
 mechanism that corrects it with zero exactness failures across all 8,132 tested cells.
@@ -1207,11 +1275,17 @@ v3.0 int6/int4pv (Llama) & Llama & 2,4,8+ & 784 & 0 \\
 \midrule
 Subtotal (pre-v3.0) & & & 6,564 & \\
 Subtotal (v3.0) & & & 1,568 & \\
-\textbf{Grand total} & & & \textbf{8,132} & \textbf{0} \\
+\textbf{Grand total (headline)} & & & \textbf{8,132} & \textbf{0} \\
+\midrule
+Faithful wave-1 & Llama+Mistral & 2,4,8+ & 864 & 0 \\
+Faithful wave-2 smoke & Mistral & 0.5,1 & 128 & 0 \\
+Faithful wave-3 & Llama+Mistral & 2,4,8+ & 576 & 0 \\
+\textbf{Faithful appendix total} & & & \textbf{1,568} & \textbf{0} \\
 \bottomrule
 \end{tabularx}
 \caption{All completed ExactKV GPU panels as of v3.0. \texttt{exactkv\_failures=0} throughout.
-Reconciliation: $6{,}564 + 784 + 784 = 8{,}132$. Each v3.0 row = one model $\times$ four
+Reconciliation: $6{,}564 + 784 + 784 = 8{,}132$ headline cells. Faithful appendix
+(1,568 cells) tracked separately. Each v3.0 row = one model $\times$ four
 compressors $\times$ three task families (784 cells). Source: \texttt{reports/external\_panels/v30/}.
 Not official benchmark scores.}
 \label{tab:all-panels}
@@ -1281,12 +1355,19 @@ python3 scripts/run_external_panel.py \
 #       For tool-call validity, use max_new_tokens={128,256}.
 \end{verbatim}
 
-\textbf{Faithful external compressor panel (GPU, KIVI r32 + SnapKV):}
+\textbf{Faithful external compressor panels (GPU, appendix):}
+\label{sec:repro-faithful}
 \begin{verbatim}
 bash scripts/setup_faithful_compressor_env.sh
 bash scripts/run_faithful_compressor_panel.sh
-# Artifacts: reports/external_panels/faithful/
-# Compressors: int8, kivi_offline_r32, snapkv_experimental
+# Wave-1 artifacts: reports/external_panels/faithful/
+# Wave-2 artifacts: reports/external_panels/faithful/wave2/
+# Wave-3 artifacts: reports/external_panels/faithful/wave3/
+# Rebuild wave-3 merged summary:
+python3 scripts/rebuild_wave3_panels.py \
+  --dir reports/external_panels/faithful/wave3 --write
+python3 scripts/integrate_faithful_panel_results.py \
+  --dir reports/external_panels/faithful/wave3 --write
 \end{verbatim}
 
 \textbf{KIVI offline diagnostic panel (GPU, 640 cells, legacy, no r32):}
@@ -1323,17 +1404,25 @@ python3 scripts/analyze_logit_margins.py \
 # Produces Table 19 metrics across 1,103 divergent cells
 \end{verbatim}
 
-{\small\raggedright Sources of truth (all under \texttt{reports/}):
-\texttt{scale\_7b/raw.json} (1,500, headline),
-\texttt{evidence\_plus/raw.json} (144, evidence-plus),
-\texttt{external\_panels/summary\_all.json} (216, smoke),
-\texttt{external\_panels/mbpp\_gpu\_raw.json} (144, MBPP),
-\texttt{external\_panels/bfcl\_export\_50\_raw.json} (1,200, BFCL export-50),
-\texttt{external\_panels/kivi\_longbench\_hf\_raw.json} (640, KIVI offline),
-\texttt{external\_panels/hf\_longbench\_v26\_merged\_raw.json} (720, v2.6),
-\texttt{external\_panels/bfcl\_validity\_v27\_merged\_raw.json} (1,200, v2.7),
-\texttt{external\_panels/h2o\_v28\_merged\_raw.json} (800, v2.8).
-Total: \textbf{8,132 completed GPU cells}, \texttt{exactkv\_failures=0}.\par}
+{\small\raggedright\textbf{Sources of truth} (all under \texttt{reports/}):
+
+\textbf{Headline total 8,132 cells:}
+\texttt{scale\_7b/raw.json} (1,500),
+\texttt{evidence\_plus/raw.json} (144),
+\texttt{external\_panels/summary\_all.json} (216),
+\texttt{external\_panels/mbpp\_gpu\_raw.json} (144),
+\texttt{external\_panels/bfcl\_export\_50\_raw.json} (1,200),
+\texttt{external\_panels/kivi\_longbench\_hf\_raw.json} + \texttt{kivi\_mbpp\_hf\_raw.json} (640),
+\texttt{external\_panels/hf\_longbench\_v26\_merged\_raw.json} (720),
+\texttt{external\_panels/bfcl\_validity\_v27\_merged\_raw.json} (1,200),
+\texttt{external\_panels/h2o\_v28\_merged\_raw.json} (800),
+\texttt{external\_panels/v30/} (1,568, int6 + int4 per-vector, both models).
+Reconciliation: $6{,}564 + 784 + 784 = 8{,}132$. \texttt{exactkv\_failures=0} throughout.
+
+\textbf{Faithful appendix (1,568 cells, separate):}
+\texttt{external\_panels/faithful/} (864, wave-1),
+\texttt{external\_panels/faithful/wave2/} (128),
+\texttt{external\_panels/faithful/wave3/} (576).\par}
 
 \bibliographystyle{plainnat}
 \bibliography{references}
