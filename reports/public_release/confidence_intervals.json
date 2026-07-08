@@ -1,0 +1,25 @@
+{
+  "schema": "exactkv.public_release.confidence_intervals.v1",
+  "generated_at": "2026-07-08T20:28:55.123170+00:00",
+  "method": "Wilson score interval, 95% two-sided (z=1.96)",
+  "claim_boundary": "Intervals describe observed drift/acceptance on cited panels only; not official benchmark scores.",
+  "headline_panel": {
+    "source": "reports/scale_7b/raw.json",
+    "cells_total": 0,
+    "by_compressor": {}
+  },
+  "external_smoke_summary": {
+    "source": "reports/external_panels/analysis_pack.json",
+    "cells_ok": 216,
+    "divergence_rate_overall_ci95": {
+      "lower": 0.0425,
+      "upper": 0.1114,
+      "mid": 0.077
+    },
+    "acceptance_full_rate_ci95": {
+      "lower": 0.9054,
+      "upper": 0.9679,
+      "mid": 0.9367
+    }
+  }
+}

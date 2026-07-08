@@ -1,0 +1,10 @@
+{
+  "schema": "exactkv.systems.recompression_overhead.v1",
+  "generated_at": "2026-07-08T20:28:55.127537+00:00",
+  "status": "not_measured",
+  "claim_boundary": "Recompression cost during draft/verify/commit is not isolated in headline GPU panels. Phase F reports kernel compress/decompress microbenchmarks only.",
+  "related_artifacts": [
+    "reports/systems/latency_microbench.json",
+    "reports/phaseF_kernel_benchmark.json"
+  ]
+}

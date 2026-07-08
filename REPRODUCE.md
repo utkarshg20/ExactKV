@@ -75,16 +75,26 @@ python3 -m pytest tests/test_acceptance_logic.py tests/test_capture_divergence_t
 | `validate_final_release_package.py` | exit 0 |
 | pytest | all green |
 
+Regenerate public review artifacts (optional):
+
+```bash
+python3 scripts/build_public_review_artifacts.py
+```
+
 ## 4. Headline artifacts (source of truth)
 
 | artifact | path |
 |----------|------|
 | Core leaderboard panel | `reports/scale_7b/raw.json` (1,500 cells) |
 | Public leaderboard JSON | `reports/public_release/leaderboard_final.json` |
+| Wilson 95% confidence intervals | `reports/public_release/confidence_intervals.json` |
 | External panel index | `reports/external_panels/summary_all.json` |
 | Phase F kernel microbench | `reports/systems/latency_microbench.json` |
+| Verifier timing proxy (evidence-plus) | `reports/systems/verifier_overhead.json` |
+| Recompression overhead status | `reports/systems/recompression_overhead.json` |
 | Stored-byte memory trace | `reports/systems/gpu_memory_trace.json` |
 | Technical report | `paper/ExactKV_Technical_Report.md` |
+| Artifact audit note | `docs/ARTIFACT_AUDIT.md` |
 
 Regenerate summaries (optional):
 

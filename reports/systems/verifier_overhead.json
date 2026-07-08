@@ -1,0 +1,32 @@
+{
+  "schema": "exactkv.systems.verifier_overhead.v1",
+  "generated_at": "2026-07-08T20:28:55.123985+00:00",
+  "claim_boundary": "Cell-level wall-clock proxy from the evidence-plus panel (144 cells, 7B/8B). NOT a per-token verifier cost model on the 1,500-cell headline panel and NOT end-to-end serving latency.",
+  "source_artifact": "reports/evidence_plus/raw.json",
+  "panel": "evidence_plus",
+  "by_compressor": {
+    "int4_sim": {
+      "cells": 48,
+      "mean_total_cell_ms": 3851.991,
+      "median_total_cell_ms": 4060.478,
+      "mean_acceptance_rate": null
+    },
+    "int8": {
+      "cells": 48,
+      "mean_total_cell_ms": 3872.619,
+      "median_total_cell_ms": 4440.671,
+      "mean_acceptance_rate": null
+    },
+    "noop": {
+      "cells": 48,
+      "mean_total_cell_ms": 3838.319,
+      "median_total_cell_ms": 4418.405,
+      "mean_acceptance_rate": null
+    }
+  },
+  "not_measured": [
+    "Per-token verifier latency breakdown on headline scale panel",
+    "Verifier cost vs draft acceptance curve on external LongBench/BFCL panels",
+    "End-to-end speedup vs full-KV-only greedy decode"
+  ]
+}

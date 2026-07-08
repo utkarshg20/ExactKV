@@ -53,6 +53,8 @@ python3 -m pytest tests/test_acceptance_logic.py tests/test_capture_divergence_t
 
 Expected: `SMOKE TEST PASSED`, claim audits pass, acceptance/top-k unit tests green.
 
+See [`ARTIFACT_AUDIT.md`](ARTIFACT_AUDIT.md) for a static public-repo audit checklist.
+
 ## 6. Main table reproduction (GPU + HF access)
 
 Headline **1,500-cell** panel:

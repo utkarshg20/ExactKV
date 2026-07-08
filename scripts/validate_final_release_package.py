@@ -42,8 +42,12 @@ REQUIRED_FILES = [
     "SHA256SUMS",
     "docs/CLAIM_BOUNDARIES.md",
     "docs/THREATS_TO_VALIDITY.md",
+    "docs/ARTIFACT_AUDIT.md",
+    "reports/public_release/confidence_intervals.json",
     "reports/systems/latency_microbench.json",
     "reports/systems/gpu_memory_trace.json",
+    "reports/systems/verifier_overhead.json",
+    "reports/systems/recompression_overhead.json",
 ]
 
 PUBLIC_COPY = [
