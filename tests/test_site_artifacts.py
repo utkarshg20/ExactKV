@@ -31,6 +31,9 @@ def test_hero_and_leaderboard_present():
     html = (SITE / "index.html").read_text(encoding="utf-8").lower()
     assert "lying" in html, "hero headline missing"
     assert "reviewer tl;dr" in html, "reviewer TLDR missing"
+    assert "reviewer takeaway" in html, "reviewer takeaway box missing"
+    assert "headline panels" in html, "split inventory headline block missing"
+    assert "faithful adapter appendix" in html, "split inventory appendix block missing"
     assert "executive summary" in html, "executive summary missing"
     assert "read the evidence" in html, "reviewer action card missing"
     assert "read pdf" in html, "hero PDF CTA missing"
@@ -86,6 +89,7 @@ def test_content_manifest_matches_page_structure():
     assert manifest.get("schema", "").startswith("exactkv.site.content_manifest.v2")
     section_ids = {s["id"] for s in manifest.get("sections", [])}
     assert "reviewer-tldr" in section_ids
+    assert "reviewer-takeaway" in section_ids
     assert "summary" in section_ids
     assert "case-studies" in section_ids
     assert "leaderboard" in section_ids

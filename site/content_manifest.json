@@ -42,7 +42,7 @@
     },
     {
       "id": "inventory",
-      "title": "15. 8,132-cell inventory"
+      "title": "15. Evidence inventory (headline + appendix)"
     },
     {
       "id": "leaderboard",
@@ -55,6 +55,10 @@
     {
       "id": "reproduce",
       "title": "18. Reproduce it"
+    },
+    {
+      "id": "reviewer-takeaway",
+      "title": "Reviewer takeaway"
     }
   ],
   "data_assets": [
