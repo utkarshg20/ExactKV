@@ -49,10 +49,12 @@ cells identifies three mechanisms: near-tie noise (int8, mean lossy rank 2.4, fd
 distribution shift (int4_sim, rank 3.5, fdi=8); and attention destruction (H2O-style,
 rank 6.7, fdi=1). Three forensic case studies with full top-5 logit traces confirm each.
 
-4. **Downstream validity is preserved when full-KV is valid.** Despite high token drift,
-ExactKV preserves **318/318** full-KV valid BFCL tool calls (long-gen validity panel) and
-**264/264** in extended BFCL subsets, but full-KV validity itself is modest (26–37% on
-BFCL). This is preservation of full-KV quality, not high absolute task success.
+4. **Downstream validity is preserved across three metric families when full-KV is valid.**
+Despite high token drift, ExactKV preserves **318/318** full-KV valid BFCL tool calls,
+**12/12** full-KV syntactically valid MBPP outputs on Llama v3.0 (Python `ast.parse`),
+and **100%** LongBench answer-overlap parity vs full-KV (720 cells scored). Full-KV
+validity itself is modest on BFCL (26–37%) and MBPP (12.5% on Llama); these are
+preservation metrics, not official pass rates.
 
 **Correctness invariant:** `exactkv_failures = 0` on all 8,132 cells. The verifier
 implementation is sound under our semantics. This is expected when verify/commit logic
@@ -115,13 +117,12 @@ verifier agreement, and exactness failures per cell.
 4. A **compressor design curve** from `int8` through `int6_sim` and `int4_per_vec_sim`
    to catastrophic `int4_sim`, showing per-vector granularity helps on structured
    tasks while bit-width still matters at 8K LongBench (§6.13-6.16).
-5. **Downstream validity measurement** on BFCL tool-call JSON (318/318 and 264/264
-   full-KV valid calls preserved under verifier-mediated execution when full-KV
-   itself is valid, §6.11). Not official benchmark pass rates.
+5. **Downstream validity across three families** — BFCL tool-call JSON, MBPP Python
+   syntax, and LongBench answer overlap — all show 100% preservation of full-KV valid
+   outputs under verifier-mediated execution (§6.11). Not official benchmark pass rates.
 6. **8,132 GPU cells** on Llama-3.1-8B and Mistral-7B across five benchmark families
-   (§6, Appendix A). **`exactkv_failures = 0` throughout** confirms verify/commit
-   semantics are implemented correctly, an engineering invariant, not the scientific
-   headline.
+   (§6, Appendix A), with a simple verifier-overhead cost sketch tied to draft acceptance
+   (§9).
 7. **Faithful upstream adapter diagnostics** (1,568 appendix cells, §6.17): real
    upstream libraries on the same crash-test grid. TurboQuant is near-clean on
    structured tasks but **~65% LongBench drift**; **`int8` is the only non-catastrophic
@@ -164,15 +165,15 @@ deployment throughput or reproduce VeriCache's system design. See Section 10.
 | 2 | **Generation length scales drift** | int4_sim mnt=16: 9% → mnt=256: 62% (7×) |
 | 3 | **Eviction > quantization drift** | H2O-style 75% kept → 100% LongBench divergence |
 | 4 | **Three distinct failure modes** | int8: near-tie (rank 2.4, fdi=22); int4_sim: distribution shift (rank 3.5, fdi=8); H2O: attention destruction (rank 6.7, fdi=1) |
-| 5 | **100% downstream validity preserved** | ExactKV preserves all 106/106 valid BFCL tool calls despite 50% drift |
-| 6 | **Zero correctness failures** | exactkv_failures=0 across all 8,132 GPU cells |
-| 7 | **Compressor design-space curve** | int8 → int6 → int4_per_vec → int4_sim → H2O: monotonic LongBench degradation (Table 6.16) |
-| 8 | **Faithful adapters reinforce task hierarchy** | TurboQuant: ~0–5% on code/tool, ~65% LongBench; int8: 8.3% combined (appendix, §6.17) |
+| 5 | **Downstream validity (3 families)** | BFCL 318/318 + MBPP 12/12 (Llama) + LongBench overlap 100% parity vs full-KV |
+| 6 | **Compressor design-space curve** | int8 → int6 → int4_per_vec → int4_sim → H2O: monotonic LongBench degradation (Table 6.16) |
+| 7 | **Faithful adapters reinforce task hierarchy** | TurboQuant: ~0–5% on code/tool, ~65% LongBench; int8: 8.3% combined (appendix, §6.17) |
 
 ExactKV's strongest supported claim is not merely that compressed KV drifts, it is
 that **KV-cache drift is governed jointly by task type, generation length, compressor
-class, and quantization granularity**, while verifier-mediated decoding preserves
-full-KV greedy equivalence (`exactkv_failures=0` throughout).
+class, and quantization granularity**. Verifier-mediated decoding preserves full-KV
+greedy equivalence on all cited panels (`exactkv_failures=0` is a harness invariant,
+not the scientific headline).
 
 ---
 
@@ -1369,6 +1370,34 @@ trade away answer-bearing text on the cells where overlap is measurable.
 
 Artifact: LongBench overlap pack (Appendix E).
 
+### 6.11.5 MBPP Python syntax validity (not pass@1)
+
+MBPP downstream validity uses `ast.parse` on extracted Python from fenced code blocks.
+This is a **syntax gate**, not MBPP pass@1 or test execution.
+
+**Table 4i-e, MBPP downstream validity (v3.0 Llama panel, 96 cells)**
+
+| Compressor | n | Drift | Full-KV valid | ExactKV valid | Preserved |
+|-----------|--:|------:|--------------:|--------------:|----------:|
+| noop | 24 | 0.0% | 3/24 (12.5%) | 3/24 (12.5%) | **100%** |
+| int8 | 24 | 0.0% | 3/24 (12.5%) | 3/24 (12.5%) | **100%** |
+| int6_sim | 24 | 0.0% | 3/24 (12.5%) | 3/24 (12.5%) | **100%** |
+| int4_per_vec_sim | 24 | 0.0% | 3/24 (12.5%) | 3/24 (12.5%) | **100%** |
+| int4_sim | 24 | 12.5% | 3/24 (12.5%) | 3/24 (12.5%) | **100%** |
+
+**Combined Llama v3.0 MBPP:** **12/12** full-KV syntactically valid outputs preserved
+(100%). On Mistral v3.0 (96 cells), full-KV syntax validity is **0%** at these
+settings (model/prompt/truncation), so preservation is vacuously 100% with n=0 valid
+cells — a boundary condition, not a compressor success story.
+
+**Interpretation:** Together with §6.11.1 (BFCL) and §6.11.4 (LongBench overlap),
+ExactKV downstream evidence now spans **tool JSON, code syntax, and reading overlap**.
+None of these replace official benchmark scores; they show verifier-mediated execution
+does not silently degrade measurable output quality relative to full-KV when full-KV
+itself is valid.
+
+Artifact: downstream validity pack (Appendix E).
+
 ---
 
 ## 6.12 Scaling Analysis: Context-Length and Generation-Length Sensitivity
@@ -1901,7 +1930,52 @@ end-to-end inference speedups.** `kv_shape=[1,8,512,64]`, CUDA.
 | Mean per cell | 3.85 s |
 | p90 per cell | 5.18 s |
 
-Per-cell wall-clock includes full + lossy + ExactKV paths. **Not** end-to-end serving latency.
+Per-cell wall-clock includes full + lossy + ExactKV paths run sequentially in the
+research harness. **Not** end-to-end serving latency.
+
+### 9.1 Verifier overhead cost model (qualitative + proxy)
+
+Strict systems reviewers ask how verification cost scales as draft acceptance drops.
+ExactKV does **not** yet publish per-token verifier latency on the 1,500-cell headline
+panel. We provide a **simple amortized model** plus an evidence-plus wall-clock proxy.
+
+**Amortized model (serving intuition, not measured E2E):**
+
+Let `α` be mean draft acceptance per cell, `T_d` compressed-KV draft cost per token,
+and `T_v` full-KV verify cost per contested token. Under greedy verify/commit with
+draft length `L`, expected verify work grows as acceptance falls:
+
+\[
+\mathbb{E}[\text{verify rounds}] \approx \frac{T_{\text{gen}}}{L} \cdot (1 - \alpha)
+\]
+
+Lower acceptance (more frequent corrections) implies **more full-KV forward passes**
+amortized over the generation — the central trade VeriCache analyzes for serving.
+
+**Empirical proxy (evidence-plus, 144 cells, both models):**
+
+| Compressor | Mean acceptance | Divergence rate | Mean cell time |
+|------------|----------------:|----------------:|---------------:|
+| noop | 1.000 | 0.0% | 3.84 s |
+| int8 | 1.000 | 0.0% | 3.87 s |
+| int4_sim | 0.985 | 31.3% | 3.85 s |
+
+Cell time is **flat across compressors** because the research harness always runs
+full-KV, lossy, and ExactKV paths sequentially regardless of acceptance. This proxy
+confirms wiring overhead dominates at this granularity; it does **not** isolate
+per-token verify cost.
+
+**Cross-panel acceptance gradient (LongBench, Table 4i-c):** `int4_sim` acceptance
+drops to **0.72–0.95** on reading tasks where divergence is 100%. Under the model
+above, a compressor with 90% divergence but 85% per-token acceptance still amortizes
+substantial verify work — consistent with VeriCache's motivation, even though ExactKV
+measures rather than optimizes that cost.
+
+Artifact: `reports/systems/verifier_overhead.json` (generated by
+`scripts/build_public_review_artifacts.py`).
+
+**Not measured:** per-token verifier breakdown on headline/external panels; recompression
+overhead (`reports/systems/recompression_overhead.json`, status `not_measured`).
 
 ---
 
@@ -2357,16 +2431,16 @@ path and how verifier-mediated execution behaves on a fixed panel.
 ExactKV's strongest supported claim is not "we beat X" or "we invented verify." It is:
 
 **KV-cache drift is governed jointly by task type, generation length, compressor class,
-and quantization granularity**, and ExactKV maps that design space while verifier-mediated
-decoding preserves full-KV greedy equivalence (`exactkv_failures=0` throughout).
+and quantization granularity**, and ExactKV maps that design space with mechanistic
+autopsy and a three-family downstream validity story (BFCL, MBPP syntax, LongBench
+overlap).
 
 **ExactKV tells you exactly when compressed KV cache behavior stops matching the
 verifier**, and separately reports when the *lossy* path drifts, how often drafts
 are accepted, and whether verifier-mediated execution still ends exact.
 
-On the 1,500-cell release panel, built-in `int8`/`noop` show no lossy divergence,
-`int4_sim` drifts in 52% of cells while the verifier maintains
-`exactkv_failures = 0`. Across **8,132 total cells**, the picture has become clearer:
+On the 1,500-cell release panel, built-in `int8`/`noop` show no lossy divergence and
+`int4_sim` drifts in 52% of cells. Across **8,132 total cells**, the picture has become clearer:
 int4_sim divergence is **task-dependent**, 6% on Python code (MBPP), 11% on
 tool-calling (BFCL short-gen), 50% on tool-calling (BFCL long-gen at mnt=128/256),
 and **90% on open-text reading/summarization (HF LongBench, 2K-8K context)**.
@@ -2375,17 +2449,20 @@ Even int8 reaches 25% divergence on LongBench vs 0% on BFCL/MBPP, confirming tha
 of KV compression drift**. H2O-style token eviction adds a further dimension:
 **eviction-class compressors produce near-universal divergence (100%) on reading tasks
 even at mild keep_ratio=0.75**, far exceeding int4_sim at matched memory budgets. Mean
-acceptance rate for H2O is ~0.35 (diverges at token 1) vs. ~0.84 for int4_sim.
-The verifier maintains `exactkv_failures = 0` across all 8,132 cells, including all
-100% H2O divergence cases. **ExactKV catches every compressor failure type.**
+acceptance rate for H2O is ~0.35 (diverges at token 1) vs. ~0.84 for int4_sim —
+a steep verifier-amortization gradient under the cost sketch in §9.1.
 
 Top-k logit analysis (§6.10) over 1,103 divergent cells reveals three mechanistically
 distinct failure modes: **(1) near-tie noise** — int8 flips close argmax decisions
 (66% near-tie, mean lossy rank 2.4); **(2) distribution shift** — int4_sim biases
 activations toward lower-ranked alternatives (83% flip, mean rank 3.5); and
 **(3) attention destruction** — H2O eviction eliminates contextual anchors from the
-first generated token (100% flip, mean rank 6.7, fdi=1). The same verifier
-corrects all three failure modes with `exactkv_failures=0`.
+first generated token (100% flip, mean rank 6.7, fdi=1).
+
+Downstream validity spans BFCL tool JSON (318/318 preserved), MBPP Python syntax
+(12/12 on Llama where full-KV parses), and LongBench answer overlap (100% parity
+vs full-KV on 720 scored cells) — complementary to drift, not a substitute for
+official benchmark pass rates.
 
 The distinction, **drift vs exactness failure**, is the paper's core methodological
 contribution. ExactKV does not propose a new compressor. It provides the measurement
