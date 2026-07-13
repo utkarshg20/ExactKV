@@ -5,6 +5,7 @@ import re
 import shutil
 import sys
 import time
+from dataclasses import dataclass
 from typing import TextIO
 
 from exactkv.demo.case_study_loader import CLOSING_LINES, PUBLIC_TAGLINE
@@ -12,38 +13,126 @@ from exactkv.demo.live_terminal import SPEED_PROFILES, LiveFrame, TerminalStyle,
 
 SNIPPET_LINES = 5
 
-META = {
-    "panel": "BFCL tool-call panel · ctx 2048 · 64 max new tokens",
-    "prompt_label": "int4_sim 4× quant · greedy decode · compressed KV draft",
-    "prompt": (
-        "User: Return a complete weather JSON tool result for Paris, France. "
-        "Include units, conditions, humidity, wind, and a 2-day forecast."
-    ),
-    "compressor": "int4_sim · 4× quant",
-    "model": "Mistral-7B-Instruct",
-}
 
-# Longer realistic tool JSON; four drifts on high-impact tool-call fields.
-TIMELINE: tuple[tuple[str, ...], ...] = (
-    ("sync", '{"tool":"get_weather","city":"Paris","country":"France","units":"'),
-    ("drift", "imperial", "metric", "4× quant flipped units argmax"),
-    ("sync", '","temp_c":'),
-    ("drift", "22", "18", "wrong temperature from compressed logits"),
-    ("sync", ',"feels_like_c":16,"conditions":"'),
-    ("drift", "overcast", "clear skies", "open-text field drift under int4_sim"),
-    ("sync", '","humidity_pct":'),
-    ("drift", "45", "72", "humidity digits flipped by KV noise"),
-    (
-        "sync",
-        ',"wind":"NW 12km/h","forecast":[{"day":"Mon","high_c":20,"low_c":12},'
-        '{"day":"Tue","high_c":19,"low_c":11}],"source":"open-meteo","valid":',
+@dataclass(frozen=True)
+class DemoScenario:
+    name: str
+    meta: dict[str, str]
+    timeline: tuple[tuple[str, ...], ...]
+    ship_lossy: tuple[str, ...]
+    ship_exact: tuple[str, ...]
+    show_scale_punch: bool = False
+
+
+_WEATHER = DemoScenario(
+    name="weather",
+    meta={
+        "panel": "BFCL tool-call panel · ctx 2048 · 64 max new tokens",
+        "prompt_label": "int4_sim 4× quant · greedy decode · compressed KV draft",
+        "prompt": (
+            "User: Return a complete weather JSON tool result for Paris, France. "
+            "Include units, conditions, humidity, wind, and a 2-day forecast."
+        ),
+        "compressor": "int4_sim · 4× quant",
+        "model": "Mistral-7B-Instruct",
+    },
+    timeline=(
+        ("sync", '{"tool":"get_weather","city":"Paris","country":"France","units":"'),
+        ("drift", "imperial", "metric", "4× quant flipped units argmax"),
+        ("sync", '","temp_c":'),
+        ("drift", "22", "18", "wrong temperature from compressed logits"),
+        ("sync", ',"feels_like_c":16,"conditions":"'),
+        ("drift", "overcast", "clear skies", "open-text field drift under int4_sim"),
+        ("sync", '","humidity_pct":'),
+        ("drift", "45", "72", "humidity digits flipped by KV noise"),
+        (
+            "sync",
+            ',"wind":"NW 12km/h","forecast":[{"day":"Mon","high_c":20,"low_c":12},'
+            '{"day":"Tue","high_c":19,"low_c":11}],"source":"open-meteo","valid":',
+        ),
+        ("sync", "true}"),
     ),
-    ("sync", "true}"),
+    ship_lossy=(
+        '"units":"imperial"',
+        '"temp_c":22',
+        '"conditions":"overcast"',
+        '"humidity_pct":45',
+        "wrong tool JSON ships silently",
+    ),
+    ship_exact=(
+        '"units":"metric"',
+        '"temp_c":18',
+        '"conditions":"clear skies"',
+        '"humidity_pct":72',
+        "full-KV greedy path preserved",
+    ),
 )
 
+# Hero launch cut: one human-obvious semantic crash + paper-scale punch.
+_HERO = DemoScenario(
+    name="hero",
+    meta={
+        "panel": "structured tool-call crash test · greedy · claim-safe replay",
+        "prompt_label": "int4_sim 4× quant · compressed KV draft vs full-KV verifier",
+        "prompt": (
+            "User: Fulfill pharmacy order P-1042. Return JSON with fulfillment mode "
+            "and pickup datetime. Patient will collect in store."
+        ),
+        "compressor": "int4_sim · 4× quant",
+        "model": "Mistral-7B-Instruct",
+    },
+    timeline=(
+        ("sync", '{"tool":"fulfill_rx","patient":"P-1042","fulfillment":"'),
+        (
+            "drift",
+            "dropoff",
+            "pickup",
+            "semantic crash: compressed KV chose dropoff — patient expected pickup",
+        ),
+        ("sync", '","date":"2022-01-01","time":"10:00"}'),
+    ),
+    ship_lossy=(
+        '"fulfillment":"dropoff"',
+        "wrong fulfillment ships to downstream agent",
+        "patient goes to wrong logistics path",
+    ),
+    ship_exact=(
+        '"fulfillment":"pickup"',
+        "verifier rejected dropoff · committed pickup",
+        "shipped output ≡ full precision KV",
+    ),
+    show_scale_punch=True,
+)
+
+SCENARIOS: dict[str, DemoScenario] = {"weather": _WEATHER, "hero": _HERO}
+
+# Back-compat for tests / older call sites.
+META = _WEATHER.meta
+TIMELINE = _WEATHER.timeline
 FULL_TEXT = "".join(seg[1] if seg[0] == "sync" else seg[2] for seg in TIMELINE)
 LOSSY_TEXT = "".join(seg[1] if seg[0] == "sync" else seg[1] for seg in TIMELINE)
 STREAM_TOTAL = len(FULL_TEXT)
+
+
+def _scenario_texts(scenario: DemoScenario) -> tuple[str, str, int]:
+    full = "".join(seg[1] if seg[0] == "sync" else seg[2] for seg in scenario.timeline)
+    lossy = "".join(seg[1] if seg[0] == "sync" else seg[1] for seg in scenario.timeline)
+    return full, lossy, len(full)
+
+
+_ACTIVE: DemoScenario = _WEATHER
+_ACTIVE_FULL = FULL_TEXT
+_ACTIVE_LOSSY = LOSSY_TEXT
+_ACTIVE_TOTAL = STREAM_TOTAL
+
+
+def _activate(scenario: DemoScenario) -> None:
+    global _ACTIVE, _ACTIVE_FULL, _ACTIVE_LOSSY, _ACTIVE_TOTAL, META, TIMELINE, FULL_TEXT, LOSSY_TEXT, STREAM_TOTAL
+    _ACTIVE = scenario
+    META = scenario.meta
+    TIMELINE = scenario.timeline
+    FULL_TEXT, LOSSY_TEXT, STREAM_TOTAL = _scenario_texts(scenario)
+    _ACTIVE_FULL, _ACTIVE_LOSSY, _ACTIVE_TOTAL = FULL_TEXT, LOSSY_TEXT, STREAM_TOTAL
 
 LOGO = [
     " ███████╗██╗  ██╗ █████╗  ██████╗████████╗██╗  ██╗██╗   ██╗",
@@ -389,34 +478,39 @@ def _comparison_columns(
 
 
 def _ship_comparison(style: TerminalStyle) -> list[str]:
+    scen = _ACTIVE
     if style.plain:
-        return [
-            "",
-            "WITHOUT EXACTKV (compressed KV only)     WITH EXACTKV (verifier crash-test)",
-            '  "units":"imperial"                         "units":"metric"',
-            '  "temp_c":22                               "temp_c":18',
-            '  "conditions":"overcast"                   "conditions":"clear skies"',
-            '  "humidity_pct":45                         "humidity_pct":72',
-            "  wrong tool JSON ships silently             full-KV greedy path preserved",
-            "  downstream agent gets bad facts            8,132-cell panels: 0 exactness failures",
-            "",
-        ]
+        lines = ["", "WITHOUT EXACTKV (compressed KV only)", *[f"  {x}" for x in scen.ship_lossy], "",
+                 "WITH EXACTKV (verifier crash-test)", *[f"  {x}" for x in scen.ship_exact], ""]
+        return lines
+    lines = ["", style.bold(style.white("WITHOUT EXACTKV (compressed KV only)"))]
+    lines.extend(style.red(f"  {x}") for x in scen.ship_lossy)
+    lines.append("")
+    lines.append(style.bold(style.white("WITH EXACTKV (verifier crash-test)")))
+    lines.extend(style.green(f"  {x}") for x in scen.ship_exact)
+    lines.append(style.white("  8,132-cell panels · MBPP + BFCL + LongBench · exactkv_failures: 0"))
+    lines.append("")
+    return lines
+
+
+def _scale_punch(style: TerminalStyle) -> list[str]:
+    """Paper headline: observational task-family span; length is within-task control."""
+    rows = [
+        "SAME 4× COMPRESSOR  ·  TASK TYPE DOMINATES DRIFT",
+        "  code (MBPP) .............. ~6% token drift",
+        "  reading (HF LongBench) ... ~90% token drift",
+        "  8,132 GPU cells · Llama-3.1-8B + Mistral-7B · exactkv_failures: 0",
+        "  ExactKV measures when compressed KV starts lying — not a new compressor",
+    ]
+    if style.plain:
+        return [""] + rows + [""]
     return [
         "",
-        style.bold(style.white("WITHOUT EXACTKV (compressed KV only)")),
-        style.red('  "units":"imperial"'),
-        style.red('  "temp_c":22'),
-        style.red('  "conditions":"overcast"'),
-        style.red('  "humidity_pct":45'),
-        style.red("  wrong tool JSON ships silently"),
-        "",
-        style.bold(style.white("WITH EXACTKV (verifier crash-test)")),
-        style.green('  "units":"metric"'),
-        style.green('  "temp_c":18'),
-        style.green('  "conditions":"clear skies"'),
-        style.green('  "humidity_pct":72'),
-        style.green("  full-KV greedy path preserved"),
-        style.white("  8,132-cell panels · MBPP + BFCL + LongBench · exactkv_failures: 0"),
+        style.bold(style.cyan(rows[0])),
+        style.white(rows[1]),
+        style.red(style.bold(rows[2])),
+        style.green(rows[3]),
+        style.white(rows[4]),
         "",
     ]
 
@@ -495,6 +589,8 @@ def _frame(
     if show_ship:
         body.extend(_ship_comparison(style))
         body.extend(_victory_banner(style, drifts_caught=drifts_caught))
+        if _ACTIVE.show_scale_punch:
+            body.extend(_scale_punch(style))
     return body
 
 
@@ -554,10 +650,16 @@ def run_streaming_demo(
     no_delay: bool = False,
     plain: bool = False,
     speed: str = "launch",
+    scenario: str | None = None,
 ) -> str:
     """Stream tool JSON; dramatic drift alerts; verifier reject/commit; victory beat."""
     if out is None:
         out = sys.stdout
+    # Hero speed implies hero scenario unless caller overrides.
+    scen_name = scenario or ("hero" if speed == "hero" else "weather")
+    if scen_name not in SCENARIOS:
+        raise ValueError(f"unknown scenario: {scen_name}")
+    _activate(SCENARIOS[scen_name])
     profile = SPEED_PROFILES.get(speed, SPEED_PROFILES["launch"])
     drift_pause = float(profile.get("drift_pause", profile["dramatic"]))
     char_delay = float(profile.get("typing", 0.05))
@@ -575,9 +677,12 @@ def run_streaming_demo(
             lossy_flag="DRIFT",
             exactkv_flag="MATCH",
             stream_pos=STREAM_TOTAL,
-            drifts_caught=4,
+            drifts_caught=sum(1 for seg in TIMELINE if seg[0] == "drift"),
             phase="victory",
-            verifier_card=("imperial", "metric", 1),
+            verifier_card=next(
+                ((seg[1], seg[2], 1) for seg in TIMELINE if seg[0] == "drift"),
+                ("?", "?", 1),
+            ),
             show_ship=True,
         )
         for line in lines:
@@ -586,7 +691,8 @@ def run_streaming_demo(
             _emit(style, style.bold(line), out=out, delay=0.0, no_delay=True)
         return "\n".join(captured)
 
-    for step in (0, 1, 2):
+    intro_steps = (0, 1) if _ACTIVE.name == "hero" else (0, 1, 2)
+    for step in intro_steps:
         live.draw(_intro_frame(style, step=step), delay=profile["section"], no_delay=no_delay)
     live.commit()
     _pause(profile["dramatic"] * 0.5, no_delay=no_delay)

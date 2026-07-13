@@ -38,6 +38,8 @@ Models: **Llama-3.1-8B** and **Mistral-7B-Instruct-v0.3**, greedy decoding.
 | `int4_sim` drift, HF LongBench (reading) | **~90%** |
 | H2O-style eviction @ 75% kept, LongBench | **100%** |
 | BFCL long-gen drift (mnt 16→256) | **9% → 62%** (7× within-task scaling) |
+
+The 6%→90% code/reading span is **observational** (task, context, and `max_new` change together across families). The cleanest controlled within-task axis in the current release is BFCL generation length.
 | Full-KV valid tool calls preserved | **106/106** (BFCL validity panel) |
 | Wilson 95% CIs (headline + smoke) | [`confidence_intervals.json`](reports/public_release/confidence_intervals.json) |
 
@@ -101,10 +103,12 @@ Requires **Python 3.10+**, **PyTorch**, and **transformers**. GPU optional for t
 **Live terminal demo:**
 
 ```bash
-python3 scripts/exactkv_live_demo.py --speed launch
+python3 scripts/exactkv_live_demo.py --speed hero     # launch cut (~25s): dropoff→pickup + 6%→90%
+python3 scripts/exactkv_live_demo.py --speed launch   # longer weather multi-drift
 python3 scripts/exactkv_live_demo.py --mode cases --speed cinematic
 ```
 
+Hero recording / Sora open: `launch/demo_hero_10.md`
 **Verify artifacts (no inference):**
 
 ```bash

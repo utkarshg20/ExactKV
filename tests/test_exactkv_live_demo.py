@@ -87,6 +87,19 @@ def test_streaming_is_default_mode() -> None:
     assert "ACT 1" not in out
 
 
+def test_hero_scenario_semantic_and_scale_punch() -> None:
+    out = _run_demo("--speed", "hero")
+    assert "dropoff" in out
+    assert "pickup" in out
+    assert "REJECT" in out
+    assert "COMMIT" in out
+    assert "TASK TYPE DOMINATES DRIFT" in out
+    assert "~6%" in out or "6%" in out
+    assert "~90%" in out or "90%" in out
+    assert "8,132" in out
+    assert "imperial" not in out  # weather scenario not active
+
+
 @pytest.mark.parametrize(
     "needle",
     [

@@ -18,6 +18,8 @@ SPEED_PROFILES = {
     "cinematic": {"pause": 0.55, "typing": 0.045, "dramatic": 1.8, "section": 0.45, "row": 0.35},
     "launch": {"pause": 0.55, "typing": 0.082, "dramatic": 1.6, "section": 0.4, "row": 0.3, "drift_pause": 2.0},
     "social": {"pause": 0.4, "typing": 0.038, "dramatic": 1.6, "section": 0.35, "row": 0.3, "drift_pause": 2.0},
+    # Hero cut: ~20–28s terminal segment after optional Sora cold-open.
+    "hero": {"pause": 0.28, "typing": 0.028, "dramatic": 1.35, "section": 0.22, "row": 0.2, "drift_pause": 1.55},
     "default": {"pause": 0.35, "typing": 0.03, "dramatic": 1.0, "section": 0.25, "row": 0.2},
 }
 

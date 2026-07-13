@@ -3,9 +3,11 @@
 
 Default: one continuous in-place replay (drift → reject/commit → match).
 Optional `--mode cases` for site case-study carousel.
+Launch cut: `--speed hero` (pharmacy semantic crash + 6%→90% scale punch).
 
 Usage::
 
+    python3 scripts/exactkv_live_demo.py --speed hero
     python3 scripts/exactkv_live_demo.py --speed launch
     python3 scripts/exactkv_live_demo.py --mode cases --speed cinematic
 """
@@ -36,6 +38,12 @@ def _build_parser() -> argparse.ArgumentParser:
         default="stream",
         help="stream=single in-place crash test (default); cases=site carousel",
     )
+    p.add_argument(
+        "--scenario",
+        choices=("weather", "hero"),
+        default=None,
+        help="stream scenario (default: weather; auto-hero when --speed hero)",
+    )
     p.add_argument("--json", type=Path, default=DEFAULT_CASE_STUDIES_JSON)
     p.add_argument("--case", metavar="PROMPT_ID")
     p.add_argument("--compressor", help="with --case (default int4_sim)")
@@ -43,7 +51,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument("--list-cases", action="store_true")
     p.add_argument(
         "--speed",
-        choices=("instant", "fast", "cinematic", "launch", "social", "default"),
+        choices=("instant", "fast", "cinematic", "launch", "social", "hero", "default"),
         default="launch",
     )
     p.add_argument("--no-delay", action="store_true")
@@ -53,13 +61,22 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
+    # Preserve hero scenario even when --no-delay forces instant pacing.
+    scenario = args.scenario
+    if scenario is None and args.speed == "hero":
+        scenario = "hero"
     speed = "instant" if args.no_delay else args.speed
 
     if args.case is not None or args.index is not None:
         args.mode = "cases"
 
     if args.mode == "stream":
-        run_streaming_demo(no_delay=args.no_delay, plain=args.plain, speed=speed)
+        run_streaming_demo(
+            no_delay=args.no_delay,
+            plain=args.plain,
+            speed=speed,
+            scenario=scenario,
+        )
         return 0
 
     all_cases = load_case_studies(args.json)
@@ -83,7 +100,7 @@ def main(argv: list[str] | None = None) -> int:
         cases,
         no_delay=args.no_delay,
         plain=args.plain,
-        speed=speed if speed != "launch" else "cinematic",
+        speed=speed if speed not in {"launch", "hero"} else "cinematic",
     )
     return 0
 

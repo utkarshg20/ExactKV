@@ -46,7 +46,7 @@ Use this after RunPod backfill reports **576/576** and `rebuild_wave3_panels.py`
 - [ ] `launch/x_thread.md` — wave-3 LongBench TurboQuant story
 - [ ] `launch/linkedin_post.md` — same numbers, claim-safe caveats
 - [ ] `launch/short_announcement.md` — appendix bullet
-- [ ] Record terminal demo: `export COLUMNS=110 && python3 scripts/exactkv_live_demo.py --speed launch`
+- [ ] Record hero demo: `export COLUMNS=110 && python3 scripts/exactkv_live_demo.py --speed hero` (see `launch/demo_hero_10.md`)
 
 ---
 

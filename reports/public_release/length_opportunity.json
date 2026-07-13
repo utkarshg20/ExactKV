@@ -1,0 +1,359 @@
+{
+  "schema": "exactkv.public_release.length_opportunity.v1",
+  "generated_at": "2026-07-13T16:58:18.350951+00:00",
+  "claim_boundary": "Opportunity framing from committed panels only. Cross-family divergence spans remain observational (task, context, and max_new often change together). Within-task BFCL mnt slices are the controlled generation-length evidence.",
+  "panels": [
+    {
+      "family": "mbpp",
+      "source": "reports/external_panels/mbpp_gpu_raw.json",
+      "cells_ok": 144,
+      "by_compressor": {
+        "int4_sim": {
+          "cells": 48,
+          "divergent_cells": 3,
+          "divergence_rate": 0.0625,
+          "mean_fdi_divergent": 17.0,
+          "mean_fdi_over_mnt": 0.6458,
+          "per_token_hazard_proxy": 0.002671,
+          "hazard_definition": "divergent_cells / sum(tokens_until_first_divergence_or_max_new); not a formal survival model",
+          "by_max_new_tokens": [
+            {
+              "max_new_tokens": 16,
+              "cells": 24,
+              "divergent_cells": 1,
+              "divergence_rate": 0.0417,
+              "mean_fdi_divergent": 11.0,
+              "mean_fdi_over_mnt": 0.6875
+            },
+            {
+              "max_new_tokens": 32,
+              "cells": 24,
+              "divergent_cells": 2,
+              "divergence_rate": 0.0833,
+              "mean_fdi_divergent": 20.0,
+              "mean_fdi_over_mnt": 0.625
+            }
+          ]
+        },
+        "int8": {
+          "cells": 48,
+          "divergent_cells": 0,
+          "divergence_rate": 0.0,
+          "mean_fdi_divergent": null,
+          "mean_fdi_over_mnt": null,
+          "per_token_hazard_proxy": 0.0,
+          "hazard_definition": "divergent_cells / sum(tokens_until_first_divergence_or_max_new); not a formal survival model",
+          "by_max_new_tokens": [
+            {
+              "max_new_tokens": 16,
+              "cells": 24,
+              "divergent_cells": 0,
+              "divergence_rate": 0.0,
+              "mean_fdi_divergent": null,
+              "mean_fdi_over_mnt": null
+            },
+            {
+              "max_new_tokens": 32,
+              "cells": 24,
+              "divergent_cells": 0,
+              "divergence_rate": 0.0,
+              "mean_fdi_divergent": null,
+              "mean_fdi_over_mnt": null
+            }
+          ]
+        },
+        "noop": {
+          "cells": 48,
+          "divergent_cells": 0,
+          "divergence_rate": 0.0,
+          "mean_fdi_divergent": null,
+          "mean_fdi_over_mnt": null,
+          "per_token_hazard_proxy": 0.0,
+          "hazard_definition": "divergent_cells / sum(tokens_until_first_divergence_or_max_new); not a formal survival model",
+          "by_max_new_tokens": [
+            {
+              "max_new_tokens": 16,
+              "cells": 24,
+              "divergent_cells": 0,
+              "divergence_rate": 0.0,
+              "mean_fdi_divergent": null,
+              "mean_fdi_over_mnt": null
+            },
+            {
+              "max_new_tokens": 32,
+              "cells": 24,
+              "divergent_cells": 0,
+              "divergence_rate": 0.0,
+              "mean_fdi_divergent": null,
+              "mean_fdi_over_mnt": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "family": "bfcl_short",
+      "source": "reports/external_panels/bfcl_export_50_raw.json",
+      "cells_ok": 1200,
+      "by_compressor": {
+        "int4_sim": {
+          "cells": 400,
+          "divergent_cells": 45,
+          "divergence_rate": 0.1125,
+          "mean_fdi_divergent": 10.244,
+          "mean_fdi_over_mnt": 0.4042,
+          "per_token_hazard_proxy": 0.005051,
+          "hazard_definition": "divergent_cells / sum(tokens_until_first_divergence_or_max_new); not a formal survival model",
+          "by_max_new_tokens": [
+            {
+              "max_new_tokens": 16,
+              "cells": 200,
+              "divergent_cells": 18,
+              "divergence_rate": 0.09,
+              "mean_fdi_divergent": 6.722,
+              "mean_fdi_over_mnt": 0.4201
+            },
+            {
+              "max_new_tokens": 32,
+              "cells": 200,
+              "divergent_cells": 27,
+              "divergence_rate": 0.135,
+              "mean_fdi_divergent": 12.593,
+              "mean_fdi_over_mnt": 0.3935
+            }
+          ]
+        },
+        "int8": {
+          "cells": 400,
+          "divergent_cells": 0,
+          "divergence_rate": 0.0,
+          "mean_fdi_divergent": null,
+          "mean_fdi_over_mnt": null,
+          "per_token_hazard_proxy": 0.0,
+          "hazard_definition": "divergent_cells / sum(tokens_until_first_divergence_or_max_new); not a formal survival model",
+          "by_max_new_tokens": [
+            {
+              "max_new_tokens": 16,
+              "cells": 200,
+              "divergent_cells": 0,
+              "divergence_rate": 0.0,
+              "mean_fdi_divergent": null,
+              "mean_fdi_over_mnt": null
+            },
+            {
+              "max_new_tokens": 32,
+              "cells": 200,
+              "divergent_cells": 0,
+              "divergence_rate": 0.0,
+              "mean_fdi_divergent": null,
+              "mean_fdi_over_mnt": null
+            }
+          ]
+        },
+        "noop": {
+          "cells": 400,
+          "divergent_cells": 0,
+          "divergence_rate": 0.0,
+          "mean_fdi_divergent": null,
+          "mean_fdi_over_mnt": null,
+          "per_token_hazard_proxy": 0.0,
+          "hazard_definition": "divergent_cells / sum(tokens_until_first_divergence_or_max_new); not a formal survival model",
+          "by_max_new_tokens": [
+            {
+              "max_new_tokens": 16,
+              "cells": 200,
+              "divergent_cells": 0,
+              "divergence_rate": 0.0,
+              "mean_fdi_divergent": null,
+              "mean_fdi_over_mnt": null
+            },
+            {
+              "max_new_tokens": 32,
+              "cells": 200,
+              "divergent_cells": 0,
+              "divergence_rate": 0.0,
+              "mean_fdi_divergent": null,
+              "mean_fdi_over_mnt": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "family": "bfcl_long",
+      "source": "reports/external_panels/bfcl_validity_v27_merged_raw.json",
+      "cells_ok": 1200,
+      "by_compressor": {
+        "int4_sim": {
+          "cells": 400,
+          "divergent_cells": 201,
+          "divergence_rate": 0.5025,
+          "mean_fdi_divergent": 84.512,
+          "mean_fdi_over_mnt": 0.4102,
+          "per_token_hazard_proxy": 0.003852,
+          "hazard_definition": "divergent_cells / sum(tokens_until_first_divergence_or_max_new); not a formal survival model",
+          "by_max_new_tokens": [
+            {
+              "max_new_tokens": 128,
+              "cells": 200,
+              "divergent_cells": 77,
+              "divergence_rate": 0.385,
+              "mean_fdi_divergent": 53.506,
+              "mean_fdi_over_mnt": 0.418
+            },
+            {
+              "max_new_tokens": 256,
+              "cells": 200,
+              "divergent_cells": 124,
+              "divergence_rate": 0.62,
+              "mean_fdi_divergent": 103.766,
+              "mean_fdi_over_mnt": 0.4053
+            }
+          ]
+        },
+        "int8": {
+          "cells": 400,
+          "divergent_cells": 3,
+          "divergence_rate": 0.0075,
+          "mean_fdi_divergent": 154.333,
+          "mean_fdi_over_mnt": 0.7669,
+          "per_token_hazard_proxy": 3.9e-05,
+          "hazard_definition": "divergent_cells / sum(tokens_until_first_divergence_or_max_new); not a formal survival model",
+          "by_max_new_tokens": [
+            {
+              "max_new_tokens": 128,
+              "cells": 200,
+              "divergent_cells": 1,
+              "divergence_rate": 0.005,
+              "mean_fdi_divergent": 126.0,
+              "mean_fdi_over_mnt": 0.9844
+            },
+            {
+              "max_new_tokens": 256,
+              "cells": 200,
+              "divergent_cells": 2,
+              "divergence_rate": 0.01,
+              "mean_fdi_divergent": 168.5,
+              "mean_fdi_over_mnt": 0.6582
+            }
+          ]
+        },
+        "noop": {
+          "cells": 400,
+          "divergent_cells": 0,
+          "divergence_rate": 0.0,
+          "mean_fdi_divergent": null,
+          "mean_fdi_over_mnt": null,
+          "per_token_hazard_proxy": 0.0,
+          "hazard_definition": "divergent_cells / sum(tokens_until_first_divergence_or_max_new); not a formal survival model",
+          "by_max_new_tokens": [
+            {
+              "max_new_tokens": 128,
+              "cells": 200,
+              "divergent_cells": 0,
+              "divergence_rate": 0.0,
+              "mean_fdi_divergent": null,
+              "mean_fdi_over_mnt": null
+            },
+            {
+              "max_new_tokens": 256,
+              "cells": 200,
+              "divergent_cells": 0,
+              "divergence_rate": 0.0,
+              "mean_fdi_divergent": null,
+              "mean_fdi_over_mnt": null
+            }
+          ]
+        }
+      }
+    },
+    {
+      "family": "longbench",
+      "source": "reports/external_panels/hf_longbench_v26_merged_raw.json",
+      "cells_ok": 720,
+      "by_compressor": {
+        "int4_sim": {
+          "cells": 240,
+          "divergent_cells": 217,
+          "divergence_rate": 0.9042,
+          "mean_fdi_divergent": 7.829,
+          "mean_fdi_over_mnt": 0.1748,
+          "per_token_hazard_proxy": 0.079692,
+          "hazard_definition": "divergent_cells / sum(tokens_until_first_divergence_or_max_new); not a formal survival model",
+          "by_max_new_tokens": [
+            {
+              "max_new_tokens": 32,
+              "cells": 120,
+              "divergent_cells": 106,
+              "divergence_rate": 0.8833,
+              "mean_fdi_divergent": 6.877,
+              "mean_fdi_over_mnt": 0.2149
+            },
+            {
+              "max_new_tokens": 64,
+              "cells": 120,
+              "divergent_cells": 111,
+              "divergence_rate": 0.925,
+              "mean_fdi_divergent": 8.739,
+              "mean_fdi_over_mnt": 0.1365
+            }
+          ]
+        },
+        "int8": {
+          "cells": 240,
+          "divergent_cells": 59,
+          "divergence_rate": 0.2458,
+          "mean_fdi_divergent": 23.576,
+          "mean_fdi_over_mnt": 0.4677,
+          "per_token_hazard_proxy": 0.005977,
+          "hazard_definition": "divergent_cells / sum(tokens_until_first_divergence_or_max_new); not a formal survival model",
+          "by_max_new_tokens": [
+            {
+              "max_new_tokens": 32,
+              "cells": 120,
+              "divergent_cells": 23,
+              "divergence_rate": 0.1917,
+              "mean_fdi_divergent": 16.304,
+              "mean_fdi_over_mnt": 0.5095
+            },
+            {
+              "max_new_tokens": 64,
+              "cells": 120,
+              "divergent_cells": 36,
+              "divergence_rate": 0.3,
+              "mean_fdi_divergent": 28.222,
+              "mean_fdi_over_mnt": 0.441
+            }
+          ]
+        },
+        "noop": {
+          "cells": 240,
+          "divergent_cells": 0,
+          "divergence_rate": 0.0,
+          "mean_fdi_divergent": null,
+          "mean_fdi_over_mnt": null,
+          "per_token_hazard_proxy": 0.0,
+          "hazard_definition": "divergent_cells / sum(tokens_until_first_divergence_or_max_new); not a formal survival model",
+          "by_max_new_tokens": [
+            {
+              "max_new_tokens": 32,
+              "cells": 120,
+              "divergent_cells": 0,
+              "divergence_rate": 0.0,
+              "mean_fdi_divergent": null,
+              "mean_fdi_over_mnt": null
+            },
+            {
+              "max_new_tokens": 64,
+              "cells": 120,
+              "divergent_cells": 0,
+              "divergence_rate": 0.0,
+              "mean_fdi_divergent": null,
+              "mean_fdi_over_mnt": null
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

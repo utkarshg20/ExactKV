@@ -1,12 +1,18 @@
 # When Does Compressed KV Start Lying? Token-Level Drift in KV Cache Compression
 
-**ExactKV Technical Report — research release (git tag `v-release`)**
+**ExactKV Technical Report**
 
 *Complete: 8,132 GPU cells, five benchmark families, h2o_sim + int6_sim + int4_per_vec_sim GPU-validated.*
 
-*Public cite: **ExactKV research release** · git tag **`v-release`**. Panel-batch labels like `v30/` in this report are internal artifact names, not separate public versions.*
+---
 
-*All quantitative values are read from on-disk release artifacts (Appendix A, Appendix E). Metric definitions follow `docs/METRIC_DEFINITIONS.md`. Claim boundaries follow [`docs/CLAIM_BOUNDARIES.md`](../docs/CLAIM_BOUNDARIES.md). No results are invented.*
+## If you read five minutes
+
+1. **Claim.** KV-cache drift is governed jointly by task type, generation length, compressor class, and quantization granularity — measured by first-divergence index, draft acceptance, and unguarded lossy damage (not by `exactkv_failures=0`, a harness invariant).
+2. **Confound caveat.** The memorable span `int4_sim` **6% (MBPP) → 90% (LongBench)** is **observational**: task family, context bucket, and `max_new_tokens` change together. The strongest *controlled* within-task axis is BFCL generation length (**9% → 62%** as mnt 16→256).
+3. **Three numbers.** (a) BFCL length scaling 9%→62%; (b) LongBench reading near-ceiling for `int4_sim` even at 2K context; (c) three failure modes from 1,103-cell logit autopsy (near-tie / distribution shift / attention destruction).
+4. **Without verification.** Unguarded lossy path can ship wrong tool/code fields; ExactKV recovers full-KV-valid outputs when full-KV itself is valid (§6.11). Verifier cost sketch: §9.1.
+5. **Details.** Panel inventory → Appendix A. Paths / repro → `REPRODUCE.md`.
 
 ---
 
@@ -36,29 +42,34 @@ and drift structure under verifier-mediated (draft/verify/commit) semantics.
 Across **8,132 GPU cells** on Llama-3.1-8B and Mistral-7B (Appendix benchmark card),
 four main findings emerge:
 
-1. **Task type dominates drift.** `int4_sim` divergence spans 6% (MBPP code) → 11%
-(BFCL short-gen) → 50% (BFCL long-gen) → **90%** (HF LongBench reading), while
-H2O-style eviction (even 75% kept) reaches **100%** on LongBench, worse than int4_sim
-at matched memory budget.
+1. **Observed task-family span (not fully matched).** `int4_sim` cell divergence spans
+6% (MBPP code) → 11% (BFCL short-gen) → 50% (BFCL long-gen) → **90%** (HF LongBench
+reading). H2O-style eviction (even 75% kept) reaches **100%** on LongBench. Cross-family
+rates mix task type with typical context and output budgets — treat as observational;
+see within-task controls in finding 2 and §6.12.
 
-2. **Generation length is the within-task driver.** On BFCL, `int4_sim` divergence scales
-7× from 9% (mnt=16) to 62% (mnt=256). `int8` stays near-zero throughout.
+2. **Generation length is the strongest within-task driver.** On BFCL (fixed task family),
+`int4_sim` divergence scales 7× from 9% (mnt=16) to 62% (mnt=256). Longer budgets create
+more argmax trials (opportunity effect); FDI / `mnt` and a simple hazard proxy separate
+early LongBench flips from late BFCL accumulation (§6.12.3). `int8` stays near-zero on BFCL.
 
 3. **Compressor class determines failure mode.** Top-k logit autopsy over 1,103 divergent
 cells identifies three mechanisms: near-tie noise (int8, mean lossy rank 2.4, fdi=22);
 distribution shift (int4_sim, rank 3.5, fdi=8); and attention destruction (H2O-style,
 rank 6.7, fdi=1). Three forensic case studies with full top-5 logit traces confirm each.
 
-4. **Downstream validity is preserved across three metric families when full-KV is valid.**
-Despite high token drift, ExactKV preserves **318/318** full-KV valid BFCL tool calls,
-**12/12** full-KV syntactically valid MBPP outputs on Llama v3.0 (Python `ast.parse`),
-and **100%** LongBench answer-overlap parity vs full-KV (720 cells scored). Full-KV
-validity itself is modest on BFCL (26–37%) and MBPP (12.5% on Llama); these are
-preservation metrics, not official pass rates.
+4. **Unguarded lossy path is not free; verification recovers full-KV-valid outputs.**
+Without ExactKV, compressed KV can ship wrong tool/code fields. With verifier-mediated
+execution, ExactKV preserves **318/318** full-KV valid BFCL tool calls, **12/12** full-KV
+syntactically valid MBPP outputs on Llama v3.0, and **100%** LongBench answer-overlap
+parity vs full-KV (720 cells). Draft acceptance and §9.1 sketch how often corrections
+happen and how verify cost scales as acceptance falls. Full-KV validity itself is modest
+on BFCL (26–37%); these are preservation metrics, not official pass rates.
 
-**Correctness invariant:** `exactkv_failures = 0` on all 8,132 cells. The verifier
-implementation is sound under our semantics. This is expected when verify/commit logic
-is correct. It is **not** a claim that compression is safe without verification.
+**Harness invariant (not the headline):** `exactkv_failures = 0` on all 8,132 cells confirms
+verify/commit wiring under our semantics. It is **not** evidence that compression is safe
+without verification, and it is **not** a scientific surprise when the verifier is the
+full-KV oracle.
 
 **Non-catastrophic (defined):** divergence rate **≤ 10%** on structured tasks (BFCL/MBPP
 at default mnt≤32) **and** mean acceptance **≥ 0.90**, or 0% divergence on those tasks.
@@ -75,6 +86,12 @@ test (90–100%); TurboQuant is **task-conditional** — near-clean on structure
 remains the only non-catastrophic real compressor** in that appendix grid (8.3% combined).
 This reinforces task-type sensitivity; it does **not** establish production-ready external
 compression or a faithful non-catastrophic LongBench baseline.
+
+The governing pattern is that **task type, generation length, compressor class, and
+quantization granularity jointly determine when compressed KV starts lying**, with
+**generation length** as the cleanest within-task control and **task-family spans**
+as the strongest observational signal (not a fully matched factorial). ExactKV makes
+that drift measurable — and shows what the unguarded lossy path would have shipped.
 
 Results are **not** official benchmark scores, production serving claims, or a reproduction
 of VeriCache [vericache2026] throughput-oriented serving.
@@ -108,21 +125,23 @@ verifier agreement, and exactness failures per cell.
 1. A **compressor-agnostic crash-test framework** with leaderboard-style reporting
    that measures token-level drift, first-divergence index, acceptance rate,
    and mechanistic failure signatures across compressors and models (§3–5).
-2. **Empirical evidence that drift is task-dependent, length-dependent, and
-   compressor-class-dependent:** `int4_sim` spans 6% (MBPP) → 90% (HF LongBench). BFCL long-gen scales 9% → 62% as output budget grows 7×. H2O-style eviction
-   reaches 100% on reading at 75% kept (§6.4-6.12, Table 6.16).
+2. **Empirical evidence that drift is jointly task-, length-, and
+   compressor-class-dependent:** observational `int4_sim` span 6% (MBPP) → 90% (HF LongBench);
+   controlled BFCL length scaling 9% → 62% as output budget grows 7×. H2O-style eviction
+   reaches 100% on reading at 75% kept (§6.4-6.12, Table 6.16). Cross-family rates are
+   not fully matched on context/`max_new`.
 3. A **logit autopsy** over 1,103 divergent cells identifying three mechanistically
    distinct failure modes: near-tie noise (int8), distribution shift (int4_sim), and
    attention destruction (H2O-style), each with forensic case studies (§6.10, §7).
 4. A **compressor design curve** from `int8` through `int6_sim` and `int4_per_vec_sim`
    to catastrophic `int4_sim`, showing per-vector granularity helps on structured
    tasks while bit-width still matters at 8K LongBench (§6.13-6.16).
-5. **Downstream validity across three families** — BFCL tool-call JSON, MBPP Python
-   syntax, and LongBench answer overlap — all show 100% preservation of full-KV valid
-   outputs under verifier-mediated execution (§6.11). Not official benchmark pass rates.
+5. **Unguarded lossy damage vs verifier recovery** — BFCL tool JSON, MBPP Python
+   syntax, and LongBench answer overlap show what compressed KV would ship without
+   verification, and that ExactKV preserves full-KV-valid outputs (§6.11). Correction
+   frequency via acceptance / FDI; verifier cost sketch §9.1. Not official pass rates.
 6. **8,132 GPU cells** on Llama-3.1-8B and Mistral-7B across five benchmark families
-   (§6, Appendix A), with a simple verifier-overhead cost sketch tied to draft acceptance
-   (§9).
+   (§6, Appendix A).
 7. **Faithful upstream adapter diagnostics** (1,568 appendix cells, §6.17): real
    upstream libraries on the same crash-test grid. TurboQuant is near-clean on
    structured tasks but **~65% LongBench drift**; **`int8` is the only non-catastrophic
@@ -161,19 +180,19 @@ deployment throughput or reproduce VeriCache's system design. See Section 10.
 
 | # | Finding | Key number |
 |---|---------|-----------|
-| 1 | **Task type dominates drift** | int4_sim: MBPP 6% → BFCL short 11% → BFCL long 50% → LongBench 90% |
-| 2 | **Generation length scales drift** | int4_sim mnt=16: 9% → mnt=256: 62% (7×) |
+| 1 | **Observed task-family span** (confounded) | int4_sim: MBPP 6% → BFCL short 11% → BFCL long 50% → LongBench 90% |
+| 2 | **Generation length (within-task control)** | int4_sim mnt=16: 9% → mnt=256: 62% (7×) |
 | 3 | **Eviction > quantization drift** | H2O-style 75% kept → 100% LongBench divergence |
 | 4 | **Three distinct failure modes** | int8: near-tie (rank 2.4, fdi=22); int4_sim: distribution shift (rank 3.5, fdi=8); H2O: attention destruction (rank 6.7, fdi=1) |
-| 5 | **Downstream validity (3 families)** | BFCL 318/318 + MBPP 12/12 (Llama) + LongBench overlap 100% parity vs full-KV |
+| 5 | **Unguarded lossy damage + recovery** | Without verify: wrong fields can ship; ExactKV preserves BFCL 318/318, MBPP 12/12 (Llama), LongBench overlap 100% vs full-KV |
 | 6 | **Compressor design-space curve** | int8 → int6 → int4_per_vec → int4_sim → H2O: monotonic LongBench degradation (Table 6.16) |
-| 7 | **Faithful adapters reinforce task hierarchy** | TurboQuant: ~0–5% on code/tool, ~65% LongBench; int8: 8.3% combined (appendix, §6.17) |
+| 7 | **Faithful adapters reinforce hierarchy** | TurboQuant: ~0–5% on code/tool, ~65% LongBench; int8: 8.3% combined (appendix, §6.17) |
 
 ExactKV's strongest supported claim is not merely that compressed KV drifts, it is
 that **KV-cache drift is governed jointly by task type, generation length, compressor
-class, and quantization granularity**. Verifier-mediated decoding preserves full-KV
-greedy equivalence on all cited panels (`exactkv_failures=0` is a harness invariant,
-not the scientific headline).
+class, and quantization granularity**, with generation length as the cleanest
+within-task control. Cross-family rate spans are memorable but **not** a fully matched
+factorial. `exactkv_failures=0` is a harness invariant, not the scientific headline.
 
 ---
 
@@ -197,8 +216,6 @@ not the scientific headline).
 | **Correction** | A verification round where `correction_token` is non-null (at least one draft token rejected). |
 
 ### 3.3 Metrics (formal)
-
-Canonical source: `docs/METRIC_DEFINITIONS.md`.
 
 | Metric | Formal definition | Notes |
 |--------|-------------------|-------|
@@ -241,29 +258,31 @@ Greedy decoding only, temperature/top-p sampling not in scope for this release
 
 ## 4. Method
 
-ExactKV's core loop is implemented in `exactkv/runtime/exactkv_generator.py`.
-Phase A scale benchmarking (`exactkv/benchmarks/phase_a_scale_benchmark.py`)
-runs three modes per cell where applicable:
+ExactKV runs three modes per cell:
 
-1. **full**, full-KV greedy reference
-2. **lossy**, compressed-KV greedy (drift measurement)
-3. **exactkv**, verifier-mediated (exactness gate)
+1. **full** — full-KV greedy reference
+2. **lossy** — compressed-KV greedy (drift measurement)
+3. **exactkv** — verifier-mediated draft/verify/commit (exactness gate)
 
-Each **cell** is one tuple:
+Each **cell** is one tuple `(model, compressor, prompt_id, max_new_tokens)` with
+fixed `draft_len=4`, `seed=0`, and greedy decoding.
 
-```text
-(model, compressor, prompt_id, max_new_tokens)
-```
+**Scoring (leaderboard-style, not an official benchmark ranking):**
 
-with fixed `draft_len=4`, `seed=0`, greedy decoding, `dtype=float32` in the
-scale manifest (runtime may promote to float16 on GPU).
+\[
+\text{score} = 0.35\,a + 0.25\,v + 0.20\,\hat{d} + 0.10\,(1-f) + 0.10\,s
+\]
 
-**Scoring (leaderboard-style):**
+| Symbol | Meaning |
+|--------|---------|
+| \(a\) | Mean draft acceptance rate (`total_accepted / total_drafted`) |
+| \(v\) | Mean verifier agreement (equal to \(a\) on the scale panel in this release) |
+| \(\hat{d}\) | Normalized first-divergence index ∈ [0, 1]: mean FDI / `max_new_tokens`, or 1.0 if no divergence (later / none is better) |
+| \(f\) | ExactKV failure rate (`exactkv_output ≠ full-KV`) |
+| \(s\) | Stability subscore (Exp-116 when available; else \(1 - \) divergence rate) |
 
-`0.35·acceptance + 0.25·verifier_agreement + 0.20·(1−normalized_first_divergence) + 0.10·(1−failure_rate) + 0.10·stability`
-
-Source: headline release leaderboard (Appendix E). Scores for validated built-in
-compressors (pilot scale, not official benchmark ranking):
+Source: headline release leaderboard (Appendix A). Scores for validated built-in
+compressors:
 
 | Rank | Compressor | Model | Score | Accept. | Div. Rate† | Stab. | Cells |
 |-----:|-----------|-------|------:|--------:|-----------:|------:|------:|
@@ -276,11 +295,9 @@ compressors (pilot scale, not official benchmark ranking):
 
 †Div. Rate = raw lossy-path token divergence fraction (same metric as §6.3 Table 3).
 `int8` Mistral: divergence_rate = 0.000 (zero cells diverge) but stability_score = 0.827.
-**Note:** `Stab.` here is the **leaderboard stability subscore** from `leaderboard_final.json`,
-not the formal `divergence_stability = 1 − divergence_rate` from Table 1. Under the formal
-metric, `int8` Mistral `divergence_stability = 1.000` (consistent with 0.000 divergence_rate).
-`spectralquant` (MOCK→`int4_sim`) and `shard` (PROBE_ONLY) are excluded from
-all analysis. See §5.1 (Limitations) for their status.
+**Note:** `Stab.` here is the **leaderboard stability subscore**, not the formal
+`divergence_stability = 1 − divergence_rate` from Table 1. Under the formal metric,
+`int8` Mistral `divergence_stability = 1.000`.
 
 ---
 
@@ -319,11 +336,6 @@ readers.
 | `int4_per_vec_sim` | BUILTIN | Per-vector INT4 simulation, KVQuant/KIVI-style (§6.14) |
 | `h2o_sim` | BUILTIN | H2O-style token eviction simulation |
 
-> **Note:** The 1,500-cell headline panel raw JSON also contains `spectralquant`
-> (MOCK → delegates to `int4_sim`) and `shard` (PROBE_ONLY heuristic) slots.
-> Neither is a real external compressor integration. Both are excluded from all
-> analysis and results tables. See §15 (Limitations) for details.
-
 ### 5.2 External benchmark smoke panels
 
 Source: Llama-only external smoke panels and external analysis pack (Appendix E).
@@ -351,8 +363,7 @@ executability, pass@1, or official leaderboard scores.
 | **Context range** | 1024-8192 prefill buckets |
 | **`exactkv_failures`** | **0** on all completed cells |
 
-Reproduce: `bash scripts/run_external_gpu_workflow.sh`,
-`python3 scripts/build_external_analysis_pack.py`.
+Reproduce: see [`REPRODUCE.md`](../REPRODUCE.md) and §17.
 
 ---
 
@@ -799,8 +810,7 @@ and first-divergence index provide a quantitative fingerprint of the failure mod
 
 ## 6.5 HF LongBench reading-compression drift (real HuggingFace prompts)
 
-**Status:** **Complete.** Both models, 720 cells, `exactkv_failures=0`.
-Artifacts: HF LongBench v2.6 panel (Appendix E).
+**Status:** Complete (720 cells, both models). Artifacts: Appendix E.
 
 **Design:**
 
@@ -912,7 +922,7 @@ Three mechanistically distinct failure modes are confirmed (see §6.10):
 
 ## 6.7 BFCL tool-call downstream validity
 
-**Status:** **Complete.** 1,200 cells, both models, `exactkv_failures=0`.
+**Status:** Complete (1,200 cells, both models).
 
 **Design:**
 
@@ -971,8 +981,16 @@ median fdi=8) even in short structured tool-call sequences.
 
 ## 6.8 Cross-panel divergence: task-type and generation-length sensitivity
 
-This section synthesises divergence rates across all completed ExactKV panels to reveal
-the dominant factors driving KV compression drift.
+This section synthesises divergence rates across completed ExactKV panels. Rates
+across families are **observational**; within-family BFCL length and LongBench context
+slices are the controlled evidence (§6.12).
+
+**Threat / confound.** Cross-family comparisons (MBPP vs BFCL vs LongBench) change
+prompt structure, typical context buckets, and `max_new_tokens` together. The memorable
+`int4_sim` span **6% → 90%** is therefore **not** a pure causal claim that “task type
+alone” drives drift. Controlled axes: (i) BFCL mnt 16→256 at fixed tool-call family;
+(ii) LongBench 2K/4K/8K at fixed reading family. A fully matched task×context×`max_new`
+factorial panel is **not** run (Limitations).
 
 **Table 4h, Cross-panel int4_sim/int8/noop divergence rates:**
 
@@ -988,24 +1006,19 @@ the dominant factors driving KV compression drift.
 
 **Key observations:**
 
-1. **noop is always 0%** across all panels and models, confirms the ExactKV deterministic
-   baseline is correct everywhere.
+1. **noop is always 0%** across all panels and models — deterministic baseline holds.
 
-2. **int4_sim divergence spans 6-90% by task family**: Python code generation (MBPP: 6%)
-   and tool-calling (BFCL short-gen: 11%) are far more stable than open-text reading
-   and summarization (LongBench: 90%). Task type is the primary driver.
+2. **Observed `int4_sim` span 6–90% by panel family** (MBPP code 6%, BFCL short 11%,
+   LongBench 90%). Memorable, but confounded with context/`max_new` (threat above).
 
-3. **int8 is near-zero except on LongBench**: 0% on BFCL export-50/MBPP/RULER/evidence-plus,
-   near-zero on BFCL validity (0.8%), but 24.6% on LongBench open-text tasks. Int8 quantization
-   noise is amplified by long-context reading-comprehension generation patterns.
+3. **int8 is near-zero except on LongBench**: 0% on BFCL export-50/MBPP, near-zero on
+   BFCL validity (0.8%), 24.6% on LongBench.
 
-4. **Generation length (mnt) matters for BFCL**: same BFCL prompts, mnt=16/32 → 11.2%
-   int4_sim divergence. Mnt=128/256 → **50.3%**. Longer generation exposes more opportunities
-   for cumulative argmax flips, independent of the prompt or context length.
+4. **Within-task generation length (BFCL):** mnt=16/32 → 11.2% int4_sim; mnt=128/256 →
+   **50.3%**. Opportunity framing and FDI/`mnt` in §6.12.3.
 
-5. **`exactkv_failures=0` throughout**: ExactKV's verifier successfully catches and
-   corrects every divergent cell across all task types, context lengths, and generation
-   lengths tested.
+5. **Harness invariant:** `exactkv_failures=0` on these cells. Headline science is the
+   drift hierarchy + unguarded lossy damage (§6.11), not zero failures.
 
 Script: `python3 scripts/analyze_panel_divergence.py --all-compressors --markdown`
 
@@ -1013,7 +1026,7 @@ Script: `python3 scripts/analyze_panel_divergence.py --all-compressors --markdow
 
 ## 6.9 H2O-style token-eviction drift
 
-**Status:** **Complete.** 800 cells, both models, `exactkv_failures=0`.
+**Status:** Complete (800 cells, both models).
 
 `H2OSimCompressor` adapter implemented and unit-tested (`exactkv/compressors/h2o_sim.py`, 26 tests passing).
 
@@ -1402,6 +1415,11 @@ Artifact: downstream validity pack (Appendix E).
 
 ## 6.12 Scaling Analysis: Context-Length and Generation-Length Sensitivity
 
+**Threat / confound (same as §6.8).** Cross-family rate tables mix task, context, and
+`max_new`. This section elevates the **within-task** controls: LongBench context buckets
+and BFCL generation budgets. Opportunity metrics (§6.12.3) separate “more trials” from
+“early catastrophic flips.”
+
 ### 6.12.1 Context-length scaling (HF LongBench)
 
 **Table 4j, Divergence rate by context bucket (HF LongBench v2.6, 80 cells each)**
@@ -1413,10 +1431,8 @@ Artifact: downstream validity pack (Appendix E).
 | int4_sim | **95.0%** [87.8%, 98.0%] | **86.2%** [77.0%, 92.1%] | **90.0%** [81.5%, 94.8%] |
 
 **Observation:** For `int4_sim`, divergence is near-ceiling at all context lengths
-(86-95%), saturating quickly even at 2K. This confirms that on open-text reading tasks,
-the dominant driver is **task type** (reading/summarization), not context length
-specifically. `int8` shows a more moderate, roughly flat profile (21-28%) across
-context lengths, its near-tie noise mechanism doesn't strongly amplify with context.
+(86-95%), saturating even at 2K within the reading family. Context length is a weak
+within-family axis once the task is open-text reading. `int8` is roughly flat (21–28%).
 
 ### 6.12.2 Generation-length scaling (BFCL tool-calling, both panels)
 
@@ -1428,15 +1444,38 @@ context lengths, its near-tie noise mechanism doesn't strongly amplify with cont
 | int8 | 0.0% | 0.0% | 0.5% | 1.0% |
 | int4_sim | **9.0%** | **13.5%** | **38.5%** | **62.0%** |
 
-**Observation:** Generation length is the dominant BFCL divergence driver. `int4_sim`
-divergence scales from 9% at mnt=16 to 62% at mnt=256, a 7× increase, while
-`int8` remains near-zero throughout. Each additional token generation step gives the
-distribution-shift failure mode an additional opportunity to flip the argmax.
+**Observation:** On BFCL (fixed task), generation length is the strongest controlled
+driver: `int4_sim` 9% → 62% as mnt 16→256 (7×). Each extra token is another greedy
+argmax trial (opportunity effect); report cell divergence **and** FDI timing (§6.12.3).
 
-**Combined scaling story:** The two strongest scaling effects are:
-- **Task-type sensitivity** (code 6% → reading 90% for int4_sim at fixed context)
-- **Generation-length sensitivity** (9% → 62% for int4_sim at fixed task type)
-- Context-length effect is weaker once task type is controlled (near-ceiling for int4_sim on reading)
+### 6.12.3 Length-opportunity framing (existing panels)
+
+Cell-level divergence rises with `max_new_tokens` partly because each extra token is
+another argmax trial. We therefore report **both** divergence rate and **FDI / `max_new`**
+(early vs late), plus a simple hazard proxy
+`#divergent / Σ(tokens until first divergence or end)` — diagnostic only, not a formal
+survival model. Artifact: `reports/public_release/length_opportunity.json`
+(`scripts/build_length_opportunity_pack.py`).
+
+**Table 4k′, Opportunity metrics for `int4_sim` (committed panels):**
+
+| Family | Div. rate | Mean FDI (div) | Mean FDI/`mnt` | Hazard proxy |
+|--------|----------:|---------------:|---------------:|-------------:|
+| MBPP | 6.2% | 17.0 | 0.65 | 0.0027 |
+| BFCL short (mnt≤32) | 11.2% | 10.2 | 0.40 | 0.0051 |
+| BFCL long (mnt≥128) | 50.2% | 84.5 | 0.41 | 0.0039 |
+| LongBench | 90.4% | 7.8 | 0.17 | 0.080 |
+
+**Interpretation.** BFCL long cells diverge late on average (FDI ≈ 85, FDI/`mnt` ≈ 0.41):
+longer budgets accumulate flips. LongBench flips **early** (FDI ≈ 8, FDI/`mnt` ≈ 0.17,
+hazard ≈ 0.08): not merely “more opportunities,” but near-immediate distribution collapse
+on reading. Cross-family rate spans remain observational; BFCL mnt slices remain the
+clean within-task length control.
+
+**Combined scaling story:**
+- **Observational task-family span** (code 6% → reading 90% for int4_sim) — memorable, confounded
+- **Controlled generation-length** (9% → 62% on BFCL) — strongest within-task axis
+- **Controlled context** (LongBench 2K/4K/8K) — weak once reading is fixed (near-ceiling)
 
 ---
 
@@ -2148,20 +2187,14 @@ as an offline adapter diagnostic).
 - end-to-end inference latency gains,
 - runtime GPU memory or VRAM reduction,
 - reproducing or outperforming VeriCache serving throughput,
-- outperforming TurboQuant or Shard on a same-task benchmark,
-- production SpectralQuant or Shard integration in this environment.
+- production-grade faithful LongBench non-catastrophic baselines beyond `int8`.
 
 ---
 
 ## 14. Evidence-plus panel (completed) and remaining extensions
 
 The **144-cell evidence-plus supplement** is now populated on GPU
-(evidence-plus panel, Appendix A). Reproduce:
-
-```bash
-python3 scripts/run_evidence_plus_panel.py --device cuda --dtype float16
-# RunPod: bash scripts/setup_runpod_evidence_plus.sh
-```
+(evidence-plus panel, Appendix A). Reproduce: see [`REPRODUCE.md`](../REPRODUCE.md).
 
 ### 14.1 Completed (June 2026, RunPod A5000)
 
@@ -2175,21 +2208,10 @@ See **§6.3** for aggregates.
 ### 14.2 External benchmark smoke panels (completed, June 2026)
 
 **1,560 GPU cells** on RunPod A5000: **216** Llama-only cells on bundled
-LongBench/RULER/BFCL/HumanEval pilots (`summary_all.json`, `exactkv_failures = 0`)
-plus **144** MBPP cells with both models (`mbpp_gpu_raw.json`) plus **1,200** BFCL
-export-50 tool-call drift cells with both models (`bfcl_export_50_raw.json`,
-`exactkv_failures = 0`, `int4_sim` divergence 11.3%). See **§6.4** for tables and case studies.
-
-Reproduce:
-
-```bash
-bash scripts/run_external_gpu_workflow.sh
-python3 scripts/build_external_analysis_pack.py
-python3 scripts/run_external_panel.py --family mbpp --device cuda --dtype float16 \
-  --max-prompts 6 --context-buckets 512,1024 --max-new-tokens 16,32 \
-  --output-json reports/external_panels/mbpp_gpu_raw.json
-python3 scripts/validate_external_panel_artifacts.py --input reports/external_panels
-```
+LongBench/RULER/BFCL/HumanEval pilots (`exactkv_failures = 0`)
+plus **144** MBPP cells with both models plus **1,200** BFCL
+export-50 tool-call drift cells with both models (`int4_sim` divergence 11.3%).
+See **§6.4** for tables and case studies. Reproduce: [`REPRODUCE.md`](../REPRODUCE.md).
 
 Not completed in first workflow: LongBench HF export, RULER 12K+, official
 benchmark scores. (Mistral external panels and MBPP GPU smoke completed
@@ -2207,7 +2229,8 @@ all 160 `kivi_offline` cells (`exactkv_failures=0`). Real HF `int4_sim` drift
 (LongBench: 91.2%) substantially exceeds bundled pilot results (20.8%), confirming
 that pilot prompts underestimate production drift.
 
-Reproduce (Appendix E, `docs/FAITHFUL_COMPRESSOR_INTEGRATION.md`):
+Reproduce (Appendix E): see [`REPRODUCE.md`](../REPRODUCE.md) and
+`docs/FAITHFUL_COMPRESSOR_INTEGRATION.md`.
 
 Claim boundary: `kivi_offline` / `kivi_offline_r32` use real KIVI quantizer math
 (simulate path, `supports_real_bytes_claim=False`). Not KIVI production CUDA/Triton serving.
@@ -2274,12 +2297,21 @@ Claim boundary: `kivi_offline` / `kivi_offline_r32` use real KIVI quantizer math
 11. **Confidence intervals** are Wilson 95% two-sided intervals on divergence rate
     per panel (added in §6.4). Acceptance rate CIs not yet reported. Intervals on
     small panels (RULER 8192, n=24) are wide. Treat with appropriate caution.
-12. **Logits at divergence** not stored in release or external panel artifacts.
-13. **Proxy/probe slots** (`spectralquant`, `shard`) must not be read as real
-    external compressor integrations.
+12. **Logits at divergence** not stored in all release panel artifacts (stored where
+    `--store-top-k-logits` was enabled for the autopsy panels).
+13. **Unvalidated proxy slots.** Raw headline artifacts may contain placeholder
+    compressor slots that are **not** real external integrations and are **excluded**
+    from all ranked tables and scientific claims in this report. Headline evidence uses
+    `noop`, `int8`, `int4_sim`, and the separately labeled simulated / faithful families only.
 14. **`exactkv_failures = 0`** is a hard gate on the **tested panels** under
-    verifier correction, not a universal safety certificate.
+    verifier correction, not a universal safety certificate. It is a harness invariant,
+    not the scientific headline (see abstract / five-minute path).
 15. **Sequential model execution** on the scale run.
+16. **No matched task×context×`max_new` factorial.** Cross-family divergence spans
+    (e.g. MBPP 6% → LongBench 90%) confound task type with typical context and output
+    budget. Within-task BFCL length and LongBench context slices partially isolate axes
+    (§6.12); a fully matched factorial panel is future work needed for causal isolation
+    of task type.
 
 ---
 
@@ -2294,131 +2326,26 @@ novelty audit, launch pack). Details:
 
 ## 17. Reproducibility
 
-**Artifact verification (no GPU):**
-```bash
-python3 scripts/exactkv_repro.py --reports-only
-python3 scripts/exactkv_repro.py --release-check
-bash scripts/build_paper_pdf.sh                     # requires: brew install tectonic
-```
+All quantitative claims in this report are backed by committed JSON artifacts under
+`reports/` (Appendix A inventory; Appendix E path index). Readers do **not** need
+to open the repository to follow the scientific argument; the repo is for verification
+and re-execution.
 
-**Headline panel (GPU):**
-```bash
-python3 scripts/run_phase_a_scale_benchmark.py --device cuda
-```
+**Public artifact:** git tag `v-release` · https://github.com/utkarshg20/ExactKV
 
-**Evidence-plus panel (GPU):**
-```bash
-python3 scripts/run_evidence_plus_panel.py --device cuda --dtype float16
-```
+| Goal | How |
+|------|-----|
+| CPU verify (~2 min, no GPU) | [`REPRODUCE.md`](../REPRODUCE.md) · `bash scripts/smoke_test.sh` |
+| Check committed reports | `python3 scripts/exactkv_repro.py --reports-only` |
+| Rebuild this PDF | `bash scripts/build_paper_pdf.sh` (requires tectonic) |
+| GPU re-run of cited panels | Full command inventory in [`REPRODUCE.md`](../REPRODUCE.md) |
 
-**External smoke panels, Llama-only LongBench/RULER/BFCL/HumanEval (GPU, 216 cells):**
-```bash
-bash scripts/run_external_gpu_workflow.sh
-python3 scripts/build_external_analysis_pack.py
-python3 scripts/build_external_panel_summary.py --write-readme
-python3 scripts/validate_external_panel_artifacts.py --input reports/external_panels
-```
+**Panel inventory (headline 8,132 cells):** scale 1,500 · evidence-plus 144 · external
+smoke / MBPP / BFCL / KIVI / LongBench / H2O / v3.0 extended validation. Faithful
+adapter appendix: **1,568 cells**, tracked separately. `exactkv_failures = 0` on all
+cited completed panels.
 
-**MBPP code-drift smoke panel (GPU, 144 cells, both models):**
-```bash
-python3 scripts/run_external_panel.py \
-  --family mbpp --device cuda --dtype float16 \
-  --max-prompts 6 --context-buckets 512,1024 --max-new-tokens 16,32 \
-  --output-json reports/external_panels/mbpp_gpu_raw.json
-python3 scripts/validate_external_panel_artifacts.py --input reports/external_panels
-```
-
-**BFCL export-50 tool-call drift panel (GPU, 1,200 cells, both models):**
-```bash
-python3 scripts/run_external_panel.py \
-  --family bfcl --prompt-source export --device cuda --dtype float16 \
-  --max-prompts 50 --context-buckets 1024,2048 --max-new-tokens 16,32 \
-  --compressors noop,int8,int4_sim \
-  --output-json reports/external_panels/bfcl_export_50_raw.json
-# Note: max_new_tokens={16,32} measures drift, NOT JSON-completeness.
-# Artifact: reports/external_panels/bfcl_export_50_raw.json (13.5 MB)
-```
-
-**KIVI offline compressor panel (GPU, 640 cells, requires KIVI `PYTHONPATH`):**
-```bash
-# Prerequisites:
-#   git clone https://github.com/jy-yuan/KIVI /tmp/kivi_research
-#   pip install datasets>=2.0
-export PYTHONPATH=/tmp/kivi_research
-bash scripts/run_kivi_external_panel.sh
-# Artifacts: reports/external_panels/kivi_longbench_hf_raw.json
-#            reports/external_panels/kivi_mbpp_hf_raw.json
-# Note: kivi_offline adapter uses KIVI simulate path (is_simulated=False,
-#       supports_real_bytes_claim=False, no CUDA/Triton kernels).
-#       Results diagnose the offline adapter path, NOT production KIVI serving.
-```
-
-See [`docs/RUNPOD_EVIDENCE_PLUS.md`](../docs/RUNPOD_EVIDENCE_PLUS.md) and
-[`docs/EXTERNAL_BENCHMARK_PANELS.md`](../docs/EXTERNAL_BENCHMARK_PANELS.md).
-
-**HF LongBench v2.6 drift panel (GPU, 720 cells, both models):**
-```bash
-python3 scripts/run_external_panel.py \
-  --family longbench --prompt-source hf \
-  --longbench-subsets narrativeqa,qasper,multifieldqa_en,hotpotqa,2wikimqa,\
-gov_report,trec,samsum,lcc,passage_retrieval_en \
-  --device cuda --dtype float16 --max-prompts 20 \
-  --context-buckets 2048,4096,8192 --max-new-tokens 32,64 \
-  --compressors noop,int8,int4_sim \
-  --models meta-llama/Llama-3.1-8B \
-  --store-top-k-logits \
-  --output-json reports/external_panels/hf_longbench_v26_Llama_3_1_8B_raw.json
-# Repeat for mistralai/Mistral-7B-Instruct-v0.3
-# Merge: python3 scripts/postprocess_merge_v27_bfcl.py (adapt for longbench)
-# Or use: scripts/run_hf_longbench_v26_panel.sh (full runbook)
-# Artifacts: hf_longbench_v26_{Llama,Mistral}_raw.json, hf_longbench_v26_merged_raw.json
-```
-
-**BFCL tool-call validity panel (GPU, 1,200 cells, mnt=128/256):**
-```bash
-python3 scripts/run_external_panel.py \
-  --family bfcl --prompt-source export --device cuda --dtype float16 \
-  --max-prompts 50 --context-buckets 1024,2048 --max-new-tokens 128,256 \
-  --compressors noop,int8,int4_sim \
-  --store-top-k-logits \
-  --output-json reports/external_panels/bfcl_validity_v27_{model}_raw.json
-# Post-process: python3 scripts/postprocess_merge_v27_bfcl.py
-# Artifacts: bfcl_validity_v27_{Llama,Mistral}_raw.json, bfcl_validity_v27_merged_raw.json
-```
-
-**Cross-panel analysis:**
-```bash
-python3 scripts/analyze_panel_divergence.py --all-compressors --markdown
-```
-
-**H2O-style token-eviction panel (GPU, 800 cells, v2.8, both models):**
-```bash
-python3 scripts/run_external_panel.py \
-  --family longbench --prompt-source hf \
-  --longbench-subsets narrativeqa,hotpotqa,samsum,trec,lcc,gov_report,qasper,2wikimqa,\
-passage_retrieval_en,multifieldqa_en \
-  --device cuda --dtype float16 --max-prompts 20 \
-  --context-buckets 2048,4096 --max-new-tokens 32,64 \
-  --compressors noop,int4_sim,h2o_sim,h2o_sim_75,h2o_sim_25 \
-  --store-top-k-logits \
-  --output-json reports/external_panels/h2o_v28_{model}_raw.json
-# Artifacts: h2o_v28_{Llama,Mistral}_raw.json, h2o_v28_merged_raw.json
-# Note: h2o_sim/h2o_sim_75/h2o_sim_25 = H2O-style eviction simulation (not faithful H2O GPU kernel)
-```
-
-**Top-k logit autopsy (post-hoc, requires panels with --store-top-k-logits):**
-```bash
-python3 scripts/analyze_logit_margins.py \
-  --inputs reports/external_panels/hf_longbench_v26_merged_raw.json \
-           reports/external_panels/bfcl_validity_v27_merged_raw.json \
-           reports/external_panels/h2o_v28_merged_raw.json \
-  --output reports/external_panels/logit_autopsy_summary.json
-# Analyzes 1,103 divergent cells. Produces Table 4e/19 metrics per compressor
-```
-
-Complete artifact path index: **Appendix A** (panel inventory) and
-**Appendix E** (flat path index). Grand total: **8,132 cells**,
-`exactkv_failures = 0`.
+Complete path index: **Appendix A** and **Appendix E**.
 
 ---
 
@@ -2431,26 +2358,27 @@ path and how verifier-mediated execution behaves on a fixed panel.
 ExactKV's strongest supported claim is not "we beat X" or "we invented verify." It is:
 
 **KV-cache drift is governed jointly by task type, generation length, compressor class,
-and quantization granularity**, and ExactKV maps that design space with mechanistic
-autopsy and a three-family downstream validity story (BFCL, MBPP syntax, LongBench
+and quantization granularity** — with generation length as the cleanest within-task
+control and cross-family rate spans as the strongest *observational* signal (not a fully
+matched factorial). ExactKV maps that design space with mechanistic autopsy, unguarded
+lossy damage, and a three-family downstream validity story (BFCL, MBPP syntax, LongBench
 overlap).
 
 **ExactKV tells you exactly when compressed KV cache behavior stops matching the
 verifier**, and separately reports when the *lossy* path drifts, how often drafts
-are accepted, and whether verifier-mediated execution still ends exact.
+are accepted (corrections), verifier cost (§9.1), and whether verifier-mediated
+execution still ends exact.
 
 On the 1,500-cell release panel, built-in `int8`/`noop` show no lossy divergence and
-`int4_sim` drifts in 52% of cells. Across **8,132 total cells**, the picture has become clearer:
-int4_sim divergence is **task-dependent**, 6% on Python code (MBPP), 11% on
-tool-calling (BFCL short-gen), 50% on tool-calling (BFCL long-gen at mnt=128/256),
-and **90% on open-text reading/summarization (HF LongBench, 2K-8K context)**.
-Even int8 reaches 25% divergence on LongBench vs 0% on BFCL/MBPP, confirming that
-**task type, not just quantization level or context length, is the dominant driver
-of KV compression drift**. H2O-style token eviction adds a further dimension:
-**eviction-class compressors produce near-universal divergence (100%) on reading tasks
-even at mild keep_ratio=0.75**, far exceeding int4_sim at matched memory budgets. Mean
-acceptance rate for H2O is ~0.35 (diverges at token 1) vs. ~0.84 for int4_sim —
-a steep verifier-amortization gradient under the cost sketch in §9.1.
+`int4_sim` drifts in 52% of cells. Across **8,132 total cells**, the observational
+picture: int4_sim divergence spans **6% on Python code (MBPP)**, **11% on tool-calling
+(BFCL short-gen)**, **50% on BFCL long-gen (mnt=128/256)**, and **90% on open-text
+reading (HF LongBench)**. That span mixes task with typical context/`max_new`; the
+strongest *controlled* within-task axis is BFCL generation length (**9% → 62%** as
+mnt 16→256). Even int8 reaches 25% on LongBench vs ~0% on BFCL/MBPP. H2O-style token
+eviction adds another dimension: **100% divergence on reading even at keep_ratio=0.75**,
+exceeding int4_sim at matched memory budgets. Mean acceptance ~0.35 for H2O vs ~0.84
+for int4_sim — a steep verifier-amortization gradient under §9.1.
 
 Top-k logit analysis (§6.10) over 1,103 divergent cells reveals three mechanistically
 distinct failure modes: **(1) near-tie noise** — int8 flips close argmax decisions
@@ -2459,10 +2387,12 @@ activations toward lower-ranked alternatives (83% flip, mean rank 3.5); and
 **(3) attention destruction** — H2O eviction eliminates contextual anchors from the
 first generated token (100% flip, mean rank 6.7, fdi=1).
 
-Downstream validity spans BFCL tool JSON (318/318 preserved), MBPP Python syntax
+Without verification, the lossy path can ship wrong tool/code fields. With ExactKV,
+downstream validity spans BFCL tool JSON (318/318 preserved), MBPP Python syntax
 (12/12 on Llama where full-KV parses), and LongBench answer overlap (100% parity
-vs full-KV on 720 scored cells) — complementary to drift, not a substitute for
-official benchmark pass rates.
+vs full-KV on 720 scored cells) — complementary to drift, not official pass rates.
+`exactkv_failures=0` is the harness invariant behind those preservation numbers, not
+the headline finding.
 
 The distinction, **drift vs exactness failure**, is the paper's core methodological
 contribution. ExactKV does not propose a new compressor. It provides the measurement
@@ -2545,7 +2475,7 @@ same panel grid. They are not counted as separate 784-cell panels.
 
 Faithful appendix paths are listed above and in Appendix E; they are **not** summed into 8,132.
 
-¹ The raw JSON also contains `spectralquant` (MOCK→`int4_sim`) and `shard` (PROBE_ONLY) slots. These are excluded from all analysis. `kivi_offline` is an offline adapter diagnostic (`supports_real_bytes_claim=False`). None are official benchmark scores.
+¹ `kivi_offline` is an offline adapter diagnostic (`supports_real_bytes_claim=False`). Unvalidated proxy slots in raw artifacts are excluded from analysis (Limitations §15). None of the drift rates here are official benchmark scores.
 
 ## Appendix B: Artifact inventory
 
@@ -2607,6 +2537,7 @@ are in **Appendix A**. Version labels in **Appendix D**.
 | Faithful wave-3 panel (both models) | `reports/external_panels/faithful/wave3/` | 576 |
 | External case-study pack | `reports/external_panels/case_studies_extracted.json` | 15+1 |
 | LongBench overlap pack | `reports/external_panels/longbench_overlap_pack.{json,md}` | 720 |
+| Length-opportunity pack | `reports/public_release/length_opportunity.{json,md}` | — |
 | Phase-F kernel microbenchmark | `reports/phaseF_kernel_benchmark.json` |, |
 | Logit autopsy summary | `reports/external_panels/logit_autopsy_summary.json` | 1,103 |
 | Historical Phase-A demo | `reports/phaseA_benchmark.json` |, |
@@ -2619,6 +2550,7 @@ are in **Appendix A**. Version labels in **Appendix D**.
 | `scripts/build_longbench_overlap_pack.py` | LongBench reference-answer overlap |
 | `scripts/analyze_logit_margins.py` | Top-k logit autopsy (§6.6, §6.10) |
 | `scripts/build_downstream_validity_pack.py` | BFCL tool-call validity preservation |
+| `scripts/build_length_opportunity_pack.py` | FDI/`max_new` opportunity framing (§6.12.3) |
 | `scripts/run_external_panel.py` | External GPU panel runner |
 | `scripts/run_evidence_plus_panel.py` | Evidence-plus panel runner |
 | `scripts/run_phase_a_scale_benchmark.py` | Headline 1,500-cell panel |

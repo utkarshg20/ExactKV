@@ -1,37 +1,38 @@
 # ExactKV Live Demo — Recording Plan
 
-**Goal:** One continuous in-place terminal replay — characters stream into the same three-path table, drift is caught, verifier rejects/commits, output matches full precision.
+**Hero launch cut (canonical):** see [`launch/demo_hero_10.md`](../../launch/demo_hero_10.md)
 
-**Script:** `scripts/exactkv_live_demo.py` (default `--mode stream`)
+**Script:** `scripts/exactkv_live_demo.py`
 
 ---
 
-## Record this
+## Record this (hero — default for launch)
 
 ```bash
 export COLUMNS=110
-python3 scripts/exactkv_live_demo.py --speed launch      # ~2–3 min, 2 drifts + long pauses
-python3 scripts/exactkv_live_demo.py --speed social      # ~90s tighter cut
+python3 scripts/exactkv_live_demo.py --speed hero
 ```
 
-~2–3 min at `--speed launch` · ~90s at `--speed social` · 2 drifts with pauses
+~20–28s terminal · **one** semantic drift (`dropoff` → `pickup`) · scale punch 6%→90%
 
-### Flow (single act)
+Save MP4 as `docs/assets/exactkv_hero_terminal.mp4`. Optional Sora cold-open + end card in edit.
 
-1. **Intro splash** — EXACTKV logo + “CRASH TEST · LIVE VERIFIER REPLAY”
-2. Prompt + HUD (decode bar · drift counter · verifier status)
-3. Three-path table streams with cursor on active row
-4. **Drift 1** — flashing red alert banner → VERIFIER ACTION card (REJECT/COMMIT)
-5. Resume stream → **Drift 2** — same beat
-6. **Finale** — “WHAT WOULD HAVE SHIPPED” side-by-side + green EXACTKV MATCH banner
+### Hero flow
 
-**Hold frames:** divergence alert, VERIFIER ACTION card, ship comparison, victory banner.
+1. Short splash — EXACTKV + crash-test line
+2. Pharmacy-style tool JSON streams (three-path table)
+3. **Drift** — lossy writes `dropoff`, full KV wants `pickup`
+4. VERIFIER ACTION — REJECT / COMMIT
+5. WITHOUT vs WITH ExactKV
+6. **Scale punch** — same 4× compressor: code ~6% · reading ~90% · 8,132 cells
 
 ---
 
-## Optional: case carousel (old style)
+## Longer modes (optional, not hero)
 
 ```bash
+python3 scripts/exactkv_live_demo.py --speed launch      # ~2–3 min, 4 weather drifts
+python3 scripts/exactkv_live_demo.py --speed social      # tighter weather cut
 python3 scripts/exactkv_live_demo.py --mode cases --speed cinematic
 ```
 
@@ -40,8 +41,6 @@ python3 scripts/exactkv_live_demo.py --mode cases --speed cinematic
 ## Rehearsal
 
 ```bash
+python3 scripts/exactkv_live_demo.py --speed hero --no-delay --plain | less
 python3 scripts/exactkv_live_demo.py --speed fast
-python3 scripts/exactkv_live_demo.py --no-delay --plain | less
 ```
-
-Save MP4 as `docs/assets/exactkv_live_demo.mp4`.

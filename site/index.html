@@ -7,7 +7,7 @@
 <meta name="description" content="A crash-test for LLM KV-cache compression: token-level drift, three failure modes, and 8,132 GPU cells on Llama + Mistral." />
 <meta property="og:type" content="website" />
 <meta property="og:title" content="ExactKV: When does compressed KV start lying?" />
-<meta property="og:description" content="Compressor-agnostic KV crash-test: 8,132 GPU cells on Llama + Mistral. int4 drift is 6% on code, ~90% on reading. Drift diagnostics, not official benchmark scores." />
+<meta property="og:description" content="Compressor-agnostic KV crash-test: 8,132 GPU cells on Llama + Mistral. Observational int4 span 6% code → ~90% reading; within-task BFCL length scales 9%→62%. Drift diagnostics, not official benchmark scores." />
 <meta property="og:url" content="https://utkarshg20.github.io/ExactKV/" />
 <meta property="og:image" content="https://utkarshg20.github.io/ExactKV/assets/public_exactkv_one_page_summary.png" />
 <meta name="twitter:card" content="summary_large_image" />
@@ -57,7 +57,9 @@
     <p class="section-label">Reviewer TL;DR</p>
     <p class="reviewer-tldr-lead">
       ExactKV shows that KV-cache compression can preserve final verified outputs while still causing early greedy-token drift.
-      Across <strong>8,132 GPU cells</strong>, int4 drift varies sharply by task, from <strong>6%</strong> on MBPP code to about <strong>90%</strong> on LongBench reading, while the verifier preserves <strong>106/106</strong> valid BFCL tool calls.
+      Across <strong>8,132 GPU cells</strong>, int4 drift spans <strong>6%</strong> on MBPP code to about <strong>90%</strong> on LongBench reading
+      (observational across families — task, context, and output budget change together). Within-task, BFCL length scales <strong>9%→62%</strong>.
+      When full-KV is valid, ExactKV preserves tool/code fields the unguarded lossy path can break.
     </p>
 
     <div class="why-matters-callout">
@@ -68,7 +70,7 @@
     <div class="story-pillars">
       <article class="story-pillar">
         <h3>What we found</h3>
-        <p>Task type dominates int4 drift (6% code → 90% reading). Three mechanistic failure classes. <code>exactkv_failures=0</code> on all cited panels.</p>
+        <p>Observed int4 span 6% code → 90% reading (task/context/length confounded); BFCL length scales 9%→62% within-task. Unguarded lossy can ship wrong fields; ExactKV recovers. Three failure modes.</p>
       </article>
       <article class="story-pillar">
         <h3>Why it matters</h3>
@@ -109,12 +111,12 @@
       <article class="stat-card">
         <div class="stat-value">8,132</div>
         <div class="stat-label">GPU cells completed</div>
-        <div class="stat-note">Llama-3.1-8B + Mistral-7B · exactkv_failures=0</div>
+        <div class="stat-note">Llama-3.1-8B + Mistral-7B · harness gate: exactkv_failures=0</div>
       </article>
       <article class="stat-card">
         <div class="stat-value">6% vs 90%</div>
-        <div class="stat-label">int4_sim drift split</div>
-        <div class="stat-note">MBPP code vs HF LongBench reading</div>
+        <div class="stat-label">int4_sim observational span</div>
+        <div class="stat-note">Code vs reading panels (not fully matched budgets)</div>
       </article>
       <article class="stat-card">
         <div class="stat-value">106/106</div>
@@ -241,7 +243,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
         <span class="viz-track"><span class="viz-fill viz-red" style="--w:100%"></span></span>
         <span class="viz-pct">100%</span>
       </div>
-      <p class="viz-caption">Same models, same compressor class, task type dominates. Source: <code>reports/external_panels/</code>.</p>
+      <p class="viz-caption">Memorable observational span across families (not a fully matched factorial). Within-task BFCL length is the controlled axis. Source: <code>reports/external_panels/</code>.</p>
     </div>
 
     <p>
@@ -351,12 +353,12 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
               <div class="headline-evidence-stat">
                 <span class="headline-evidence-value">8,132</span>
                 <span class="headline-evidence-label">GPU cells completed</span>
-                <span class="headline-evidence-note">Llama-3.1-8B + Mistral-7B · <code>exactkv_failures=0</code></span>
+                <span class="headline-evidence-note">Llama-3.1-8B + Mistral-7B · harness: <code>exactkv_failures=0</code></span>
               </div>
               <div class="headline-evidence-stat headline-evidence-stat--accent">
                 <span class="headline-evidence-value">6% → 90%</span>
-                <span class="headline-evidence-label">int4_sim drift split</span>
-                <span class="headline-evidence-note">MBPP code vs HF LongBench reading</span>
+                <span class="headline-evidence-label">Observational int4 span</span>
+                <span class="headline-evidence-note">Code vs reading (budgets not fully matched)</span>
               </div>
               <div class="headline-evidence-stat">
                 <span class="headline-evidence-value">106/106</span>
@@ -928,7 +930,7 @@ bash scripts/setup_faithful_compressor_env.sh</code></div>
       <h2 class="reviewer-takeaway-title">Three bullets to remember</h2>
       <ul class="reviewer-takeaway-list">
         <li><strong>Contribution:</strong> KV-cache compression can preserve final verified outputs while still causing early greedy-token drift. Average benchmark scores can hide that instability.</li>
-        <li><strong>Evidence:</strong> 8,132 headline GPU cells, int4 drift from 6% (code) to ~90% (reading), 106/106 BFCL tool calls preserved when full-KV valid, <code>exactkv_failures=0</code> on cited panels.</li>
+        <li><strong>Evidence:</strong> 8,132 headline GPU cells; observational int4 span 6% (code) → ~90% (reading); within-task BFCL length 9%→62%; unguarded lossy can break tool/code fields while ExactKV recovers when full-KV is valid. <code>exactkv_failures=0</code> is a harness invariant, not the headline.</li>
         <li><strong>Boundary:</strong> ExactKV is a drift crash-test and measurement framework. Not a production serving system, not VeriCache, not official benchmark scoring.</li>
       </ul>
     </section>
