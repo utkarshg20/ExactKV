@@ -1,0 +1,54 @@
+{
+  "schema": "exactkv.matched_factorial.summary.v1",
+  "claim_boundary": "Matched context and max_new across MBPP/BFCL/LongBench. Prompts still differ by family. Mistral complete (702 cells). Llama replication may be pending.",
+  "design": {
+    "context_buckets": [
+      2048,
+      4096,
+      8192
+    ],
+    "max_new_tokens": [
+      32,
+      64,
+      128
+    ],
+    "compressors": [
+      "noop",
+      "int8",
+      "int4_sim"
+    ]
+  },
+  "mistral_int4_sim": {
+    "mbpp": {
+      "rate": 0.0,
+      "divergent": 0,
+      "n": 54
+    },
+    "bfcl": {
+      "rate": 0.2333,
+      "divergent": 21,
+      "n": 90
+    },
+    "longbench": {
+      "rate": 0.9667,
+      "divergent": 87,
+      "n": 90
+    }
+  },
+  "mistral_int8": {
+    "mbpp": {
+      "rate": 0.0,
+      "n": 54
+    },
+    "bfcl": {
+      "rate": 0.0,
+      "n": 90
+    },
+    "longbench": {
+      "rate": 0.3444,
+      "divergent": 31,
+      "n": 90
+    }
+  },
+  "total_mistral_cells": 702
+}

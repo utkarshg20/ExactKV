@@ -46,10 +46,11 @@ that measures first-divergence index, draft acceptance, unguarded lossy damage, 
 
 \noindent\textbf{If you read five minutes:}
 (1)~drift is joint in task, length, compressor class, and granularity;
-(2)~the 6\%$\to$90\% span is \emph{observational} (task/context/\texttt{max\_new} confounded);
-(3)~controlled BFCL length scales 9\%$\to$62\%; LongBench flips early (FDI$\approx$8);
+(2)~matched Mistral factorial: \texttt{int4\_sim} \textbf{0\%/23\%/97\%} (MBPP/BFCL/LongBench)
+at shared 2K--8K $\times$ mnt 32/64/128 --- family gap survives budget matching;
+(3)~within-task BFCL length still scales 9\%$\to$62\%;
 (4)~unguarded lossy can ship wrong fields; ExactKV recovers full-KV-valid outputs;
-(5)~details in Appendix~A / \texttt{REPRODUCE.md}.
+(5)~details in Appendix~A / site / \texttt{REPRODUCE.md}.
 
 Across \textbf{8,132 GPU cells} on Llama-3.1-8B and Mistral-7B
 (Appendix benchmark card)\footnote{Six built-in compressor classes: \texttt{noop},
@@ -59,10 +60,10 @@ H2O-style eviction (\texttt{h2o\_sim}). External adapters evaluated separately
 invariant, not the scientific headline.}, four main findings:
 
 \begin{enumerate}
-\item \textbf{Observed task-family span (not fully matched).} \texttt{int4\_sim}: 6\% (MBPP)
-  $\to$ 11\% (BFCL short) $\to$ 50\% (BFCL long-gen) $\to$ \textbf{90\%} (HF LongBench).
-  H2O-style eviction at 75\% kept: \textbf{100\%} on LongBench. Cross-family rates mix
-  task with typical context and output budgets.
+\item \textbf{Task-family hierarchy survives matched budgets.} Cross-panel 6\%$\to$90\% was
+  observational. Matched Mistral factorial (shared 2K/4K/8K $\times$ mnt 32/64/128):
+  \texttt{int4\_sim} \textbf{0\% / 23\% / 97\%} on MBPP / BFCL / LongBench. Prompts still
+  differ by family; budgets do not. H2O-style eviction at 75\% kept: \textbf{100\%} on LongBench.
 \item \textbf{Generation length is the strongest within-task driver.} On BFCL,
   \texttt{int4\_sim} rises from 9\% (mnt=16) to 62\% (mnt=256), a $7\times$ increase.
   FDI/\texttt{mnt} separates early LongBench flips from late BFCL accumulation
@@ -165,7 +166,7 @@ acceptance, and exactness failures, \emph{not} deployment throughput. It does
 \toprule
 \textbf{\#} & \textbf{Finding} & \textbf{Key number} \\
 \midrule
-1 & Observed task-family span (confounded) & int4\_sim: MBPP 6\% $\to$ BFCL 11\% $\to$ BFCL long 50\% $\to$ LongBench 90\% \\
+1 & Matched task-family hierarchy (Mistral) & int4\_sim at shared budgets: MBPP 0\% $\to$ BFCL 23\% $\to$ LongBench 97\% \\
 2 & Generation length (within-task control) & int4\_sim mnt=16: 9\% $\to$ mnt=256: 62\% ($7\times$) \\
 3 & Eviction $>$ quantization & H2O-style 75\% kept $\to$ 100\% LongBench divergence \\
 4 & Three distinct failure modes & int8: near-tie (rank 2.4, fdi=22); int4\_sim: shift (rank 3.5, fdi=8); H2O: destruction (rank 6.7, fdi=1) \\
@@ -864,8 +865,30 @@ BFCL long diverges late (FDI$\approx$85); LongBench flips early (FDI$\approx$8).
 \label{tab:length-opportunity}
 \end{table}
 
-\noindent\textbf{Combined:} observational family span (6\%$\to$90\%); controlled BFCL length
-(9\%$\to$62\%); weak controlled LongBench context (near-ceiling).
+\noindent\textbf{Combined:} matched Mistral hierarchy (0\%$\to$97\% at shared budgets);
+controlled BFCL length (9\%$\to$62\%); weak controlled LongBench context (near-ceiling).
+
+\begin{table}[htbp]
+\centering\small\setlength\tabcolsep{4pt}
+\renewcommand{\arraystretch}{1.05}
+\begin{tabular}{lrr}
+\toprule
+\textbf{Family} & \textbf{Cells (\texttt{int4\_sim})} & \textbf{Divergence} \\
+\midrule
+MBPP (code) & 54 & \textbf{0.0\%} (0/54) \\
+BFCL (tool) & 90 & \textbf{23.3\%} (21/90) \\
+LongBench (reading) & 90 & \textbf{96.7\%} (87/90) \\
+\bottomrule
+\end{tabular}
+\caption{Matched task$\times$context$\times$\texttt{max\_new} factorial on Mistral-7B
+(shared 2K/4K/8K and mnt 32/64/128). Family hierarchy survives budget matching.
+Prompts still differ by family. Llama replication pending at freeze.
+Artifacts: \texttt{reports/external\_panels/matched\_factorial/}.}
+\label{tab:matched-factorial}
+\end{table}
+
+\noindent\textbf{No identical-prompt factorial.} Budgets are matched; template text is not.
+\texttt{exactkv\_failures=0} remains a harness invariant, not the headline.
 
 \section{int6\_sim: Non-Catastrophic Intermediate Compressor}
 \label{sec:int6}
@@ -1337,12 +1360,11 @@ are excluded from all ranked tables and scientific claims. Headline evidence use
 \texttt{noop}, \texttt{int8}, \texttt{int4\_sim}, and the separately labeled
 simulated / faithful families only.
 
-\noindent\textbf{No matched task$\times$context$\times$\texttt{max\_new} factorial.}
-Cross-family divergence spans (e.g.\ MBPP 6\% $\to$ LongBench 90\%) confound task type
-with typical context and output budget. Within-task BFCL length and LongBench context
-slices partially isolate axes; a fully matched factorial panel is future work for causal
-isolation of task type. \texttt{exactkv\_failures=0} is a harness invariant, not the
-scientific headline.
+\noindent\textbf{Matched factorial (Mistral complete).}
+Shared context 2K/4K/8K and \texttt{max\_new} 32/64/128 across MBPP/BFCL/LongBench yields
+\texttt{int4\_sim} \textbf{0\%/23\%/97\%} (Table~\ref{tab:matched-factorial}). The older
+cross-family confound is addressed for budgets; prompts still differ by family.
+Llama-3.1-8B replication was in progress at report freeze.
 
 \section{Conclusion}
 
@@ -1359,9 +1381,9 @@ unguarded lossy damage, and a three-family downstream validity story.
 Across \textbf{8,132 completed GPU cells}, ExactKV establishes four empirical findings:
 
 \begin{enumerate}
-\item \textbf{Observed task-family span (confounded).} \texttt{int4\_sim} diverges 6\% on
-  MBPP, 11\% on BFCL short, 50\% on BFCL long, and 90\% on HF LongBench --- memorable but
-  mixing task with typical context/\texttt{max\_new}.
+\item \textbf{Task-family hierarchy survives matched budgets.} Matched Mistral factorial:
+  \texttt{int4\_sim} 0\% (MBPP) / 23\% (BFCL) / 97\% (LongBench) at shared context and
+  \texttt{max\_new}. The older 6\%$\to$90\% cross-panel span remains a useful hook.
 
 \item \textbf{Generation length is the strongest within-task driver.} On BFCL,
   \texttt{int4\_sim} scales from 9\% (mnt=16) to 62\% (mnt=256), a $7\times$ increase.

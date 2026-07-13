@@ -38,10 +38,10 @@ Models: **Llama-3.1-8B** and **Mistral-7B-Instruct-v0.3**, greedy decoding.
 | `int4_sim` drift, HF LongBench (reading) | **~90%** |
 | H2O-style eviction @ 75% kept, LongBench | **100%** |
 | BFCL long-gen drift (mnt 16→256) | **9% → 62%** (7× within-task scaling) |
-
-The 6%→90% code/reading span is **observational** (task, context, and `max_new` change together across families). The cleanest controlled within-task axis in the current release is BFCL generation length.
 | Full-KV valid tool calls preserved | **106/106** (BFCL validity panel) |
 | Wilson 95% CIs (headline + smoke) | [`confidence_intervals.json`](reports/public_release/confidence_intervals.json) |
+
+The 6%→90% code/reading span in the table above is the original cross-panel hook. A **matched** task×context×`max_new` panel on Mistral (shared 2K/4K/8K × mnt 32/64/128) still shows **`int4_sim` 0% / 23% / 97%** on MBPP / BFCL / LongBench — see technical report §6.12.4. Within-task, BFCL generation length remains the cleanest length control (9%→62%).
 
 ### Faithful adapter appendix (separate from 8,132 headline)
 

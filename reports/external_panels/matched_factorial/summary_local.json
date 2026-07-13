@@ -1,0 +1,58 @@
+{
+  "schema": "exactkv.matched_factorial.summary.v1",
+  "models": {
+    "mistralai/Mistral-7B-Instruct-v0.3": {
+      "bfcl": {
+        "noop": {
+          "divergent": 0,
+          "n": 90,
+          "rate": 0.0
+        },
+        "int8": {
+          "divergent": 0,
+          "n": 90,
+          "rate": 0.0
+        },
+        "int4_sim": {
+          "divergent": 21,
+          "n": 90,
+          "rate": 0.23333333333333334
+        }
+      },
+      "longbench": {
+        "noop": {
+          "divergent": 0,
+          "n": 90,
+          "rate": 0.0
+        },
+        "int8": {
+          "divergent": 31,
+          "n": 90,
+          "rate": 0.34444444444444444
+        },
+        "int4_sim": {
+          "divergent": 87,
+          "n": 90,
+          "rate": 0.9666666666666667
+        }
+      },
+      "mbpp": {
+        "noop": {
+          "divergent": 0,
+          "n": 54,
+          "rate": 0.0
+        },
+        "int8": {
+          "divergent": 0,
+          "n": 54,
+          "rate": 0.0
+        },
+        "int4_sim": {
+          "divergent": 0,
+          "n": 54,
+          "rate": 0.0
+        }
+      }
+    }
+  }
+}

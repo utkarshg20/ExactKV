@@ -9,10 +9,10 @@
 ## If you read five minutes
 
 1. **Claim.** KV-cache drift is governed jointly by task type, generation length, compressor class, and quantization granularity — measured by first-divergence index, draft acceptance, and unguarded lossy damage (not by `exactkv_failures=0`, a harness invariant).
-2. **Confound caveat.** The memorable span `int4_sim` **6% (MBPP) → 90% (LongBench)** is **observational**: task family, context bucket, and `max_new_tokens` change together. The strongest *controlled* within-task axis is BFCL generation length (**9% → 62%** as mnt 16→256).
-3. **Three numbers.** (a) BFCL length scaling 9%→62%; (b) LongBench reading near-ceiling for `int4_sim` even at 2K context; (c) three failure modes from 1,103-cell logit autopsy (near-tie / distribution shift / attention destruction).
+2. **Confound, then matched check.** The memorable `int4_sim` span **6% (MBPP) → 90% (LongBench)** mixes task with typical context/`max_new` across panels. A **matched** task×context×`max_new` panel on Mistral (shared 2K/4K/8K × mnt 32/64/128) still shows **0% / 23% / 97%** (MBPP / BFCL / LongBench) for `int4_sim` — the family gap survives budget matching (§6.12.4). Within-task, BFCL length still scales **9% → 62%** (mnt 16→256).
+3. **Three numbers.** (a) Matched Mistral hierarchy 0%/23%/97%; (b) BFCL length scaling 9%→62%; (c) three failure modes from 1,103-cell logit autopsy (near-tie / distribution shift / attention destruction).
 4. **Without verification.** Unguarded lossy path can ship wrong tool/code fields; ExactKV recovers full-KV-valid outputs when full-KV itself is valid (§6.11). Verifier cost sketch: §9.1.
-5. **Details.** Panel inventory → Appendix A. Paths / repro → `REPRODUCE.md`.
+5. **Details.** Panel inventory → Appendix A. Paths / repro → `REPRODUCE.md`. Short public path → site.
 
 ---
 
@@ -42,11 +42,12 @@ and drift structure under verifier-mediated (draft/verify/commit) semantics.
 Across **8,132 GPU cells** on Llama-3.1-8B and Mistral-7B (Appendix benchmark card),
 four main findings emerge:
 
-1. **Observed task-family span (not fully matched).** `int4_sim` cell divergence spans
-6% (MBPP code) → 11% (BFCL short-gen) → 50% (BFCL long-gen) → **90%** (HF LongBench
-reading). H2O-style eviction (even 75% kept) reaches **100%** on LongBench. Cross-family
-rates mix task type with typical context and output budgets — treat as observational;
-see within-task controls in finding 2 and §6.12.
+1. **Task-family hierarchy survives matched budgets.** The cross-panel `int4_sim` span
+6% (MBPP) → 90% (LongBench) was observational (task/context/`max_new` mixed). A matched
+factorial on Mistral-7B (shared context 2K/4K/8K and `max_new` 32/64/128) still yields
+**0% / 23% / 97%** on MBPP / BFCL / LongBench for `int4_sim` (§6.12.4). Prompts still
+differ by family; budgets do not. H2O-style eviction at 75% kept remains **100%** on
+LongBench in the eviction panel.
 
 2. **Generation length is the strongest within-task driver.** On BFCL (fixed task family),
 `int4_sim` divergence scales 7× from 9% (mnt=16) to 62% (mnt=256). Longer budgets create
@@ -180,7 +181,7 @@ deployment throughput or reproduce VeriCache's system design. See Section 10.
 
 | # | Finding | Key number |
 |---|---------|-----------|
-| 1 | **Observed task-family span** (confounded) | int4_sim: MBPP 6% → BFCL short 11% → BFCL long 50% → LongBench 90% |
+| 1 | **Matched task-family hierarchy (Mistral)** | int4_sim at shared budgets: MBPP 0% → BFCL 23% → LongBench 97% (§6.12.4) |
 | 2 | **Generation length (within-task control)** | int4_sim mnt=16: 9% → mnt=256: 62% (7×) |
 | 3 | **Eviction > quantization drift** | H2O-style 75% kept → 100% LongBench divergence |
 | 4 | **Three distinct failure modes** | int8: near-tie (rank 2.4, fdi=22); int4_sim: distribution shift (rank 3.5, fdi=8); H2O: attention destruction (rank 6.7, fdi=1) |
@@ -190,9 +191,10 @@ deployment throughput or reproduce VeriCache's system design. See Section 10.
 
 ExactKV's strongest supported claim is not merely that compressed KV drifts, it is
 that **KV-cache drift is governed jointly by task type, generation length, compressor
-class, and quantization granularity**, with generation length as the cleanest
-within-task control. Cross-family rate spans are memorable but **not** a fully matched
-factorial. `exactkv_failures=0` is a harness invariant, not the scientific headline.
+class, and quantization granularity**. A matched-budget panel on Mistral shows the
+task-family hierarchy survives equal context/`max_new` (0%/23%/97%); generation length
+remains the cleanest within-task length control. `exactkv_failures=0` is a harness
+invariant, not the scientific headline.
 
 ---
 
@@ -1473,9 +1475,44 @@ on reading. Cross-family rate spans remain observational; BFCL mnt slices remain
 clean within-task length control.
 
 **Combined scaling story:**
-- **Observational task-family span** (code 6% → reading 90% for int4_sim) — memorable, confounded
-- **Controlled generation-length** (9% → 62% on BFCL) — strongest within-task axis
+- **Matched task-family hierarchy** (Mistral `int4_sim`: code 0% → tools 23% → reading 97% at shared budgets) — §6.12.4
+- **Controlled generation-length** (9% → 62% on BFCL) — strongest within-task length axis
 - **Controlled context** (LongBench 2K/4K/8K) — weak once reading is fixed (near-ceiling)
+- Cross-panel 6%→90% remains a useful hook, but is no longer the only evidence
+
+### 6.12.4 Matched task × context × `max_new` factorial (Mistral complete)
+
+**Design.** Same model, compressors (`noop`/`int8`/`int4_sim`), context buckets
+(**2048 / 4096 / 8192**), and generation budgets (**32 / 64 / 128**) across MBPP, BFCL,
+and LongBench. This removes the budget confound in the old cross-family rate table.
+Prompts still differ by family (code vs tool vs reading) — we match **budgets**, not
+template text. Runner: `scripts/run_matched_factorial_panel.sh`. Artifacts:
+`reports/external_panels/matched_factorial/`.
+
+**Table 4k″, Mistral-7B `int4_sim` divergence at matched budgets (702 cells total panel):**
+
+| Family | Cells (`int4_sim`) | Divergence rate |
+|--------|-------------------:|----------------:|
+| MBPP (code) | 54 | **0.0%** (0/54) |
+| BFCL (tool) | 90 | **23.3%** (21/90) |
+| LongBench (reading) | 90 | **96.7%** (87/90) |
+
+`noop` is 0% on all three families. `int8` is 0% on MBPP/BFCL and **34.4%** on LongBench
+(31/90) under the same matched grid.
+
+**Slice checks.** LongBench stays near-ceiling even at short budgets (e.g. 2K/mnt=32:
+10/10 divergent for `int4_sim`). MBPP stays 0% even at 8K/mnt=128. BFCL sits in between
+and still rises with `max_new` inside the matched grid (about 10% at mnt=32 vs 30–40% at
+mnt=128 at several context buckets) — consistent with opportunity framing (§6.12.3).
+
+**Interpretation.** The budget confound in the older cross-family headline table was real.
+After matching context and output budget, **task family differences remain large**. Length
+remains a secondary within-family driver (especially BFCL). Llama-3.1-8B replication of
+this grid was running at report freeze; treat Mistral as the primary matched evidence
+until both models are committed.
+
+**Claim boundary:** Matched budgets across families; not identical prompts; not official
+benchmark scores; Mistral-complete / Llama-pending at this writing.
 
 ---
 
@@ -2307,11 +2344,10 @@ Claim boundary: `kivi_offline` / `kivi_offline_r32` use real KIVI quantizer math
     verifier correction, not a universal safety certificate. It is a harness invariant,
     not the scientific headline (see abstract / five-minute path).
 15. **Sequential model execution** on the scale run.
-16. **No matched task×context×`max_new` factorial.** Cross-family divergence spans
-    (e.g. MBPP 6% → LongBench 90%) confound task type with typical context and output
-    budget. Within-task BFCL length and LongBench context slices partially isolate axes
-    (§6.12); a fully matched factorial panel is future work needed for causal isolation
-    of task type.
+16. **Matched factorial: Mistral complete; Llama pending at freeze.** Cross-family
+    observational spans are supplemented by a matched task×context×`max_new` panel on
+    Mistral (§6.12.4: `int4_sim` 0%/23%/97% on MBPP/BFCL/LongBench). Prompts still differ
+    by family. Llama replication of the same grid was in progress at report freeze.
 
 ---
 
@@ -2538,6 +2574,7 @@ are in **Appendix A**. Version labels in **Appendix D**.
 | External case-study pack | `reports/external_panels/case_studies_extracted.json` | 15+1 |
 | LongBench overlap pack | `reports/external_panels/longbench_overlap_pack.{json,md}` | 720 |
 | Length-opportunity pack | `reports/public_release/length_opportunity.{json,md}` | — |
+| Matched factorial (Mistral) | `reports/external_panels/matched_factorial/` | 702 |
 | Phase-F kernel microbenchmark | `reports/phaseF_kernel_benchmark.json` |, |
 | Logit autopsy summary | `reports/external_panels/logit_autopsy_summary.json` | 1,103 |
 | Historical Phase-A demo | `reports/phaseA_benchmark.json` |, |

@@ -58,7 +58,9 @@
     <p class="reviewer-tldr-lead">
       ExactKV shows that KV-cache compression can preserve final verified outputs while still causing early greedy-token drift.
       Across <strong>8,132 GPU cells</strong>, int4 drift spans <strong>6%</strong> on MBPP code to about <strong>90%</strong> on LongBench reading
-      (observational across families — task, context, and output budget change together). Within-task, BFCL length scales <strong>9%→62%</strong>.
+      in the original panels. A <strong>matched-budget</strong> Mistral factorial still shows <strong>0% / 23% / 97%</strong>
+      (code / tools / reading) — the family gap survives equal context and output length.
+      Within-task, BFCL length scales <strong>9%→62%</strong>.
       When full-KV is valid, ExactKV preserves tool/code fields the unguarded lossy path can break.
     </p>
 
@@ -70,7 +72,7 @@
     <div class="story-pillars">
       <article class="story-pillar">
         <h3>What we found</h3>
-        <p>Observed int4 span 6% code → 90% reading (task/context/length confounded); BFCL length scales 9%→62% within-task. Unguarded lossy can ship wrong fields; ExactKV recovers. Three failure modes.</p>
+        <p>Matched Mistral factorial: int4 0% / 23% / 97% (code / tools / reading) at shared budgets. BFCL length scales 9%→62% within-task. Unguarded lossy can ship wrong fields; ExactKV recovers. Three failure modes.</p>
       </article>
       <article class="story-pillar">
         <h3>Why it matters</h3>
