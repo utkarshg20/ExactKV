@@ -90,9 +90,11 @@ compression or a faithful non-catastrophic LongBench baseline.
 
 The governing pattern is that **task type, generation length, compressor class, and
 quantization granularity jointly determine when compressed KV starts lying**, with
-**generation length** as the cleanest within-task control and **task-family spans**
-as the strongest observational signal (not a fully matched factorial). ExactKV makes
-that drift measurable — and shows what the unguarded lossy path would have shipped.
+**generation length** as the cleanest within-task control. Cross-panel family spans
+(6%→90%) are the memorable observational hook; a **matched-budget factorial**
+(§6.12.4) shows the hierarchy still holds on both models after equalizing context
+and `max_new`. ExactKV makes that drift measurable — and shows what the unguarded
+lossy path would have shipped.
 
 Results are **not** official benchmark scores, production serving claims, or a reproduction
 of VeriCache [vericache2026] throughput-oriented serving.
@@ -128,9 +130,10 @@ verifier agreement, and exactness failures per cell.
    and mechanistic failure signatures across compressors and models (§3–5).
 2. **Empirical evidence that drift is jointly task-, length-, and
    compressor-class-dependent:** observational `int4_sim` span 6% (MBPP) → 90% (HF LongBench);
-   controlled BFCL length scaling 9% → 62% as output budget grows 7×. H2O-style eviction
-   reaches 100% on reading at 75% kept (§6.4-6.12, Table 6.16). Cross-family rates are
-   not fully matched on context/`max_new`.
+   matched-budget factorial still **0%/23%/97%** (Mistral) and **17%/26%/91%** (Llama)
+   on MBPP/BFCL/LongBench (§6.12.4); controlled BFCL length scaling 9% → 62% as output
+   budget grows 7×. H2O-style eviction reaches 100% on reading at 75% kept
+   (§6.4-6.12, Table 6.16).
 3. A **logit autopsy** over 1,103 divergent cells identifying three mechanistically
    distinct failure modes: near-tie noise (int8), distribution shift (int4_sim), and
    attention destruction (H2O-style), each with forensic case studies (§6.10, §7).
@@ -991,8 +994,9 @@ slices are the controlled evidence (§6.12).
 prompt structure, typical context buckets, and `max_new_tokens` together. The memorable
 `int4_sim` span **6% → 90%** is therefore **not** a pure causal claim that “task type
 alone” drives drift. Controlled axes: (i) BFCL mnt 16→256 at fixed tool-call family;
-(ii) LongBench 2K/4K/8K at fixed reading family. A fully matched task×context×`max_new`
-factorial panel is **not** run (Limitations).
+(ii) LongBench 2K/4K/8K at fixed reading family; (iii) a matched task×context×`max_new`
+factorial (§6.12.4) with shared 2K/4K/8K and mnt 32/64/128 — hierarchy survives on both
+models (prompts still differ by family).
 
 **Table 4h, Cross-panel int4_sim/int8/noop divergence rates:**
 
@@ -2396,8 +2400,9 @@ ExactKV's strongest supported claim is not "we beat X" or "we invented verify." 
 
 **KV-cache drift is governed jointly by task type, generation length, compressor class,
 and quantization granularity** — with generation length as the cleanest within-task
-control and cross-family rate spans as the strongest *observational* signal (not a fully
-matched factorial). ExactKV maps that design space with mechanistic autopsy, unguarded
+control, cross-family spans as the memorable observational hook, and a matched-budget
+factorial (§6.12.4) confirming the hierarchy survives equalized context/`max_new` on
+both models. ExactKV maps that design space with mechanistic autopsy, unguarded
 lossy damage, and a three-family downstream validity story (BFCL, MBPP syntax, LongBench
 overlap).
 

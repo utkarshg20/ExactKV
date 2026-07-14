@@ -7,7 +7,7 @@
 <meta name="description" content="A crash-test for LLM KV-cache compression: token-level drift, three failure modes, and 8,132 GPU cells on Llama + Mistral." />
 <meta property="og:type" content="website" />
 <meta property="og:title" content="ExactKV: When does compressed KV start lying?" />
-<meta property="og:description" content="Compressor-agnostic KV crash-test: 8,132 GPU cells on Llama + Mistral. Observational int4 span 6% code → ~90% reading; within-task BFCL length scales 9%→62%. Drift diagnostics, not official benchmark scores." />
+<meta property="og:description" content="Compressor-agnostic KV crash-test: 8,132 GPU cells on Llama + Mistral. Matched-budget int4 hierarchy Mistral 0%/23%/97%, Llama 17%/26%/91%; BFCL length 9%→62%. Drift diagnostics, not official benchmark scores." />
 <meta property="og:url" content="https://utkarshg20.github.io/ExactKV/" />
 <meta property="og:image" content="https://utkarshg20.github.io/ExactKV/assets/public_exactkv_one_page_summary.png" />
 <meta name="twitter:card" content="summary_large_image" />
@@ -117,9 +117,9 @@
         <div class="stat-note">Llama-3.1-8B + Mistral-7B · harness gate: exactkv_failures=0</div>
       </article>
       <article class="stat-card">
-        <div class="stat-value">6% vs 90%</div>
-        <div class="stat-label">int4_sim observational span</div>
-        <div class="stat-note">Code vs reading panels (not fully matched budgets)</div>
+        <div class="stat-value">0→97% / 17→91%</div>
+        <div class="stat-label">Matched int4 hierarchy</div>
+        <div class="stat-note">Mistral / Llama at shared budgets (code→tools→reading)</div>
       </article>
       <article class="stat-card">
         <div class="stat-value">106/106</div>
@@ -246,7 +246,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
         <span class="viz-track"><span class="viz-fill viz-red" style="--w:100%"></span></span>
         <span class="viz-pct">100%</span>
       </div>
-      <p class="viz-caption">Memorable observational span across families (not a fully matched factorial). Within-task BFCL length is the controlled axis. Source: <code>reports/external_panels/</code>.</p>
+      <p class="viz-caption">Original cross-panel hook (budgets mixed). Matched factorial still shows Mistral 0%/23%/97% and Llama 17%/26%/91%. Within-task BFCL length is the cleanest length axis. Source: <code>reports/external_panels/</code>.</p>
     </div>
 
     <p>
@@ -359,9 +359,9 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
                 <span class="headline-evidence-note">Llama-3.1-8B + Mistral-7B · harness: <code>exactkv_failures=0</code></span>
               </div>
               <div class="headline-evidence-stat headline-evidence-stat--accent">
-                <span class="headline-evidence-value">6% → 90%</span>
-                <span class="headline-evidence-label">Observational int4 span</span>
-                <span class="headline-evidence-note">Code vs reading (budgets not fully matched)</span>
+                <span class="headline-evidence-value">0→97% · 17→91%</span>
+                <span class="headline-evidence-label">Matched int4 hierarchy</span>
+                <span class="headline-evidence-note">Mistral / Llama · shared ctx + max_new</span>
               </div>
               <div class="headline-evidence-stat">
                 <span class="headline-evidence-value">106/106</span>
@@ -809,6 +809,7 @@ its high forehead and its straight nose, they were positively grotes</pre>
             <tr><td>v30 int6 + int4_per_vec panel</td><td class="num">1,568</td><td>Both</td><td>Compressor curve extension</td></tr>
             <tr><td>MBPP + pilots + evidence-plus</td><td class="num">~1,144</td><td>Mixed</td><td>Code/smoke supplements</td></tr>
             <tr class="inventory-total-row"><td><strong>Headline total</strong></td><td class="num"><strong>8,132</strong></td><td colspan="2">6,564 pre-v30 + 784 + 784 v30 batches</td></tr>
+            <tr><td>Matched factorial (follow-up)</td><td class="num">1,404</td><td>Both</td><td>Shared 2K/4K/8K × mnt 32/64/128; not in 8,132 total</td></tr>
           </tbody>
         </table>
       </div>
@@ -933,7 +934,7 @@ bash scripts/setup_faithful_compressor_env.sh</code></div>
       <h2 class="reviewer-takeaway-title">Three bullets to remember</h2>
       <ul class="reviewer-takeaway-list">
         <li><strong>Contribution:</strong> KV-cache compression can preserve final verified outputs while still causing early greedy-token drift. Average benchmark scores can hide that instability.</li>
-        <li><strong>Evidence:</strong> 8,132 headline GPU cells; observational int4 span 6% (code) → ~90% (reading); within-task BFCL length 9%→62%; unguarded lossy can break tool/code fields while ExactKV recovers when full-KV is valid. <code>exactkv_failures=0</code> is a harness invariant, not the headline.</li>
+        <li><strong>Evidence:</strong> 8,132 headline GPU cells; matched-budget int4 hierarchy Mistral 0%/23%/97% and Llama 17%/26%/91% (plus observational 6%→90% hook); within-task BFCL length 9%→62%; unguarded lossy can break tool/code fields while ExactKV recovers when full-KV is valid. <code>exactkv_failures=0</code> is a harness invariant, not the headline.</li>
         <li><strong>Boundary:</strong> ExactKV is a drift crash-test and measurement framework. Not a production serving system, not VeriCache, not official benchmark scoring.</li>
       </ul>
     </section>

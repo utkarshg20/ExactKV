@@ -126,8 +126,9 @@ failures per cell.
   benchmark families, six built-in compressor classes (\S6).
 \item Empirical evidence that drift is \textbf{jointly} task-, length-, and
   compressor-class-dependent: observational \texttt{int4\_sim} span 6\%$\to$90\%;
-  controlled BFCL length 9\%$\to$62\% ($7\times$). Cross-family rates are not fully
-  matched on context/\texttt{max\_new} (\S6.4--6.12).
+  controlled BFCL length 9\%$\to$62\% ($7\times$); matched factorial still
+  Mistral 0\%/23\%/97\% and Llama 17\%/26\%/91\%
+  (Table~\ref{tab:matched-factorial}, \S6.4--6.12).
 \item A \textbf{logit autopsy} over 1,103 divergent cells identifying three
   mechanistically distinct failure modes: near-tie noise (int8), distribution
   shift (int4\_sim), and attention destruction (H2O eviction) (\S\ref{sec:autopsy-main}, \S\ref{sec:forensic-cases}).
@@ -620,7 +621,8 @@ change prompts, context buckets, and \texttt{max\_new\_tokens} together. The mem
 \texttt{int4\_sim} span 6\%$\to$90\% is \emph{not} a pure causal claim that task type alone
 drives drift. Controlled axes: BFCL mnt 16$\to$256 (fixed tool-call family) and LongBench
 2K/4K/8K (fixed reading family). A matched task$\times$context$\times$\texttt{max\_new}
-factorial is not run (Limitations).
+factorial with shared budgets confirms the hierarchy on both models
+(Table~\ref{tab:matched-factorial}); prompts still differ by family.
 
 \begin{table}[htbp]
 \centering\small\setlength\tabcolsep{4pt}
@@ -1377,9 +1379,10 @@ unguarded path would ship, and how often verification corrects.
 
 ExactKV's strongest supported claim is that \textbf{KV-cache drift is governed jointly
 by task type, generation length, compressor class, and quantization granularity}, with
-generation length as the cleanest within-task control and cross-family spans as
-observational (not a fully matched factorial). Mapped with mechanistic autopsy,
-unguarded lossy damage, and a three-family downstream validity story.
+generation length as the cleanest within-task control, cross-family spans as the
+observational hook, and a matched-budget factorial confirming the hierarchy on both
+models. Mapped with mechanistic autopsy, unguarded lossy damage, and a three-family
+downstream validity story.
 
 Across \textbf{8,132 completed GPU cells}, ExactKV establishes four empirical findings:
 
