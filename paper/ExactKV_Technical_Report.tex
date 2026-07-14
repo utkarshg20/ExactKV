@@ -46,8 +46,8 @@ that measures first-divergence index, draft acceptance, unguarded lossy damage, 
 
 \noindent\textbf{If you read five minutes:}
 (1)~drift is joint in task, length, compressor class, and granularity;
-(2)~matched Mistral factorial: \texttt{int4\_sim} \textbf{0\%/23\%/97\%} (MBPP/BFCL/LongBench)
-at shared 2K--8K $\times$ mnt 32/64/128 --- family gap survives budget matching;
+(2)~matched factorial: \texttt{int4\_sim} Mistral \textbf{0\%/23\%/97\%}, Llama
+\textbf{17\%/26\%/91\%} (MBPP/BFCL/LongBench) at shared 2K--8K $\times$ mnt 32/64/128;
 (3)~within-task BFCL length still scales 9\%$\to$62\%;
 (4)~unguarded lossy can ship wrong fields; ExactKV recovers full-KV-valid outputs;
 (5)~details in Appendix~A / site / \texttt{REPRODUCE.md}.
@@ -61,9 +61,10 @@ invariant, not the scientific headline.}, four main findings:
 
 \begin{enumerate}
 \item \textbf{Task-family hierarchy survives matched budgets.} Cross-panel 6\%$\to$90\% was
-  observational. Matched Mistral factorial (shared 2K/4K/8K $\times$ mnt 32/64/128):
-  \texttt{int4\_sim} \textbf{0\% / 23\% / 97\%} on MBPP / BFCL / LongBench. Prompts still
-  differ by family; budgets do not. H2O-style eviction at 75\% kept: \textbf{100\%} on LongBench.
+  observational. Matched factorial (shared 2K/4K/8K $\times$ mnt 32/64/128):
+  \texttt{int4\_sim} Mistral \textbf{0\% / 23\% / 97\%}, Llama \textbf{17\% / 26\% / 91\%}
+  on MBPP / BFCL / LongBench. Prompts still differ by family; budgets do not.
+  H2O-style eviction at 75\% kept: \textbf{100\%} on LongBench.
 \item \textbf{Generation length is the strongest within-task driver.} On BFCL,
   \texttt{int4\_sim} rises from 9\% (mnt=16) to 62\% (mnt=256), a $7\times$ increase.
   FDI/\texttt{mnt} separates early LongBench flips from late BFCL accumulation
@@ -166,7 +167,7 @@ acceptance, and exactness failures, \emph{not} deployment throughput. It does
 \toprule
 \textbf{\#} & \textbf{Finding} & \textbf{Key number} \\
 \midrule
-1 & Matched task-family hierarchy (Mistral) & int4\_sim at shared budgets: MBPP 0\% $\to$ BFCL 23\% $\to$ LongBench 97\% \\
+1 & Matched task-family hierarchy (both models) & int4\_sim: Mistral 0\%/23\%/97\%; Llama 17\%/26\%/91\% \\
 2 & Generation length (within-task control) & int4\_sim mnt=16: 9\% $\to$ mnt=256: 62\% ($7\times$) \\
 3 & Eviction $>$ quantization & H2O-style 75\% kept $\to$ 100\% LongBench divergence \\
 4 & Three distinct failure modes & int8: near-tie (rank 2.4, fdi=22); int4\_sim: shift (rank 3.5, fdi=8); H2O: destruction (rank 6.7, fdi=1) \\
@@ -865,24 +866,26 @@ BFCL long diverges late (FDI$\approx$85); LongBench flips early (FDI$\approx$8).
 \label{tab:length-opportunity}
 \end{table}
 
-\noindent\textbf{Combined:} matched Mistral hierarchy (0\%$\to$97\% at shared budgets);
-controlled BFCL length (9\%$\to$62\%); weak controlled LongBench context (near-ceiling).
+\noindent\textbf{Combined:} matched hierarchy on both models (Mistral 0\%$\to$97\%,
+Llama 17\%$\to$91\% at shared budgets); controlled BFCL length (9\%$\to$62\%);
+weak controlled LongBench context (near-ceiling).
 
 \begin{table}[htbp]
 \centering\small\setlength\tabcolsep{4pt}
 \renewcommand{\arraystretch}{1.05}
 \begin{tabular}{lrr}
 \toprule
-\textbf{Family} & \textbf{Cells (\texttt{int4\_sim})} & \textbf{Divergence} \\
+\textbf{Family} & \textbf{Mistral} & \textbf{Llama} \\
 \midrule
-MBPP (code) & 54 & \textbf{0.0\%} (0/54) \\
-BFCL (tool) & 90 & \textbf{23.3\%} (21/90) \\
-LongBench (reading) & 90 & \textbf{96.7\%} (87/90) \\
+MBPP (code) & \textbf{0.0\%} (0/54) & \textbf{16.7\%} (9/54) \\
+BFCL (tool) & \textbf{23.3\%} (21/90) & \textbf{25.6\%} (23/90) \\
+LongBench (reading) & \textbf{96.7\%} (87/90) & \textbf{91.1\%} (82/90) \\
 \bottomrule
 \end{tabular}
-\caption{Matched task$\times$context$\times$\texttt{max\_new} factorial on Mistral-7B
-(shared 2K/4K/8K and mnt 32/64/128). Family hierarchy survives budget matching.
-Prompts still differ by family. Llama replication pending at freeze.
+\caption{Matched task$\times$context$\times$\texttt{max\_new} factorial
+(\texttt{int4\_sim}; shared 2K/4K/8K and mnt 32/64/128; 1{,}404 cells).
+Family hierarchy survives budget matching on both models.
+Prompts still differ by family.
 Artifacts: \texttt{reports/external\_panels/matched\_factorial/}.}
 \label{tab:matched-factorial}
 \end{table}
@@ -1360,11 +1363,11 @@ are excluded from all ranked tables and scientific claims. Headline evidence use
 \texttt{noop}, \texttt{int8}, \texttt{int4\_sim}, and the separately labeled
 simulated / faithful families only.
 
-\noindent\textbf{Matched factorial (Mistral complete).}
+\noindent\textbf{Matched factorial (both models complete).}
 Shared context 2K/4K/8K and \texttt{max\_new} 32/64/128 across MBPP/BFCL/LongBench yields
-\texttt{int4\_sim} \textbf{0\%/23\%/97\%} (Table~\ref{tab:matched-factorial}). The older
-cross-family confound is addressed for budgets; prompts still differ by family.
-Llama-3.1-8B replication was in progress at report freeze.
+\texttt{int4\_sim} Mistral \textbf{0\%/23\%/97\%}, Llama \textbf{17\%/26\%/91\%}
+(Table~\ref{tab:matched-factorial}). The older cross-family confound is addressed for
+budgets; prompts still differ by family.
 
 \section{Conclusion}
 
@@ -1381,9 +1384,10 @@ unguarded lossy damage, and a three-family downstream validity story.
 Across \textbf{8,132 completed GPU cells}, ExactKV establishes four empirical findings:
 
 \begin{enumerate}
-\item \textbf{Task-family hierarchy survives matched budgets.} Matched Mistral factorial:
-  \texttt{int4\_sim} 0\% (MBPP) / 23\% (BFCL) / 97\% (LongBench) at shared context and
-  \texttt{max\_new}. The older 6\%$\to$90\% cross-panel span remains a useful hook.
+\item \textbf{Task-family hierarchy survives matched budgets.} Matched factorial:
+  \texttt{int4\_sim} Mistral 0\%/23\%/97\%, Llama 17\%/26\%/91\%
+  (MBPP/BFCL/LongBench) at shared context and \texttt{max\_new}.
+  The older 6\%$\to$90\% cross-panel span remains a useful hook.
 
 \item \textbf{Generation length is the strongest within-task driver.} On BFCL,
   \texttt{int4\_sim} scales from 9\% (mnt=16) to 62\% (mnt=256), a $7\times$ increase.

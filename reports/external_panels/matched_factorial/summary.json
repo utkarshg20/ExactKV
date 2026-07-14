@@ -1,6 +1,6 @@
 {
   "schema": "exactkv.matched_factorial.summary.v1",
-  "claim_boundary": "Matched context and max_new across MBPP/BFCL/LongBench. Prompts still differ by family. Mistral complete (702 cells). Llama replication may be pending.",
+  "claim_boundary": "Matched context 2K/4K/8K and max_new 32/64/128 across MBPP/BFCL/LongBench. Prompts still differ by family. Both Mistral and Llama complete.",
   "design": {
     "context_buckets": [
       2048,
@@ -18,37 +18,148 @@
       "int4_sim"
     ]
   },
-  "mistral_int4_sim": {
-    "mbpp": {
-      "rate": 0.0,
-      "divergent": 0,
-      "n": 54
+  "int4_sim": {
+    "llama": {
+      "bfcl": {
+        "divergent": 23,
+        "n": 90,
+        "rate": 0.25555555555555554
+      },
+      "longbench": {
+        "divergent": 82,
+        "n": 90,
+        "rate": 0.9111111111111111
+      },
+      "mbpp": {
+        "divergent": 9,
+        "n": 54,
+        "rate": 0.16666666666666666
+      }
     },
-    "bfcl": {
-      "rate": 0.2333,
-      "divergent": 21,
-      "n": 90
-    },
-    "longbench": {
-      "rate": 0.9667,
-      "divergent": 87,
-      "n": 90
+    "mistral": {
+      "bfcl": {
+        "divergent": 21,
+        "n": 90,
+        "rate": 0.23333333333333334
+      },
+      "longbench": {
+        "divergent": 87,
+        "n": 90,
+        "rate": 0.9666666666666667
+      },
+      "mbpp": {
+        "divergent": 0,
+        "n": 54,
+        "rate": 0.0
+      }
     }
   },
-  "mistral_int8": {
-    "mbpp": {
-      "rate": 0.0,
-      "n": 54
+  "by_model": {
+    "llama": {
+      "bfcl": {
+        "noop": {
+          "divergent": 0,
+          "n": 90,
+          "rate": 0.0
+        },
+        "int8": {
+          "divergent": 0,
+          "n": 90,
+          "rate": 0.0
+        },
+        "int4_sim": {
+          "divergent": 23,
+          "n": 90,
+          "rate": 0.25555555555555554
+        }
+      },
+      "longbench": {
+        "noop": {
+          "divergent": 0,
+          "n": 90,
+          "rate": 0.0
+        },
+        "int8": {
+          "divergent": 40,
+          "n": 90,
+          "rate": 0.4444444444444444
+        },
+        "int4_sim": {
+          "divergent": 82,
+          "n": 90,
+          "rate": 0.9111111111111111
+        }
+      },
+      "mbpp": {
+        "noop": {
+          "divergent": 0,
+          "n": 54,
+          "rate": 0.0
+        },
+        "int8": {
+          "divergent": 0,
+          "n": 54,
+          "rate": 0.0
+        },
+        "int4_sim": {
+          "divergent": 9,
+          "n": 54,
+          "rate": 0.16666666666666666
+        }
+      }
     },
-    "bfcl": {
-      "rate": 0.0,
-      "n": 90
-    },
-    "longbench": {
-      "rate": 0.3444,
-      "divergent": 31,
-      "n": 90
+    "mistral": {
+      "bfcl": {
+        "noop": {
+          "divergent": 0,
+          "n": 90,
+          "rate": 0.0
+        },
+        "int8": {
+          "divergent": 0,
+          "n": 90,
+          "rate": 0.0
+        },
+        "int4_sim": {
+          "divergent": 21,
+          "n": 90,
+          "rate": 0.23333333333333334
+        }
+      },
+      "longbench": {
+        "noop": {
+          "divergent": 0,
+          "n": 90,
+          "rate": 0.0
+        },
+        "int8": {
+          "divergent": 31,
+          "n": 90,
+          "rate": 0.34444444444444444
+        },
+        "int4_sim": {
+          "divergent": 87,
+          "n": 90,
+          "rate": 0.9666666666666667
+        }
+      },
+      "mbpp": {
+        "noop": {
+          "divergent": 0,
+          "n": 54,
+          "rate": 0.0
+        },
+        "int8": {
+          "divergent": 0,
+          "n": 54,
+          "rate": 0.0
+        },
+        "int4_sim": {
+          "divergent": 0,
+          "n": 54,
+          "rate": 0.0
+        }
+      }
     }
-  },
-  "total_mistral_cells": 702
+  }
 }
