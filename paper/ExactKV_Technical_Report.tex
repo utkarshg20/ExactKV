@@ -1329,6 +1329,7 @@ MagicDec~\citep{chen2024magicdec} use draft/verify for throughput acceleration. 
 \end{sloppypar}
 
 \paragraph{KV quantization methods.}
+\begin{sloppypar}
 KVQuant~\citep{hooper2024kvquant} proposes non-uniform per-channel INT4 quantization
 targeting KV outlier heads. KIVI~\citep{liu2024kivi} proposes asymmetric 2-bit
 per-channel KV quantization with a CUDA kernel. Both directly motivate
@@ -1340,6 +1341,7 @@ SnapKV~\citep{li2024snapkv} selects important KV entries by eviction. The
 \texttt{h2o\_sim} family models the H2O Heavy Hitter Oracle
 policy~\citep{zhang2023h2o} from the same compressor class and shows 100\%
 LongBench divergence even at 75\% retention (Section~\ref{sec:h2o-panel}).
+\end{sloppypar}
 
 \paragraph{KV storage and streaming.}
 CacheGen~\citep{liu2024cachegen} compresses KV caches for network streaming and
