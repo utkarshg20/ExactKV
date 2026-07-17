@@ -8,11 +8,18 @@
 
 ## If you read five minutes
 
-1. **Claim.** KV-cache drift is governed jointly by task type, generation length, compressor class, and quantization granularity — measured by first-divergence index, draft acceptance, and unguarded lossy damage (not by `exactkv_failures=0`, a harness invariant).
-2. **Confound, then matched check.** The memorable `int4_sim` span **6% (MBPP) → 90% (LongBench)** mixes task with typical context/`max_new` across panels. A **matched** task×context×`max_new` panel (shared 2K/4K/8K × mnt 32/64/128) still shows a large family gap: Mistral **0% / 23% / 97%**, Llama **17% / 26% / 91%** (MBPP / BFCL / LongBench) for `int4_sim` (§6.12.4). Within-task, BFCL length still scales **9% → 62%** (mnt 16→256).
-3. **Three numbers.** (a) Matched hierarchy Mistral 0%/23%/97% and Llama 17%/26%/91%; (b) BFCL length scaling 9%→62%; (c) three failure modes from 1,103-cell logit autopsy (near-tie / distribution shift / attention destruction).
-4. **Without verification.** Unguarded lossy path can ship wrong tool/code fields; ExactKV recovers full-KV-valid outputs when full-KV itself is valid (§6.11). Verifier cost sketch: §9.1.
-5. **Details.** Panel inventory → Appendix A. Paths / repro → `REPRODUCE.md`. Short public path → site.
+**Gloss.** ExactKV compares compressed-KV greedy decoding to full-precision greedy decoding.
+**Drift %** = share of prompts where at least one generated token differs. **First divergence**
+= the token index where that first happens. (`exactkv_failures=0` is a harness wiring check,
+not the scientific headline.)
+
+1. **Matched hierarchy.** At shared context and output length, `int4_sim` still lands
+   Mistral **0%/23%/97%** and Llama **17%/26%/91%** on code / tools / reading (§6.12.4).
+   (The memorable 6%→90% cross-panel span is a budget-confounded hook, not the causal claim.)
+2. **Length within task.** On tool-calling (BFCL), the same compressor scales **9% → 62%**
+   as the output budget grows 7×.
+3. **Without verification.** Unguarded lossy can ship wrong tool/code fields; ExactKV recovers
+   full-KV-valid outputs when full-KV itself is valid (§6.11). Details → Appendix A / site.
 
 ---
 
@@ -40,32 +47,17 @@ that measures **first-divergence index**, draft acceptance, verifier agreement,
 and drift structure under verifier-mediated (draft/verify/commit) semantics.
 
 Across **8,132 GPU cells** on Llama-3.1-8B and Mistral-7B (Appendix benchmark card),
-four main findings emerge:
+four main findings emerge (numbers in the glance table below):
 
-1. **Task-family hierarchy survives matched budgets.** The cross-panel `int4_sim` span
-6% (MBPP) → 90% (LongBench) was observational (task/context/`max_new` mixed). A matched
-factorial (shared context 2K/4K/8K and `max_new` 32/64/128) still yields
-**0% / 23% / 97%** on Mistral and **17% / 26% / 91%** on Llama for MBPP / BFCL / LongBench
-(`int4_sim`, §6.12.4). Prompts still differ by family; budgets do not. H2O-style eviction
-at 75% kept remains **100%** on LongBench in the eviction panel.
-
-2. **Generation length is the strongest within-task driver.** On BFCL (fixed task family),
-`int4_sim` divergence scales 7× from 9% (mnt=16) to 62% (mnt=256). Longer budgets create
-more argmax trials (opportunity effect); FDI / `mnt` and a simple hazard proxy separate
-early LongBench flips from late BFCL accumulation (§6.12.3). `int8` stays near-zero on BFCL.
-
-3. **Compressor class determines failure mode.** Top-k logit autopsy over 1,103 divergent
-cells identifies three mechanisms: near-tie noise (int8, mean lossy rank 2.4, fdi=22);
-distribution shift (int4_sim, rank 3.5, fdi=8); and attention destruction (H2O-style,
-rank 6.7, fdi=1). Three forensic case studies with full top-5 logit traces confirm each.
-
-4. **Unguarded lossy path is not free; verification recovers full-KV-valid outputs.**
-Without ExactKV, compressed KV can ship wrong tool/code fields. With verifier-mediated
-execution, ExactKV preserves **318/318** full-KV valid BFCL tool calls, **12/12** full-KV
-syntactically valid MBPP outputs on Llama v3.0, and **100%** LongBench answer-overlap
-parity vs full-KV (720 cells). Draft acceptance and §9.1 sketch how often corrections
-happen and how verify cost scales as acceptance falls. Full-KV validity itself is modest
-on BFCL (26–37%); these are preservation metrics, not official pass rates.
+1. **Task-family hierarchy survives matched budgets** — Mistral 0%/23%/97%, Llama 17%/26%/91%
+   for `int4_sim` at shared context/`max_new` (§6.12.4); H2O eviction 100% on LongBench.
+2. **Generation length is the strongest within-task driver** — BFCL `int4_sim` 9%→62%
+   as mnt 16→256 (§6.12.3).
+3. **Compressor class determines failure mode** — near-tie (int8), distribution shift
+   (`int4_sim`), attention destruction (H2O) over 1,103 divergent cells (§6.10).
+4. **Unguarded lossy is not free; verification recovers full-KV-valid outputs** —
+   BFCL validity panel **318/318** preserved when full-KV was valid; MBPP 12/12 (Llama);
+   LongBench overlap 100% vs full-KV (§6.11).
 
 **Harness invariant (not the headline):** `exactkv_failures = 0` on all 8,132 cells confirms
 verify/commit wiring under our semantics. It is **not** evidence that compression is safe
@@ -126,30 +118,16 @@ verifier agreement, and exactness failures per cell.
 **Contributions:**
 
 1. A **compressor-agnostic crash-test framework** with leaderboard-style reporting
-   that measures token-level drift, first-divergence index, acceptance rate,
-   and mechanistic failure signatures across compressors and models (§3–5).
-2. **Empirical evidence that drift is jointly task-, length-, and
-   compressor-class-dependent:** observational `int4_sim` span 6% (MBPP) → 90% (HF LongBench);
-   matched-budget factorial still **0%/23%/97%** (Mistral) and **17%/26%/91%** (Llama)
-   on MBPP/BFCL/LongBench (§6.12.4); controlled BFCL length scaling 9% → 62% as output
-   budget grows 7×. H2O-style eviction reaches 100% on reading at 75% kept
-   (§6.4-6.12, Table 6.16).
-3. A **logit autopsy** over 1,103 divergent cells identifying three mechanistically
-   distinct failure modes: near-tie noise (int8), distribution shift (int4_sim), and
-   attention destruction (H2O-style), each with forensic case studies (§6.10, §7).
-4. A **compressor design curve** from `int8` through `int6_sim` and `int4_per_vec_sim`
-   to catastrophic `int4_sim`, showing per-vector granularity helps on structured
-   tasks while bit-width still matters at 8K LongBench (§6.13-6.16).
-5. **Unguarded lossy damage vs verifier recovery** — BFCL tool JSON, MBPP Python
-   syntax, and LongBench answer overlap show what compressed KV would ship without
-   verification, and that ExactKV preserves full-KV-valid outputs (§6.11). Correction
-   frequency via acceptance / FDI; verifier cost sketch §9.1. Not official pass rates.
-6. **8,132 GPU cells** on Llama-3.1-8B and Mistral-7B across five benchmark families
-   (§6, Appendix A).
-7. **Faithful upstream adapter diagnostics** (1,568 appendix cells, §6.17): real
-   upstream libraries on the same crash-test grid. TurboQuant is near-clean on
-   structured tasks but **~65% LongBench drift**; **`int8` is the only non-catastrophic
-   real compressor** in that grid. No faithful non-catastrophic LongBench baseline.
+   for token-level drift, first divergence, acceptance, and exactness failures (§3–5).
+2. **Empirical map of when compressors drift** — matched task×budget hierarchy,
+   within-task length scaling, and eviction vs quantization (glance table; §6.12).
+3. A **logit autopsy** over 1,103 divergent cells with three failure modes and
+   forensic case studies (§6.10, §7).
+4. A **compressor design curve** from `int8` through `int6_sim` / `int4_per_vec_sim`
+   to catastrophic `int4_sim` / H2O (§6.13–6.16).
+5. **Unguarded lossy damage vs verifier recovery** across BFCL / MBPP / LongBench,
+   plus a verifier-cost sketch (§6.11, §9.1).
+6. **8,132 headline GPU cells** plus a **1,568-cell faithful-adapter appendix** (§6, §6.17).
 
 ### 2.1 Shared problem framing with VeriCache
 
@@ -192,12 +170,9 @@ deployment throughput or reproduce VeriCache's system design. See Section 10.
 | 6 | **Compressor design-space curve** | int8 → int6 → int4_per_vec → int4_sim → H2O: monotonic LongBench degradation (Table 6.16) |
 | 7 | **Faithful adapters reinforce hierarchy** | TurboQuant: ~0–5% on code/tool, ~65% LongBench; int8: 8.3% combined (appendix, §6.17) |
 
-ExactKV's strongest supported claim is not merely that compressed KV drifts, it is
-that **KV-cache drift is governed jointly by task type, generation length, compressor
-class, and quantization granularity**. A matched-budget panel on both models shows the
-task-family hierarchy survives equal context/`max_new` (Mistral 0%/23%/97%; Llama
-17%/26%/91%); generation length remains the cleanest within-task length control.
-`exactkv_failures=0` is a harness invariant, not the scientific headline.
+ExactKV's strongest supported claim is that **KV-cache drift is governed jointly by
+task type, generation length, compressor class, and quantization granularity**
+(see glance table). `exactkv_failures=0` is a harness invariant, not the scientific headline.
 
 ---
 
@@ -2058,6 +2033,27 @@ Artifact: `reports/systems/verifier_overhead.json` (generated by
 **Not measured:** per-token verifier breakdown on headline/external panels; recompression
 overhead (`reports/systems/recompression_overhead.json`, status `not_measured`).
 
+### 9.2 Systems diagnostic panel (peak CUDA + path wall-clock)
+
+Practical question from readers: *how much memory / time does this cost in the real world?*
+ExactKV’s headline remains **drift**. Separately, a **96-cell `systems_diagnostic` panel**
+(both models × `noop`/`int8`/`int4_sim` × context 2K/4K × mnt 64/128 × 4 fixed prompts)
+records, per arm (full / lossy / ExactKV):
+
+- `gpu_peak_allocated_bytes` — process-level `torch.cuda.max_memory_allocated` after sync
+  (includes **model weights + KV + temporaries**)
+- `wall_clock_ms` — harness path timing for that arm alone
+
+**Claim boundary:** diagnostic peak CUDA allocation and harness wall-clock — **not**
+serving RPS, TTFT, continuous batching, or unqualified production VRAM savings.
+ExactKV is expected to peak **higher** than lossy-only (full + compressed state coexist)
+and to run **slower** than pure lossy (verify cost). That is the crash-test cost, not a
+serving win.
+
+Runner: `scripts/run_systems_diagnostic_panel.sh` · pack:
+`reports/systems/systems_diagnostic.json` (populated after the GPU run).
+Methodology: `docs/GPU_MEMORY_METHODOLOGY.md` · claim row in `docs/CLAIM_BOUNDARIES.md`.
+
 ---
 
 ## 10. VeriCache: closest prior art (explicit boundary)
@@ -2353,6 +2349,9 @@ Claim boundary: `kivi_offline` / `kivi_offline_r32` use real KIVI quantizer math
     supplemented by a matched task×context×`max_new` panel (§6.12.4): `int4_sim`
     Mistral **0%/23%/97%** and Llama **17%/26%/91%** on MBPP/BFCL/LongBench. Prompts
     still differ by family.
+17. **Systems diagnostic is not serving.** Peak CUDA allocation and path wall-clock on the
+    96-cell `systems_diagnostic` panel (§9.2) are harness diagnostics — not RPS, TTFT,
+    or unqualified production VRAM savings. ExactKV often peaks higher than lossy-only.
 
 ---
 
@@ -2581,6 +2580,7 @@ are in **Appendix A**. Version labels in **Appendix D**.
 | LongBench overlap pack | `reports/external_panels/longbench_overlap_pack.{json,md}` | 720 |
 | Length-opportunity pack | `reports/public_release/length_opportunity.{json,md}` | — |
 | Matched factorial (both models) | `reports/external_panels/matched_factorial/` | 1,404 |
+| Systems diagnostic (both models) | `reports/external_panels/systems_diagnostic/` · `reports/systems/systems_diagnostic.json` | 96 |
 | Phase-F kernel microbenchmark | `reports/phaseF_kernel_benchmark.json` |, |
 | Logit autopsy summary | `reports/external_panels/logit_autopsy_summary.json` | 1,103 |
 | Historical Phase-A demo | `reports/phaseA_benchmark.json` |, |

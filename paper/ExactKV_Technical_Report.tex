@@ -51,62 +51,46 @@
 \begin{document}
 \maketitle
 
+\noindent\textbf{If you read five minutes.}
+ExactKV compares compressed-KV greedy decoding to full-precision greedy decoding.
+\emph{Drift \%} $=$ share of prompts with $\geq$1 differing token;
+\emph{first divergence} $=$ that token index.
+(1)~matched hierarchy: \texttt{int4\_sim} Mistral \textbf{0\%/23\%/97\%}, Llama
+\textbf{17\%/26\%/91\%} (code/tools/reading) at shared budgets;
+(2)~BFCL length still scales 9\%$\to$62\%;
+(3)~unguarded lossy can ship wrong fields; ExactKV recovers full-KV-valid outputs.
+Details: Appendix~A / site / \texttt{REPRODUCE.md}.
+
 \begin{abstract}
 Lossy KV-cache compression is widely deployed, but most evaluations report aggregate
 quality and stop there. ExactKV is a compressor-agnostic \textbf{crash-test framework}
 that measures first-divergence index, draft acceptance, unguarded lossy damage, and
 \texttt{exactkv\_failure} under verifier-mediated semantics.
 
-\noindent\textbf{If you read five minutes:}
-(1)~drift is joint in task, length, compressor class, and granularity;
-(2)~matched factorial: \texttt{int4\_sim} Mistral \textbf{0\%/23\%/97\%}, Llama
-\textbf{17\%/26\%/91\%} (MBPP/BFCL/LongBench) at shared 2K--8K $\times$ mnt 32/64/128;
-(3)~within-task BFCL length still scales 9\%$\to$62\%;
-(4)~unguarded lossy can ship wrong fields; ExactKV recovers full-KV-valid outputs;
-(5)~details in Appendix~A / site / \texttt{REPRODUCE.md}.
-
 Across \textbf{8,132 GPU cells} on Llama-3.1-8B and Mistral-7B
 (Appendix benchmark card)\footnote{Six built-in compressor classes: \texttt{noop},
 \texttt{int8}, \texttt{int6\_sim}, \texttt{int4\_per\_vec\_sim}, \texttt{int4\_sim},
 H2O-style eviction (\texttt{h2o\_sim}). External adapters evaluated separately
 (Section~\ref{sec:faithful-compressors}). \texttt{exactkv\_failures=0} is a harness
-invariant, not the scientific headline.}, four main findings:
+invariant, not the scientific headline.}, four main findings (glance table below):
 
 \begin{enumerate}
-\item \textbf{Task-family hierarchy survives matched budgets.} Cross-panel 6\%$\to$90\% was
-  observational. Matched factorial (shared 2K/4K/8K $\times$ mnt 32/64/128):
-  \texttt{int4\_sim} Mistral \textbf{0\% / 23\% / 97\%}, Llama \textbf{17\% / 26\% / 91\%}
-  on MBPP / BFCL / LongBench. Prompts still differ by family; budgets do not.
-  H2O-style eviction at 75\% kept: \textbf{100\%} on LongBench.
-\item \textbf{Generation length is the strongest within-task driver.} On BFCL,
-  \texttt{int4\_sim} rises from 9\% (mnt=16) to 62\% (mnt=256), a $7\times$ increase.
-  FDI/\texttt{mnt} separates early LongBench flips from late BFCL accumulation
-  (\S6.12.3).
-\item \textbf{Three distinct failure modes.} Top-k logit autopsy (1{,}103 divergent cells):
-  near-tie noise (int8, rank~2.4, fdi=22); distribution shift (int4\_sim,
-  rank~3.5, fdi=8); and attention destruction (H2O-style, rank~6.7, fdi=1).
-\item \textbf{Unguarded lossy is not free; verification recovers full-KV-valid outputs.}
-  Without ExactKV, compressed KV can ship wrong tool/code fields. With verification:
-  318/318 BFCL, 12/12 MBPP syntax (Llama), 100\% LongBench overlap parity vs full-KV.
-  Acceptance and \S9.1 sketch correction frequency and verify cost.
+\item \textbf{Matched budgets:} Mistral 0\%/23\%/97\%, Llama 17\%/26\%/91\%
+  (\texttt{int4\_sim}); H2O eviction 100\% on LongBench.
+\item \textbf{Within-task length:} BFCL \texttt{int4\_sim} 9\%$\to$62\% (mnt 16$\to$256).
+\item \textbf{Three failure modes:} near-tie (int8), distribution shift (\texttt{int4\_sim}),
+  attention destruction (H2O) over 1{,}103 divergent cells.
+\item \textbf{Recovery:} BFCL validity \textbf{318/318} when full-KV valid; MBPP 12/12
+  (Llama); LongBench overlap 100\% vs full-KV.
 \end{enumerate}
 
 \begin{sloppypar}
-\noindent\texttt{int6\_sim} (6-bit per-tensor) and \texttt{int4\_per\_vec\_sim}
-(KIVI/KVQuant-style per-vector INT4, $2.06\times$ int8 error) are GPU-validated
-non-catastrophic on both Mistral-7B and Llama-3.1-8B (extended validation panel,
-1{,}568 cells): both show 0\% divergence on BFCL and MBPP.
-\texttt{int6\_sim} reaches 37--47\% and \texttt{int4\_per\_vec\_sim} 56--57\% on
-HF LongBench; per-vector granularity helps on structured tasks, while bit-width
-still matters at 8K LongBench context.
-\textbf{Faithful upstream adapters} (1{,}568 appendix cells, separate from headline):
-\texttt{turboquant\_experimental} is task-conditional, near-clean on structured tasks
-but $\sim$65\% LongBench drift; \texttt{int8} remains the only non-catastrophic real
-compressor in that grid (8.3\% combined).
-The governing pattern is that \textbf{task type, generation length, compressor class,
-and quantization granularity jointly determine when compressed KV starts lying}, with
-generation length as the cleanest within-task control and cross-family spans as
-observational. ExactKV makes drift and unguarded lossy damage measurable.
+\noindent\texttt{int6\_sim} and \texttt{int4\_per\_vec\_sim} are GPU-validated
+non-catastrophic on structured tasks (extended validation, 1{,}568 cells).
+\textbf{Faithful upstream adapters} (1{,}568 appendix cells): TurboQuant is
+task-conditional ($\sim$65\% LongBench); \texttt{int8} remains the only
+non-catastrophic real compressor in that grid (8.3\% combined).
+Drift is jointly governed by task, length, compressor class, and granularity.
 Results are \textbf{not} benchmark scores, production claims, or a reproduction of
 VeriCache~\citep{vericache2026}.
 \end{sloppypar}
@@ -132,25 +116,18 @@ failures per cell.
 \textbf{Contributions:}
 \begin{enumerate}
 \item A \textbf{compressor-agnostic crash-test framework} with leaderboard-style
-  reporting for token-level drift, first-divergence index, acceptance rate, and
-  exactness failures across compressors and models (\S3--5).
-\item \textbf{8,132 GPU cells} across Llama-3.1-8B and Mistral-7B, five
-  benchmark families, six built-in compressor classes (\S6).
-\item Empirical evidence that drift is \textbf{jointly} task-, length-, and
-  compressor-class-dependent: observational \texttt{int4\_sim} span 6\%$\to$90\%;
-  controlled BFCL length 9\%$\to$62\% ($7\times$); matched factorial still
-  Mistral 0\%/23\%/97\% and Llama 17\%/26\%/91\%
-  (Table~\ref{tab:matched-factorial}, \S6.4--6.12).
-\item A \textbf{logit autopsy} over 1,103 divergent cells identifying three
-  mechanistically distinct failure modes: near-tie noise (int8), distribution
-  shift (int4\_sim), and attention destruction (H2O eviction) (\S\ref{sec:autopsy-main}, \S\ref{sec:forensic-cases}).
-\item \textbf{Unguarded lossy damage vs verifier recovery} across three families
-  (BFCL tool JSON, MBPP Python syntax, LongBench answer overlap); correction
-  frequency via acceptance; cost sketch \S9.1 (\S\ref{sec:downstream}).
-\item \textbf{GPU validation} of \texttt{int6\_sim} and \texttt{int4\_per\_vec\_sim}
-  confirming non-catastrophic drift on structured tasks. Per-vector granularity helps
-  on BFCL/MBPP while bit-width still matters at 8K LongBench context
-  (Sections~\ref{sec:int6}--\ref{sec:int4pervec}, Table~\ref{tab:core-curve}).
+  reporting for token-level drift, first divergence, acceptance, and exactness
+  failures (\S3--5).
+\item \textbf{Empirical map of when compressors drift} --- matched task$\times$budget
+  hierarchy, within-task length scaling, eviction vs quantization (glance table;
+  Table~\ref{tab:matched-factorial}, \S6.12).
+\item A \textbf{logit autopsy} over 1{,}103 divergent cells with three failure modes
+  (\S\ref{sec:autopsy-main}, \S\ref{sec:forensic-cases}).
+\item \textbf{Unguarded lossy damage vs verifier recovery} across three families;
+  cost sketch \S9.1 (\S\ref{sec:downstream}).
+\item \textbf{8,132 headline GPU cells} plus a 1{,}568-cell faithful-adapter appendix
+  and GPU validation of \texttt{int6\_sim}/\texttt{int4\_per\_vec\_sim}
+  (\S6, Sections~\ref{sec:int6}--\ref{sec:int4pervec}).
 \end{enumerate}
 
 \subsection{Shared problem framing with VeriCache}
@@ -1280,6 +1257,22 @@ acceptance drops to 0.72--0.95 where divergence is 100\%, implying substantial
 verify amortization under the model above even though ExactKV measures rather than
 optimizes that cost. Artifact: systems verifier-overhead summary (Appendix inventory).
 
+\subsection{Systems diagnostic panel (peak CUDA + path wall-clock)}
+Practical memory/latency questions are answered by a separate \textbf{96-cell}
+\texttt{systems\_diagnostic} panel (both models; shared 2K/4K $\times$ mnt 64/128;
+\texttt{noop}/\texttt{int8}/\texttt{int4\_sim}). Each cell records per-arm
+\texttt{gpu\_peak\_allocated\_bytes} (process-level peak CUDA allocation) and
+\texttt{wall\_clock\_ms} (harness path timing) for full / lossy / ExactKV.
+
+\begin{sloppypar}
+\noindent\textbf{Claim boundary:} diagnostic peak CUDA and harness wall-clock ---
+\emph{not} serving RPS, TTFT, or unqualified production VRAM savings. Peak includes
+model weights + KV + temporaries. ExactKV often peaks higher than lossy-only because
+full and compressed state coexist. Runner:
+\texttt{scripts/run\_systems\_diagnostic\_panel.sh}; pack:
+\texttt{reports/systems/systems\_diagnostic.json}.
+\end{sloppypar}
+
 \section{VeriCache: Closest Prior Art}
 VeriCache~\citep{vericache2026} is closer than a casual skim suggests. Both use
 compressed draft + full-KV verify/correct and target lossless greedy equivalence.
@@ -1408,6 +1401,10 @@ Shared context 2K/4K/8K and \texttt{max\_new} 32/64/128 across MBPP/BFCL/LongBen
 yields \texttt{int4\_sim} Mistral \textbf{0\%/23\%/97\%}, Llama \textbf{17\%/26\%/91\%}
 (Table~\ref{tab:matched-factorial}). The older cross-family confound is addressed for
 budgets; prompts still differ by family.
+
+\noindent\textbf{Systems diagnostic is not serving.} Peak CUDA allocation and path
+wall-clock on the 96-cell \texttt{systems\_diagnostic} panel are harness diagnostics
+--- not RPS, TTFT, or unqualified production VRAM savings.
 \end{sloppypar}
 
 \section{Conclusion}

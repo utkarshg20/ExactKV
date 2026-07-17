@@ -56,12 +56,11 @@
   <section class="reviewer-tldr" id="reviewer-tldr">
     <p class="section-label">Reviewer TL;DR</p>
     <p class="reviewer-tldr-lead">
-      ExactKV shows that KV-cache compression can preserve final verified outputs while still causing early greedy-token drift.
-      Across <strong>8,132 GPU cells</strong>, int4 drift spans <strong>6%</strong> on MBPP code to about <strong>90%</strong> on LongBench reading
-      in the original panels. A <strong>matched-budget</strong> factorial still shows
+      ExactKV compares compressed-KV greedy decoding to full precision and records the
+      <em>first token</em> that differs. Across <strong>8,132 GPU cells</strong>, a
+      <strong>matched-budget</strong> check still shows
       <strong>0%/23%/97%</strong> (Mistral) and <strong>17%/26%/91%</strong> (Llama)
-      on code / tools / reading — the family gap survives equal context and output length.
-      Within-task, BFCL length scales <strong>9%→62%</strong>.
+      on code / tools / reading. Within-task, BFCL length scales <strong>9%→62%</strong>.
       When full-KV is valid, ExactKV preserves tool/code fields the unguarded lossy path can break.
     </p>
 
@@ -73,7 +72,7 @@
     <div class="story-pillars">
       <article class="story-pillar">
         <h3>What we found</h3>
-        <p>Matched factorial (both models): int4 Mistral 0%/23%/97%, Llama 17%/26%/91% (code/tools/reading) at shared budgets. BFCL length scales 9%→62% within-task. Unguarded lossy can ship wrong fields; ExactKV recovers. Three failure modes.</p>
+        <p>Code ≪ tools ≪ long reading even at equal context and output length. Longer answers flip more within a task. Three different failure mechanisms; unguarded lossy can ship wrong fields while ExactKV recovers.</p>
       </article>
       <article class="story-pillar">
         <h3>Why it matters</h3>
@@ -124,7 +123,7 @@
       <article class="stat-card">
         <div class="stat-value">106/106</div>
         <div class="stat-label">Tool calls preserved</div>
-        <div class="stat-note">BFCL validity panel when full-KV valid</div>
+        <div class="stat-note">BFCL validity panel (when full-KV valid; full grid 318/318)</div>
       </article>
       <article class="stat-card">
         <div class="stat-value">3 modes</div>
@@ -810,10 +809,26 @@ its high forehead and its straight nose, they were positively grotes</pre>
             <tr><td>MBPP + pilots + evidence-plus</td><td class="num">~1,144</td><td>Mixed</td><td>Code/smoke supplements</td></tr>
             <tr class="inventory-total-row"><td><strong>Headline total</strong></td><td class="num"><strong>8,132</strong></td><td colspan="2">6,564 pre-v30 + 784 + 784 v30 batches</td></tr>
             <tr><td>Matched factorial (follow-up)</td><td class="num">1,404</td><td>Both</td><td>Shared 2K/4K/8K × mnt 32/64/128; not in 8,132 total</td></tr>
+            <tr><td>Systems diagnostic (follow-up)</td><td class="num">96</td><td>Both</td><td>Peak CUDA + path wall-clock; not serving RPS/VRAM claim</td></tr>
           </tbody>
         </table>
       </div>
     </div>
+
+    <h2 id="systems-diagnostic">15b. Practical systems (diagnostic)</h2>
+    <p>
+      Friends often ask about memory and latency — the usual reasons to compress KV.
+      ExactKV’s headline is still <strong>drift</strong>. Separately, a small
+      <code>systems_diagnostic</code> panel (96 cells, both models) records
+      <strong>peak CUDA allocation</strong> and <strong>per-path wall-clock</strong>
+      for full / lossy / ExactKV arms.
+    </p>
+    <p class="inventory-note">
+      Diagnostic only: peak includes model weights + KV + temporaries.
+      <strong>Not</strong> serving RPS, TTFT, or unqualified production VRAM savings.
+      ExactKV is expected to be slower than pure lossy (verify cost). Artifacts:
+      <code>reports/systems/systems_diagnostic.json</code> (populated after the GPU run).
+    </p>
 
     <div class="inventory-block inventory-block--appendix">
       <div class="inventory-block-header">

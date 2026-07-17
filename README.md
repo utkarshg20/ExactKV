@@ -26,6 +26,8 @@ ExactKV is a **research-grade evaluation framework**. It is **not** a production
 
 Models: **Llama-3.1-8B** and **Mistral-7B-Instruct-v0.3**, greedy decoding.
 
+**What “drift” means:** share of prompts where compressed-KV greedy decoding produces a different token than full-precision greedy at least once. ExactKV also records *which* generated token flips first.
+
 **Primary metrics:** divergence rate, acceptance rate, first-divergence index.
 
 **Safety gate:** `exactkv_failures = 0` on cited panels confirms verify/commit wiring — not that compression is practically useful by itself.
@@ -34,14 +36,13 @@ Models: **Llama-3.1-8B** and **Mistral-7B-Instruct-v0.3**, greedy decoding.
 |--------|--------|
 | External GPU cells (headline) | **8,132** |
 | Core leaderboard panel | **1,500** (`reports/scale_7b/raw.json`) |
-| `int4_sim` drift, MBPP (code) | **6%** |
-| `int4_sim` drift, HF LongBench (reading) | **~90%** |
-| H2O-style eviction @ 75% kept, LongBench | **100%** |
+| Matched `int4_sim` (Mistral / Llama) | **0%/23%/97%** · **17%/26%/91%** (code/tools/reading at shared budgets) |
 | BFCL long-gen drift (mnt 16→256) | **9% → 62%** (7× within-task scaling) |
-| Full-KV valid tool calls preserved | **106/106** (BFCL validity panel) |
+| H2O-style eviction @ 75% kept, LongBench | **100%** |
+| Full-KV valid tool calls preserved | **106/106** (BFCL validity panel; paper also cites 318/318 on the full both-model validity grid) |
 | Wilson 95% CIs (headline + smoke) | [`confidence_intervals.json`](reports/public_release/confidence_intervals.json) |
 
-The 6%→90% code/reading span in the table above is the original cross-panel hook. A **matched** task×context×`max_new` panel (shared 2K/4K/8K × mnt 32/64/128) still shows **`int4_sim` Mistral 0%/23%/97%** and **Llama 17%/26%/91%** on MBPP/BFCL/LongBench — see technical report §6.12.4. Within-task, BFCL generation length remains the cleanest length control (9%→62%).
+The older cross-panel hook (~6% code → ~90% reading) mixes typical context/`max_new` across families; the **matched** row above equalizes budgets (§6.12.4). Systems diagnostics (peak CUDA allocation / path wall-clock) are separate from this drift table — see `reports/systems/` when present; not serving RPS or unqualified VRAM savings.
 
 ### Faithful adapter appendix (separate from 8,132 headline)
 

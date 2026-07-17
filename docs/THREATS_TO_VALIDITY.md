@@ -35,8 +35,9 @@ ExactKV is a **research-grade evaluation framework**, not a production serving s
 |-------------|-------|----------|
 | Phase F kernel latency | **Microbenchmark only** — fixed KV shape, not end-to-end decode | `reports/systems/latency_microbench.json` |
 | Stored tensor memory before/after compress | Same microbench shape; not serving-time peak VRAM | `reports/systems/gpu_memory_trace.json` |
-| Per-token verifier overhead on 7B panels | **Not measured** in headline 1,500-cell panel | Future work; do not infer from Phase F alone |
-| Wall-clock panel runtime | Not standardized across hardware in public bundle | Re-run scripts on your GPU for timing |
+| Systems diagnostic (96 cells, 7B/8B) | Peak CUDA allocation + per-path wall-clock (full/lossy/ExactKV); **not** serving RPS/TTFT/unqualified VRAM savings | `reports/systems/systems_diagnostic.json` |
+| Per-token verifier overhead on 7B panels | **Not measured** in headline 1,500-cell panel | Do not infer from Phase F alone |
+| Wall-clock panel runtime | Hardware-dependent; systems_diagnostic reports harness path timing only | Re-run on your GPU for local timing |
 
 ## 5. Reproducibility threats
 

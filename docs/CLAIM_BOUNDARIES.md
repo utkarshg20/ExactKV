@@ -28,6 +28,7 @@ Authoritative allowed / qualified / forbidden public claims. See also [`NOVELTY_
 | Shard support | Probe-first heuristic; not full Shard integration |
 | Speedups | Phase F **kernel microbenchmark** only — not end-to-end |
 | Compression ratios | **Stored tensor byte ratios** unless active GPU memory measured |
+| Systems diagnostic peaks / wall-clock | Observed peak CUDA allocation and per-path wall-clock on the **96-cell `systems_diagnostic` panel** (7B/8B). Peak includes model weights + KV + temporaries. **Not** serving throughput, TTFT, RPS, or unqualified production VRAM savings. |
 | Triton KV kernel path | Tested shape/hardware; block_sparse uses torch backend |
 | VeriCache relationship | Inspired by draft/verify semantics; **does not reproduce** VeriCache |
 
@@ -55,6 +56,7 @@ When mentioning the topic, include:
 |-------|--------------------------|
 | Phase F / speedup | kernel microbenchmark; not end-to-end |
 | compression ratio | stored tensor byte ratio |
+| systems diagnostic | diagnostic peak CUDA / harness wall-clock; not serving RPS or production VRAM savings |
 | SpectralQuant | fallback / proxy |
 | Shard | probe-first |
 | VeriCache | does not reproduce |
