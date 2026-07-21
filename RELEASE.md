@@ -128,7 +128,7 @@ combined in wave-3. KnormPress/SnapKV remain catastrophic in wave-2. Artifacts:
 |----------|------|
 | Technical report (Markdown) | `paper/ExactKV_Technical_Report.md` |
 | Technical report (LaTeX) | `paper/ExactKV_Technical_Report.tex` |
-| Technical report (PDF) | `paper/ExactKV_Technical_Report.pdf` |
+| Technical report (PDF) | [Google Drive](https://drive.google.com/file/d/1W2_dyc1QOBHTjc94yKPpQ-j7JKk04dln/view?usp=sharing) (local build: `paper/ExactKV_Technical_Report.pdf`) |
 | Bibliography | `paper/references.bib` |
 | Website | `site/index.html` |
 | v3.0 panel script | `scripts/run_v30_new_compressors.sh` |

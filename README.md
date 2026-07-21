@@ -12,7 +12,7 @@ ExactKV is a compressor-agnostic **crash-test and leaderboard** for LLM KV-cache
 | Start here (reviewers) | [`docs/EVALUATOR_GUIDE.md`](docs/EVALUATOR_GUIDE.md) |
 | Reproduce (CPU, ~2 min) | [`REPRODUCE.md`](REPRODUCE.md) |
 | Artifact audit note | [`docs/ARTIFACT_AUDIT.md`](docs/ARTIFACT_AUDIT.md) |
-| Technical report | [`paper/ExactKV_Technical_Report.md`](paper/ExactKV_Technical_Report.md) |
+| Technical report | [`paper/ExactKV_Technical_Report.md`](paper/ExactKV_Technical_Report.md) · [PDF](https://drive.google.com/file/d/1W2_dyc1QOBHTjc94yKPpQ-j7JKk04dln/view?usp=sharing) |
 | Landing page | [`site/index.html`](site/index.html) |
 | GitHub Release | [`v-release`](https://github.com/utkarshg20/ExactKV/releases/tag/v-release) |
 
