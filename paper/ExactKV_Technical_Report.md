@@ -14,12 +14,12 @@
 not the scientific headline.)
 
 1. **Matched hierarchy.** At shared context and output length, `int4_sim` still lands
-   Mistral **0%/23%/97%** and Llama **17%/26%/91%** on code / tools / reading (§6.12.4).
-   (The memorable 6%→90% cross-panel span is a budget-confounded hook, not the causal claim.)
-2. **Length within task.** On tool-calling (BFCL), the same compressor scales **9% → 62%**
+   Mistral **0%, 23%, 97%** and Llama **17%, 26%, 91%** on code, tools, and reading (§6.12.4).
+   (The memorable 6% to 90% cross-panel span is a budget-confounded hook, not the causal claim.)
+2. **Length within task.** On tool-calling (BFCL), the same compressor scales **9% to 62%**
    as the output budget grows 7×.
-3. **Without verification.** Unguarded lossy can ship wrong tool/code fields; ExactKV recovers
-   full-KV-valid outputs when full-KV itself is valid (§6.11). Details → Appendix A / site.
+3. **Without verification.** Unguarded lossy can ship wrong tool and code fields. ExactKV recovers
+   full-KV-valid outputs when full-KV itself is valid (§6.11). Details: Appendix A, the [project site](https://utkarshg20.github.io/ExactKV/), and the [PDF](https://drive.google.com/file/d/1W2_dyc1QOBHTjc94yKPpQ-j7JKk04dln/view?usp=sharing).
 
 ---
 
@@ -49,9 +49,9 @@ and drift structure under verifier-mediated (draft/verify/commit) semantics.
 Across **8,132 GPU cells** on Llama-3.1-8B and Mistral-7B (Appendix benchmark card),
 four main findings emerge (numbers in the glance table below):
 
-1. **Task-family hierarchy survives matched budgets** — Mistral 0%/23%/97%, Llama 17%/26%/91%
+1. **Task-family hierarchy survives matched budgets** — Mistral 0%, 23%, 97%, Llama 17%, 26%, 91%
    for `int4_sim` at shared context/`max_new` (§6.12.4); H2O eviction 100% on LongBench.
-2. **Generation length is the strongest within-task driver** — BFCL `int4_sim` 9%→62%
+2. **Generation length is the strongest within-task driver** — BFCL `int4_sim` 9% to 62%
    as mnt 16→256 (§6.12.3).
 3. **Compressor class determines failure mode** — near-tie (int8), distribution shift
    (`int4_sim`), attention destruction (H2O) over 1,103 divergent cells (§6.10).
@@ -162,7 +162,7 @@ deployment throughput or reproduce VeriCache's system design. See Section 10.
 
 | # | Finding | Key number |
 |---|---------|-----------|
-| 1 | **Matched task-family hierarchy (both models)** | int4_sim at shared budgets: Mistral 0%/23%/97%; Llama 17%/26%/91% (§6.12.4) |
+| 1 | **Matched task-family hierarchy (both models)** | int4_sim at shared budgets: Mistral 0%, 23%, 97%; Llama 17%, 26%, 91% (§6.12.4) |
 | 2 | **Generation length (within-task control)** | int4_sim mnt=16: 9% → mnt=256: 62% (7×) |
 | 3 | **Eviction > quantization drift** | H2O-style 75% kept → 100% LongBench divergence |
 | 4 | **Three distinct failure modes** | int8: near-tie (rank 2.4, fdi=22); int4_sim: distribution shift (rank 3.5, fdi=8); H2O: attention destruction (rank 6.7, fdi=1) |
@@ -1426,7 +1426,7 @@ within-family axis once the task is open-text reading. `int8` is roughly flat (2
 | int4_sim | **9.0%** | **13.5%** | **38.5%** | **62.0%** |
 
 **Observation:** On BFCL (fixed task), generation length is the strongest controlled
-driver: `int4_sim` 9% → 62% as mnt 16→256 (7×). Each extra token is another greedy
+driver: `int4_sim` 9% to 62% as mnt 16→256 (7×). Each extra token is another greedy
 argmax trial (opportunity effect); report cell divergence **and** FDI timing (§6.12.3).
 
 ### 6.12.3 Length-opportunity framing (existing panels)
@@ -1454,8 +1454,8 @@ on reading. Cross-family rate spans remain observational; BFCL mnt slices remain
 clean within-task length control.
 
 **Combined scaling story:**
-- **Matched task-family hierarchy** (both models): Mistral `int4_sim` 0%/23%/97%; Llama 17%/26%/91% (MBPP/BFCL/LongBench) — §6.12.4
-- **Controlled generation-length** (9% → 62% on BFCL) — strongest within-task length axis
+- **Matched task-family hierarchy** (both models): Mistral `int4_sim` 0%, 23%, 97%; Llama 17%, 26%, 91% (MBPP/BFCL/LongBench) — §6.12.4
+- **Controlled generation-length** (9% to 62% on BFCL) — strongest within-task length axis
 - **Controlled context** (LongBench 2K/4K/8K) — weak once reading is fixed (near-ceiling)
 - Cross-panel 6%→90% remains a useful hook, but is no longer the only evidence
 
@@ -2050,7 +2050,7 @@ records, per arm (full / lossy / ExactKV):
 **Claim boundary:** diagnostic peak CUDA allocation and harness wall-clock —
 **not** serving RPS/TTFT/continuous batching, and **not** a production VRAM claim.
 ExactKV peaks **higher** than lossy-only (full + compressed state coexist) and runs
-**~2.3× slower** than full/lossy on this harness (verify cost). That is the crash-test
+**~2.3× slower** than full and lossy on this harness (verify cost). That is the crash-test
 cost, not a serving win.
 
 #### Peak CUDA allocation (GiB, mean over 16 cells/arm)
@@ -2093,7 +2093,7 @@ mnt `{64,128}` × `n_requests` `{1,4,8}` = 36 cells/model.
 
 Per cell it records:
 
-- `ttft_like_ms` — prefill→first-token for full/lossy; first verify-commit round for ExactKV
+- `ttft_like_ms` — prefill→first-token for full and lossy; first verify-commit round for ExactKV
 - `completed_requests_per_sec` — finished serial requests / wall time
 - `gpu_peak_allocated_bytes` and `peak_delta_vs_full_bytes` (may be **positive**)
 
@@ -2437,7 +2437,7 @@ Claim boundary: `kivi_offline` / `kivi_offline_r32` use real KIVI quantizer math
 15. **Sequential model execution** on the scale run.
 16. **Matched factorial complete on both models.** Cross-family observational spans are
     supplemented by a matched task×context×`max_new` panel (§6.12.4): `int4_sim`
-    Mistral **0%/23%/97%** and Llama **17%/26%/91%** on MBPP/BFCL/LongBench. Prompts
+    Mistral **0%, 23%, 97%** and Llama **17%, 26%, 91%** on MBPP/BFCL/LongBench. Prompts
     still differ by family.
 17. **Systems / serving diagnostics are not production serving.** Peak CUDA and path
     wall-clock on the 96-cell `systems_diagnostic` panel (§9.2), and TTFT-like /
@@ -2508,7 +2508,7 @@ On the 1,500-cell release panel, built-in `int8`/`noop` show no lossy divergence
 picture: int4_sim divergence spans **6% on Python code (MBPP)**, **11% on tool-calling
 (BFCL short-gen)**, **50% on BFCL long-gen (mnt=128/256)**, and **90% on open-text
 reading (HF LongBench)**. That span mixes task with typical context/`max_new`; the
-strongest *controlled* within-task axis is BFCL generation length (**9% → 62%** as
+strongest *controlled* within-task axis is BFCL generation length (**9% to 62%** as
 mnt 16→256). Even int8 reaches 25% on LongBench vs ~0% on BFCL/MBPP. H2O-style token
 eviction adds another dimension: **100% divergence on reading even at keep_ratio=0.75**,
 exceeding int4_sim at matched memory budgets. Mean acceptance ~0.35 for H2O vs ~0.84
@@ -2521,7 +2521,7 @@ activations toward lower-ranked alternatives (83% flip, mean rank 3.5); and
 **(3) attention destruction** — H2O eviction eliminates contextual anchors from the
 first generated token (100% flip, mean rank 6.7, fdi=1).
 
-Without verification, the lossy path can ship wrong tool/code fields. With ExactKV,
+Without verification, the lossy path can ship wrong tool and code fields. With ExactKV,
 downstream validity spans BFCL tool JSON (318/318 preserved), MBPP Python syntax
 (12/12 on Llama where full-KV parses), and LongBench answer overlap (100% parity
 vs full-KV on 720 scored cells) — complementary to drift, not official pass rates.

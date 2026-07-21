@@ -376,17 +376,17 @@ pre.code code { background: none; color: #d4d8e8; padding: 0; line-height: 1.75;
 .article-back:hover { color: var(--ink); opacity: 1; }
 .article-wrap {
   max-width: 720px; margin: 0 auto;
-  padding: 48px 24px 100px;
+  padding: 56px clamp(20px, 4vw, 32px) 120px;
 }
-.article-header { margin-bottom: 40px; border-bottom: 1px solid var(--line); padding-bottom: 32px; }
+.article-header { margin-bottom: 48px; border-bottom: 1px solid var(--line); padding-bottom: 36px; }
 .article-header h1 {
   font-family: Georgia, "Times New Roman", Times, serif;
   font-size: clamp(2rem, 5vw, 2.75rem);
   font-weight: 400; letter-spacing: -0.02em; line-height: 1.15;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 .article-sub {
-  font-size: 1.05rem; color: var(--muted); line-height: 1.55; max-width: 640px;
+  font-size: 1.05rem; color: var(--muted); line-height: 1.6; max-width: 640px;
 }
 .article-meta {
   margin-top: 18px; font-size: 0.82rem; color: var(--muted); font-family: var(--mono);

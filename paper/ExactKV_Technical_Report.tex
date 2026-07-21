@@ -55,13 +55,17 @@
 
 \noindent\textbf{Key takeaways.}
 ExactKV compares compressed-KV greedy decoding to full-precision greedy decoding.
-\emph{Drift \%} $=$ share of prompts with $\geq$1 differing token;
-\emph{first divergence} $=$ that token index.
-(1)~matched hierarchy: \texttt{int4\_sim} Mistral \textbf{0\%/23\%/97\%}, Llama
-\textbf{17\%/26\%/91\%} (code/tools/reading) at shared budgets;
-(2)~BFCL length still scales 9\%$\to$62\%;
-(3)~unguarded lossy can ship wrong fields; ExactKV recovers full-KV-valid outputs.
-Details: Appendix~A / site / \texttt{REPRODUCE.md}.
+\emph{Drift \%} $=$ share of prompts with $\geq$1 differing token.
+\emph{First divergence} $=$ that token index.
+(1)~matched hierarchy: \texttt{int4\_sim} Mistral \textbf{0\%, 23\%, 97\%}, Llama
+\textbf{17\%, 26\%, 91\%} (code, tools, reading) at shared budgets.
+(2)~BFCL length still scales 9\% to 62\%.
+(3)~unguarded lossy can ship wrong fields. ExactKV recovers full-KV-valid outputs.
+Details: Appendix~A,
+\href{https://utkarshg20.github.io/ExactKV/}{project site},
+\href{https://drive.google.com/file/d/1W2_dyc1QOBHTjc94yKPpQ-j7JKk04dln/view?usp=sharing}{PDF},
+and the reproduction guide in the
+\href{https://github.com/utkarshg20/ExactKV}{public repository}.
 
 \begin{abstract}
 Lossy KV-cache compression is widely deployed, but most evaluations report aggregate
@@ -77,9 +81,9 @@ H2O-style eviction (\texttt{h2o\_sim}). External adapters evaluated separately
 invariant, not the scientific headline.}, four main findings (glance table below):
 
 \begin{enumerate}
-\item \textbf{Matched budgets:} Mistral 0\%/23\%/97\%, Llama 17\%/26\%/91\%
-  (\texttt{int4\_sim}); H2O eviction 100\% on LongBench.
-\item \textbf{Within-task length:} BFCL \texttt{int4\_sim} 9\%$\to$62\% (mnt 16$\to$256).
+\item \textbf{Matched budgets:} Mistral 0\%, 23\%, 97\%, Llama 17\%, 26\%, 91\%
+  (\texttt{int4\_sim}). H2O eviction 100\% on LongBench.
+\item \textbf{Within-task length:} BFCL \texttt{int4\_sim} 9\% to 62\% (mnt 16 to 256).
 \item \textbf{Three failure modes:} near-tie (int8), distribution shift (\texttt{int4\_sim}),
   attention destruction (H2O) over 1{,}103 divergent cells.
 \item \textbf{Recovery:} BFCL validity \textbf{318/318} when full-KV valid; MBPP 12/12
@@ -120,7 +124,7 @@ failures per cell.
 \item A \textbf{compressor-agnostic crash-test framework} with leaderboard-style
   reporting for token-level drift, first divergence, acceptance, and exactness
   failures (\S3--5).
-\item \textbf{Empirical map of when compressors drift} --- matched task$\times$budget
+\item \textbf{Empirical map of when compressors drift}. matched task$\times$budget
   hierarchy, within-task length scaling, eviction vs quantization (glance table;
   Table~\ref{tab:matched-factorial}, \S6.12).
 \item A \textbf{logit autopsy} over 1{,}103 divergent cells with three failure modes
@@ -160,7 +164,7 @@ acceptance, and exactness failures, \emph{not} deployment throughput. It does
 \textbf{\#} & \textbf{Finding} & \textbf{Key number} \\
 \midrule
 1 & Matched task-family hierarchy (both models)
-  & \texttt{int4\_sim}: Mistral 0\%/23\%/97\%; Llama 17\%/26\%/91\% \\
+  & \texttt{int4\_sim}: Mistral 0\%, 23\%, 97\%; Llama 17\%, 26\%, 91\% \\
 2 & Generation length (within-task control)
   & \texttt{int4\_sim} mnt=16: 9\% $\to$ mnt=256: 62\% ($7\times$) \\
 3 & Eviction $>$ quantization
@@ -626,7 +630,7 @@ across completed ExactKV panels. Cross-family rates are \textbf{observational}.
 \noindent\textbf{Threat / confound.} Cross-family comparisons (MBPP vs BFCL vs LongBench)
 change prompts, context buckets, and \texttt{max\_new\_tokens} together. The memorable
 \texttt{int4\_sim} span 6\%$\to$90\% is \emph{not} a pure causal claim that task type alone
-drives drift. Controlled axes: BFCL mnt 16$\to$256 (fixed tool-call family) and LongBench
+drives drift. Controlled axes: BFCL mnt 16 to 256 (fixed tool-call family) and LongBench
 2K/4K/8K (fixed reading family). A matched task$\times$context$\times$\texttt{max\_new}
 factorial with shared budgets confirms the hierarchy on both models
 (Table~\ref{tab:matched-factorial}); prompts still differ by family.
@@ -648,8 +652,8 @@ HF LongBench v2.6 & reading/summ. & 2K--8K & 32/64 & L+M & 0.0\% & 24.6\% & \tex
 \end{tabular}
 \caption{Cross-panel int4\_sim/int8/noop divergence rates (observational across families).
 noop=0\% throughout. Memorable span: code 6\% $<$ tool short 11\% $<$ tool long 50\% $<$
-reading 90\% --- confounded with context/\texttt{max\_new}. Within-task BFCL length
-11\%$\to$50\% as mnt 16$\to$256. Harness invariant \texttt{exactkv\_failures=0}.
+reading 90\%. confounded with context/\texttt{max\_new}. Within-task BFCL length
+11\%$\to$50\% as mnt 16 to 256. Harness invariant \texttt{exactkv\_failures=0}.
 L=Llama-3.1-8B, M=Mistral-7B.}
 \label{tab:cross-panel}
 \end{table}
@@ -832,7 +836,7 @@ int4\_sim & \textbf{95.0\%} & \textbf{86.2\%} & \textbf{90.0\%} \\
 \bottomrule
 \end{tabular}
 \caption{Context-length scaling on HF LongBench v2.6 (80 cells each; fixed reading family).
-\texttt{int4\_sim} is near-ceiling at all lengths --- context is a weak within-family axis.
+\texttt{int4\_sim} is near-ceiling at all lengths. context is a weak within-family axis.
 \texttt{int8} is moderate (21--28\%) and roughly flat.}
 \label{tab:ctx-scaling}
 \end{table}
@@ -850,7 +854,7 @@ int4\_sim & 9.0\% & 13.5\% & \textbf{38.5\%} & \textbf{62.0\%} \\
 \bottomrule
 \end{tabular}
 \caption{Generation-length scaling on BFCL (both models; fixed tool-call family).
-\texttt{int4\_sim} scales $7\times$ from mnt=16 to mnt=256 --- strongest within-task control.
+\texttt{int4\_sim} scales $7\times$ from mnt=16 to mnt=256. strongest within-task control.
 \texttt{int8} remains near-zero.}
 \label{tab:gen-scaling}
 \end{table}
@@ -876,7 +880,7 @@ BFCL long diverges late (FDI$\approx$85); LongBench flips early (FDI$\approx$8).
 \end{table}
 
 \noindent\textbf{Combined:} matched hierarchy on both models (Mistral 0\%$\to$97\%,
-Llama 17\%$\to$91\% at shared budgets); controlled BFCL length (9\%$\to$62\%);
+Llama 17\%$\to$91\% at shared budgets); controlled BFCL length (9\% to 62\%);
 weak controlled LongBench context (near-ceiling).
 
 \begin{table}[htbp]
@@ -1010,7 +1014,7 @@ h2o\_sim\_75    &,  &,  & 100\%  & Eviction (75\% kept) \\
 Phase D3 wires \textbf{faithful external adapters} (upstream algorithms, not ExactKV
 tensor sims) on the same crash-test grid as built-in compressors. Results are
 \textbf{appendix evidence only}, tracked separately from the 8,132-cell headline total.
-Reproduction: \texttt{REPRODUCE.md}. Internal wave labels (1--3)
+Reproduction: \href{https://github.com/utkarshg20/ExactKV/blob/main/REPRODUCE.md}{\texttt{REPRODUCE.md}}. Internal wave labels (1--3)
 in tables below map to artifact directories in Appendix~E.
 
 \begin{sloppypar}
@@ -1260,22 +1264,24 @@ verify amortization under the model above even though ExactKV measures rather th
 optimizes that cost. Artifact: systems verifier-overhead summary (Appendix inventory).
 
 \subsection{Systems diagnostic panel (peak CUDA + path wall-clock)}
-Practical memory/latency questions are answered by a separate \textbf{96-cell}
-\texttt{systems\_diagnostic} panel (both models; shared 2K/4K $\times$ mnt 64/128;
-\texttt{noop}/\texttt{int8}/\texttt{int4\_sim}). Each cell records per-arm
+Practical memory and latency questions are answered by a separate \textbf{96-cell}
+\texttt{systems\_diagnostic} panel on both models (shared context 2K and 4K,
+\texttt{max\_new} 64 and 128, compressors \texttt{noop}, \texttt{int8}, and
+\texttt{int4\_sim}). Each cell records per-arm
 \texttt{gpu\_peak\_allocated\_bytes} (process-level peak CUDA allocation) and
-\texttt{wall\_clock\_ms} (harness path timing) for full / lossy / ExactKV.
-Hardware: NVIDIA RTX PRO 4000 Blackwell, torch 2.8.0+cu128, float16;
+\texttt{wall\_clock\_ms} (harness path timing) for full, lossy, and ExactKV.
+Hardware: NVIDIA RTX PRO 4000 Blackwell, torch 2.8.0+cu128, float16.
 \texttt{exactkv\_failures=0} on all 96 cells.
 
 \begin{sloppypar}
-\noindent\textbf{Claim boundary:} diagnostic peak CUDA and harness wall-clock ---
-\emph{not} serving RPS, TTFT, or unqualified production VRAM savings. Peak includes
+\noindent\textbf{Claim boundary:} diagnostic peak CUDA and harness wall-clock.
+\emph{Not} serving RPS, TTFT, or an unqualified peak-memory win. Peak includes
 model weights + KV + temporaries. ExactKV peaks higher than lossy-only (full +
-compressed state coexist) and is $\sim$2.3$\times$ slower than full/lossy on this
+compressed state coexist) and is $\sim$2.3$\times$ slower than full and lossy on this
 harness (verify cost). Runner:
-\texttt{scripts/run\_systems\_diagnostic\_panel.sh}; pack:
-\texttt{reports/systems/systems\_diagnostic.json}.
+\href{https://github.com/utkarshg20/ExactKV/blob/main/scripts/run_systems_diagnostic_panel.sh}{\texttt{scripts/run\_systems\_diagnostic\_panel.sh}}.
+Pack:
+\href{https://github.com/utkarshg20/ExactKV/blob/main/reports/systems/systems_diagnostic.json}{\texttt{reports/systems/systems\_diagnostic.json}}.
 \end{sloppypar}
 
 \begin{table}[htbp]
@@ -1297,7 +1303,7 @@ Mistral-7B & int4\_sim & 14.23 & 15.22 & 15.26 \\
 
 \begin{table}[htbp]
 \centering\footnotesize
-\caption{Systems diagnostic path wall-clock (ms, mean; harness timing, not serving TTFT/RPS).}
+\caption{Systems diagnostic path wall-clock (ms, mean; harness timing, not serving TTFT or RPS).}
 \label{tab:systems-wall-clock}
 \begin{tabular}{@{}llrrr@{}}
 \toprule
@@ -1312,28 +1318,30 @@ Mistral-7B & int4\_sim & 3535 & 3141 & 8345 \\
 \end{tabular}
 \end{table}
 
-\subsection{Serving microbench (TTFT-like + serial requests/sec)}
+\subsection{Serving microbench (TTFT-like + serial requests per second)}
 A follow-up \textbf{76-cell} \texttt{serving\_microbench} panel (72 strong + 4
-\texttt{serial\_16} extras) records TTFT-like latency, completed-requests/sec under
-\textbf{serial} multi-request load, and peak CUDA / $\Delta$ vs full for full / lossy /
-ExactKV on the same HF harness (not continuous batching, not vLLM).
-Hardware: NVIDIA RTX PRO 4000 Blackwell; \texttt{exactkv\_failures=0} on all 76 cells.
-Strong design: both models $\times$ \{\texttt{noop},\texttt{int8},\texttt{int4\_sim}\}
-$\times$ ctx \{2048,4096\} $\times$ mnt \{64,128\} $\times$ $n_{\mathrm{req}}$ \{1,4,8\}.
+\texttt{serial\_16} extras) records TTFT-like latency, completed requests per second under
+\textbf{serial} multi-request load, and peak CUDA and $\Delta$ vs full for full, lossy,
+and ExactKV on the same HF harness (not continuous batching, not vLLM).
+Hardware: NVIDIA RTX PRO 4000 Blackwell. \texttt{exactkv\_failures=0} on all 76 cells.
+Strong design: both models with compressors \{\texttt{noop}, \texttt{int8}, \texttt{int4\_sim}\},
+context \{2048, 4096\}, \texttt{max\_new} \{64, 128\}, and $n_{\mathrm{req}}$ \{1, 4, 8\}.
 
 \begin{sloppypar}
-\noindent\textbf{Claim boundary:} HF multi-request diagnostic --- \emph{not} vLLM
-integration, continuous batching, production serving, or unqualified VRAM savings.
-Across strong-panel loads, ExactKV completes $\sim$1.9$\times$ fewer requests/sec than
+\noindent\textbf{Claim boundary:} HF multi-request diagnostic.
+\emph{Not} vLLM integration, continuous batching, production serving, or an unqualified
+peak-memory win.
+Across strong-panel loads, ExactKV completes $\sim$1.9$\times$ fewer requests per second than
 full ($\sim$0.13 vs $\sim$0.25) and shows $\sim$1.5$\times$ higher TTFT-like latency
 ($\sim$940\,ms vs $\sim$630\,ms). Runner:
-\texttt{scripts/run\_serving\_microbench\_panel.sh}; pack:
-\texttt{reports/systems/serving\_microbench.json}.
+\href{https://github.com/utkarshg20/ExactKV/blob/main/scripts/run_serving_microbench_panel.sh}{\texttt{scripts/run\_serving\_microbench\_panel.sh}}.
+Pack:
+\href{https://github.com/utkarshg20/ExactKV/blob/main/reports/systems/serving_microbench.json}{\texttt{reports/systems/serving\_microbench.json}}.
 \end{sloppypar}
 
 \begin{table}[htbp]
 \centering\footnotesize
-\caption{Serving microbench completed requests/sec (mean over serial\_1/4/8).}
+\caption{Serving microbench completed requests per second (mean over serial 1, 4, and 8).}
 \label{tab:serving-rps}
 \begin{tabular}{@{}llrrr@{}}
 \toprule
@@ -1350,7 +1358,7 @@ Mistral-7B & int4\_sim & 0.253 & 0.371 & 0.132 \\
 
 \begin{table}[htbp]
 \centering\footnotesize
-\caption{Serving microbench TTFT-like latency (ms, mean over serial\_1/4/8).}
+\caption{Serving microbench TTFT-like latency (ms, mean over serial 1, 4, and 8).}
 \label{tab:serving-ttft}
 \begin{tabular}{@{}llrrr@{}}
 \toprule
@@ -1490,14 +1498,14 @@ simulated / faithful families only.
 \begin{sloppypar}
 \noindent\textbf{Matched factorial (both models complete).}
 Shared context 2K/4K/8K and \texttt{max\_new} 32/64/128 across MBPP/BFCL/LongBench
-yields \texttt{int4\_sim} Mistral \textbf{0\%/23\%/97\%}, Llama \textbf{17\%/26\%/91\%}
+yields \texttt{int4\_sim} Mistral \textbf{0\%, 23\%, 97\%}, Llama \textbf{17\%, 26\%, 91\%}
 (Table~\ref{tab:matched-factorial}). The older cross-family confound is addressed for
 budgets; prompts still differ by family.
 
 \noindent\textbf{Systems / serving diagnostics are not production serving.}
 Peak CUDA and path wall-clock (\texttt{systems\_diagnostic}, 96 cells) and
-TTFT-like / completed-requests/sec (\texttt{serving\_microbench}, 76 cells) are HF
-harness diagnostics --- not vLLM RPS, continuous batching, or unqualified VRAM
+TTFT-like and completed requests per second (\texttt{serving\_microbench}, 76 cells) are HF
+harness diagnostics. not vLLM RPS, continuous batching, or unqualified VRAM
 savings. ExactKV is $\sim$1.9$\times$ lower completed-req/s and $\sim$1.5$\times$
 higher TTFT-like under serial load.
 \end{sloppypar}
@@ -1519,7 +1527,7 @@ Across \textbf{8,132 completed GPU cells}, ExactKV establishes four empirical fi
 
 \begin{enumerate}
 \item \textbf{Task-family hierarchy survives matched budgets.} Matched factorial:
-  \texttt{int4\_sim} Mistral 0\%/23\%/97\%, Llama 17\%/26\%/91\%
+  \texttt{int4\_sim} Mistral 0\%, 23\%, 97\%, Llama 17\%, 26\%, 91\%
   (MBPP/BFCL/LongBench) at shared context and \texttt{max\_new}.
   The older 6\%$\to$90\% cross-panel span remains a useful hook.
 
@@ -1633,13 +1641,13 @@ re-execution.
 \textbf{Goal} & \textbf{How} \\
 \midrule
 CPU verify ($\sim$2\,min, no GPU)
-  & \texttt{REPRODUCE.md} · \texttt{bash scripts/smoke\_test.sh} \\
+  & \href{https://github.com/utkarshg20/ExactKV/blob/main/REPRODUCE.md}{\texttt{REPRODUCE.md}} · \texttt{bash scripts/smoke\_test.sh} \\
 Check committed reports
   & \texttt{python3 scripts/exactkv\_repro.py --reports-only} \\
 Rebuild this PDF
   & \texttt{bash scripts/build\_paper\_pdf.sh} (tectonic) \\
 GPU re-run of cited panels
-  & Full command inventory in \texttt{REPRODUCE.md} \\
+  & Full command inventory in \href{https://github.com/utkarshg20/ExactKV/blob/main/REPRODUCE.md}{\texttt{REPRODUCE.md}} \\
 \bottomrule
 \end{tabularx}
 \end{center}
