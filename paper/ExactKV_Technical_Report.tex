@@ -18,9 +18,11 @@
 \usepackage{etoolbox}
 \usepackage{hyperref}
 \hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
-% Keep section heads with following material; flush pending floats first.
-\preto{\section}{\FloatBarrier\needspace{5\baselineskip}}
-\preto{\subsection}{\needspace{3\baselineskip}}
+% Keep section heads with following material. Prefer needspace over a hard
+% FloatBarrier here: flushing floats before every \section was leaving large
+% empty regions (e.g. orphaned ``15'' before Forensic Case Studies).
+\preto{\section}{\needspace{10\baselineskip}}
+\preto{\subsection}{\needspace{4\baselineskip}}
 \captionsetup{skip=3pt, font=small, justification=raggedright, singlelinecheck=false}
 \setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
 \setlength{\floatsep}{8pt plus 2pt minus 2pt}
@@ -1072,7 +1074,7 @@ MBPP & 128 & 0.0\% & 1.6\% & 0.998 \\
 \end{tabular}
 \end{table}
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering\small
 \caption{Wave-3 HF LongBench by model (144 cells each).}
 \label{tab:faithful-wave3-longbench}
@@ -1105,7 +1107,7 @@ illustrate the mechanistic failure modes in detail.
 
 \subsection{Forensic Case A: int8: Near-tie noise}
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering\small
 \begin{tabular}{clrrl}
 \toprule
@@ -1133,7 +1135,7 @@ continuation, even when the full-KV model's preference is clear. Divergence occu
 token 1 (the very first generated token), meaning the entire generation trajectory is
 corrupted from the start.
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering\small
 \begin{tabular}{clrl}
 \toprule
@@ -1162,7 +1164,7 @@ model selects a token that does not even appear in the full-KV top-5. The fact t
 full-KV model distributes probability across numeric tokens (suggesting factual recall)
 while H2O selects a question mark (suggesting confusion) confirms total context destruction.
 
-\begin{table}[htbp]
+\begin{table}[H]
 \centering\small
 \begin{tabular}{clrl}
 \toprule
@@ -1642,6 +1644,9 @@ GPU re-run of cited panels
 \end{tabularx}
 \end{center}
 
+% Short bib (~9 entries): keep on the same page as the last appendix body.
+% A \clearpage here would mostly create empty space, not cleaner reading.
+\bigskip
 \bibliographystyle{plainnat}
 \bibliography{references}
 
