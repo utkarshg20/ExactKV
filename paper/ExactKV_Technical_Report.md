@@ -6,7 +6,7 @@
 
 ---
 
-## If you read five minutes
+## Key takeaways
 
 **Gloss.** ExactKV compares compressed-KV greedy decoding to full-precision greedy decoding.
 **Drift %** = share of prompts where at least one generated token differs. **First divergence**
