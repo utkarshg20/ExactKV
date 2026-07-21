@@ -42,7 +42,7 @@ Models: **Llama-3.1-8B** and **Mistral-7B-Instruct-v0.3**, greedy decoding.
 | Full-KV valid tool calls preserved | **106/106** (BFCL validity panel; paper also cites 318/318 on the full both-model validity grid) |
 | Wilson 95% CIs (headline + smoke) | [`confidence_intervals.json`](reports/public_release/confidence_intervals.json) |
 
-The older cross-panel hook (~6% code → ~90% reading) mixes typical context/`max_new` across families; the **matched** row above equalizes budgets (§6.12.4). Systems diagnostics (96-cell peak CUDA / path wall-clock on RTX PRO 4000 Blackwell): ExactKV ~2.3× slower than full/lossy and peaks slightly above lossy-only — see `reports/systems/systems_diagnostic.json`. Serving microbench (76 cells, same GPU, HF serial load): ExactKV ~1.9× lower completed-req/s and ~1.5× higher TTFT-like vs full — see `reports/systems/serving_microbench.json`. Neither is vLLM RPS or unqualified VRAM savings.
+The older cross-panel hook (~6% code → ~90% reading) mixes typical context/`max_new` across families; the **matched** row above equalizes budgets (§6.12.4). Systems diagnostics (96-cell peak CUDA / path wall-clock on RTX PRO 4000 Blackwell): ExactKV ~2.3× slower than full/lossy and peaks slightly above lossy-only — see `reports/systems/systems_diagnostic.json`. Serving microbench (76 cells, same GPU, HF serial load): ExactKV ~1.9× lower completed-req/s and ~1.5× higher TTFT-like vs full — see `reports/systems/serving_microbench.json`. Neither is vLLM RPS or an unqualified peak-memory win.
 
 ### Faithful adapter appendix (separate from 8,132 headline)
 
