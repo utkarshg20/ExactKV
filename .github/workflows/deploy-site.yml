@@ -10,6 +10,7 @@ on:
       - "scripts/render_site_embedded_html.py"
       - "scripts/curate_site_case_studies.py"
       - "reports/public_release/leaderboard_final.json"
+      - "docs/assets/og_card.png"
       - "docs/assets/public_exactkv_one_page_summary.png"
       - "docs/assets/exp035_first_divergence_histogram.png"
       - "docs/assets/exp035_category_heatmap.png"

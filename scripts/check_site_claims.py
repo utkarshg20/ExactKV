@@ -34,6 +34,7 @@ REQUIRED_FILES = [
 ]
 
 REQUIRED_ASSETS = [
+    "assets/og_card.png",
     "assets/public_exactkv_one_page_summary.png",
     "assets/exp035_first_divergence_histogram.png",
     "assets/exp035_category_heatmap.png",

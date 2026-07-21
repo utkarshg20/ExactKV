@@ -20,11 +20,21 @@ def test_site_files_exist():
         "README.md",
         "data/leaderboard.json",
         "data/case_studies.json",
+        "assets/og_card.png",
         "assets/public_exactkv_one_page_summary.png",
         "assets/exp035_first_divergence_histogram.png",
         "assets/exp035_category_heatmap.png",
     ):
         assert (SITE / f).is_file(), f"missing site/{f}"
+
+
+def test_og_image_points_at_og_card():
+    html = (SITE / "index.html").read_text(encoding="utf-8")
+    assert "assets/og_card.png" in html
+    assert 'property="og:image"' in html
+    assert 'name="twitter:image"' in html
+    # Prefer the clean OG card over the dense one-pager for social previews.
+    assert "public_exactkv_one_page_summary.png" not in html.split("og:image")[1][:200]
 
 
 def test_hero_and_leaderboard_present():
