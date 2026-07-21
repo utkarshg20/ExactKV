@@ -1,0 +1,238 @@
+{
+  "schema": "exactkv.systems.systems_diagnostic.v1",
+  "generated_at": "2026-07-20T01:25:02.352632+00:00",
+  "claim_boundary": "Diagnostic peak CUDA allocation and per-path wall-clock on the systems_diagnostic panel (7B/8B). NOT serving throughput, TTFT, RPS, or unqualified production VRAM savings. Peak includes model weights + KV + temporaries.",
+  "source_artifacts": [
+    "reports/external_panels/systems_diagnostic/Llama_3_1_8B_raw.json",
+    "reports/external_panels/systems_diagnostic/Mistral_7B_Instruct_v0_3_raw.json"
+  ],
+  "n_cells": 96,
+  "exactkv_failures": 0,
+  "peak_cuda_allocation_gib": {
+    "llama": {
+      "int4_sim": {
+        "exactkv": {
+          "mean_gib": 16.716,
+          "median_gib": 16.716,
+          "n": 16
+        },
+        "full": {
+          "mean_gib": 16.099,
+          "median_gib": 16.099,
+          "n": 16
+        },
+        "lossy": {
+          "mean_gib": 16.673,
+          "median_gib": 16.674,
+          "n": 16
+        }
+      },
+      "int8": {
+        "exactkv": {
+          "mean_gib": 16.715,
+          "median_gib": 16.716,
+          "n": 16
+        },
+        "full": {
+          "mean_gib": 16.099,
+          "median_gib": 16.099,
+          "n": 16
+        },
+        "lossy": {
+          "mean_gib": 16.673,
+          "median_gib": 16.674,
+          "n": 16
+        }
+      },
+      "noop": {
+        "exactkv": {
+          "mean_gib": 16.494,
+          "median_gib": 16.493,
+          "n": 16
+        },
+        "full": {
+          "mean_gib": 16.099,
+          "median_gib": 16.099,
+          "n": 16
+        },
+        "lossy": {
+          "mean_gib": 16.494,
+          "median_gib": 16.493,
+          "n": 16
+        }
+      }
+    },
+    "mistral": {
+      "int4_sim": {
+        "exactkv": {
+          "mean_gib": 15.261,
+          "median_gib": 15.264,
+          "n": 16
+        },
+        "full": {
+          "mean_gib": 14.227,
+          "median_gib": 14.227,
+          "n": 16
+        },
+        "lossy": {
+          "mean_gib": 15.216,
+          "median_gib": 15.216,
+          "n": 16
+        }
+      },
+      "int8": {
+        "exactkv": {
+          "mean_gib": 15.261,
+          "median_gib": 15.264,
+          "n": 16
+        },
+        "full": {
+          "mean_gib": 14.227,
+          "median_gib": 14.227,
+          "n": 16
+        },
+        "lossy": {
+          "mean_gib": 15.216,
+          "median_gib": 15.216,
+          "n": 16
+        }
+      },
+      "noop": {
+        "exactkv": {
+          "mean_gib": 14.683,
+          "median_gib": 14.682,
+          "n": 16
+        },
+        "full": {
+          "mean_gib": 14.227,
+          "median_gib": 14.227,
+          "n": 16
+        },
+        "lossy": {
+          "mean_gib": 14.672,
+          "median_gib": 14.671,
+          "n": 16
+        }
+      }
+    }
+  },
+  "path_wall_clock_ms": {
+    "llama": {
+      "int4_sim": {
+        "exactkv": {
+          "mean_ms": 8571.778,
+          "median_ms": 8524.376,
+          "n": 16
+        },
+        "full": {
+          "mean_ms": 3660.013,
+          "median_ms": 3628.197,
+          "n": 16
+        },
+        "lossy": {
+          "mean_ms": 3674.747,
+          "median_ms": 3643.503,
+          "n": 16
+        }
+      },
+      "int8": {
+        "exactkv": {
+          "mean_ms": 8688.918,
+          "median_ms": 8601.042,
+          "n": 16
+        },
+        "full": {
+          "mean_ms": 3691.411,
+          "median_ms": 3679.063,
+          "n": 16
+        },
+        "lossy": {
+          "mean_ms": 3712.755,
+          "median_ms": 3684.172,
+          "n": 16
+        }
+      },
+      "noop": {
+        "exactkv": {
+          "mean_ms": 8472.187,
+          "median_ms": 8513.369,
+          "n": 16
+        },
+        "full": {
+          "mean_ms": 3689.776,
+          "median_ms": 3641.087,
+          "n": 16
+        },
+        "lossy": {
+          "mean_ms": 3746.195,
+          "median_ms": 3677.108,
+          "n": 16
+        }
+      }
+    },
+    "mistral": {
+      "int4_sim": {
+        "exactkv": {
+          "mean_ms": 8345.277,
+          "median_ms": 8223.084,
+          "n": 16
+        },
+        "full": {
+          "mean_ms": 3534.743,
+          "median_ms": 3543.613,
+          "n": 16
+        },
+        "lossy": {
+          "mean_ms": 3140.91,
+          "median_ms": 2804.553,
+          "n": 16
+        }
+      },
+      "int8": {
+        "exactkv": {
+          "mean_ms": 8388.943,
+          "median_ms": 8335.325,
+          "n": 16
+        },
+        "full": {
+          "mean_ms": 3571.187,
+          "median_ms": 3536.273,
+          "n": 16
+        },
+        "lossy": {
+          "mean_ms": 3584.654,
+          "median_ms": 3531.107,
+          "n": 16
+        }
+      },
+      "noop": {
+        "exactkv": {
+          "mean_ms": 8275.323,
+          "median_ms": 8144.177,
+          "n": 16
+        },
+        "full": {
+          "mean_ms": 3565.501,
+          "median_ms": 3533.368,
+          "n": 16
+        },
+        "lossy": {
+          "mean_ms": 3620.175,
+          "median_ms": 3527.581,
+          "n": 16
+        }
+      }
+    }
+  },
+  "notes": [
+    "Peak is process-level torch.cuda.max_memory_allocated (weights+KV+temps).",
+    "ExactKV arm often peaks higher than lossy-only because full+compressed state coexist.",
+    "Wall-clock is harness path timing, not serving TTFT/RPS."
+  ],
+  "not_measured": [
+    "Serving requests-per-second",
+    "TTFT / continuous batching",
+    "Isolated KV-only VRAM (without model weights)",
+    "Packed INT4 production VRAM savings"
+  ]
+}

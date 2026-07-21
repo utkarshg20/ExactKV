@@ -1,0 +1,128 @@
+{
+  "schema": "exactkv.serving_microbench.v1",
+  "panel_id": "serving_microbench_panel",
+  "claim_boundary": "HF multi-request serving microbench (ExactKV harness): TTFT-like latency, completed-requests/sec under serial load, and peak CUDA allocation for full / lossy / ExactKV. NOT vLLM integration, NOT continuous batching, NOT production serving, NOT unqualified VRAM savings. Peak includes weights + KV + temporaries.",
+  "generated_at": "2026-07-18T17:46:44.026753+00:00",
+  "design": {
+    "models": [
+      "mistralai/Mistral-7B-Instruct-v0.3"
+    ],
+    "compressors": [
+      "int8",
+      "int4_sim"
+    ],
+    "context_buckets": [
+      2048
+    ],
+    "max_new_tokens": [
+      64
+    ],
+    "n_requests": [
+      16
+    ],
+    "draft_len": 4,
+    "load_mode": "serial_requests",
+    "expected_cells": 2,
+    "smoke": false,
+    "deterministic_mode": false
+  },
+  "hardware": {
+    "cuda_available": true,
+    "hostname": "883ef432726f",
+    "gpu_device_name": "NVIDIA RTX PRO 4000 Blackwell",
+    "torch_version": "2.8.0+cu128",
+    "cuda_version": "12.8"
+  },
+  "cells": [
+    {
+      "prompt_id": "srv_lb_qasper_001_ctx2048",
+      "base_prompt_id": "srv_lb_qasper_001",
+      "category": "longbench_reading",
+      "context_bucket": 2048,
+      "actual_context_tokens": 2048,
+      "compressor_name": "int8",
+      "max_new_tokens": 64,
+      "draft_len": 4,
+      "n_requests": 16,
+      "load_shape": "serial_16",
+      "claim_boundary": "HF multi-request serving microbench (ExactKV harness): TTFT-like latency, completed-requests/sec under serial load, and peak CUDA allocation for full / lossy / ExactKV. NOT vLLM integration, NOT continuous batching, NOT production serving, NOT unqualified VRAM savings. Peak includes weights + KV + temporaries.",
+      "full": {
+        "n_requests": 16,
+        "load_wall_s": 45.2721,
+        "completed_requests_per_sec": 0.3534,
+        "mean_ttft_like_ms": 426.837,
+        "mean_e2e_ms": 2280.828,
+        "gpu_peak_allocated_bytes": 15568905728,
+        "peak_delta_vs_full_bytes": 0
+      },
+      "lossy": {
+        "n_requests": 16,
+        "load_wall_s": 44.9878,
+        "completed_requests_per_sec": 0.3557,
+        "mean_ttft_like_ms": 401.43,
+        "mean_e2e_ms": 2283.811,
+        "gpu_peak_allocated_bytes": 16127330816,
+        "peak_delta_vs_full_bytes": 558425088
+      },
+      "exactkv": {
+        "n_requests": 16,
+        "load_wall_s": 87.3506,
+        "completed_requests_per_sec": 0.1832,
+        "mean_ttft_like_ms": 717.29,
+        "mean_e2e_ms": 5336.264,
+        "gpu_peak_allocated_bytes": 15754032128,
+        "peak_delta_vs_full_bytes": 185126400
+      },
+      "exact_match_exactkv_vs_full": true,
+      "lossy_diverged": false,
+      "exactkv_failure": false,
+      "model_name": "mistralai/Mistral-7B-Instruct-v0.3"
+    },
+    {
+      "prompt_id": "srv_lb_qasper_001_ctx2048",
+      "base_prompt_id": "srv_lb_qasper_001",
+      "category": "longbench_reading",
+      "context_bucket": 2048,
+      "actual_context_tokens": 2048,
+      "compressor_name": "int4_sim",
+      "max_new_tokens": 64,
+      "draft_len": 4,
+      "n_requests": 16,
+      "load_shape": "serial_16",
+      "claim_boundary": "HF multi-request serving microbench (ExactKV harness): TTFT-like latency, completed-requests/sec under serial load, and peak CUDA allocation for full / lossy / ExactKV. NOT vLLM integration, NOT continuous batching, NOT production serving, NOT unqualified VRAM savings. Peak includes weights + KV + temporaries.",
+      "full": {
+        "n_requests": 16,
+        "load_wall_s": 44.7036,
+        "completed_requests_per_sec": 0.3579,
+        "mean_ttft_like_ms": 393.727,
+        "mean_e2e_ms": 2279.112,
+        "gpu_peak_allocated_bytes": 15568119296,
+        "peak_delta_vs_full_bytes": 0
+      },
+      "lossy": {
+        "n_requests": 16,
+        "load_wall_s": 38.1862,
+        "completed_requests_per_sec": 0.419,
+        "mean_ttft_like_ms": 399.692,
+        "mean_e2e_ms": 1854.35,
+        "gpu_peak_allocated_bytes": 16127723520,
+        "peak_delta_vs_full_bytes": 559604224
+      },
+      "exactkv": {
+        "n_requests": 16,
+        "load_wall_s": 87.9636,
+        "completed_requests_per_sec": 0.1819,
+        "mean_ttft_like_ms": 709.771,
+        "mean_e2e_ms": 5372.589,
+        "gpu_peak_allocated_bytes": 15755241984,
+        "peak_delta_vs_full_bytes": 187122688
+      },
+      "exact_match_exactkv_vs_full": true,
+      "lossy_diverged": true,
+      "exactkv_failure": false,
+      "model_name": "mistralai/Mistral-7B-Instruct-v0.3"
+    }
+  ],
+  "exactkv_failures": 0,
+  "n_cells": 2
+}

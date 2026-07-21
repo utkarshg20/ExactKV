@@ -2044,15 +2044,105 @@ records, per arm (full / lossy / ExactKV):
   (includes **model weights + KV + temporaries**)
 - `wall_clock_ms` — harness path timing for that arm alone
 
-**Claim boundary:** diagnostic peak CUDA allocation and harness wall-clock — **not**
-serving RPS, TTFT, continuous batching, or unqualified production VRAM savings.
-ExactKV is expected to peak **higher** than lossy-only (full + compressed state coexist)
-and to run **slower** than pure lossy (verify cost). That is the crash-test cost, not a
-serving win.
+**Hardware:** NVIDIA RTX PRO 4000 Blackwell, torch 2.8.0+cu128, float16.
+**Result:** `exactkv_failures=0` across all 96 cells.
+
+**Claim boundary:** diagnostic peak CUDA allocation and harness wall-clock —
+**not** serving RPS/TTFT/continuous batching, and **not** a production VRAM claim.
+ExactKV peaks **higher** than lossy-only (full + compressed state coexist) and runs
+**~2.3× slower** than full/lossy on this harness (verify cost). That is the crash-test
+cost, not a serving win.
+
+#### Peak CUDA allocation (GiB, mean over 16 cells/arm)
+
+| Model | Compressor | full | lossy | ExactKV |
+|-------|------------|-----:|------:|--------:|
+| Llama-3.1-8B | noop | 16.10 | 16.49 | 16.49 |
+| Llama-3.1-8B | int8 | 16.10 | 16.67 | 16.72 |
+| Llama-3.1-8B | int4_sim | 16.10 | 16.67 | 16.72 |
+| Mistral-7B | noop | 14.23 | 14.67 | 14.68 |
+| Mistral-7B | int8 | 14.23 | 15.22 | 15.26 |
+| Mistral-7B | int4_sim | 14.23 | 15.22 | 15.26 |
+
+#### Path wall-clock (ms, mean)
+
+| Model | Compressor | full | lossy | ExactKV |
+|-------|------------|-----:|------:|--------:|
+| Llama-3.1-8B | noop | 3690 | 3746 | 8472 |
+| Llama-3.1-8B | int8 | 3691 | 3713 | 8689 |
+| Llama-3.1-8B | int4_sim | 3660 | 3675 | 8572 |
+| Mistral-7B | noop | 3566 | 3620 | 8275 |
+| Mistral-7B | int8 | 3571 | 3585 | 8389 |
+| Mistral-7B | int4_sim | 3535 | 3141 | 8345 |
 
 Runner: `scripts/run_systems_diagnostic_panel.sh` · pack:
-`reports/systems/systems_diagnostic.json` (populated after the GPU run).
+`reports/systems/systems_diagnostic.json`.
 Methodology: `docs/GPU_MEMORY_METHODOLOGY.md` · claim row in `docs/CLAIM_BOUNDARIES.md`.
+
+### 9.3 Serving microbench (TTFT-like + serial requests/sec)
+
+Practical follow-up: *how many requests / how fast / how much memory under load?*
+A **76-cell `serving_microbench` panel** (72 strong + 4 serial_16 extras) runs the
+same three arms under a **serial** multi-request load on the ExactKV HF harness
+(one generate after another — not continuous batching).
+
+**Design (strong):** both models × `noop`/`int8`/`int4_sim` × ctx `{2048,4096}` ×
+mnt `{64,128}` × `n_requests` `{1,4,8}` = 36 cells/model.
+**Hardware:** NVIDIA RTX PRO 4000 Blackwell, torch 2.8.0+cu128, float16.
+**Result:** `exactkv_failures=0` across all 76 cells.
+
+Per cell it records:
+
+- `ttft_like_ms` — prefill→first-token for full/lossy; first verify-commit round for ExactKV
+- `completed_requests_per_sec` — finished serial requests / wall time
+- `gpu_peak_allocated_bytes` and `peak_delta_vs_full_bytes` (may be **positive**)
+
+**Claim boundary:** HF multi-request diagnostic harness —
+**not** vLLM integration, **not** continuous batching, **not** production serving,
+and **not** unqualified VRAM savings. See `docs/SERVING_PATH_C.md`.
+
+Headline (means over strong-panel loads `serial_1`/`4`/`8`): ExactKV completes
+**~1.9× fewer** requests/sec than full (~0.13 vs ~0.25) and shows **~1.5× higher**
+TTFT-like latency (~940 ms vs ~630 ms) — the verify cost under sustained serial load.
+
+#### Completed requests/sec (mean over serial_1/4/8)
+
+| Model | Compressor | full | lossy | ExactKV |
+|-------|------------|-----:|------:|--------:|
+| Llama-3.1-8B | noop | 0.243 | 0.247 | 0.132 |
+| Llama-3.1-8B | int8 | 0.247 | 0.245 | 0.129 |
+| Llama-3.1-8B | int4_sim | 0.247 | 0.246 | 0.129 |
+| Mistral-7B | noop | 0.248 | 0.253 | 0.136 |
+| Mistral-7B | int8 | 0.253 | 0.250 | 0.134 |
+| Mistral-7B | int4_sim | 0.253 | 0.371 | 0.132 |
+
+#### TTFT-like (ms, mean over serial_1/4/8)
+
+| Model | Compressor | full | lossy | ExactKV |
+|-------|------------|-----:|------:|--------:|
+| Llama-3.1-8B | noop | 646 | 611 | 939 |
+| Llama-3.1-8B | int8 | 610 | 623 | 943 |
+| Llama-3.1-8B | int4_sim | 611 | 617 | 943 |
+| Mistral-7B | noop | 666 | 626 | 946 |
+| Mistral-7B | int8 | 625 | 637 | 947 |
+| Mistral-7B | int4_sim | 625 | 631 | 947 |
+
+#### Peak CUDA (GiB, mean) and ΔExactKV vs full
+
+| Model | Compressor | full | lossy | ExactKV | ΔExactKV |
+|-------|------------|-----:|------:|--------:|---------:|
+| Llama-3.1-8B | noop | 16.67 | 16.80 | 16.44 | −0.24 |
+| Llama-3.1-8B | int8 | 16.67 | 17.16 | 16.65 | −0.03 |
+| Llama-3.1-8B | int4_sim | 16.67 | 17.16 | 16.65 | −0.03 |
+| Mistral-7B | noop | 14.86 | 15.04 | 14.68 | −0.18 |
+| Mistral-7B | int8 | 14.86 | 15.77 | 15.25 | +0.39 |
+| Mistral-7B | int4_sim | 14.86 | 15.77 | 15.25 | +0.39 |
+
+Extra `serial_16` cells (int8/int4_sim, ctx 2048, mnt 64) keep the same ~1.9×
+ExactKV vs full gap (e.g. Llama int8: 0.176 vs 0.344 completed-req/s).
+
+Runner: `scripts/run_serving_microbench_panel.sh` · pack:
+`reports/systems/serving_microbench.json`.
 
 ---
 
@@ -2349,9 +2439,12 @@ Claim boundary: `kivi_offline` / `kivi_offline_r32` use real KIVI quantizer math
     supplemented by a matched task×context×`max_new` panel (§6.12.4): `int4_sim`
     Mistral **0%/23%/97%** and Llama **17%/26%/91%** on MBPP/BFCL/LongBench. Prompts
     still differ by family.
-17. **Systems diagnostic is not serving.** Peak CUDA allocation and path wall-clock on the
-    96-cell `systems_diagnostic` panel (§9.2) are harness diagnostics — not RPS, TTFT,
-    or unqualified production VRAM savings. ExactKV often peaks higher than lossy-only.
+17. **Systems / serving diagnostics are not production serving.** Peak CUDA and path
+    wall-clock on the 96-cell `systems_diagnostic` panel (§9.2), and TTFT-like /
+    completed-requests/sec on the 76-cell `serving_microbench` panel (§9.3), are HF
+    harness diagnostics — **not** vLLM RPS, continuous batching, or unqualified VRAM
+    savings. ExactKV is ~1.9× lower completed-req/s and ~1.5× higher TTFT-like under
+    serial load; peaks may sit above full.
 
 ---
 
@@ -2581,6 +2674,7 @@ are in **Appendix A**. Version labels in **Appendix D**.
 | Length-opportunity pack | `reports/public_release/length_opportunity.{json,md}` | — |
 | Matched factorial (both models) | `reports/external_panels/matched_factorial/` | 1,404 |
 | Systems diagnostic (both models) | `reports/external_panels/systems_diagnostic/` · `reports/systems/systems_diagnostic.json` | 96 |
+| Serving microbench (both models) | `reports/external_panels/serving_microbench/` · `reports/systems/serving_microbench.json` | 76 |
 | Phase-F kernel microbenchmark | `reports/phaseF_kernel_benchmark.json` |, |
 | Logit autopsy summary | `reports/external_panels/logit_autopsy_summary.json` | 1,103 |
 | Historical Phase-A demo | `reports/phaseA_benchmark.json` |, |
@@ -2599,6 +2693,9 @@ are in **Appendix A**. Version labels in **Appendix D**.
 | `scripts/run_phase_a_scale_benchmark.py` | Headline 1,500-cell panel |
 | `scripts/setup_faithful_compressor_env.sh` | Faithful adapter deps (KIVI, kvpress) |
 | `scripts/run_faithful_compressor_panel.sh` | Faithful wave-1 panel runner |
+| `scripts/run_systems_diagnostic_panel.sh` | Peak CUDA + path wall-clock diagnostic (§9.2) |
+| `scripts/run_serving_microbench_panel.sh` | HF serial-load TTFT-like / req/s / peak CUDA (§9.3) |
+| `scripts/build_serving_microbench_pack.py` | Aggregate serving microbench pack |
 | `scripts/rebuild_wave3_panels.py` | Dedupe/rebuild wave-3 faithful JSONs |
 | `scripts/integrate_faithful_panel_results.py` | Merge faithful panel summaries |
 

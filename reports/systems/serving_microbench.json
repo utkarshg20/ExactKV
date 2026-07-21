@@ -1,0 +1,1329 @@
+{
+  "schema": "exactkv.systems.serving_microbench.v1",
+  "generated_at": "2026-07-20T01:24:58.970253+00:00",
+  "claim_boundary": "HF multi-request serving microbench (ExactKV harness): TTFT-like latency, completed-requests/sec under serial load, and peak CUDA allocation for full / lossy / ExactKV. NOT vLLM integration, NOT continuous batching, NOT production serving, NOT unqualified VRAM savings. Peak includes weights + KV + temporaries.",
+  "source_artifacts": [
+    "reports/external_panels/serving_microbench/Llama_3_1_8B_extra16_raw.json",
+    "reports/external_panels/serving_microbench/Llama_3_1_8B_raw.json",
+    "reports/external_panels/serving_microbench/Mistral_7B_Instruct_v0_3_extra16_raw.json",
+    "reports/external_panels/serving_microbench/Mistral_7B_Instruct_v0_3_raw.json"
+  ],
+  "n_cells": 76,
+  "exactkv_failures": 0,
+  "peak_cuda_allocation_gib": {
+    "llama": {
+      "int4_sim": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 16.648,
+            "n": 4
+          },
+          "full": {
+            "mean": 16.424,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 17.155,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 16.647,
+            "n": 4
+          },
+          "full": {
+            "mean": 16.799,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 17.155,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 16.647,
+            "n": 4
+          },
+          "full": {
+            "mean": 16.799,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 17.155,
+            "n": 4
+          }
+        },
+        "serial_16": {
+          "exactkv": {
+            "mean": 16.089,
+            "n": 1
+          },
+          "full": {
+            "mean": 16.196,
+            "n": 1
+          },
+          "lossy": {
+            "mean": 16.43,
+            "n": 1
+          }
+        }
+      },
+      "int8": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 16.648,
+            "n": 4
+          },
+          "full": {
+            "mean": 16.424,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 17.155,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 16.646,
+            "n": 4
+          },
+          "full": {
+            "mean": 16.799,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 17.155,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 16.647,
+            "n": 4
+          },
+          "full": {
+            "mean": 16.799,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 17.155,
+            "n": 4
+          }
+        },
+        "serial_16": {
+          "exactkv": {
+            "mean": 16.09,
+            "n": 1
+          },
+          "full": {
+            "mean": 16.196,
+            "n": 1
+          },
+          "lossy": {
+            "mean": 16.431,
+            "n": 1
+          }
+        }
+      },
+      "noop": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 16.436,
+            "n": 4
+          },
+          "full": {
+            "mean": 16.424,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 16.798,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 16.437,
+            "n": 4
+          },
+          "full": {
+            "mean": 16.8,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 16.8,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 16.436,
+            "n": 4
+          },
+          "full": {
+            "mean": 16.8,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 16.799,
+            "n": 4
+          }
+        }
+      }
+    },
+    "mistral": {
+      "int4_sim": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 15.254,
+            "n": 4
+          },
+          "full": {
+            "mean": 14.601,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 15.773,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 15.255,
+            "n": 4
+          },
+          "full": {
+            "mean": 14.99,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 15.774,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 15.254,
+            "n": 4
+          },
+          "full": {
+            "mean": 14.992,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 15.774,
+            "n": 4
+          }
+        },
+        "serial_16": {
+          "exactkv": {
+            "mean": 14.673,
+            "n": 1
+          },
+          "full": {
+            "mean": 14.499,
+            "n": 1
+          },
+          "lossy": {
+            "mean": 15.02,
+            "n": 1
+          }
+        }
+      },
+      "int8": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 15.254,
+            "n": 4
+          },
+          "full": {
+            "mean": 14.601,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 15.773,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 15.254,
+            "n": 4
+          },
+          "full": {
+            "mean": 14.99,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 15.774,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 15.254,
+            "n": 4
+          },
+          "full": {
+            "mean": 14.992,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 15.774,
+            "n": 4
+          }
+        },
+        "serial_16": {
+          "exactkv": {
+            "mean": 14.672,
+            "n": 1
+          },
+          "full": {
+            "mean": 14.5,
+            "n": 1
+          },
+          "lossy": {
+            "mean": 15.02,
+            "n": 1
+          }
+        }
+      },
+      "noop": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 14.677,
+            "n": 4
+          },
+          "full": {
+            "mean": 14.601,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 15.04,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 14.678,
+            "n": 4
+          },
+          "full": {
+            "mean": 14.99,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 15.041,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 14.677,
+            "n": 4
+          },
+          "full": {
+            "mean": 14.991,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 15.041,
+            "n": 4
+          }
+        }
+      }
+    }
+  },
+  "ttft_like_ms": {
+    "llama": {
+      "int4_sim": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 942.812,
+            "n": 4
+          },
+          "full": {
+            "mean": 610.158,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 617.037,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 942.778,
+            "n": 4
+          },
+          "full": {
+            "mean": 610.778,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 616.98,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 942.543,
+            "n": 4
+          },
+          "full": {
+            "mean": 610.711,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 616.824,
+            "n": 4
+          }
+        },
+        "serial_16": {
+          "exactkv": {
+            "mean": 719.608,
+            "n": 1
+          },
+          "full": {
+            "mean": 392.607,
+            "n": 1
+          },
+          "lossy": {
+            "mean": 398.318,
+            "n": 1
+          }
+        }
+      },
+      "int8": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 942.802,
+            "n": 4
+          },
+          "full": {
+            "mean": 609.739,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 634.558,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 942.367,
+            "n": 4
+          },
+          "full": {
+            "mean": 610.449,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 616.538,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 942.466,
+            "n": 4
+          },
+          "full": {
+            "mean": 610.5,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 616.682,
+            "n": 4
+          }
+        },
+        "serial_16": {
+          "exactkv": {
+            "mean": 730.4,
+            "n": 1
+          },
+          "full": {
+            "mean": 421.266,
+            "n": 1
+          },
+          "lossy": {
+            "mean": 401.043,
+            "n": 1
+          }
+        }
+      },
+      "noop": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 959.821,
+            "n": 4
+          },
+          "full": {
+            "mean": 716.202,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 611.005,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 928.038,
+            "n": 4
+          },
+          "full": {
+            "mean": 611.836,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 611.824,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 929.171,
+            "n": 4
+          },
+          "full": {
+            "mean": 610.12,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 610.233,
+            "n": 4
+          }
+        }
+      }
+    },
+    "mistral": {
+      "int4_sim": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 946.966,
+            "n": 4
+          },
+          "full": {
+            "mean": 624.711,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 631.643,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 946.948,
+            "n": 4
+          },
+          "full": {
+            "mean": 624.903,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 631.101,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 946.742,
+            "n": 4
+          },
+          "full": {
+            "mean": 625.029,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 630.799,
+            "n": 4
+          }
+        },
+        "serial_16": {
+          "exactkv": {
+            "mean": 709.771,
+            "n": 1
+          },
+          "full": {
+            "mean": 393.727,
+            "n": 1
+          },
+          "lossy": {
+            "mean": 399.692,
+            "n": 1
+          }
+        }
+      },
+      "int8": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 947.526,
+            "n": 4
+          },
+          "full": {
+            "mean": 624.918,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 648.372,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 947.087,
+            "n": 4
+          },
+          "full": {
+            "mean": 624.805,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 630.918,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 947.193,
+            "n": 4
+          },
+          "full": {
+            "mean": 624.858,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 630.808,
+            "n": 4
+          }
+        },
+        "serial_16": {
+          "exactkv": {
+            "mean": 717.29,
+            "n": 1
+          },
+          "full": {
+            "mean": 426.837,
+            "n": 1
+          },
+          "lossy": {
+            "mean": 401.43,
+            "n": 1
+          }
+        }
+      },
+      "noop": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 980.082,
+            "n": 4
+          },
+          "full": {
+            "mean": 748.326,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 625.466,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 929.15,
+            "n": 4
+          },
+          "full": {
+            "mean": 626.249,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 626.929,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 929.703,
+            "n": 4
+          },
+          "full": {
+            "mean": 624.431,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 624.567,
+            "n": 4
+          }
+        }
+      }
+    }
+  },
+  "completed_requests_per_sec": {
+    "llama": {
+      "int4_sim": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 0.129,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.247,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.246,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 0.129,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.247,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.246,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 0.129,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.247,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.246,
+            "n": 4
+          }
+        },
+        "serial_16": {
+          "exactkv": {
+            "mean": 0.177,
+            "n": 1
+          },
+          "full": {
+            "mean": 0.347,
+            "n": 1
+          },
+          "lossy": {
+            "mean": 0.345,
+            "n": 1
+          }
+        }
+      },
+      "int8": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 0.129,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.247,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.244,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 0.129,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.247,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.246,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 0.129,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.247,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.246,
+            "n": 4
+          }
+        },
+        "serial_16": {
+          "exactkv": {
+            "mean": 0.176,
+            "n": 1
+          },
+          "full": {
+            "mean": 0.344,
+            "n": 1
+          },
+          "lossy": {
+            "mean": 0.346,
+            "n": 1
+          }
+        }
+      },
+      "noop": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 0.131,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.234,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.247,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 0.132,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.247,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.247,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 0.132,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.247,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.247,
+            "n": 4
+          }
+        }
+      }
+    },
+    "mistral": {
+      "int4_sim": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 0.132,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.253,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.371,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 0.132,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.253,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.37,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 0.133,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.253,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.371,
+            "n": 4
+          }
+        },
+        "serial_16": {
+          "exactkv": {
+            "mean": 0.182,
+            "n": 1
+          },
+          "full": {
+            "mean": 0.358,
+            "n": 1
+          },
+          "lossy": {
+            "mean": 0.419,
+            "n": 1
+          }
+        }
+      },
+      "int8": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 0.134,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.253,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.249,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 0.134,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.253,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.251,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 0.134,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.253,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.251,
+            "n": 4
+          }
+        },
+        "serial_16": {
+          "exactkv": {
+            "mean": 0.183,
+            "n": 1
+          },
+          "full": {
+            "mean": 0.353,
+            "n": 1
+          },
+          "lossy": {
+            "mean": 0.356,
+            "n": 1
+          }
+        }
+      },
+      "noop": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 0.135,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.238,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.253,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 0.137,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.253,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.252,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 0.137,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.254,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.253,
+            "n": 4
+          }
+        }
+      }
+    }
+  },
+  "peak_delta_vs_full_gib": {
+    "llama": {
+      "int4_sim": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 0.225,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.732,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": -0.152,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.356,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": -0.151,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.356,
+            "n": 4
+          }
+        },
+        "serial_16": {
+          "exactkv": {
+            "mean": -0.107,
+            "n": 1
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 1
+          },
+          "lossy": {
+            "mean": 0.234,
+            "n": 1
+          }
+        }
+      },
+      "int8": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 0.225,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.732,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": -0.152,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.356,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": -0.152,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.356,
+            "n": 4
+          }
+        },
+        "serial_16": {
+          "exactkv": {
+            "mean": -0.106,
+            "n": 1
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 1
+          },
+          "lossy": {
+            "mean": 0.235,
+            "n": 1
+          }
+        }
+      },
+      "noop": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 0.013,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.374,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": -0.363,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": -0.001,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": -0.364,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": -0.002,
+            "n": 4
+          }
+        }
+      }
+    },
+    "mistral": {
+      "int4_sim": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 0.653,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 1.172,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 0.264,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.784,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 0.263,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.782,
+            "n": 4
+          }
+        },
+        "serial_16": {
+          "exactkv": {
+            "mean": 0.174,
+            "n": 1
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 1
+          },
+          "lossy": {
+            "mean": 0.521,
+            "n": 1
+          }
+        }
+      },
+      "int8": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 0.652,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 1.172,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": 0.264,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.784,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": 0.263,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.782,
+            "n": 4
+          }
+        },
+        "serial_16": {
+          "exactkv": {
+            "mean": 0.172,
+            "n": 1
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 1
+          },
+          "lossy": {
+            "mean": 0.52,
+            "n": 1
+          }
+        }
+      },
+      "noop": {
+        "serial_1": {
+          "exactkv": {
+            "mean": 0.075,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.439,
+            "n": 4
+          }
+        },
+        "serial_4": {
+          "exactkv": {
+            "mean": -0.312,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.051,
+            "n": 4
+          }
+        },
+        "serial_8": {
+          "exactkv": {
+            "mean": -0.314,
+            "n": 4
+          },
+          "full": {
+            "mean": 0.0,
+            "n": 4
+          },
+          "lossy": {
+            "mean": 0.05,
+            "n": 4
+          }
+        }
+      }
+    }
+  },
+  "notes": [
+    "Serial request load on the ExactKV HF harness (one generate after another).",
+    "TTFT-like: prefill\u2192first-token for full/lossy; first verify-commit round for ExactKV.",
+    "peak_delta_vs_full_gib > 0 means the arm peaked higher than full (common for ExactKV).",
+    "NOT vLLM integration / continuous batching / production serving."
+  ],
+  "not_measured": [
+    "vLLM continuous batching RPS",
+    "OpenAI-compatible HTTP server load",
+    "Isolated KV-only VRAM without weights",
+    "Packed INT4 production memory savings"
+  ]
+}

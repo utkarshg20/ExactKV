@@ -1263,15 +1263,105 @@ Practical memory/latency questions are answered by a separate \textbf{96-cell}
 \texttt{noop}/\texttt{int8}/\texttt{int4\_sim}). Each cell records per-arm
 \texttt{gpu\_peak\_allocated\_bytes} (process-level peak CUDA allocation) and
 \texttt{wall\_clock\_ms} (harness path timing) for full / lossy / ExactKV.
+Hardware: NVIDIA RTX PRO 4000 Blackwell, torch 2.8.0+cu128, float16;
+\texttt{exactkv\_failures=0} on all 96 cells.
 
 \begin{sloppypar}
 \noindent\textbf{Claim boundary:} diagnostic peak CUDA and harness wall-clock ---
 \emph{not} serving RPS, TTFT, or unqualified production VRAM savings. Peak includes
-model weights + KV + temporaries. ExactKV often peaks higher than lossy-only because
-full and compressed state coexist. Runner:
+model weights + KV + temporaries. ExactKV peaks higher than lossy-only (full +
+compressed state coexist) and is $\sim$2.3$\times$ slower than full/lossy on this
+harness (verify cost). Runner:
 \texttt{scripts/run\_systems\_diagnostic\_panel.sh}; pack:
 \texttt{reports/systems/systems\_diagnostic.json}.
 \end{sloppypar}
+
+\begin{table}[htbp]
+\centering\footnotesize
+\caption{Systems diagnostic peak CUDA allocation (GiB, mean; $n{=}16$ cells/arm).}
+\label{tab:systems-peak-cuda}
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+Model & Comp. & full & lossy & ExactKV \\ \midrule
+Llama-3.1-8B & noop & 16.10 & 16.49 & 16.49 \\
+Llama-3.1-8B & int8 & 16.10 & 16.67 & 16.72 \\
+Llama-3.1-8B & int4\_sim & 16.10 & 16.67 & 16.72 \\
+Mistral-7B & noop & 14.23 & 14.67 & 14.68 \\
+Mistral-7B & int8 & 14.23 & 15.22 & 15.26 \\
+Mistral-7B & int4\_sim & 14.23 & 15.22 & 15.26 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering\footnotesize
+\caption{Systems diagnostic path wall-clock (ms, mean; harness timing, not serving TTFT/RPS).}
+\label{tab:systems-wall-clock}
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+Model & Comp. & full & lossy & ExactKV \\ \midrule
+Llama-3.1-8B & noop & 3690 & 3746 & 8472 \\
+Llama-3.1-8B & int8 & 3691 & 3713 & 8689 \\
+Llama-3.1-8B & int4\_sim & 3660 & 3675 & 8572 \\
+Mistral-7B & noop & 3566 & 3620 & 8275 \\
+Mistral-7B & int8 & 3571 & 3585 & 8389 \\
+Mistral-7B & int4\_sim & 3535 & 3141 & 8345 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Serving microbench (TTFT-like + serial requests/sec)}
+A follow-up \textbf{76-cell} \texttt{serving\_microbench} panel (72 strong + 4
+\texttt{serial\_16} extras) records TTFT-like latency, completed-requests/sec under
+\textbf{serial} multi-request load, and peak CUDA / $\Delta$ vs full for full / lossy /
+ExactKV on the same HF harness (not continuous batching, not vLLM).
+Hardware: NVIDIA RTX PRO 4000 Blackwell; \texttt{exactkv\_failures=0} on all 76 cells.
+Strong design: both models $\times$ \{\texttt{noop},\texttt{int8},\texttt{int4\_sim}\}
+$\times$ ctx \{2048,4096\} $\times$ mnt \{64,128\} $\times$ $n_{\mathrm{req}}$ \{1,4,8\}.
+
+\begin{sloppypar}
+\noindent\textbf{Claim boundary:} HF multi-request diagnostic --- \emph{not} vLLM
+integration, continuous batching, production serving, or unqualified VRAM savings.
+Across strong-panel loads, ExactKV completes $\sim$1.9$\times$ fewer requests/sec than
+full ($\sim$0.13 vs $\sim$0.25) and shows $\sim$1.5$\times$ higher TTFT-like latency
+($\sim$940\,ms vs $\sim$630\,ms). Runner:
+\texttt{scripts/run\_serving\_microbench\_panel.sh}; pack:
+\texttt{reports/systems/serving\_microbench.json}.
+\end{sloppypar}
+
+\begin{table}[htbp]
+\centering\footnotesize
+\caption{Serving microbench completed requests/sec (mean over serial\_1/4/8).}
+\label{tab:serving-rps}
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+Model & Comp. & full & lossy & ExactKV \\ \midrule
+Llama-3.1-8B & noop & 0.243 & 0.247 & 0.132 \\
+Llama-3.1-8B & int8 & 0.247 & 0.245 & 0.129 \\
+Llama-3.1-8B & int4\_sim & 0.247 & 0.246 & 0.129 \\
+Mistral-7B & noop & 0.248 & 0.253 & 0.136 \\
+Mistral-7B & int8 & 0.253 & 0.250 & 0.134 \\
+Mistral-7B & int4\_sim & 0.253 & 0.371 & 0.132 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\centering\footnotesize
+\caption{Serving microbench TTFT-like latency (ms, mean over serial\_1/4/8).}
+\label{tab:serving-ttft}
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+Model & Comp. & full & lossy & ExactKV \\ \midrule
+Llama-3.1-8B & noop & 646 & 611 & 939 \\
+Llama-3.1-8B & int8 & 610 & 623 & 943 \\
+Llama-3.1-8B & int4\_sim & 611 & 617 & 943 \\
+Mistral-7B & noop & 666 & 626 & 946 \\
+Mistral-7B & int8 & 625 & 637 & 947 \\
+Mistral-7B & int4\_sim & 625 & 631 & 947 \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{VeriCache: Closest Prior Art}
 VeriCache~\citep{vericache2026} is closer than a casual skim suggests. Both use
@@ -1402,9 +1492,12 @@ yields \texttt{int4\_sim} Mistral \textbf{0\%/23\%/97\%}, Llama \textbf{17\%/26\
 (Table~\ref{tab:matched-factorial}). The older cross-family confound is addressed for
 budgets; prompts still differ by family.
 
-\noindent\textbf{Systems diagnostic is not serving.} Peak CUDA allocation and path
-wall-clock on the 96-cell \texttt{systems\_diagnostic} panel are harness diagnostics
---- not RPS, TTFT, or unqualified production VRAM savings.
+\noindent\textbf{Systems / serving diagnostics are not production serving.}
+Peak CUDA and path wall-clock (\texttt{systems\_diagnostic}, 96 cells) and
+TTFT-like / completed-requests/sec (\texttt{serving\_microbench}, 76 cells) are HF
+harness diagnostics --- not vLLM RPS, continuous batching, or unqualified VRAM
+savings. ExactKV is $\sim$1.9$\times$ lower completed-req/s and $\sim$1.5$\times$
+higher TTFT-like under serial load.
 \end{sloppypar}
 
 \section{Conclusion}

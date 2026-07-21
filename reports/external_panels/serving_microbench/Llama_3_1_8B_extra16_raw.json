@@ -1,0 +1,128 @@
+{
+  "schema": "exactkv.serving_microbench.v1",
+  "panel_id": "serving_microbench_panel",
+  "claim_boundary": "HF multi-request serving microbench (ExactKV harness): TTFT-like latency, completed-requests/sec under serial load, and peak CUDA allocation for full / lossy / ExactKV. NOT vLLM integration, NOT continuous batching, NOT production serving, NOT unqualified VRAM savings. Peak includes weights + KV + temporaries.",
+  "generated_at": "2026-07-18T17:54:59.423550+00:00",
+  "design": {
+    "models": [
+      "meta-llama/Llama-3.1-8B"
+    ],
+    "compressors": [
+      "int8",
+      "int4_sim"
+    ],
+    "context_buckets": [
+      2048
+    ],
+    "max_new_tokens": [
+      64
+    ],
+    "n_requests": [
+      16
+    ],
+    "draft_len": 4,
+    "load_mode": "serial_requests",
+    "expected_cells": 2,
+    "smoke": false,
+    "deterministic_mode": false
+  },
+  "hardware": {
+    "cuda_available": true,
+    "hostname": "883ef432726f",
+    "gpu_device_name": "NVIDIA RTX PRO 4000 Blackwell",
+    "torch_version": "2.8.0+cu128",
+    "cuda_version": "12.8"
+  },
+  "cells": [
+    {
+      "prompt_id": "srv_lb_qasper_001_ctx2048",
+      "base_prompt_id": "srv_lb_qasper_001",
+      "category": "longbench_reading",
+      "context_bucket": 2048,
+      "actual_context_tokens": 1978,
+      "compressor_name": "int8",
+      "max_new_tokens": 64,
+      "draft_len": 4,
+      "n_requests": 16,
+      "load_shape": "serial_16",
+      "claim_boundary": "HF multi-request serving microbench (ExactKV harness): TTFT-like latency, completed-requests/sec under serial load, and peak CUDA allocation for full / lossy / ExactKV. NOT vLLM integration, NOT continuous batching, NOT production serving, NOT unqualified VRAM savings. Peak includes weights + KV + temporaries.",
+      "full": {
+        "n_requests": 16,
+        "load_wall_s": 46.4912,
+        "completed_requests_per_sec": 0.3442,
+        "mean_ttft_like_ms": 421.266,
+        "mean_e2e_ms": 2362.66,
+        "gpu_peak_allocated_bytes": 17389826048,
+        "peak_delta_vs_full_bytes": 0
+      },
+      "lossy": {
+        "n_requests": 16,
+        "load_wall_s": 46.2069,
+        "completed_requests_per_sec": 0.3463,
+        "mean_ttft_like_ms": 401.043,
+        "mean_e2e_ms": 2364.089,
+        "gpu_peak_allocated_bytes": 17642443264,
+        "peak_delta_vs_full_bytes": 252617216
+      },
+      "exactkv": {
+        "n_requests": 16,
+        "load_wall_s": 90.6707,
+        "completed_requests_per_sec": 0.1765,
+        "mean_ttft_like_ms": 730.4,
+        "mean_e2e_ms": 5544.097,
+        "gpu_peak_allocated_bytes": 17276544512,
+        "peak_delta_vs_full_bytes": -113281536
+      },
+      "exact_match_exactkv_vs_full": true,
+      "lossy_diverged": false,
+      "exactkv_failure": false,
+      "model_name": "meta-llama/Llama-3.1-8B"
+    },
+    {
+      "prompt_id": "srv_lb_qasper_001_ctx2048",
+      "base_prompt_id": "srv_lb_qasper_001",
+      "category": "longbench_reading",
+      "context_bucket": 2048,
+      "actual_context_tokens": 1978,
+      "compressor_name": "int4_sim",
+      "max_new_tokens": 64,
+      "draft_len": 4,
+      "n_requests": 16,
+      "load_shape": "serial_16",
+      "claim_boundary": "HF multi-request serving microbench (ExactKV harness): TTFT-like latency, completed-requests/sec under serial load, and peak CUDA allocation for full / lossy / ExactKV. NOT vLLM integration, NOT continuous batching, NOT production serving, NOT unqualified VRAM savings. Peak includes weights + KV + temporaries.",
+      "full": {
+        "n_requests": 16,
+        "load_wall_s": 46.0893,
+        "completed_requests_per_sec": 0.3472,
+        "mean_ttft_like_ms": 392.607,
+        "mean_e2e_ms": 2363.074,
+        "gpu_peak_allocated_bytes": 17390350336,
+        "peak_delta_vs_full_bytes": 0
+      },
+      "lossy": {
+        "n_requests": 16,
+        "load_wall_s": 46.3389,
+        "completed_requests_per_sec": 0.3453,
+        "mean_ttft_like_ms": 398.318,
+        "mean_e2e_ms": 2373.616,
+        "gpu_peak_allocated_bytes": 17642082816,
+        "peak_delta_vs_full_bytes": 251732480
+      },
+      "exactkv": {
+        "n_requests": 16,
+        "load_wall_s": 90.5228,
+        "completed_requests_per_sec": 0.1768,
+        "mean_ttft_like_ms": 719.608,
+        "mean_e2e_ms": 5535.245,
+        "gpu_peak_allocated_bytes": 17275213312,
+        "peak_delta_vs_full_bytes": -115137024
+      },
+      "exact_match_exactkv_vs_full": true,
+      "lossy_diverged": false,
+      "exactkv_failure": false,
+      "model_name": "meta-llama/Llama-3.1-8B"
+    }
+  ],
+  "exactkv_failures": 0,
+  "n_cells": 2
+}

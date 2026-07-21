@@ -1,7 +1,7 @@
 # Systems diagnostic panel
 
-**Status:** runner shipped; **GPU execution pending a live RunPod** (all previously used
-SSH endpoints were down when this note was written).
+**Status:** complete on NVIDIA RTX PRO 4000 Blackwell (torch 2.8.0+cu128, float16).
+96 cells, `exactkv_failures=0`. Pack: `reports/systems/systems_diagnostic.{json,md}`.
 
 ## Design (96 cells)
 
@@ -19,7 +19,17 @@ SSH endpoints were down when this note was written).
 Diagnostic peak CUDA allocation and harness path wall-clock only.
 **Not** serving RPS, TTFT, or unqualified production VRAM savings.
 
-## Run (RunPod)
+## Headline numbers (mean)
+
+| Model | Comp | Peak GiB full / lossy / ExactKV | Wall ms full / lossy / ExactKV |
+|-------|------|--------------------------------:|-------------------------------:|
+| Llama | int4_sim | 16.10 / 16.67 / 16.72 | 3660 / 3675 / 8572 |
+| Mistral | int4_sim | 14.23 / 15.22 / 15.26 | 3535 / 3141 / 8345 |
+
+ExactKV is ~2.3× slower than full on this harness (verify cost) and peaks slightly
+above lossy-only because full + compressed state coexist.
+
+## Re-run (RunPod)
 
 ```bash
 export HF_TOKEN=hf_...   # Llama gated

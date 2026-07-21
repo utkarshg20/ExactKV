@@ -96,3 +96,11 @@ reports/external_panels/faithful/wave3/*_backup.json
 # All other *.jsonl are ignored (e.g. benchmark output reports).
 *.jsonl
 !benchmarks/prompts/*.jsonl
+
+# RunPod pull safety copies (ephemeral; keep live reports/)
+reports/remote_backups/
+reports/external_panels/**/*.bak.*.json
+launch/pod_ssh.env
+
+# Ephemeral panel runner status files
+reports/external_panels/**/*.status.txt

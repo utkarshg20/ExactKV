@@ -810,6 +810,7 @@ its high forehead and its straight nose, they were positively grotes</pre>
             <tr class="inventory-total-row"><td><strong>Headline total</strong></td><td class="num"><strong>8,132</strong></td><td colspan="2">6,564 pre-v30 + 784 + 784 v30 batches</td></tr>
             <tr><td>Matched factorial (follow-up)</td><td class="num">1,404</td><td>Both</td><td>Shared 2K/4K/8K × mnt 32/64/128; not in 8,132 total</td></tr>
             <tr><td>Systems diagnostic (follow-up)</td><td class="num">96</td><td>Both</td><td>Peak CUDA + path wall-clock; not serving RPS/VRAM claim</td></tr>
+            <tr><td>Serving microbench (follow-up)</td><td class="num">76</td><td>Both</td><td>TTFT-like + serial req/s + peak CUDA; HF harness, not vLLM</td></tr>
           </tbody>
         </table>
       </div>
@@ -818,17 +819,97 @@ its high forehead and its straight nose, they were positively grotes</pre>
     <h2 id="systems-diagnostic">15b. Practical systems (diagnostic)</h2>
     <p>
       Friends often ask about memory and latency — the usual reasons to compress KV.
-      ExactKV’s headline is still <strong>drift</strong>. Separately, a small
-      <code>systems_diagnostic</code> panel (96 cells, both models) records
-      <strong>peak CUDA allocation</strong> and <strong>per-path wall-clock</strong>
-      for full / lossy / ExactKV arms.
+      ExactKV’s headline is still <strong>drift</strong>. Separately, a
+      <code>systems_diagnostic</code> panel (96 cells, both models, RTX PRO 4000 Blackwell)
+      records <strong>peak CUDA allocation</strong> and <strong>per-path wall-clock</strong>
+      for full / lossy / ExactKV arms. <code>exactkv_failures=0</code>.
     </p>
     <p class="inventory-note">
       Diagnostic only: peak includes model weights + KV + temporaries.
       <strong>Not</strong> serving RPS, TTFT, or unqualified production VRAM savings.
-      ExactKV is expected to be slower than pure lossy (verify cost). Artifacts:
-      <code>reports/systems/systems_diagnostic.json</code> (populated after the GPU run).
+      ExactKV peaks slightly above lossy-only (dual KV) and is ~2.3× slower than
+      full/lossy on this harness (verify cost). Artifact:
+      <code>reports/systems/systems_diagnostic.json</code>.
     </p>
+    <div class="article-table-wrap article-table-wrap--spacious">
+      <table class="article-table">
+        <caption>Peak CUDA allocation (GiB, mean)</caption>
+        <thead>
+          <tr><th>Model</th><th>Comp.</th><th class="num">full</th><th class="num">lossy</th><th class="num">ExactKV</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Llama-3.1-8B</td><td>noop</td><td class="num">16.10</td><td class="num">16.49</td><td class="num">16.49</td></tr>
+          <tr><td>Llama-3.1-8B</td><td>int8</td><td class="num">16.10</td><td class="num">16.67</td><td class="num">16.72</td></tr>
+          <tr><td>Llama-3.1-8B</td><td>int4_sim</td><td class="num">16.10</td><td class="num">16.67</td><td class="num">16.72</td></tr>
+          <tr><td>Mistral-7B</td><td>noop</td><td class="num">14.23</td><td class="num">14.67</td><td class="num">14.68</td></tr>
+          <tr><td>Mistral-7B</td><td>int8</td><td class="num">14.23</td><td class="num">15.22</td><td class="num">15.26</td></tr>
+          <tr><td>Mistral-7B</td><td>int4_sim</td><td class="num">14.23</td><td class="num">15.22</td><td class="num">15.26</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="article-table-wrap article-table-wrap--spacious">
+      <table class="article-table">
+        <caption>Path wall-clock (ms, mean; harness timing)</caption>
+        <thead>
+          <tr><th>Model</th><th>Comp.</th><th class="num">full</th><th class="num">lossy</th><th class="num">ExactKV</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Llama-3.1-8B</td><td>noop</td><td class="num">3690</td><td class="num">3746</td><td class="num">8472</td></tr>
+          <tr><td>Llama-3.1-8B</td><td>int8</td><td class="num">3691</td><td class="num">3713</td><td class="num">8689</td></tr>
+          <tr><td>Llama-3.1-8B</td><td>int4_sim</td><td class="num">3660</td><td class="num">3675</td><td class="num">8572</td></tr>
+          <tr><td>Mistral-7B</td><td>noop</td><td class="num">3566</td><td class="num">3620</td><td class="num">8275</td></tr>
+          <tr><td>Mistral-7B</td><td>int8</td><td class="num">3571</td><td class="num">3585</td><td class="num">8389</td></tr>
+          <tr><td>Mistral-7B</td><td>int4_sim</td><td class="num">3535</td><td class="num">3141</td><td class="num">8345</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="serving-microbench">15c. Serving microbench (HF serial load)</h2>
+    <p>
+      Same three arms under a <strong>serial</strong> multi-request load on the ExactKV HF
+      harness (76 cells: 72 strong + 4 <code>serial_16</code> extras; RTX PRO 4000 Blackwell).
+      Reports TTFT-like latency, completed-requests/sec, and peak CUDA / Δ vs full.
+      <code>exactkv_failures=0</code>.
+    </p>
+    <p class="inventory-note">
+      <strong>Not</strong> vLLM, continuous batching, or production serving.
+      Across strong-panel loads, ExactKV completes ~1.9× fewer requests/sec than full
+      (~0.13 vs ~0.25) and shows ~1.5× higher TTFT-like latency (~940&nbsp;ms vs ~630&nbsp;ms).
+      Artifact: <code>reports/systems/serving_microbench.json</code> ·
+      <code>docs/SERVING_PATH_C.md</code>.
+    </p>
+    <div class="article-table-wrap article-table-wrap--spacious">
+      <table class="article-table">
+        <caption>Completed requests/sec (mean over serial_1/4/8)</caption>
+        <thead>
+          <tr><th>Model</th><th>Comp.</th><th class="num">full</th><th class="num">lossy</th><th class="num">ExactKV</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Llama-3.1-8B</td><td>noop</td><td class="num">0.243</td><td class="num">0.247</td><td class="num">0.132</td></tr>
+          <tr><td>Llama-3.1-8B</td><td>int8</td><td class="num">0.247</td><td class="num">0.245</td><td class="num">0.129</td></tr>
+          <tr><td>Llama-3.1-8B</td><td>int4_sim</td><td class="num">0.247</td><td class="num">0.246</td><td class="num">0.129</td></tr>
+          <tr><td>Mistral-7B</td><td>noop</td><td class="num">0.248</td><td class="num">0.253</td><td class="num">0.136</td></tr>
+          <tr><td>Mistral-7B</td><td>int8</td><td class="num">0.253</td><td class="num">0.250</td><td class="num">0.134</td></tr>
+          <tr><td>Mistral-7B</td><td>int4_sim</td><td class="num">0.253</td><td class="num">0.371</td><td class="num">0.132</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="article-table-wrap article-table-wrap--spacious">
+      <table class="article-table">
+        <caption>TTFT-like (ms, mean over serial_1/4/8)</caption>
+        <thead>
+          <tr><th>Model</th><th>Comp.</th><th class="num">full</th><th class="num">lossy</th><th class="num">ExactKV</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Llama-3.1-8B</td><td>noop</td><td class="num">646</td><td class="num">611</td><td class="num">939</td></tr>
+          <tr><td>Llama-3.1-8B</td><td>int8</td><td class="num">610</td><td class="num">623</td><td class="num">943</td></tr>
+          <tr><td>Llama-3.1-8B</td><td>int4_sim</td><td class="num">611</td><td class="num">617</td><td class="num">943</td></tr>
+          <tr><td>Mistral-7B</td><td>noop</td><td class="num">666</td><td class="num">626</td><td class="num">946</td></tr>
+          <tr><td>Mistral-7B</td><td>int8</td><td class="num">625</td><td class="num">637</td><td class="num">947</td></tr>
+          <tr><td>Mistral-7B</td><td>int4_sim</td><td class="num">625</td><td class="num">631</td><td class="num">947</td></tr>
+        </tbody>
+      </table>
+    </div>
 
     <div class="inventory-block inventory-block--appendix">
       <div class="inventory-block-header">

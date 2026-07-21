@@ -350,6 +350,7 @@ def run_systems_diagnostic_panel(
     deterministic_mode: bool = False,
     resume_cells: Sequence[Mapping[str, Any]] | None = None,
     progress_callback: Callable[[str], None] | None = None,
+    checkpoint_callback: Callable[[dict[str, Any]], None] | None = None,
 ) -> dict[str, Any]:
     model_list = list(SMOKE_MODELS if smoke else (models or DEFAULT_MODELS))
     comp_list = list(compressors or DEFAULT_COMPRESSORS)
@@ -458,6 +459,33 @@ def run_systems_diagnostic_panel(
                                 max_new_tokens=mnt,
                             )
                         )
+                        if checkpoint_callback:
+                            checkpoint_callback(
+                                {
+                                    "schema": "exactkv.systems_diagnostic.v1",
+                                    "panel_id": SYSTEMS_DIAGNOSTIC_ID,
+                                    "claim_boundary": CLAIM_BOUNDARY,
+                                    "generated_at": datetime.now(timezone.utc).isoformat(),
+                                    "design": {
+                                        "models": model_list,
+                                        "compressors": comp_list,
+                                        "context_buckets": buckets,
+                                        "max_new_tokens": mnts,
+                                        "draft_len": draft_len,
+                                        "n_prompts": len(_BASE_PROMPTS),
+                                        "expected_cells": expected,
+                                        "smoke": smoke,
+                                        "deterministic_mode": False,
+                                        "partial": True,
+                                    },
+                                    "hardware": collect_runpod_meta(),
+                                    "cells": list(cells),
+                                    "exactkv_failures": sum(
+                                        1 for c in cells if c.get("exactkv_failure")
+                                    ),
+                                    "n_cells": len(cells),
+                                }
+                            )
 
         del runtime
         _best_effort_empty_cache()
