@@ -20,14 +20,12 @@ DEFAULT_CAROUSEL_KEYS: tuple[tuple[str, str], ...] = (
 DEFAULT_SINGLE_CASE = ("p02_p2_json_tool", "int4_sim")
 
 PUBLIC_TAGLINE = (
-    "Everyone is racing to shrink KV caches.\n"
-    "ExactKV tells you when they start lying."
+    "Benchmarks miss when compressed KV starts lying.\n"
+    "ExactKV crash-tests every token vs full precision."
 )
 
-CLOSING_LINES = (
-    "KV compression should not be trusted.\n"
-    "It should be crash-tested."
-)
+# Closing beat removed from live demos (victory / ship comparison is enough).
+CLOSING_LINES = ""
 
 
 @dataclass(frozen=True)

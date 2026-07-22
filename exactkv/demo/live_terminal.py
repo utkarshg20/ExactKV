@@ -8,7 +8,6 @@ from dataclasses import dataclass
 from typing import TextIO
 
 from exactkv.demo.case_study_loader import (
-    CLOSING_LINES,
     PUBLIC_TAGLINE,
     CaseStudy,
 )
@@ -476,9 +475,5 @@ def run_live_demo(
         parts.append(body)
         if i < total:
             _emit(style, "", out=out, delay=profile["section"], no_delay=no_delay)
-
-    for line in CLOSING_LINES.splitlines():
-        _emit(style, style.bold(line), out=out, delay=profile["section"], no_delay=no_delay)
-        parts.append(line)
 
     return "\n".join(parts)

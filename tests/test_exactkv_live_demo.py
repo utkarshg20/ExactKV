@@ -121,7 +121,6 @@ def _run_demo(*extra: str) -> str:
         "COMMIT",
         "EXACTKV MATCH",
         "exactkv_failures: 0",
-        "KV compression should not be trusted",
         "imperial",
         "metric",
         "22",
@@ -135,11 +134,19 @@ def _run_demo(*extra: str) -> str:
         "first-divergence",
         "France",
         "WITHOUT EXACTKV",
+        "Benchmarks miss when compressed KV starts lying",
+        "FULL-KV VS COMPRESSED DRAFT",
     ],
 )
 def test_streaming_demo_required_strings(needle: str) -> None:
     out = _run_demo()
     assert needle in out
+
+
+def test_streaming_demo_drops_old_sermon_copy() -> None:
+    out = _run_demo()
+    assert "KV compression should not be trusted" not in out
+    assert "Everyone is racing to shrink KV caches" not in out
 
 
 def test_streaming_is_default_mode() -> None:

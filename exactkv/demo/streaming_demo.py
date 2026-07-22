@@ -7,7 +7,7 @@ import time
 from dataclasses import dataclass
 from typing import TextIO
 
-from exactkv.demo.case_study_loader import CLOSING_LINES, PUBLIC_TAGLINE
+from exactkv.demo.case_study_loader import PUBLIC_TAGLINE
 from exactkv.demo.live_terminal import (
     SPEED_PROFILES,
     LiveFrame,
@@ -233,21 +233,22 @@ def _intro_frame(style: TerminalStyle, *, step: int) -> list[str]:
     for row in LOGO:
         lines.append(_box_line(center_visible(row, inner), inner))
     lines.append(_box_line("", inner))
-    title = "CRASH TEST  ·  LIVE VERIFIER REPLAY"
+    title = "CRASH TEST  ·  FULL-KV VS COMPRESSED DRAFT"
     if not style.plain:
         title = style.bold(style.cyan(title))
     lines.append(_box_line(center_visible(title, inner), inner))
     if step >= 1:
-        sub = "Every token: compressed draft vs full KV  ·  drift blocked before it ships"
+        sub = "Every greedy token checked vs full precision  ·  first divergence caught live"
         if not style.plain:
             sub = style.white(sub)
         lines.append(_box_line(center_visible(sub, inner), inner))
     if step >= 2:
-        tag = PUBLIC_TAGLINE.replace("\n", "  ·  ")
         lines.append(_box_line("", inner))
-        if not style.plain:
-            tag = style.bold(style.white(tag))
-        lines.append(_box_line(center_visible(tag, inner), inner))
+        for part in PUBLIC_TAGLINE.splitlines():
+            tag = part
+            if not style.plain:
+                tag = style.bold(style.white(tag))
+            lines.append(_box_line(center_visible(tag, inner), inner))
     lines.extend([_box_line("", inner), f"┗{sep}┛"])
     return lines
 
@@ -688,6 +689,9 @@ def run_streaming_demo(
     captured: list[str] = []
 
     if no_delay or plain:
+        for step in (0, 1, 2):
+            for line in _intro_frame(style, step=step):
+                _emit(style, line, out=out, delay=0.0, no_delay=True)
         lines = _frame(
             style=style,
             full_vis=FULL_TEXT,
@@ -707,8 +711,6 @@ def run_streaming_demo(
         )
         for line in lines:
             _emit(style, line, out=out, delay=0.0, no_delay=True)
-        for line in CLOSING_LINES.splitlines():
-            _emit(style, style.bold(line), out=out, delay=0.0, no_delay=True)
         return "\n".join(captured)
 
     intro_steps = (0, 1) if _ACTIVE.name == "hero" else (0, 1, 2)
@@ -852,8 +854,5 @@ def run_streaming_demo(
     )
     _pause(profile["dramatic"], no_delay=no_delay)
     live.commit()
-
-    for line in CLOSING_LINES.splitlines():
-        _emit(style, style.bold(line), out=out, delay=profile["section"], no_delay=no_delay)
 
     return "\n".join(captured)
