@@ -43,7 +43,7 @@ def test_hero_and_leaderboard_present():
     html = (SITE / "index.html").read_text(encoding="utf-8").lower()
     assert "lying" in html, "hero headline missing"
     assert "reviewer tl;dr" in html, "reviewer TLDR missing"
-    assert "reviewer takeaway" in html, "reviewer takeaway box missing"
+    assert "key takeaway" in html, "key takeaway box missing"
     assert "headline panels" in html, "split inventory headline block missing"
     assert "faithful adapter appendix" in html, "split inventory appendix block missing"
     assert "executive summary" in html, "executive summary missing"

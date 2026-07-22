@@ -435,9 +435,7 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       “Preserved” means ExactKV output matches full-KV, not that full-KV always succeeds. The verifier closes the gap between drift rate and output validity on tested panels.
     </p>
 
-    <details class="article-details article-details--section" id="compressor-curve">
-      <summary>11. The compressor curve: bit-width and granularity</summary>
-      <div class="detail-body">
+    <h2 id="compressor-curve">11. The compressor curve: bit-width and granularity</h2>
     <p>
       The 6% and 90% hook is one point. GPU-validated built-ins (v30 panel batch, both models, task-family means):
     </p>
@@ -481,24 +479,20 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
       </div>
     </details>
 
-      </div>
-    </details>
+      
 
-    <details class="article-details article-details--section" id="h2o-eviction">
-      <summary>12. H2O-style eviction, worse than int4 at matched budget</summary>
-      <div class="detail-body">
+
+    <h2 id="h2o-eviction">12. H2O-style eviction, worse than int4 at matched budget</h2>
     <p>
       Token eviction is a different failure class. H2O-style simulation (attention-sink + recency window, keep_ratio 0.75, 0.50, and 0.25) on LongBench: <strong>100% divergence</strong> at all keep ratios, median first divergence index <strong>1</strong>, mean lossy rank <strong>6.7</strong>. Eviction destroys anchoring context immediately, worse than int4_sim at a matched ~4× memory story on reading tasks.
     </p>
     <p>
       Claim boundary: H2O-style simulation, not faithful H2O GPU kernel. Still useful as a class diagnostic.
     </p>
-      </div>
-    </details>
+      
 
-    <details class="article-details article-details--section" id="faithful-adapters">
-      <summary>13. Faithful upstream adapters (1,568 cells, appendix)</summary>
-      <div class="detail-body">
+
+    <h2 id="faithful-adapters">13. Faithful upstream adapters (1,568 cells, appendix)</h2>
     <p>
       Built-in sims map the design space. Phase D3 wires real upstream algorithms on the same crash-test grid, in a separate artifact tree (<code>reports/external_panels/faithful/</code>), not merged into the 8,132 headline total. These are <strong>adapter smoke tests</strong>: they ask whether ExactKV can run real upstream code paths and how much they drift, not which compressor wins.
     </p>
@@ -571,8 +565,8 @@ Llama-3.1-8B: L=32, H_kv=8, d=128
     <p>
       <strong>Key finding:</strong> TurboQuant looks fine on structured code and tool tasks (1.6-5.0% drift) but <strong>fails the long-context reading stress test</strong> (~63-67% LongBench drift, both models). <code>int8</code> remains the only non-catastrophic real compressor in this appendix grid (8.3% combined). Offline Python adapter only. Not a deployment claim. Artifacts: <code>reports/external_panels/faithful/wave3/</code>. Full tables: technical report §6.17.2.
     </p>
-      </div>
-    </details>
+      
+
 
     <h2 id="case-studies">14. Divergence case studies</h2>
     <p>
@@ -962,9 +956,7 @@ its high forehead and its straight nose, they were positively grotes</pre>
     </div>
     <p class="viz-caption" id="leaderboard-caption">Full JSON: <a href="https://github.com/utkarshg20/ExactKV/blob/main/reports/public_release/leaderboard_final.json">leaderboard_final.json</a>. Registry slots labeled fallback/proxy or probe-first are not headline evidence.</p>
 
-    <details class="article-details article-details--section" id="limitations">
-      <summary>17. What we measure but do not claim</summary>
-      <div class="detail-body">
+    <h2 id="limitations">17. What we measure but do not claim</h2>
     <ul>
       <li>Not a production serving system. No throughput or active GPU memory savings claims.</li>
       <li>Does not reproduce VeriCache. Inspired by draft and verify semantics only.</li>
@@ -988,8 +980,8 @@ its high forehead and its straight nose, they were positively grotes</pre>
         </p>
       </div>
     </details>
-      </div>
-    </details>
+      
+
 
     <h2 id="reproduce">18. Reproduce it</h2>
     <p>Every published number traces to an on-disk artifact. One-command regeneration where possible.</p>
@@ -1026,7 +1018,7 @@ bash scripts/setup_faithful_compressor_env.sh</code></div>
     </p>
 
     <section class="reviewer-takeaway" id="reviewer-takeaway">
-      <p class="section-label">Reviewer takeaway</p>
+      <p class="section-label">Key takeaway</p>
       <h2 class="reviewer-takeaway-title">Three bullets to remember</h2>
       <ul class="reviewer-takeaway-list">
         <li><strong>Contribution:</strong> KV-cache compression can preserve final verified outputs while still causing early greedy-token drift. Average benchmark scores can hide that instability.</li>
