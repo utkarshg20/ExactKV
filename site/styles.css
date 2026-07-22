@@ -60,6 +60,10 @@ code {
 .brand {
   font-weight: 600; font-size: 1rem; letter-spacing: -0.03em;
   color: var(--ink); font-family: var(--mono);
+  display: inline-flex; align-items: center;
+}
+.brand-logo {
+  height: 22px; width: auto; display: block;
 }
 .nav-links a {
   color: var(--muted); margin-left: 24px; font-size: 0.85rem;
@@ -379,6 +383,12 @@ pre.code code { background: none; color: #d4d8e8; padding: 0; line-height: 1.75;
   padding: 56px clamp(20px, 4vw, 32px) 120px;
 }
 .article-header { margin-bottom: 48px; border-bottom: 1px solid var(--line); padding-bottom: 36px; }
+.hero-logo {
+  display: block;
+  height: clamp(40px, 7vw, 64px);
+  width: auto;
+  margin: 0 0 28px;
+}
 .article-header h1 {
   font-family: Georgia, "Times New Roman", Times, serif;
   font-size: clamp(2rem, 5vw, 2.75rem);

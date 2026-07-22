@@ -15,6 +15,8 @@ SITE_PANEL = (17, 17, 20)
 COPY_AS_IS = (
     "public_exactkv_one_page_summary.png",
     "og_card.png",
+    "exactkv_logo.png",
+    "exactkv_icon.png",
 )
 DARKEN_CHARTS = (
     "exp035_first_divergence_histogram.png",
