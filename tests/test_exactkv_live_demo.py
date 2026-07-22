@@ -21,6 +21,7 @@ from exactkv.demo.streaming_demo import (
     _drift_alert,
     _intro_frame,
     _top_rail,
+    _verifier_card,
     _wrap_snippet,
 )
 
@@ -70,6 +71,7 @@ def test_boxed_frames_keep_right_border_aligned() -> None:
         _intro_frame(style, step=2),
         _top_rail(style),
         _drift_alert(style, note="note", wrong="imperial", right="metric", flash=True),
+        _verifier_card(style, wrong="22", right="18", drift_num=2),
         _comparison_columns(
             style=style,
             full_vis='{"units":"metric"}',

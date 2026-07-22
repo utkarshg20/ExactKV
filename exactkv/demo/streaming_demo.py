@@ -370,7 +370,13 @@ def _drift_alert(
 
 def _verifier_card(style: TerminalStyle, *, wrong: str, right: str, drift_num: int) -> list[str]:
     inner = _panel_width()
-    sep = "═" * inner
+    # Match other panels: total visible width = inner + 4.
+    fill = inner + 2
+    label = "══ VERIFIER "
+    if len(label) >= fill:
+        top_fill = label[:fill]
+    else:
+        top_fill = label + "═" * (fill - len(label))
     reject = f"REJECT  «{wrong}»  — never reaches output"
     commit = f"COMMIT  «{right}»  — from full-KV reference"
     foot = f"drift #{drift_num} corrected  ·  greedy path preserved"
@@ -379,11 +385,11 @@ def _verifier_card(style: TerminalStyle, *, wrong: str, right: str, drift_num: i
         commit = style.green(style.bold(commit))
         foot = style.white(foot)
     return [
-        "╔══ VERIFIER ══════════════════════════════════════════════════════════════════╗",
+        f"╔{top_fill}╗",
         _box_line(reject, inner, left="║", right="║"),
         _box_line(commit, inner, left="║", right="║"),
         _box_line(foot, inner, left="║", right="║"),
-        f"╚{sep}╝",
+        f"╚{'═' * fill}╝",
         "",
     ]
 
