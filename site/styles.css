@@ -375,7 +375,7 @@ pre.code code { background: none; color: #d4d8e8; padding: 0; line-height: 1.75;
 }
 .article-back:hover { color: var(--ink); opacity: 1; }
 .article-wrap {
-  max-width: 720px; margin: 0 auto;
+  max-width: 780px; margin: 0 auto;
   padding: 56px clamp(20px, 4vw, 32px) 120px;
 }
 .article-header { margin-bottom: 48px; border-bottom: 1px solid var(--line); padding-bottom: 36px; }
@@ -461,7 +461,7 @@ pre.code code { background: none; color: #d4d8e8; padding: 0; line-height: 1.75;
   font-size: 1.05rem;
   line-height: 1.65;
   color: var(--ink);
-  max-width: 720px;
+  max-width: 780px;
   margin-bottom: 18px;
 }
 .why-matters-callout {
@@ -473,7 +473,7 @@ pre.code code { background: none; color: #d4d8e8; padding: 0; line-height: 1.75;
   color: var(--muted);
   line-height: 1.6;
   margin-bottom: 22px;
-  max-width: 720px;
+  max-width: 780px;
 }
 .why-matters-callout strong { color: var(--ink); }
 .story-pillars {
