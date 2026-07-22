@@ -134,6 +134,8 @@ def _run_demo(*extra: str) -> str:
         "first-divergence",
         "France",
         "WITHOUT EXACTKV",
+        "STREAM COMPLETE",
+        "shipped output ≡ full precision KV",
         "Benchmarks miss when compressed KV starts lying",
         "FULL-KV VS COMPRESSED DRAFT",
     ],

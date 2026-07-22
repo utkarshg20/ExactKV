@@ -498,19 +498,61 @@ def _comparison_columns(
     return lines
 
 
+def _ship_panel(
+    style: TerminalStyle,
+    *,
+    title: str,
+    rows: tuple[str, ...],
+    bad: bool,
+) -> list[str]:
+    inner = _panel_width()
+    fill = inner + 2
+    label = f"══ {title} "
+    top_fill = label + "═" * max(0, fill - len(label))
+    body: list[str] = [f"╔{top_fill}╗"]
+    for row in rows:
+        plain = f"  {row}"
+        if style.plain:
+            text = plain
+        elif row.startswith('"'):
+            text = style.red(style.bold(plain)) if bad else style.green(style.bold(plain))
+        else:
+            text = style.red(plain) if bad else style.green(plain)
+        body.append(_box_line(text, inner, left="║", right="║"))
+    body.append(f"╚{'═' * fill}╝")
+    return body
+
+
 def _ship_comparison(style: TerminalStyle) -> list[str]:
+    """Full ship comparison used by plain snapshots and outro assembly."""
     scen = _ACTIVE
-    if style.plain:
-        lines = ["", "WITHOUT EXACTKV (compressed KV only)", *[f"  {x}" for x in scen.ship_lossy], "",
-                 "WITH EXACTKV (verifier crash-test)", *[f"  {x}" for x in scen.ship_exact], ""]
-        return lines
-    lines = ["", style.bold(style.white("WITHOUT EXACTKV (compressed KV only)"))]
-    lines.extend(style.red(f"  {x}") for x in scen.ship_lossy)
+    lines: list[str] = [""]
+    bridge = "STREAM COMPLETE  ·  what would have shipped"
+    if not style.plain:
+        bridge = style.bold(style.white(bridge))
+    lines.append(bridge)
     lines.append("")
-    lines.append(style.bold(style.white("WITH EXACTKV (verifier crash-test)")))
-    lines.extend(style.green(f"  {x}") for x in scen.ship_exact)
-    lines.append(style.white("  8,132-cell panels · MBPP + BFCL + LongBench · exactkv_failures: 0"))
+    lines.extend(
+        _ship_panel(
+            style,
+            title="WITHOUT EXACTKV  ·  compressed KV only",
+            rows=scen.ship_lossy,
+            bad=True,
+        )
+    )
     lines.append("")
+    lines.extend(
+        _ship_panel(
+            style,
+            title="WITH EXACTKV  ·  verifier crash-test",
+            rows=scen.ship_exact,
+            bad=False,
+        )
+    )
+    note = "8,132-cell panels · MBPP + BFCL + LongBench · exactkv_failures: 0"
+    if not style.plain:
+        note = style.white(note)
+    lines.extend(["", note, ""])
     return lines
 
 
@@ -537,7 +579,11 @@ def _scale_punch(style: TerminalStyle) -> list[str]:
 
 
 def _victory_banner(style: TerminalStyle, *, drifts_caught: int) -> list[str]:
-    headline = "EXACTKV MATCH  ·  shipped output ≡ full precision KV"
+    inner = _panel_width()
+    fill = inner + 2
+    label = "══ EXACTKV MATCH "
+    top_fill = label + "═" * max(0, fill - len(label))
+    headline = "shipped output ≡ full precision KV"
     stats = (
         f"drifts caught & corrected: {drifts_caught}  ·  acceptance restored  ·  "
         f"exactkv_failures: 0"
@@ -547,9 +593,115 @@ def _victory_banner(style: TerminalStyle, *, drifts_caught: int) -> list[str]:
         headline = style.green(style.bold(headline))
         stats = style.white(stats)
         scope = style.white(scope)
-    return ["", headline, stats, scope, ""]
+    return [
+        f"╔{top_fill}╗",
+        _box_line(headline, inner, left="║", right="║"),
+        _box_line(stats, inner, left="║", right="║"),
+        _box_line(scope, inner, left="║", right="║"),
+        f"╚{'═' * fill}╝",
+        "",
+    ]
 
 
+def _outro_lines(style: TerminalStyle, *, drifts_caught: int) -> list[str]:
+    lines = _ship_comparison(style)
+    lines.extend(_victory_banner(style, drifts_caught=drifts_caught))
+    if _ACTIVE.show_scale_punch:
+        lines.extend(_scale_punch(style))
+    return lines
+
+
+def _emit_block(
+    style: TerminalStyle,
+    out: TextIO,
+    lines: list[str],
+    *,
+    profile: dict[str, float],
+    no_delay: bool,
+    line_scale: float = 0.55,
+) -> list[str]:
+    captured: list[str] = []
+    for line in lines:
+        captured.append(line)
+        delay = 0.0 if no_delay else (
+            profile["row"] * line_scale if line.strip() else profile["pause"] * 0.3
+        )
+        _emit(style, line, out=out, delay=delay, no_delay=no_delay)
+    return captured
+
+
+def _play_outro(
+    *,
+    style: TerminalStyle,
+    out: TextIO,
+    drifts_caught: int,
+    profile: dict[str, float],
+    no_delay: bool,
+) -> list[str]:
+    """Reveal the closing comparison below the live frame, beat by beat."""
+    scen = _ACTIVE
+    captured: list[str] = []
+
+    bridge = ["", "STREAM COMPLETE  ·  what would have shipped", ""]
+    if not style.plain:
+        bridge[1] = style.bold(style.white(strip_ansi(bridge[1])))
+    captured.extend(
+        _emit_block(style, out, bridge, profile=profile, no_delay=no_delay, line_scale=0.4)
+    )
+    _pause(profile["section"] * 0.8, no_delay=no_delay)
+
+    without = _ship_panel(
+        style,
+        title="WITHOUT EXACTKV  ·  compressed KV only",
+        rows=scen.ship_lossy,
+        bad=True,
+    )
+    captured.extend(_emit_block(style, out, without, profile=profile, no_delay=no_delay))
+    _pause(profile["dramatic"] * 0.65, no_delay=no_delay)
+
+    with_panel = _ship_panel(
+        style,
+        title="WITH EXACTKV  ·  verifier crash-test",
+        rows=scen.ship_exact,
+        bad=False,
+    )
+    note = "8,132-cell panels · MBPP + BFCL + LongBench · exactkv_failures: 0"
+    if not style.plain:
+        note = style.white(note)
+    captured.extend(
+        _emit_block(
+            style,
+            out,
+            with_panel + ["", note, ""],
+            profile=profile,
+            no_delay=no_delay,
+        )
+    )
+    _pause(profile["dramatic"] * 0.45, no_delay=no_delay)
+
+    captured.extend(
+        _emit_block(
+            style,
+            out,
+            _victory_banner(style, drifts_caught=drifts_caught),
+            profile=profile,
+            no_delay=no_delay,
+            line_scale=0.45,
+        )
+    )
+    if scen.show_scale_punch:
+        _pause(profile["section"], no_delay=no_delay)
+        captured.extend(
+            _emit_block(
+                style,
+                out,
+                _scale_punch(style),
+                profile=profile,
+                no_delay=no_delay,
+                line_scale=0.5,
+            )
+        )
+    return captured
 def _frame(
     *,
     style: TerminalStyle,
@@ -608,10 +760,8 @@ def _frame(
         wrong, right, num = verifier_card
         body.extend(_verifier_card(style, wrong=wrong, right=right, drift_num=num))
     if show_ship:
-        body.extend(_ship_comparison(style))
-        body.extend(_victory_banner(style, drifts_caught=drifts_caught))
-        if _ACTIVE.show_scale_punch:
-            body.extend(_scale_punch(style))
+        # Kept for plain/no-delay snapshots; live path stages this via _play_outro.
+        body.extend(_outro_lines(style, drifts_caught=drifts_caught))
     return body
 
 
@@ -692,6 +842,7 @@ def run_streaming_demo(
         for step in (0, 1, 2):
             for line in _intro_frame(style, step=step):
                 _emit(style, line, out=out, delay=0.0, no_delay=True)
+        drifts = sum(1 for seg in TIMELINE if seg[0] == "drift")
         lines = _frame(
             style=style,
             full_vis=FULL_TEXT,
@@ -701,15 +852,18 @@ def run_streaming_demo(
             lossy_flag="DRIFT",
             exactkv_flag="MATCH",
             stream_pos=STREAM_TOTAL,
-            drifts_caught=sum(1 for seg in TIMELINE if seg[0] == "drift"),
+            drifts_caught=drifts,
             phase="victory",
+            status="stream complete · ExactKV matched full KV",
             verifier_card=next(
-                ((seg[1], seg[2], 1) for seg in TIMELINE if seg[0] == "drift"),
+                ((seg[1], seg[2], drifts) for seg in TIMELINE if seg[0] == "drift"),
                 ("?", "?", 1),
             ),
-            show_ship=True,
+            show_ship=False,
         )
         for line in lines:
+            _emit(style, line, out=out, delay=0.0, no_delay=True)
+        for line in _outro_lines(style, drifts_caught=drifts):
             _emit(style, line, out=out, delay=0.0, no_delay=True)
         return "\n".join(captured)
 
@@ -837,6 +991,13 @@ def run_streaming_demo(
         pos += len(right)
         _pause(profile["section"] * 0.4, no_delay=no_delay)
 
+    # Hold on a clean MATCH frame, then reveal the ship comparison below
+    # (instead of suddenly growing the live redraw block).
+    status = (
+        style.green(style.bold("stream complete · ExactKV matched full KV"))
+        if not style.plain
+        else "stream complete · ExactKV matched full KV"
+    )
     _draw_frame(
         live,
         style,
@@ -850,9 +1011,21 @@ def run_streaming_demo(
         stream_pos=STREAM_TOTAL,
         drifts_caught=drifts_caught,
         phase="victory",
-        show_ship=True,
+        status=status,
+        verifier_card=last_card,
+        show_ship=False,
     )
-    _pause(profile["dramatic"], no_delay=no_delay)
+    _pause(profile["dramatic"] * 0.85, no_delay=no_delay)
     live.commit()
+    _pause(profile["section"], no_delay=no_delay)
+    captured.extend(
+        _play_outro(
+            style=style,
+            out=out,
+            drifts_caught=drifts_caught,
+            profile=profile,
+            no_delay=no_delay,
+        )
+    )
 
     return "\n".join(captured)
