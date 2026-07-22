@@ -1,7 +1,6 @@
 """Single-act streaming terminal demo — cinematic crash-test replay."""
 from __future__ import annotations
 
-import shutil
 import sys
 import time
 from dataclasses import dataclass
@@ -17,6 +16,7 @@ from exactkv.demo.live_terminal import (
     ljust_visible,
     progress_bar,
     strip_ansi,
+    terminal_columns,
     visible_len,
 )
 
@@ -153,9 +153,9 @@ LOGO = [
 ]
 
 def _panel_width() -> int:
-    cols = shutil.get_terminal_size((110, 24)).columns
-    # Box chrome is 4 cols ("┃ " + content + " ┃"); never exceed the terminal.
-    return min(104, max(72, cols - 4))
+    # Keep a stable content width and center it in the real tty (see LiveFrame/_emit).
+    cols = terminal_columns(fallback=120)
+    return min(100, max(72, cols - 10))
 
 
 def _col_width(inner: int) -> int:

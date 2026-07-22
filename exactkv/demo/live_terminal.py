@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import re
+import shutil
+import struct
 import sys
 import time
 from dataclasses import dataclass
@@ -21,6 +23,36 @@ def strip_ansi(text: str) -> str:
 
 def visible_len(text: str) -> int:
     return len(strip_ansi(text))
+
+
+def terminal_columns(*, fallback: int = 120) -> int:
+    """Real tty width when possible (ignores COLUMNS so centering still works)."""
+    try:
+        import fcntl
+        import termios
+
+        for fd in (1, 0, 2):
+            try:
+                packed = fcntl.ioctl(fd, termios.TIOCGWINSZ, b"\0" * 8)
+                _rows, cols, _hp, _wp = struct.unpack("HHHH", packed)
+                if cols > 0:
+                    return int(cols)
+            except OSError:
+                continue
+    except Exception:
+        pass
+    return shutil.get_terminal_size((fallback, 24)).columns
+
+
+def center_on_terminal(line: str, *, cols: int | None = None) -> str:
+    """Pad a line so its visible content is centered in the terminal."""
+    if not line:
+        return line
+    width = cols if cols is not None else terminal_columns()
+    vis = visible_len(line)
+    if vis >= width:
+        return line
+    return " " * ((width - vis) // 2) + line
 
 
 def truncate_visible(text: str, width: int, *, ellipsis: bool = False) -> str:
@@ -176,21 +208,23 @@ class LiveFrame:
         self._line_count = 0
 
     def draw(self, lines: list[str], *, delay: float = 0.0, no_delay: bool = False) -> None:
+        cols = terminal_columns()
+        centered = [center_on_terminal(line, cols=cols) for line in lines]
         if self._line_count and not self.plain:
             # Move to the top of the previous frame, then rewrite in place.
             self.out.write(f"\033[{self._line_count}A")
-        for line in lines:
+        for line in centered:
             if not self.plain:
                 # Clear full physical row before rewrite so shorter/ANSI lines
                 # cannot leave ghost borders from the previous frame.
                 self.out.write("\033[2K\r")
             print(line, file=self.out)
-        if not self.plain and self._line_count > len(lines):
-            leftover = self._line_count - len(lines)
+        if not self.plain and self._line_count > len(centered):
+            leftover = self._line_count - len(centered)
             for _ in range(leftover):
                 self.out.write("\033[2K\n")
             self.out.write(f"\033[{leftover}A")
-        self._line_count = len(lines)
+        self._line_count = len(centered)
         self.out.flush()
         _pause(delay, no_delay=no_delay)
 
@@ -200,7 +234,7 @@ class LiveFrame:
 
 
 def _emit(style: TerminalStyle, text: str, *, out: TextIO, delay: float, no_delay: bool) -> None:
-    style.print(text, file=out)
+    style.print(center_on_terminal(text), file=out)
     _pause(delay, no_delay=no_delay)
 
 
