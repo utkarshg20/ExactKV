@@ -1,6 +1,7 @@
 """Shard/TurboQuant-style terminal UI for ExactKV case-study replay."""
 from __future__ import annotations
 
+import re
 import sys
 import time
 from dataclasses import dataclass
@@ -11,6 +12,62 @@ from exactkv.demo.case_study_loader import (
     PUBLIC_TAGLINE,
     CaseStudy,
 )
+
+_ANSI_RE = re.compile(r"\033\[[0-9;]*m")
+
+
+def strip_ansi(text: str) -> str:
+    return _ANSI_RE.sub("", text)
+
+
+def visible_len(text: str) -> int:
+    return len(strip_ansi(text))
+
+
+def truncate_visible(text: str, width: int, *, ellipsis: bool = False) -> str:
+    """Truncate so visible width <= width, preserving leading ANSI when possible."""
+    if width <= 0:
+        return ""
+    if visible_len(text) <= width:
+        return text
+    target = width - 1 if ellipsis and width >= 2 else width
+    out: list[str] = []
+    visible = 0
+    i = 0
+    n = len(text)
+    while i < n and visible < target:
+        if text[i] == "\033":
+            match = _ANSI_RE.match(text, i)
+            if match:
+                out.append(match.group(0))
+                i = match.end()
+                continue
+        out.append(text[i])
+        visible += 1
+        i += 1
+    if ellipsis and width >= 2:
+        out.append("…")
+    # Always reset after truncation so a cut color span cannot bleed into ┃.
+    if "\033[" in text:
+        out.append("\033[0m")
+    return "".join(out)
+
+
+def ljust_visible(text: str, width: int) -> str:
+    text = truncate_visible(text, width, ellipsis=True)
+    return text + " " * (width - visible_len(text))
+
+
+def rjust_visible(text: str, width: int) -> str:
+    text = truncate_visible(text, width, ellipsis=True)
+    return " " * (width - visible_len(text)) + text
+
+
+def center_visible(text: str, width: int) -> str:
+    text = truncate_visible(text, width, ellipsis=True)
+    pad = width - visible_len(text)
+    left = pad // 2
+    return " " * left + text + " " * (pad - left)
 
 SPEED_PROFILES = {
     "instant": {"pause": 0.0, "typing": 0.0, "dramatic": 0.0, "section": 0.0, "row": 0.0},
@@ -121,11 +178,19 @@ class LiveFrame:
 
     def draw(self, lines: list[str], *, delay: float = 0.0, no_delay: bool = False) -> None:
         if self._line_count and not self.plain:
+            # Move to the top of the previous frame, then rewrite in place.
             self.out.write(f"\033[{self._line_count}A")
         for line in lines:
-            if self._line_count and not self.plain:
+            if not self.plain:
+                # Clear full physical row before rewrite so shorter/ANSI lines
+                # cannot leave ghost borders from the previous frame.
                 self.out.write("\033[2K\r")
             print(line, file=self.out)
+        if not self.plain and self._line_count > len(lines):
+            leftover = self._line_count - len(lines)
+            for _ in range(leftover):
+                self.out.write("\033[2K\n")
+            self.out.write(f"\033[{leftover}A")
         self._line_count = len(lines)
         self.out.flush()
         _pause(delay, no_delay=no_delay)
@@ -162,8 +227,8 @@ def _comparison_table(
     lines: list[str] = []
     sep = "─" * inner_width
     lines.append(f"┌{sep}┐")
-    header = f"│ {'path':<{label_w}} {'drift?':<{flag_w}} snippet"
-    lines.append(header.ljust(inner_width + 1) + "│")
+    header = f"{'path':<{label_w}} {'drift?':<{flag_w}} snippet"
+    lines.append("│ " + ljust_visible(header, inner_width - 1) + "│")
     lines.append(f"├{'─' * inner_width}┤")
 
     for idx, (label, flag, snippet, key) in enumerate(rows):
@@ -177,10 +242,10 @@ def _comparison_table(
             elif flag == "MATCH":
                 flag_styled = style.green(flag)
 
-        row = f"{prefix} {label:<{label_w - 1}} {flag_styled:<{flag_w if style.plain else len(flag)}} {visible}"
-        if len(row) > inner_width + 1:
-            row = row[: inner_width]
-        lines.append("│ " + row.ljust(inner_width - 1) + "│")
+        label_part = f"{prefix} {label:<{label_w - 1}}"
+        flag_part = ljust_visible(flag_styled, flag_w)
+        row = f"{label_part} {flag_part} {visible}"
+        lines.append("│ " + ljust_visible(row, inner_width - 1) + "│")
 
     lines.append(f"└{sep}┘")
     return lines

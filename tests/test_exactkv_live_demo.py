@@ -8,7 +8,21 @@ from pathlib import Path
 
 import pytest
 
-from exactkv.demo.streaming_demo import _wrap_snippet
+from exactkv.demo.live_terminal import (
+    TerminalStyle,
+    center_visible,
+    ljust_visible,
+    strip_ansi,
+    visible_len,
+)
+from exactkv.demo.streaming_demo import (
+    _box_line,
+    _comparison_columns,
+    _drift_alert,
+    _intro_frame,
+    _top_rail,
+    _wrap_snippet,
+)
 
 _ROOT = Path(__file__).resolve().parents[1]
 _SCRIPT = _ROOT / "scripts" / "exactkv_live_demo.py"
@@ -30,6 +44,52 @@ def test_wrap_snippet_keeps_words_intact() -> None:
         if line and line[-1].isalpha():
             assert not (len(line) < len("metric") and line in "metric")
 
+
+def test_visible_padding_ignores_ansi() -> None:
+    style = TerminalStyle(plain=False)
+    colored = style.red(style.bold("DRIFT"))
+    assert visible_len(colored) == 5
+    assert visible_len(ljust_visible(colored, 12)) == 12
+    assert visible_len(center_visible(colored, 11)) == 11
+    assert strip_ansi(ljust_visible(colored, 12)).endswith("       ")
+
+
+def test_box_line_stable_with_ansi() -> None:
+    style = TerminalStyle(plain=False)
+    width = 40
+    plain = _box_line("hello", width)
+    colored = _box_line(style.red(style.bold("hello")), width)
+    assert visible_len(plain) == visible_len(colored) == width + 4
+    assert plain.startswith("┃ ") and plain.endswith(" ┃")
+    assert colored.startswith("┃ ") and colored.endswith(" ┃")
+
+
+def test_boxed_frames_keep_right_border_aligned() -> None:
+    style = TerminalStyle(plain=False)
+    frames = [
+        _intro_frame(style, step=2),
+        _top_rail(style),
+        _drift_alert(style, note="note", wrong="imperial", right="metric", flash=True),
+        _comparison_columns(
+            style=style,
+            full_vis='{"units":"metric"}',
+            lossy_vis='{"units":"imperial"}',
+            exactkv_vis='{"units":"',
+            active=1,
+            lossy_flag="DRIFT",
+            exactkv_flag="HOLD",
+            cursor_path=2,
+            hot_lossy=True,
+        ),
+    ]
+    for lines in frames:
+        boxed = [ln for ln in lines if ln[:1] in {"┏", "┗", "┃", "║", "┌", "└", "├", "│"}]
+        if not boxed:
+            continue
+        widths = {visible_len(ln) for ln in boxed}
+        assert len(widths) == 1, f"misaligned borders: {widths}\n" + "\n".join(
+            repr(strip_ansi(ln)) for ln in boxed
+        )
 
 def test_streaming_demo_wraps_in_output() -> None:
     out = _run_demo()

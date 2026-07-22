@@ -1,7 +1,6 @@
 """Single-act streaming terminal demo — cinematic crash-test replay."""
 from __future__ import annotations
 
-import re
 import shutil
 import sys
 import time
@@ -9,7 +8,17 @@ from dataclasses import dataclass
 from typing import TextIO
 
 from exactkv.demo.case_study_loader import CLOSING_LINES, PUBLIC_TAGLINE
-from exactkv.demo.live_terminal import SPEED_PROFILES, LiveFrame, TerminalStyle, _emit, progress_bar
+from exactkv.demo.live_terminal import (
+    SPEED_PROFILES,
+    LiveFrame,
+    TerminalStyle,
+    _emit,
+    center_visible,
+    ljust_visible,
+    progress_bar,
+    strip_ansi,
+    visible_len,
+)
 
 SNIPPET_LINES = 5
 
@@ -143,16 +152,10 @@ LOGO = [
     " ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝   ╚═╝   ╚═╝  ╚═╝  ╚═══╝  ",
 ]
 
-_ANSI_RE = re.compile(r"\033\[[0-9;]*m")
-
-
-def _strip_ansi(text: str) -> str:
-    return _ANSI_RE.sub("", text)
-
-
 def _panel_width() -> int:
     cols = shutil.get_terminal_size((110, 24)).columns
-    return min(104, max(92, cols - 4))
+    # Box chrome is 4 cols ("┃ " + content + " ┃"); never exceed the terminal.
+    return min(104, max(72, cols - 4))
 
 
 def _col_width(inner: int) -> int:
@@ -206,6 +209,7 @@ def _wrap_snippet(text: str, width: int, *, max_lines: int = SNIPPET_LINES) -> l
 
 
 def _fit_cell(plain: str, width: int) -> str:
+    plain = strip_ansi(plain)
     if len(plain) <= width:
         return plain.ljust(width)
     line = _wrap_snippet(plain, width, max_lines=1)[0]
@@ -218,10 +222,8 @@ def _fit_cell(plain: str, width: int) -> str:
 
 
 def _box_line(inner: str, width: int, left: str = "┃", right: str = "┃") -> str:
-    plain = _strip_ansi(inner)
-    if len(plain) > width:
-        inner = _fit_cell(plain, width)
-    return f"{left} {inner.ljust(width)} {right}"
+    """Draw one boxed row; pad/truncate by visible width so ANSI cannot shift ┃."""
+    return f"{left} {ljust_visible(inner, width)} {right}"
 
 
 def _intro_frame(style: TerminalStyle, *, step: int) -> list[str]:
@@ -229,26 +231,23 @@ def _intro_frame(style: TerminalStyle, *, step: int) -> list[str]:
     sep = "━" * (inner + 2)
     lines = [f"┏{sep}┓", _box_line("", inner)]
     for row in LOGO:
-        lines.append(_box_line(row.center(inner), inner))
+        lines.append(_box_line(center_visible(row, inner), inner))
     lines.append(_box_line("", inner))
     title = "CRASH TEST  ·  LIVE VERIFIER REPLAY"
     if not style.plain:
         title = style.bold(style.cyan(title))
-    lines.append(_box_line(title.center(inner), inner))
+    lines.append(_box_line(center_visible(title, inner), inner))
     if step >= 1:
         sub = "Every token: compressed draft vs full KV  ·  drift blocked before it ships"
         if not style.plain:
-            sub = style.white(sub.center(inner))
-        else:
-            sub = sub.center(inner)
-        lines.append(_box_line(sub, inner))
+            sub = style.white(sub)
+        lines.append(_box_line(center_visible(sub, inner), inner))
     if step >= 2:
         tag = PUBLIC_TAGLINE.replace("\n", "  ·  ")
         lines.append(_box_line("", inner))
         if not style.plain:
-            lines.append(_box_line(style.bold(style.white(tag.center(inner))), inner))
-        else:
-            lines.append(_box_line(tag.center(inner), inner))
+            tag = style.bold(style.white(tag))
+        lines.append(_box_line(center_visible(tag, inner), inner))
     lines.extend([_box_line("", inner), f"┗{sep}┛"])
     return lines
 
@@ -289,12 +288,19 @@ def _top_rail(style: TerminalStyle) -> list[str]:
     if not style.plain:
         badge = style.green(style.bold("verifier LIVE"))
     title = style.bold("EXACTKV") if not style.plain else "EXACTKV"
+    left = f"{title}   {META['model']}"
+    # Keep left + badge on one row without ANSI format-width skew.
+    gap = inner - visible_len(left) - visible_len(badge)
+    if gap < 1:
+        left = ljust_visible(left, max(0, inner - visible_len(badge) - 1))
+        gap = 1
+    row = left + " " * gap + badge
     meta = f"{META['compressor']}  ·  {META['prompt_label']}"
     if not style.plain:
         meta = style.white(meta)
     return [
         f"┏{sep}┓",
-        _box_line(f"{title}   {META['model']:<28}{badge:>{inner - 44}}", inner),
+        _box_line(row, inner),
         _box_line(meta, inner),
         f"┗{sep}┛",
     ]
@@ -322,12 +328,14 @@ def _hud(
         verifier = style.cyan("armed") if not style.plain else "armed"
     line1 = (
         f"DECODE {bar} {pct:>3}%   token {stream_pos}/{STREAM_TOTAL}   "
-        f"drifts {drift_txt:<3}   verifier {verifier}"
+        f"drifts {drift_txt}   verifier {verifier}"
     )
     line2 = "draft / full KV / ExactKV output compared every greedy step"
     if not style.plain:
         line2 = style.white(line2)
-    return [line1, line2, ""]
+    # Clamp HUD to panel width so color codes cannot wrap the terminal row.
+    width = _panel_width() + 4
+    return [ljust_visible(line1, width), ljust_visible(line2, width), ""]
 
 
 def _drift_alert(
@@ -440,38 +448,44 @@ def _comparison_columns(
     lossy_lines = _wrap_snippet(lossy_vis, cw, max_lines=SNIPPET_LINES)
     exact_lines = _wrap_snippet(exactkv_vis, cw, max_lines=SNIPPET_LINES)
 
-    if cursor_path == 1 and lossy_lines:
-        lossy_lines = list(lossy_lines)
-        lossy_lines[-1] = lossy_lines[-1] + ("▌" if style.plain else style.cyan("▌"))
-    if cursor_path == 2 and exact_lines:
-        exact_lines = list(exact_lines)
-        exact_lines[-1] = exact_lines[-1] + ("▌" if style.plain else style.cyan("▌"))
-
-    def _styled_cell(plain: str, *, hot: bool) -> str:
+    def _styled_cell(plain: str, *, hot: bool, cursor: bool = False) -> str:
         fitted = _fit_cell(plain, cw)
         if style.plain:
-            return fitted
-        stripped = fitted.rstrip()
-        pad = " " * max(0, cw - len(stripped))
-        if hot and stripped:
-            return style.red(style.bold(stripped)) + pad
-        if stripped:
-            return style.white(stripped) + pad
-        return fitted
+            body = fitted.rstrip()
+            if cursor:
+                body = (body + "▌")[:cw]
+            return body.ljust(cw)
+        body = fitted.rstrip()
+        if hot and body:
+            body = style.red(style.bold(body))
+        elif body:
+            body = style.white(body)
+        if cursor:
+            body = body + (style.cyan("▌") if not style.plain else "▌")
+        return ljust_visible(body, cw)
 
     title = "SIDE-BY-SIDE TOKEN PATHS"
     if not style.plain:
         title = style.bold(style.white(title))
 
     lines: list[str] = [title, top]
-    lines.append("│" + "│".join(f" {_fit_cell(_strip_ansi(h), cw)} " for h in headers) + "│")
+    lines.append("│" + "│".join(f" {ljust_visible(h, cw)} " for h in headers) + "│")
     lines.append(mid)
-    lines.append("│" + "│".join(f" {_fit_cell(_strip_ansi(f), cw)} " for f in flags) + "│")
+    lines.append("│" + "│".join(f" {ljust_visible(f, cw)} " for f in flags) + "│")
     lines.append(mid)
     for i in range(SNIPPET_LINES):
-        c1 = _styled_cell(full_lines[i], hot=False)
-        c2 = _styled_cell(lossy_lines[i], hot=hot_lossy and bool(lossy_lines[i].strip()))
-        c3 = _styled_cell(exact_lines[i], hot=False)
+        last = i == SNIPPET_LINES - 1
+        c1 = _styled_cell(full_lines[i], hot=False, cursor=False)
+        c2 = _styled_cell(
+            lossy_lines[i],
+            hot=hot_lossy and bool(lossy_lines[i].strip()),
+            cursor=last and cursor_path == 1,
+        )
+        c3 = _styled_cell(
+            exact_lines[i],
+            hot=False,
+            cursor=last and cursor_path == 2,
+        )
         lines.append("│" + f" {c1} " + "│" + f" {c2} " + "│" + f" {c3} " + "│")
     lines.append(bot)
     return lines
