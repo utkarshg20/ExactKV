@@ -30,8 +30,6 @@ REQUIRED_FILES = [
     "site/data/leaderboard.json",
     "site/data/case_studies.json",
     "site/assets/og_card.png",
-    "site/assets/exactkv_logo.png",
-    "site/assets/exactkv_icon.png",
     "site/assets/public_exactkv_one_page_summary.png",
     "site/assets/exp035_first_divergence_histogram.png",
     "site/assets/exp035_category_heatmap.png",
