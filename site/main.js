@@ -34,19 +34,6 @@
     return v.toFixed(digits === undefined ? 3 : digits);
   }
 
-  function tierNote(entry) {
-    if (entry.probe_only || entry.backend_tier === "PROBE_ONLY") {
-      return "probe-first";
-    }
-    if (entry.backend_tier === "MOCK" || entry.availability === "mock_fallback") {
-      return "fallback/proxy";
-    }
-    if (entry.backend_tier === "RESTRICTED_ADAPTER") {
-      return "restricted adapter";
-    }
-    return "";
-  }
-
   function loadLeaderboard() {
     var tbody = document.querySelector("#leaderboard-table tbody");
     if (!tbody) return;
@@ -59,18 +46,13 @@
 
     function renderRows(data) {
       var entries = (data && data.entries) || [];
-      var diagnostic = (data && data.diagnostic_entries) || [];
-      var rows = entries.concat(diagnostic);
-      if (!rows.length) return false;
+      if (!entries.length) return false;
       tbody.innerHTML = "";
-      rows.forEach(function (e) {
-        var note = tierNote(e);
+      entries.forEach(function (e) {
         var tr = document.createElement("tr");
-        if (note) tr.className = "row-muted";
         tr.innerHTML =
           "<td>" + e.rank + "</td>" +
-          "<td><code>" + e.compressor + "</code>" +
-            (note ? ' <span class="tier-tag">' + note + "</span>" : "") + "</td>" +
+          "<td><code>" + e.compressor + "</code></td>" +
           "<td>" + (e.model_short || e.model) + "</td>" +
           '<td class="num">' + fmtNum(e.score) + "</td>" +
           '<td class="num">' + fmtNum(e.acceptance_rate) + "</td>" +
@@ -80,9 +62,8 @@
       var cap = document.getElementById("leaderboard-caption");
       if (cap && data.score_formula) {
         cap.textContent =
-          "Loaded from leaderboard JSON (" + entries.length + " ranked rows" +
-          (diagnostic.length ? ", " + diagnostic.length + " diagnostic/proxy rows shown muted" : "") +
-          "). " + data.score_formula + ".";
+          "Loaded from leaderboard JSON (" + entries.length + " ranked rows). " +
+          data.score_formula + ".";
       }
       return true;
     }

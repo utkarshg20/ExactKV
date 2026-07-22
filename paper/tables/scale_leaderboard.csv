@@ -4,8 +4,4 @@ rank,compressor,model,model_short,score,acceptance_rate,divergence_score,verifie
 3,noop,mistralai/Mistral-7B-Instruct-v0.3,Mistral-7B,1.0,1.0,0.0,1.0,0.0,1.0,1.0,1.0,available,150
 4,int8,mistralai/Mistral-7B-Instruct-v0.3,Mistral-7B,0.9827,1.0,0.1733,1.0,0.0,0.8267,0.25,1.0,available,150
 5,int4_sim,meta-llama/Llama-3.1-8B,Llama-3.1-8B,0.8589,0.8515,0.52,0.8515,0.0,0.48,0.25,1.0,available,150
-6,spectralquant,meta-llama/Llama-3.1-8B,Llama-3.1-8B,0.8589,0.8515,0.52,0.8515,0.0,0.48,0.25,1.0,mock_fallback,150
-7,int4_sim,mistralai/Mistral-7B-Instruct-v0.3,Mistral-7B,0.8512,0.8365,0.5067,0.8365,0.0,0.4933,0.25,1.0,available,150
-8,spectralquant,mistralai/Mistral-7B-Instruct-v0.3,Mistral-7B,0.8512,0.8365,0.5067,0.8365,0.0,0.4933,0.25,1.0,mock_fallback,150
-9,shard,meta-llama/Llama-3.1-8B,Llama-3.1-8B,0.7315,0.6323,0.2267,0.5317,0.0,0.7733,0.4062,1.0,probe_only,150
-10,shard,mistralai/Mistral-7B-Instruct-v0.3,Mistral-7B,0.7268,0.6233,0.2467,0.5333,0.0,0.7533,0.3963,1.0,probe_only,150
+6,int4_sim,mistralai/Mistral-7B-Instruct-v0.3,Mistral-7B,0.8512,0.8365,0.5067,0.8365,0.0,0.4933,0.25,1.0,available,150

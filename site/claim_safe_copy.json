@@ -43,8 +43,7 @@
   "required_caveats": [
     "Phase F kernel results are a kernel microbenchmark only, not an end-to-end inference speedup.",
     "Compression ratios are stored tensor byte ratios, not active GPU memory savings.",
-    "SpectralQuant runs in fallback/proxy mode when the real dependency is unavailable.",
-    "Shard is a probe-first heuristic, not a full Shard / ShardCache integration.",
+    "Public leaderboard evidence is limited to headline compressors: noop, int8, and int4_sim.",
     "ExactKV is inspired by verifier-mediated compressed-KV ideas. it does not reproduce VeriCache.",
     "ExactKV is not a production serving system.",
     "exactkv_failures = 0 is a hard gate on the tested panel only.",

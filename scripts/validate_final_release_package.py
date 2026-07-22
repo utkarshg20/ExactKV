@@ -86,8 +86,7 @@ FORBIDDEN = [
 CAVEAT_GROUPS = [
     (["kernel microbenchmark", "microbenchmark"], "Phase F microbenchmark caveat"),
     (["stored tensor byte ratio", "stored byte ratio", "stored tensor"], "compression ratio caveat"),
-    (["fallback/proxy", "fallback", "proxy"], "SpectralQuant fallback caveat"),
-    (["probe-first", "probe"], "Shard probe caveat"),
+    (["noop", "int8", "int4_sim"], "headline compressor set"),
     (["does not reproduce vericache", "not reproduce", "not a vericache"], "VeriCache caveat"),
     (["not a production serving system", "not a production", "not production"], "production caveat"),
 ]

@@ -946,15 +946,11 @@ its high forehead and its straight nose, they were positively grotes</pre>
           <tr><td>4</td><td><code>int8</code></td><td>Mistral-7B</td><td class="num">0.983</td><td class="num">1.000</td><td class="num">0.173</td></tr>
           <tr><td>5</td><td><code>int4_sim</code></td><td>Llama-3.1-8B</td><td class="num">0.859</td><td class="num">0.852</td><td class="num">0.520</td></tr>
           <tr><td>6</td><td><code>int4_sim</code></td><td>Mistral-7B</td><td class="num">0.851</td><td class="num">0.837</td><td class="num">0.507</td></tr>
-          <tr class="row-muted"><td>6</td><td><code>spectralquant</code> <span class="tier-tag">fallback/proxy</span></td><td>Llama-3.1-8B</td><td class="num">0.859</td><td class="num">0.852</td><td class="num">0.520</td></tr>
-          <tr class="row-muted"><td>8</td><td><code>spectralquant</code> <span class="tier-tag">fallback/proxy</span></td><td>Mistral-7B</td><td class="num">0.851</td><td class="num">0.837</td><td class="num">0.507</td></tr>
-          <tr class="row-muted"><td>9</td><td><code>shard</code> <span class="tier-tag">probe-first</span></td><td>Llama-3.1-8B</td><td class="num">0.732</td><td class="num">0.632</td><td class="num">0.227</td></tr>
-          <tr class="row-muted"><td>10</td><td><code>shard</code> <span class="tier-tag">probe-first</span></td><td>Mistral-7B</td><td class="num">0.727</td><td class="num">0.623</td><td class="num">0.247</td></tr>
       <!-- /SYNC:LEADERBOARD_TBODY -->
         </tbody>
       </table>
     </div>
-    <p class="viz-caption" id="leaderboard-caption">Full JSON: <a href="https://github.com/utkarshg20/ExactKV/blob/main/reports/public_release/leaderboard_final.json">leaderboard_final.json</a>. Registry slots labeled fallback/proxy or probe-first are not headline evidence.</p>
+    <p class="viz-caption" id="leaderboard-caption">Full JSON: <a href="https://github.com/utkarshg20/ExactKV/blob/main/reports/public_release/leaderboard_final.json">leaderboard_final.json</a>. Public table shows headline compressors only: <code>noop</code>, <code>int8</code>, <code>int4_sim</code>.</p>
 
     <h2 id="limitations">17. What we measure but do not claim</h2>
     <ul>
@@ -1028,7 +1024,7 @@ bash scripts/setup_faithful_compressor_env.sh</code></div>
     </section>
 
     <footer class="article-foot">
-      ExactKV research release (git tag <code>v-release</code>). Research-grade evaluation framework, not a production serving system, and does not reproduce VeriCache. Phase F kernel results are a kernel microbenchmark only (not end-to-end speedup). Compression ratios are stored tensor byte ratios, not active GPU memory savings. Core leaderboard compressors: <code>noop</code>, <code>int8</code>, <code>int4_sim</code>. Other registry slots may be fallback/proxy or probe-first. Not headline evidence.
+      ExactKV research release (git tag <code>v-release</code>). Research-grade evaluation framework, not a production serving system, and does not reproduce VeriCache. Phase F kernel results are a kernel microbenchmark only (not end-to-end speedup). Compression ratios are stored tensor byte ratios, not active GPU memory savings. Core leaderboard compressors: <code>noop</code>, <code>int8</code>, <code>int4_sim</code>.
     </footer>
   </div>
 </article>

@@ -60,7 +60,6 @@ The older cross-panel hook (~6% code → ~90% reading) mixes typical context/`ma
 |------|----------|------|
 | Built-in real | `noop`, `int8` | Headline 1,500-cell panel |
 | Built-in simulated | `int4_sim`, `int6_sim`, `h2o_sim` | Diagnostic, not upstream ports |
-| Fallback / proxy | `spectralquant`, `shard` | Mock or probe-only leaderboard rows |
 | Faithful adapter | `snapkv_experimental`, `turboquant_experimental`, `kivi_offline_r32` | Appendix smoke grid only |
 
 External panel drift rates are **not** official LongBench/BFCL/MBPP scores. Compression ratios in the report are **stored tensor byte ratios**, not active GPU memory savings.
@@ -181,7 +180,7 @@ docs/             # claim boundaries, evaluator guide, artifact audit
 - Not a production serving system; no throughput or active VRAM savings claims
 - Does not reproduce VeriCache (draft/verify semantics only)
 - Not official benchmark scores — external panels are drift smoke tests
-- `spectralquant` / `shard` are fallback/proxy diagnostics only
+- Public leaderboard headline compressors are `noop`, `int8`, and `int4_sim` only
 - `exactkv_failures = 0` is a harness safety gate, not “compression is always safe”
 
 ---

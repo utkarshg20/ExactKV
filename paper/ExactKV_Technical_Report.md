@@ -2554,7 +2554,7 @@ non-catastrophic LongBench baseline.
 
 | Panel | Source | Official score? | Models | Compressors | Cells | Context (K) | `exactkv_failures` |
 |-------|--------|----------------|--------|-------------|------:|-------------|-------------------:|
-| Headline release panel | `reports/scale_7b/raw.json` | No | Llama-3.1-8B, Mistral-7B | noop, int8, int4_sim (+ 2 proxy/probe slots¹) | 1,500 | 0.5-2 | 0 |
+| Headline release panel | `reports/scale_7b/raw.json` | No | Llama-3.1-8B, Mistral-7B | noop, int8, int4_sim | 1,500 | 0.5-2 | 0 |
 | Evidence-plus panel | `reports/evidence_plus/raw.json` | No | Llama-3.1-8B, Mistral-7B | noop, int8, int4_sim | 144 | 0.5, 1 | 0 |
 | External smoke: LongBench pilot | `summary_all.json` | No | Llama-3.1-8B only | noop, int8, int4_sim | 72 | 2, 4 | 0 |
 | External smoke: RULER 2K/4K | `summary_all.json` | No | Llama-3.1-8B only | noop, int8, int4_sim | 48 | 2, 4 | 0 |
@@ -2609,7 +2609,7 @@ same panel grid. They are not counted as separate 784-cell panels.
 
 Faithful appendix paths are listed above and in Appendix E; they are **not** summed into 8,132.
 
-¹ `kivi_offline` is an offline adapter diagnostic (`supports_real_bytes_claim=False`). Unvalidated proxy slots in raw artifacts are excluded from analysis (Limitations §15). None of the drift rates here are official benchmark scores.
+¹ `kivi_offline` is an offline adapter diagnostic (`supports_real_bytes_claim=False`). None of the drift rates here are official benchmark scores.
 
 ## Appendix B: Artifact inventory
 

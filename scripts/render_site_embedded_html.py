@@ -24,27 +24,16 @@ def _fmt_num(v: object, digits: int = 3) -> str:
     return html.escape(str(v))
 
 
-def _tier_note(entry: dict) -> str:
-    if entry.get("probe_only") or entry.get("backend_tier") == "PROBE_ONLY":
-        return "probe-first"
-    if entry.get("backend_tier") == "MOCK" or entry.get("availability") == "mock_fallback":
-        return "fallback/proxy"
-    if entry.get("backend_tier") == "RESTRICTED_ADAPTER":
-        return "restricted adapter"
-    return ""
-
-
 def render_leaderboard_rows(data: dict) -> str:
-    rows = list(data.get("entries") or []) + list(data.get("diagnostic_entries") or [])
+    # Public site shows headline compressors only (noop / int8 / int4_sim).
+    # Diagnostic fallback/proxy and probe-first slots stay in JSON, not the table.
+    rows = list(data.get("entries") or [])
     lines: list[str] = []
     for e in rows:
-        note = _tier_note(e)
-        muted = ' class="row-muted"' if note else ""
-        tag = f' <span class="tier-tag">{html.escape(note)}</span>' if note else ""
         lines.append(
-            f'          <tr{muted}>'
+            f'          <tr>'
             f"<td>{html.escape(str(e.get('rank', '-')))}</td>"
-            f"<td><code>{html.escape(str(e.get('compressor', '-')))}</code>{tag}</td>"
+            f"<td><code>{html.escape(str(e.get('compressor', '-')))}</code></td>"
             f"<td>{html.escape(str(e.get('model_short') or e.get('model') or '-'))}</td>"
             f'<td class="num">{_fmt_num(e.get("score"))}</td>'
             f'<td class="num">{_fmt_num(e.get("acceptance_rate"))}</td>'
@@ -109,7 +98,7 @@ def main() -> int:
     page = _patch(page, *LEADERBOARD_MARK, render_leaderboard_rows(lb))
     page = _patch(page, *CASES_MARK, render_case_studies(cases))
     INDEX.write_text(page, encoding="utf-8")
-    n_lb = len(lb.get("entries") or []) + len(lb.get("diagnostic_entries") or [])
+    n_lb = len(lb.get("entries") or [])
     n_cs = min(8, len(cases.get("case_studies") or []))
     print(f"embedded static HTML: {n_lb} leaderboard rows, {n_cs} case studies")
     return 0

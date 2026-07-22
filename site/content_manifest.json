@@ -147,42 +147,6 @@
       "acceptance": 0.8365,
       "divergence": 0.5067,
       "availability": "available"
-    },
-    {
-      "rank": 6,
-      "compressor": "spectralquant",
-      "model": "Llama-3.1-8B",
-      "score": 0.8589,
-      "acceptance": 0.8515,
-      "divergence": 0.52,
-      "availability": "mock_fallback"
-    },
-    {
-      "rank": 8,
-      "compressor": "spectralquant",
-      "model": "Mistral-7B",
-      "score": 0.8512,
-      "acceptance": 0.8365,
-      "divergence": 0.5067,
-      "availability": "mock_fallback"
-    },
-    {
-      "rank": 9,
-      "compressor": "shard",
-      "model": "Llama-3.1-8B",
-      "score": 0.7315,
-      "acceptance": 0.6323,
-      "divergence": 0.2267,
-      "availability": "probe_only"
-    },
-    {
-      "rank": 10,
-      "compressor": "shard",
-      "model": "Mistral-7B",
-      "score": 0.7268,
-      "acceptance": 0.6233,
-      "divergence": 0.2467,
-      "availability": "probe_only"
     }
   ],
   "generated_at": null

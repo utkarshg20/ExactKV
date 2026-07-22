@@ -12,9 +12,8 @@
 KV-cache compression exactness.** It measures token-level drift, first divergence,
 acceptance rate, verifier agreement, and exactness failures across compressors and
 models. It is a **research-grade evaluation framework — not a production serving
-system — and does not reproduce VeriCache.** SpectralQuant runs in fallback/proxy
-mode when the real dependency is unavailable. Shard is a probe-first heuristic, not
-a full Shard / ShardCache integration.
+system — and does not reproduce VeriCache.** Public leaderboard evidence is limited
+to headline compressors (`noop`, `int8`, `int4_sim`).
 
 ## What was released
 
@@ -97,7 +96,7 @@ on LongBench (86% → 57%, a 29pp improvement), but bit-width still matters at 8
 - Not a production serving system
 - No active GPU memory / VRAM telemetry claims
 - External panels are drift smoke tests, not official LongBench/BFCL/MBPP scores
-- `spectralquant` and `shard` rows are fallback/proxy diagnostics only (see leaderboard `diagnostic_entries`)
+- Public leaderboard shows headline compressors only (`noop`, `int8`, `int4_sim`)
 
 **Phase D3 (June–July 2026):** Faithful external adapter appendix **complete** — **1,568 GPU cells**
 total (separate from 8,132 headline): **864** wave-1 (both models: LongBench + BFCL + MBPP),

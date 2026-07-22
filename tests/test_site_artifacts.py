@@ -61,12 +61,15 @@ def test_required_caveats_present():
     for caveat in (
         "kernel microbenchmark",
         "stored tensor byte ratio",
-        "fallback/proxy",
-        "probe-first",
+        "noop",
+        "int4_sim",
         "does not reproduce vericache",
         "not a production serving system",
     ):
         assert caveat in html, f"missing caveat: {caveat}"
+    assert "spectralquant" not in html
+    assert "fallback/proxy" not in html
+    assert "probe-first" not in html
 
 
 def test_no_forbidden_terms_in_rendered_page():
@@ -87,13 +90,18 @@ def test_no_forbidden_terms_in_rendered_page():
 def test_leaderboard_rows_match_scale_evidence():
     manifest = json.loads((SITE / "content_manifest.json").read_text(encoding="utf-8"))
     rows = manifest["leaderboard_rows"]
-    assert len(rows) >= 10
+    assert len(rows) == 6
     top = rows[0]
     assert top["compressor"] == "noop"
     assert top["acceptance"] == 1.0
-    avail = {(r["compressor"], r["availability"]) for r in rows}
-    assert any(c == "spectralquant" and a == "mock_fallback" for c, a in avail)
-    assert any(c == "shard" and a == "probe_only" for c, a in avail)
+    comps = {r["compressor"] for r in rows}
+    assert comps == {"noop", "int8", "int4_sim"}
+    assert "spectralquant" not in comps
+    assert "shard" not in comps
+    html = (SITE / "index.html").read_text(encoding="utf-8")
+    assert "spectralquant" not in html
+    assert "fallback/proxy" not in html
+    assert "probe-first" not in html
 
 
 def test_content_manifest_matches_page_structure():
@@ -109,7 +117,7 @@ def test_content_manifest_matches_page_structure():
     assert manifest.get("deployment", {}).get("public_url", "").startswith("https://")
     policy = manifest.get("case_study_policy") or {}
     assert "longbench_pilot" in (policy.get("excludes") or [])
-    assert len(manifest.get("leaderboard_rows") or []) >= 10
+    assert len(manifest.get("leaderboard_rows") or []) == 6
 
 
 def test_claim_safe_copy_lists_caveats_and_forbidden():

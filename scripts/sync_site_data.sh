@@ -31,20 +31,7 @@ for e in lb.get("entries") or []:
         "score": e.get("score"),
         "acceptance": e.get("acceptance_rate"),
         "divergence": e.get("divergence_score"),
-        "availability": e.get("availability") or (
-            "mock_fallback" if e.get("backend_tier") == "MOCK" else
-            "probe_only" if e.get("probe_only") else "available"
-        ),
-    })
-for e in lb.get("diagnostic_entries") or []:
-    rows.append({
-        "rank": e.get("rank"),
-        "compressor": e.get("compressor"),
-        "model": e.get("model_short") or e.get("model"),
-        "score": e.get("score"),
-        "acceptance": e.get("acceptance_rate"),
-        "divergence": e.get("divergence_score"),
-        "availability": e.get("availability") or "diagnostic",
+        "availability": e.get("availability") or "available",
     })
 
 manifest["leaderboard_rows"] = rows
